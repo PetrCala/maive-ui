@@ -1,0 +1,30 @@
+version: '3.8'
+services:
+  flask:
+    build:
+      context: .
+      dockerfile: Dockerfile-flask
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    depends_on:
+      - r_service
+
+  react:
+    build:
+      context: .
+      dockerfile: Dockerfile-react
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./client:/client
+    depends_on:
+      - flask
+
+  r_service:
+    build:
+      context: .
+      dockerfile: Dockerfile-r
+    volumes:
+      - ./r_scripts:/r_scripts
