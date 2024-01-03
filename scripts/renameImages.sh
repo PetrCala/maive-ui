@@ -29,6 +29,7 @@ for entry in "${dockerfile_tags[@]}"; do
         if [ "$latest_image_tag" != "$repository_name/$new_image_tag" ]; then
             podman tag "$latest_image_tag" "$new_image_tag"
             info "Renamed $latest_image_tag to $new_image_tag"
+            image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$key:" | sort -r) # update
         else
             info "Latest image $latest_image_tag already has the correct version"
         fi
@@ -40,7 +41,7 @@ for entry in "${dockerfile_tags[@]}"; do
         done
     else
         info "No existing images found for $new_image_tag".
-        info "Youcan build the current image versions using 'npm run images:build'"
+        info "You can build the current image versions using 'npm run images:build'"
     fi
 
 done
