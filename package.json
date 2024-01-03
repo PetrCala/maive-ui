@@ -1,0 +1,24 @@
+{
+  "name": "artma",
+  "version": "1.0.0-1",
+  "description": "Automatic Replication Tools for Meta-Analysis",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "bump-build": "./scripts/bumpVersion.sh BUILD",
+    "bump-patch": "./scripts/bumpVersion.sh PATCH",
+    "bump-minor": "./scripts/bumpVersion.sh MINOR",
+    "bump-major": "./scripts/bumpVersion.sh MAJOR"
+  },
+  "keywords": [],
+  "author": "PetrCala",
+  "license": "AGPL",
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "semver": "^7.5.4",
+    "underscore": "^1.13.6",
+    "yargs": "^17.7.2"
+  }
+}
