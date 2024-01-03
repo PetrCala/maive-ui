@@ -44,6 +44,7 @@ function title {
   printf "\n%s%s%s\n" "$TITLE" "$1" "$RESET"
 }
 
+
 function assert_equal {
   if [[ "$1" != "$2" ]]; then
     error "Assertion failed: $1 is not equal to $2"
@@ -105,4 +106,41 @@ get_abs_path() {
     abs_path=${abs_path/#\/\//\/}
 
     echo "$abs_path"
+}
+
+function get_package_version {
+  # Check if jq is installed
+  if ! command -v jq &>/dev/null; then
+      echo "jq is not installed. Please install jq to parse JSON files."
+      exit 1
+  fi
+
+  local package_json_path=$(get_abs_path "./package.json")
+
+  if [ ! -f "$package_json_path" ]; then
+    error "Package JSON file not found under this path: $package_json_path"
+    error "Please make sure this script is placed in the ./scripts folder."
+    exit 1
+  fi
+
+  local version=$(jq -r '.version' "$package_json_path")
+  echo "$version"
+}
+
+# Check whether an image tag exists. Return True if the image exists, False otherwise.
+#
+# Example usage:
+#   my_image="localhost/artma/flask:v1"
+#   if image_exists $my_image; then
+#     echo "Image exists"
+#   else
+#     echo "Image does not exist"
+#   fi
+function image_exists {
+  local tag="$1"
+  if podman images --format "{{.Repository}}:{{.Tag}}" | grep -q "$tag"; then
+    echo true
+  else
+    echo false
+  fi
 }

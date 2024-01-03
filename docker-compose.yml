@@ -1,34 +1,35 @@
 version: '3.8'
 services:
   flask:
-    build:
-      context: .
-      dockerfile: Dockerfile-flask
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-flask
+    image: ${FLASK_IMAGE_NAME}
     ports:
-      - "5000:5000"
+      - "8080:8080"
     volumes:
       - .:/app
-    depends_on:
-      - r_service
     environment:
       - FLASK_ENV=development # Environment variables for Flask
 
   react:
-    build:
-      context: .
-      dockerfile: Dockerfile-react
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-react
+    image: ${REACT_IMAGE_NAME}
     ports:
       - "3000:3000"
     volumes:
       - ./client:/client
-    depends_on:
-      - flask
     environment:
-     - REACT_APP_API_URL=http://flask_api:5000 # URL to the Flask API
+     - REACT_APP_API_URL=http://flask_api:8080 # URL to the Flask API
 
-  r_service:
-    build:
-      context: .
-      dockerfile: Dockerfile-r
+  r:
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile-r
+    image: ${R_IMAGE_NAME}
+    ports:
+      - "8787:8787"
     volumes:
       - ./r_scripts:/r_scripts

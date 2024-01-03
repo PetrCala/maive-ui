@@ -20,5 +20,8 @@ RUN apt-get update && cat packages/r-packages.txt | sed 's/^/r-cran-/' | xargs a
 # Install any non-standard packages
 # RUN Rscript packages/r-packages-extra.R
 
+# Make port 8787 available to the world outside this container
+EXPOSE 8787
+
 # Keep the container running
 CMD ["R"]
