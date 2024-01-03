@@ -8,6 +8,12 @@ setup(
     install_requires=[
         'flask>=3.0.0',
     ],
+    extras_require={
+        'docs': [
+            'sphinx>=4.0.0',
+            'sphinx-rtd-theme>=1.0.0',
+        ],
+    },
     author='Petr Cala',
     author_email='cala.p@seznam.cz',
 )
