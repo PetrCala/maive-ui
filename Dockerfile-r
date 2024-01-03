@@ -1,0 +1,15 @@
+# Start with a base image that has R pre-installed
+FROM r-base:latest
+
+# Set the working directory in the container to /r_scripts
+WORKDIR /r_scripts
+
+# Copy the R scripts directory into the container
+COPY ./r_scripts /r_scripts
+
+# Copy the package file into the container and run it
+COPY packages.R /r_scripts/
+RUN Rscript packages.R
+
+# Keep the container running
+CMD ["R"]
