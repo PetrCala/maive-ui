@@ -7,10 +7,14 @@
     "test": "tests"
   },
   "scripts": {
-    "bump-build": "./scripts/bumpVersion.sh BUILD",
-    "bump-patch": "./scripts/bumpVersion.sh PATCH",
-    "bump-minor": "./scripts/bumpVersion.sh MINOR",
-    "bump-major": "./scripts/bumpVersion.sh MAJOR"
+    "containers:build": "./scripts/buildImages.sh",
+    "containers:run": "podman-compose up",
+    "containers:stop": "podman-compose down",
+    "remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
+    "bump:build": "./scripts/bumpVersion.sh BUILD",
+    "bump:patch": "./scripts/bumpVersion.sh PATCH",
+    "bump:minor": "./scripts/bumpVersion.sh MINOR",
+    "bump:major": "./scripts/bumpVersion.sh MAJOR"
   },
   "keywords": [],
   "author": "Petr Cala",

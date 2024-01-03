@@ -7,6 +7,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'flask>=3.0.0',
+        'podman-compose>=1.0.6'
     ],
     extras_require={
         'docs': [

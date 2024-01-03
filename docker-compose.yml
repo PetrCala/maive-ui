@@ -10,6 +10,8 @@ services:
       - .:/app
     depends_on:
       - r_service
+    environment:
+      - FLASK_ENV=development # Environment variables for Flask
 
   react:
     build:
@@ -21,6 +23,8 @@ services:
       - ./client:/client
     depends_on:
       - flask
+    environment:
+     - REACT_APP_API_URL=http://flask_api:5000 # URL to the Flask API
 
   r_service:
     build:
