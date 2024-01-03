@@ -7,8 +7,7 @@ WORKDIR /r_scripts
 # Copy the R scripts directory into the container
 COPY ./r_scripts /r_scripts
 
-# Copy the package file into the container and run it
-COPY packages.R /r_scripts/
+# Run the packages.R file
 RUN Rscript packages.R
 
 # Keep the container running
