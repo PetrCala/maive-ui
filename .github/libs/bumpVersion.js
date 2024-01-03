@@ -47,10 +47,10 @@ console.log(`Previous version: ${previousVersion}`, `New version: ${newVersion}`
 // Update version using npm command
 exec(`npm --no-git-tag-version version ${newVersion} --prefix ${path.dirname(packageJsonPath)}`)
     .then(() => {
-        console.log(`Successfully updated npm version to ${newVersion}`);
+        console.log(`Successfully updated client npm version to ${newVersion}`);
     })
     .catch((error) => {
-        console.error(`Failed to update npm version: ${error}`);
+        console.error(`Failed to update client npm version: ${error}`);
     });
 
 
