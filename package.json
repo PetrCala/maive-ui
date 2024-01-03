@@ -1,6 +1,6 @@
 {
   "name": "artma",
-  "version": "0.0.3-0",
+  "version": "0.0.3-1",
   "description": "Automatic Replication Tools for Meta-Analysis",
   "main": "index.js",
   "directories": {
@@ -13,7 +13,7 @@
     "bump-major": "./scripts/bumpVersion.sh MAJOR"
   },
   "keywords": [],
-  "author": "PetrCala",
+  "author": "Petr Cala",
   "license": "AGPL",
   "dependencies": {
     "@actions/core": "^1.10.1",

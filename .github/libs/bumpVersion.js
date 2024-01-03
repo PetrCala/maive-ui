@@ -55,3 +55,16 @@ exec(`npm --no-git-tag-version version ${newVersion} -m "Update version to ${new
         console.error(stderr);
         core.setFailed('An error occurred in the `npm version` command');
     });
+
+    
+// Read the contents of the setup.py file
+const setupPyPath = './setup.py';
+const setupPyContents = fs.readFileSync(setupPyPath, 'utf8');
+
+// Update the version in the setup.py file
+const newSetupPyContents = setupPyContents.replace(/version\s*=\s*['"][^'"]+['"]/i, `version='${newVersion}'`);
+
+// Write the updated contents back to the setup.py file
+fs.writeFileSync(setupPyPath, newSetupPyContents, 'utf8');
+
+console.log(`Successfully updated version in setup.py to ${newVersion}`);
