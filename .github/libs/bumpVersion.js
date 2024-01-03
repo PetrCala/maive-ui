@@ -3,6 +3,7 @@
 
 const {promisify} = require('util');
 const fs = require('fs');
+const path = require('path');
 const exec = promisify(require('child_process').exec);
 const _ = require('underscore');
 const core = require('@actions/core');
@@ -16,6 +17,8 @@ const {argv} = yargs(process.argv.slice(2))
         demandOption: true,
     });
 
+const packageJsonPath = path.join(__dirname, '..', '..', 'client', 'package.json');
+const packageLockJsonPath = path.join(__dirname, '..', '..', 'client', 'package-lock.json');
 
 // let semanticVersionLevel = core.getInput('SEMVER_LEVEL', {require: true}); // Use when running as GH action
 let semanticVersionLevel = argv.SEMVER_LEVEL; // Running the script using node.js
@@ -28,6 +31,28 @@ if (!semanticVersionLevel || !_.contains(versionUpdater.SEMANTIC_VERSION_LEVELS,
 const {version: previousVersion} = JSON.parse(fs.readFileSync('./package.json'));
 const newVersion = versionUpdater.incrementVersion(previousVersion, semanticVersionLevel);
 console.log(`Previous version: ${previousVersion}`, `New version: ${newVersion}`);
+
+// Read package.json and package-lock.json
+// let packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+// let packageLockJson = JSON.parse(fs.readFileSync(packageLockJsonPath, 'utf8'));
+
+// // Update version
+// packageJson.version = newVersion;
+// packageLockJson.version = newVersion;
+
+// // Write updated version back to package.json and package-lock.json
+// fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
+// fs.writeFileSync(packageLockJsonPath, JSON.stringify(packageLockJson, null, 2));
+
+// Update version using npm command
+exec(`npm --no-git-tag-version version ${newVersion} --prefix ${path.dirname(packageJsonPath)}`)
+    .then(() => {
+        console.log(`Successfully updated npm version to ${newVersion}`);
+    })
+    .catch((error) => {
+        console.error(`Failed to update npm version: ${error}`);
+    });
+
 
 console.log(`Setting npm version to ${newVersion}`);
 exec(`npm --no-git-tag-version version ${newVersion} -m "Update version to ${newVersion}"`)
