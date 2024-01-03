@@ -10,6 +10,12 @@ if [ $# -eq 0 ]; then
     exit 1
 fi
 
+# Check if there are unsaved changes
+if [[ $(git status --porcelain) ]]; then
+    error "There are unsaved changes. Please commit or stash your changes before running this script."
+    exit 1
+fi
+
 # Navigate to the project root (one level above SCRIPTS_DIR)
 PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
 cd "$PROJECT_ROOT"
