@@ -1,6 +1,6 @@
 {
   "name": "artma",
-  "version": "1.0.0-1",
+  "version": "1.0.1-0",
   "description": "Automatic Replication Tools for Meta-Analysis",
   "main": "index.js",
   "directories": {
