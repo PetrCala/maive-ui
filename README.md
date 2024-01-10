@@ -8,6 +8,7 @@ Automatic Replication Tools for Meta-Analysis
 
 - Install `node`, `Python`, `R`, `Podman` (or `Docker`),
 - [Set up podman](https://podman.io/docs/installation) or [Set up Docker](https://docs.docker.com/engine/install/)
+- Install `podman-compose` using `brew install podman-compose`
 
 ## Building the containers
 
