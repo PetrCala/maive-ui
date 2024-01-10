@@ -79,4 +79,5 @@ cython_debug/
 node_modules/
 
 # Other
+bun.lockb
 notes/

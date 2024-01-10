@@ -2,6 +2,9 @@
   "name": "artma",
   "version": "0.0.5-1",
   "description": "Automatic Replication Tools for Meta-Analysis",
+  "keywords": [],
+  "author": "Petr Cala",
+  "license": "AGPL",
   "main": "index.js",
   "directories": {
     "test": "tests"
@@ -19,9 +22,6 @@
     "bump:minor": "./scripts/bumpVersion.sh MINOR && ./scripts/renameImages.sh",
     "bump:major": "./scripts/bumpVersion.sh MAJOR && ./scripts/renameImages.sh"
   },
-  "keywords": [],
-  "author": "Petr Cala",
-  "license": "AGPL",
   "dependencies": {
     "@actions/core": "^1.10.1",
     "semver": "^7.5.4",
