@@ -13,10 +13,10 @@
     "start:prod": "./scripts/composeUp.sh prod",
     "stop": "podman-compose down",
     "remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
-    "bump:build": "./scripts/bumpVersion.sh BUILD",
-    "bump:patch": "./scripts/bumpVersion.sh PATCH",
-    "bump:minor": "./scripts/bumpVersion.sh MINOR",
-    "bump:major": "./scripts/bumpVersion.sh MAJOR"
+    "bump:build": "./scripts/bumpVersion.sh BUILD && ./scripts/renameImages.sh",
+    "bump:patch": "./scripts/bumpVersion.sh PATCH && ./scripts/renameImages.sh",
+    "bump:minor": "./scripts/bumpVersion.sh MINOR && ./scripts/renameImages.sh",
+    "bump:major": "./scripts/bumpVersion.sh MAJOR && ./scripts/renameImages.sh"
   },
   "keywords": [],
   "author": "Petr Cala",
