@@ -15,14 +15,17 @@ Automatic Replication Tools for Meta-Analysis
 ### Steps
 
 - Initialize the podman using `podman machine start`.
-- Build the local images with `npm run containers:build`.
-- Run `npm run containers:run` to call `podman-compose up` and compose up all the images through the `docker-compose.yml` file.
+- Build the local images with `npm run images:build`.
+- To run the project in a development environment, execute `npm run start:dev`. For production environment, do `npm run start:prod`. This will check for all necessary images, build missing ones, and start up all relevant containers. You can check that the containers are up and running by calling `podman ps -a`.
+
+## Accessing individual parts of the application
+
+TBA
 
 ### Useful notes
 
 - Remove empty images
 ```podman images --format "{{.ID}}: {{.Repository}}:{{.Tag}}" | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}```
-
 
 ## Technical choices
 
