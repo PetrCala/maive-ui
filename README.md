@@ -1,6 +1,24 @@
-# artma
-Automatic Replication Tools for Meta-Analysis
+<div align="center">
+    <h1>
+        <!-- <a href="https://link-here"> -->
+        Automatic Replication Tools for Meta-Analysis
+        <!-- </a> -->
+    </h1>
+</div>
 
+
+#### Table of Contents
+- [How to run](#how-to-run)
+  - [Prerequisites](#prerequisites)
+  - [Steps](#steps)
+  - [Notes](#notes)
+- [Handling images containers](#handling-images-containers)
+  - [Scripts](#scripts)
+- [Useful notes](#useful-notes)
+    - [Technical choices](#technical-choices)
+    - [Front-end](#front-end)
+    - [Back end](#back-end)
+    - [CI/CD](#cicd)
 
 # How to run
 
@@ -10,24 +28,41 @@ Automatic Replication Tools for Meta-Analysis
 - [Set up podman](https://podman.io/docs/installation) or [Set up Docker](https://docs.docker.com/engine/install/)
 - Install `podman-compose` using `brew install podman-compose`
 
-## Building the containers
-
-### Steps
+## Steps
 
 - Initialize the podman using `podman machine start`.
-- Build the local images with `npm run images:build`.
-- To run the project in a development environment, execute `npm run start:dev`. For production environment, do `npm run start:prod`. This will check for all necessary images, build missing ones, and start up all relevant containers. You can check that the containers are up and running by calling `podman ps -a`.
+- Run `npm run start:dev`. This will build all necessary images, and start up relevant containers in a development environment. For production environment, execute `npm run start:prod` instead.
+- Individual parts of the application can be accessed from your browser or from the terminal under these domains:
+  - **React application:** `127.0.0.1:3000`
+  - **Flask application:** `127.0.0.1:8080`
+  - **R:** `127.0.0.1:8787`
+  
+## Notes
 
-## Accessing individual parts of the application
+- You can check that the containers are up and running by calling `podman ps -a` from another terminal instance.
+- Upon pressing Ctrl+C in the terminal instance where the `start:dev` command was executed, all of the running containers will be gracefully shut down and deleted.
+- Any images built during the process will remain present. You can check the list of these images by running `podman images`. Remove these using `podman rmi [image-name]`, or `podman rmi -a`, which will remove all images.
+- You can also access any of the containers by using `localhost` as the host name, such as `localhost:3000` for the React application.
 
-TBA
+# Handling images containers
 
-### Useful notes
+## Scripts
+
+There are several pre-defined node scripts which should help you work with images and containers. All of these can be executed using `npm run [script-name]`Here is a list of some of them:
+
+- `images:build`: Builds the Docker images only if they don't already exist.
+- `images:rebuild`: Forces the rebuild of all Docker images.
+- `images:rename`: Renames all existing images to match the current project version.
+- `start:dev`: Builds any missing images and starts up all containers in a development environment. Upon Ctrl+C, all of the containers will be gracefully shut down and deleted.
+- `start:prod`: Very similar to `start:dev`, but builds and starts the containers in a production environment.
+- `stop`: Stops and removes all existing containers.
+
+# Useful notes
 
 - Remove empty images
 ```podman images --format "{{.ID}}: {{.Repository}}:{{.Tag}}" | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}```
 
-## Technical choices
+### Technical choices
 
 ### Front-end
 
