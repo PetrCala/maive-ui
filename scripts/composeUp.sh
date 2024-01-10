@@ -93,3 +93,5 @@ trap cleanup SIGINT
 info "Running all containers for version $package_version in $ENVIRONMENT environment..."
 
 podman-compose up
+
+exit 0;
