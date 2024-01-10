@@ -3,14 +3,18 @@
 set -e
 
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
+PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
 source "$SCRIPTS_DIR/shellUtils.sh";
 
 # Set the environment. Pass 'dev' or 'prod' as an argument to this script.
 ENVIRONMENT=${1:-dev} # Default to 'dev' if no argument is provided
-"$SCRIPTS_DIR/setenv.sh" $ENVIRONMENT
 
+if [[ "$ENVIRONMENT" != "prod" && "$ENVIRONMENT" != "dev" ]]; then
+    error "Invalid environment. Please provide either 'prod' or 'dev' as an argument."
+    exit 1
+fi
 
-PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
+"$SCRIPTS_DIR/setenv.sh" $ENVIRONMENT # Set the .env file to the correct environment
 
 if [ -f "$PROJECT_ROOT/.env" ]; then
     source "$PROJECT_ROOT/.env"
@@ -27,6 +31,16 @@ package_version=$(get_package_version)
 export FLASK_IMAGE_NAME="$repository_name/$image_name/flask:v$package_version"
 export REACT_IMAGE_NAME="$repository_name/$image_name/react:v$package_version"
 export R_IMAGE_NAME="$repository_name/$image_name/r:v$package_version"
+
+# Set the flask environment
+if [ "$ENVIRONMENT" = "prod" ]; then
+    export FLASK_ENV="production"
+elif [ "$ENVIRONMENT" = "dev" ]; then
+    export FLASK_ENV="development"
+else
+    error "Invalid flask environment. Exiting..."
+    exit 1
+fi
 
 # Check if images exist
 image_names=("$FLASK_IMAGE_NAME" "$REACT_IMAGE_NAME" "$R_IMAGE_NAME")

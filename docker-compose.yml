@@ -10,7 +10,7 @@ services:
     volumes:
       - .:/app
     environment:
-      - FLASK_ENV=development # Environment variables for Flask
+      - FLASK_ENV=${FLASK_ENV}
 
   react:
     image: ${REACT_IMAGE_NAME}
