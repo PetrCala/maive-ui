@@ -100,5 +100,12 @@ iterates over different Dockerfile types, and builds the corresponding images if
 don't already exist. The images are tagged with the version number and stored locally. 
 The script uses the `shellUtils.sh` script for utility functions.
 
-Usage: `./buildImages.sh`
+Usage: `./buildImages.sh [force-rebuild]`
+
+Arguments:
+- `force-rebuild` (optional): If provided, forces the rebuild of all images, even if they already exist.
+
+Example:
+- `./buildImages.sh` - Builds the Docker images only if they don't already exist.
+- `./buildImages.sh force-rebuild` - Forces the rebuild of all Docker images.
 

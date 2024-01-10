@@ -8,6 +8,7 @@
   },
   "scripts": {
     "images:build": "./scripts/buildImages.sh",
+    "images:rebuild": "./scripts/buildImages.sh force-rebuild",
     "images:rename": "./scripts/renameImages.sh",
     "start:dev": "./scripts/composeUp.sh dev",
     "start:prod": "./scripts/composeUp.sh prod",
