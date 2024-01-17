@@ -1,3 +1,4 @@
-tidyverse
 dplyr
 ggplot2
+plumber
+tidyverse
