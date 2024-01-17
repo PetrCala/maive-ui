@@ -1,7 +1,7 @@
 from flask import render_template, request
 from .. import bp
 
-@bp.route('/scripts/edit/<int:id>', methods=['GET', 'POST'])
+@bp.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit_script(id):
     if request.method == 'POST':
         # Process the form data and update the script
