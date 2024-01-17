@@ -5,13 +5,13 @@ FROM node:21-alpine
 WORKDIR /client
 
 # Copy package.json and package-lock.json
-COPY client/package*.json ./
+COPY client/package*.json /client
 
 # Install project dependencies
 RUN npm install
 
 # Copy the client directory contents into the container at /client
-COPY client/ .
+COPY client/ /client
 
 # Build the app
 RUN npm run build

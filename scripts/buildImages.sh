@@ -7,7 +7,7 @@ source "$SCRIPTS_DIR/shellUtils.sh";
 # Static
 repository_name="localhost"
 image_name="artma"
-dockerfile_tags=("flask:Dockerfile-flask" "react:Dockerfile-react" "r:Dockerfile-r") # tag:dockerfile
+dockerfile_tags=("flask:Flask-app/" "react:React-client/" "r:R/") # tag:project-folder
 
 # Call the function to get the package version
 version=$(get_package_version)
@@ -26,7 +26,7 @@ for entry in "${dockerfile_tags[@]}"; do
     # Check if the image already exists
     if ! image_exists "$repository_name/$new_image_tag" | grep -q "true" >/dev/null; then
         info "Building $new_image_tag"
-        podman build -f "$value" -t "$repository_name/$new_image_tag" .
+        podman build -t "$repository_name/$new_image_tag" "$value"
     else
         info "Image $new_image_tag already exists. Skipping build."
     fi

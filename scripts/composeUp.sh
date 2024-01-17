@@ -4,7 +4,7 @@ set -e
 
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
 PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
-source "$SCRIPTS_DIR/shellUtils.sh";
+source "$SCRIPTS_DIR/shellUtils.sh"
 
 # Set the environment. Pass 'dev' or 'prod' as an argument to this script.
 ENVIRONMENT=${1:-dev} # Default to 'dev' if no argument is provided
@@ -35,8 +35,12 @@ export R_IMAGE_NAME="$repository_name/$image_name/r:v$package_version"
 # Set the flask environment
 if [ "$ENVIRONMENT" = "prod" ]; then
     export FLASK_ENV="production"
+    export FLASK_RUN_HOST="host_domain" # Modify in the future
+    export FLASK_RUN_PORT="8080" # Possibly move these to the .env file?
 elif [ "$ENVIRONMENT" = "dev" ]; then
     export FLASK_ENV="development"
+    export FLASK_RUN_HOST="0.0.0.0"
+    export FLASK_RUN_PORT="8080"
 else
     error "Invalid flask environment. Exiting..."
     exit 1
@@ -54,26 +58,22 @@ for image_name in "${image_names[@]}"; do
     fi
 done
 
-# Handling BUILD_ variables
-export BUILD_FLASK_IMAGE=${BUILD_FLASK_IMAGE:-"none"}
-export BUILD_REACT_IMAGE=${BUILD_REACT_IMAGE:-"none"}
-export BUILD_R_IMAGE=${BUILD_R_IMAGE:-"none"}
-
 if [ "$build_required" = true ]; then
-    if [[ "$BUILD_FLASK_IMAGE" != "none" || "$BUILD_REACT_IMAGE" != "none" || "$BUILD_R_IMAGE" != "none" ]]; then
+    if [["$ENVIRONMENT" == "prod"]]; then
+        # Always build images in production
         info "Building missing images as per BUILD_ variables..."
         npm run images:build
     else
         read -p "Some of the local images are missing: ${missing_images[*]}. Do you want to build them now? (y/N) " response
         case "$response" in
-            [yY][eE][sS]|[yY])
-                info "Building missing images..."
-                npm run images:build
-                ;;
-            *)
-                error "Required images are missing. Exiting..."
-                exit 1
-                ;;
+        [yY][eE][sS] | [yY])
+            info "Building missing images..."
+            npm run images:build
+            ;;
+        *)
+            error "Required images are missing. Exiting..."
+            exit 1
+            ;;
         esac
     fi
 fi
@@ -84,7 +84,7 @@ cleanup() {
     podman-compose down
     info "Successfully stopped and removed all containers."
     success "Done."
-    exit 0;
+    exit 0
 }
 
 # Trap Ctrl+C and call the cleanup function
@@ -94,4 +94,4 @@ info "Running all containers for version $package_version in $ENVIRONMENT enviro
 
 podman-compose up
 
-exit 0;
+exit 0
