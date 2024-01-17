@@ -1,5 +1,15 @@
 # R scripts folder
 
+### How R is hosted and accessed
+
+- We use [Plumber](https://www.rplumber.io) to expose an API endpoint to the rest of the containers.
+- This is set up in the project root `host.R` file, which is then being called in the R dockerfile, setting up the API endpoint.
+- To make calls to the endpoint, either `curl` or access the relevant address, for exmple:
+
+  ```bash
+  curl "http://localhost:8787/echo?msg=hello" # Returns {"msg":["The message is: 'hello'"]}
+  ```
+
 ### Package installation inside the container
 
 - To install new packages, simply add them to the `r-packages.txt` file.
@@ -15,8 +25,10 @@
 
 ### Accessing environmental variables
 
-- Environmental variables should be placed inside the `.Renviron` file at the R project root `r_scripts`. You can access these using `Sys.getenv()`, such as:
+- Environmental variables should be placed inside the `.Renviron` file at the R project root `r_scripts`. Further, they are provided through the `docker-compose.yml`. You can access these using `Sys.getenv()`, such as:
 
   ```R
-  print(Sys.getenv("R_LIBS"))
+  print(Sys.getenv("R_LIBS")) # Served from .Renviron
+  print(Sys.getenv("R_HOST")) # Served from docker-compose.yml
+  print(Sys.getenv("R_PORT")) # Served from docker-compose.yml
   ```

@@ -24,4 +24,4 @@ RUN apt-get update && cat packages/r-packages.txt | sed 's/^/r-cran-/' | xargs a
 EXPOSE 8787
 
 # Keep the container running
-CMD ["Rscript", "main.R"]
+CMD ["Rscript", "host.R"]

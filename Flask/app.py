@@ -22,4 +22,4 @@ if __name__ == "__main__":
     host = os.getenv("FLASK_RUN_HOST", "0.0.0.0")
     port = int(os.getenv("FLASK_RUN_PORT", "8080"))
     app = create_app()
-    app.run(debug=debug_mode, host="0.0.0.0", port=8080)
+    app.run(debug=debug_mode, host=host, port=port)

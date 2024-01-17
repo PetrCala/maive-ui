@@ -1,6 +1,7 @@
 # plumber.R
 
 #* Echo back the input
+#* @usage curl --data "a=4&b=3" "http://localhost:8787/sum"
 #* @param msg The message to echo
 #* @get /echo
 function(msg="") {
@@ -16,6 +17,7 @@ function() {
 }
 
 #* Return the sum of two numbers
+#* @usage curl "http://localhost:8787/echo?msg=hello"
 #* @param a The first number to add
 #* @param b The second number to add
 #* @post /sum

@@ -35,3 +35,6 @@ services:
       - "8787:8787"
     volumes:
       - ./R/r_scripts:/r_scripts
+    environment:
+      - R_HOST=${R_HOST}
+      - R_PORT=${R_PORT}
