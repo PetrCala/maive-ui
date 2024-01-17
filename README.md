@@ -53,6 +53,7 @@ There are several pre-defined node scripts which should help you work with image
 
 - `images:build`: Builds the Docker images only if they don't already exist.
 - `images:rebuild`: Forces the rebuild of all Docker images.
+- `images:rebuild-<image-tag>`: Force the rebuild of a single Docker image (specified by `<image-tag>`). E.g., `bun run images:rebuild-react` rebuilds the React image.
 - `images:rename`: Renames all existing images to match the current project version.
 - `start:dev`: Builds any missing images and starts up all containers in a development environment. Upon Ctrl+C, all of the containers will be gracefully shut down and deleted.
 - `start:prod`: Very similar to `start:dev`, but builds and starts the containers in a production environment.
