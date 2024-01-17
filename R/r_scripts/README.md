@@ -23,9 +23,14 @@
     For now, this option is disabled.
 
 
+### Accessing packages inside the container
+
+- By default, during the image build, the packages are installed using `apt-get` into the `/usr/lib/R/site-library` path.
+- Given that the container, by default, recognizes only two default package paths, `/usr/lib/R/site-library` and `/usr/local/lib/R/site-library`, the installation path is served to the environment through the `.Renviron` file at the R project root `r_scripts`. Without this configuration, the install packages would not be available to the scripts.
+
 ### Accessing environmental variables
 
-- Environmental variables should be placed inside the `.Renviron` file at the R project root `r_scripts`. Further, they are provided through the `docker-compose.yml`. You can access these using `Sys.getenv()`, such as:
+- Environmental variables should be placed inside the `.Renviron` file. Further, they are provided through the `docker-compose.yml`. You can access these using `Sys.getenv()`, such as:
 
   ```R
   print(Sys.getenv("R_LIBS")) # Served from .Renviron
