@@ -6,9 +6,12 @@ def create_app():
     app = Flask(__name__)
 
     def register_blueprints(app):
-        from app.routes import script_route, home_route
-        app.register_blueprint(script_route.bp)
-        app.register_blueprint(home_route.bp)
+        from app.blueprints.auth import bp as auth_bp
+        from app.blueprints.scripts import bp as scripts_bp
+        from app.blueprints.home import bp as home_bp
+        app.register_blueprint(auth_bp, url_prefix="/auth")
+        app.register_blueprint(scripts_bp, url_prefix="/scripts")
+        app.register_blueprint(home_bp, url_prefix="/")
 
     register_blueprints(app)
     return app
