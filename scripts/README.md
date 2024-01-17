@@ -93,19 +93,21 @@ Note:
 - Make sure to commit or stash any unsaved changes before running this script.
 - After running the script, remember to push the changes to the remote repository using `git push`.
 
-## `buildImages.sh`
+## `buildImage.sh`
 
-This script builds Docker images for the artma project. It retrieves the package version, 
-iterates over different Dockerfile types, and builds the corresponding images if they 
-don't already exist. The images are tagged with the version number and stored locally. 
+This script builds a Docker image for the artma project. It retrieves the package version, 
+,and builds the corresponding images if it does not already exist. The image is tagged with the version number and stored locally. 
 The script uses the `shellUtils.sh` script for utility functions.
 
-Usage: `./buildImages.sh [force-rebuild]`
+Usage: `./buildImage.sh [image-name] [force-rebuild]`
 
 Arguments:
-- `force-rebuild` (optional): If provided, forces the rebuild of all images, even if they already exist.
+- `image-name`: Name of the image to build (one of `flask`, `react`, `r`, `all`). If set to `all`, all images will be built.
+- `force-rebuild` (optional): If provided, rebuilds the specified image instead.
 
 Example:
-- `./buildImages.sh` - Builds the Docker images only if they don't already exist.
-- `./buildImages.sh force-rebuild` - Forces the rebuild of all Docker images.
+- `./buildImage.sh react` - Builds the react image if it does not already exist.
+- `./buildImage.sh all` - Builds all images if they do not already exist.
+- `./buildImage.sh r force-rebuild` - Forces the rebuild of the r image.
+- `./buildImage.sh all force-rebuild` - Forces the rebuild of all images.
 

@@ -10,8 +10,11 @@
     "test": "tests"
   },
   "scripts": {
-    "images:build": "./scripts/buildImages.sh",
-    "images:rebuild": "./scripts/buildImages.sh force-rebuild",
+    "images:build": "./scripts/buildImage.sh all",
+    "images:rebuild": "./scripts/buildImage.sh all force-rebuild",
+    "images:rebuild-flask": "./scripts/buildImage.sh flask force-rebuild",
+    "images:rebuild-react": "./scripts/buildImage.sh react force-rebuild",
+    "images:rebuild-r": "./scripts/buildImage.sh r force-rebuild",
     "images:rename": "./scripts/renameImages.sh",
     "start:dev": "./scripts/composeUp.sh dev",
     "start:prod": "./scripts/composeUp.sh prod",
