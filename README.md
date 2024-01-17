@@ -62,7 +62,16 @@ There are several pre-defined node scripts which should help you work with image
 # Useful notes
 
 - Remove empty images
-```podman images --format "{{.ID}}: {{.Repository}}:{{.Tag}}" | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}```
+
+  ```bash
+  podman images --format "{{.ID}}: {{.Repository}}:{{.Tag}}" | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}
+  ```
+
+- Get logs of a container that is running in a detached mode
+
+  ```bash
+  podman logs -f <container-name>
+  ```
 
 ### Technical choices
 
