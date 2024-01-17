@@ -2,12 +2,14 @@ import os
 
 from flask import Flask
 
-from app.routes import script_route
+from app.routes import script_route, home_route
 
 app = Flask(__name__)
 
 # Register the routes
 app.register_blueprint(script_route.bp)
+app.register_blueprint(home_route.bp)
+
 
 if __name__ == "__main__":
     # Get environmental variables, or default if not set
