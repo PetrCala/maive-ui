@@ -82,7 +82,7 @@ There are several pre-defined node scripts which should help you work with image
 ### Back end
 
 - Flask
-- R scripts
+- R API endpoint through [Plumber](https://www.rplumber.io)
 
 ### CI/CD
 
@@ -91,4 +91,3 @@ There are several pre-defined node scripts which should help you work with image
 # Useful resources
 
 - [Retro-board GH repo](https://github.com/antoinejaussoin/retro-board/blob/develop/docker-compose.yml) - For integrating PostgreSQL into the project
-- [R Plumber](https://github.com/rstudio/cheatsheets/blob/main/plumber.pdf) - Plumber allows you to create a web API by merely decorating your existing R source code with roxygen2-like comments. 
