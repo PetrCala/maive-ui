@@ -11,3 +11,12 @@
     ```
 
     For now, this option is disabled.
+
+
+### Accessing environmental variables
+
+- Environmental variables should be placed inside the `.Renviron` file at the R project root `r_scripts`. You can access these using `Sys.getenv()`, such as:
+
+  ```R
+  print(Sys.getenv("R_LIBS"))
+  ```

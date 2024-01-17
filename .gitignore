@@ -55,9 +55,12 @@ cover/
 *.mo
 *.pot
 
-# Flask stuff:
+# Flask
 instance/
 .webassets-cache
+
+# R
+**/*.Rapp.history
 
 # Sphinx documentation
 docs/_build/
