@@ -1,7 +1,9 @@
 # main.R
 
 print("Hello, world!")
-# library('dplyr')
+
+# See: https://www.rplumber.io
+# library('plumber')
 
 # #* @apiTitle My API
 # pr("executables/plumber.R") %>%
