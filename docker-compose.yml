@@ -3,12 +3,12 @@ services:
   flask:
     image: ${FLASK_IMAGE_NAME}
     build:
-      context: ./Flask-app
+      context: ./Flask
       dockerfile: Dockerfile
     ports:
       - "8080:8080"
     volumes:
-      - ./Flask-app:/usr/src/app
+      - ./Flask:/usr/src/app
     environment:
       - FLASK_ENV=${FLASK_ENV}
       - FLASK_RUN_HOST=${FLASK_RUN_HOST}
@@ -17,12 +17,12 @@ services:
   react:
     image: ${REACT_IMAGE_NAME}
     build:
-      context: ./React-client
+      context: ./React
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
-      - ./React-client/client:/client
+      - ./React/client:/client
     environment:
      - REACT_APP_API_URL=http://flask_api:8080 # URL to the Flask API
 

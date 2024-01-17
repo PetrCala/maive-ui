@@ -7,7 +7,7 @@ source "$SCRIPTS_DIR/shellUtils.sh";
 # Static
 repository_name="localhost"
 image_name="artma"
-dockerfile_tags=("flask:Flask-app/" "react:React-client/" "r:R/") # tag:project-folder
+dockerfile_tags=("flask:Flask/" "react:React/" "r:R/") # tag:project-folder
 
 # Call the function to get the package version
 version=$(get_package_version)
