@@ -9,7 +9,7 @@ print("Plumber library successfully loaded")
 
 # Load the docker-compose environment variables
 R_HOST = Sys.getenv("R_HOST")
-R_PORT = Sys.getenv("R_PORT")
+R_PORT = as.numeric(Sys.getenv("R_PORT"))
 
 # #* @apiTitle R API
 pr("executables/plumber.R") %>%
