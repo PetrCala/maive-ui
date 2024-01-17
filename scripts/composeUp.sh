@@ -35,7 +35,7 @@ export R_IMAGE_NAME="$repository_name/$image_name/r:v$package_version"
 # Set the application environment variables
 if [ "$ENVIRONMENT" = "prod" ]; then
     export FLASK_ENV="production"
-    export FLASK_RUN_HOST="flask-host" # Modify in the future
+    export FLASK_RUN_HOST="flask-host" # Modify in the future - add secret manager
     export FLASK_RUN_PORT="8080" # Possibly move these to the .env file?
     export R_HOST="r-host"
     export R_PORT="8787"

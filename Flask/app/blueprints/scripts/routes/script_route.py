@@ -1,4 +1,5 @@
 from flask import Blueprint, jsonify
+
 from ..services import script_service
 from .. import bp  # Import the blueprint from the parent module
 
