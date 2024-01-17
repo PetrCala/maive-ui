@@ -58,7 +58,7 @@ exec(`npm --no-git-tag-version version ${newVersion} -m "Update version to ${new
 
     
 // Read the contents of the setup.py file
-const setupPyPath = './setup.py';
+const setupPyPath = './Flask-app/setup.py';
 const setupPyContents = fs.readFileSync(setupPyPath, 'utf8');
 
 // Update the version in the setup.py file
