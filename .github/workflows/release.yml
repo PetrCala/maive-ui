@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches: [release]
-  workflow_dispatch:
+  workflow_dispatch: # for manual triggering - remove once the release is automated
 
 permissions:
   id-token: write
