@@ -88,7 +88,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Execute destruction
-destroy_runtime
+# destroy_runtime # Enable this after the runtime is ready
 destroy_bootstrap
 
 echo -e "${GREEN}All infrastructure has been destroyed successfully${NC}"

@@ -113,7 +113,7 @@ else
     >/dev/null
 
   echo "🔒 Waiting for the table to be created..."
-  sleep 5 # wait for the table to be created
+  sleep 10 # wait for the table to be created
 
   echo "🔒 Tagging DynamoDB table for automatic deletion after 30 days..."
   aws dynamodb tag-resource \
