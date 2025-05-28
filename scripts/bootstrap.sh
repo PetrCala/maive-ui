@@ -115,9 +115,9 @@ else
   echo "🔒 Tagging DynamoDB table for automatic deletion after 30 days..."
   aws dynamodb tag-resource \
     --resource-arn "$(aws dynamodb describe-table --table-name "$DDB_TABLE_NAME" --query "Table.TableArn" --output text)" \
-    --tags Key=delete-after,Value="$(date -d '+30 days' +%Y-%m-%d)" \
-    --region "$REGION"
-
+    --tags Key=delete-after,Value="$(date -v '+30d' +%Y-%m-%d)" \
+    --region "$REGION" \
+    >/dev/null
 fi
 # === Run Terraform ===
 
