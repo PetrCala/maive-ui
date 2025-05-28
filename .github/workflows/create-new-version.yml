@@ -61,10 +61,9 @@ jobs:
 
       - name: Create new version
         run: |
-          git checkout -b release
           echo "Creating new version..."
           ./scripts/bumpVersion.sh ${{ needs.labelChecks.outputs.SEMVER_LEVEL }} # creates a commit
 
       - name: Propagate new version
         run: |
-          git push -u --force origin release
+          git push -u --force origin master
