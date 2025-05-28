@@ -19,7 +19,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "ttl" {
     id     = "expire-short-lived-data"
     status = "Enabled"
 
-    filter {} # This applies the rule to all objects in the bucket
+    filter {
+      prefix = "" # Apply to all objects
+    }
 
     expiration {
       days = 7
