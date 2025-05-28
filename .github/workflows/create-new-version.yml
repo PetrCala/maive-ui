@@ -53,6 +53,11 @@ jobs:
       - name: Install npm packages
         run: npm install
 
+      - name: Set up Git
+        run: |
+          git config --global user.email "${{ secrets.ADMIN_EMAIL }}"
+          git config --global user.name "${{ secrets.ADMIN_NAME }}"
+
       - name: Create new version
         run: |
           echo "Creating new version..."
