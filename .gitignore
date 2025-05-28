@@ -86,9 +86,8 @@ node_modules/
 **/.terraform.lock.hcl
 **/backend.tf
 **/versions.tf
-**/provider.tf
-*.tfstate
-*.tfstate.*
+**/*.tfstate
+**/*.tfstate.*
 
 # Terragrunt
 **/.terragrunt-cache/
