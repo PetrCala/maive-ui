@@ -141,6 +141,7 @@ else
   else
     echo "❗ Skipping tagging — table does not exist."
     exit 1
+  fi
 fi
 
 # === Run Terraform ===
