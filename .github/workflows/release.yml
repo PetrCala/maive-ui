@@ -44,12 +44,20 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
           aws-region: ${{ secrets.AWS_REGION }}
 
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: image-tag
+        run: |
+          echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
       - name: Build & push ${{ matrix.service }}
         uses: docker/build-push-action@v5
         with:
           context: ./apps/${{ matrix.service }}
           push: true
-          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ matrix.service }}:${{ github.sha }}
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ matrix.service }}:${{ steps.image-tag.outputs.IMAGE_TAG }}
 
   # deploy:
   #   needs: build
@@ -65,6 +73,11 @@ jobs:
   #         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
   #         aws-region: ${{ secrets.AWS_REGION }}
 
+  #     - name: Set image tag
+  #       id: image-tag
+  #       run: |
+  #         echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+
   #     - name: Setup Terraform
   #       uses: hashicorp/setup-terraform@v3
   #       with: { terraform_version: ${{ env.TF_VERSION }} }
@@ -74,7 +87,7 @@ jobs:
 
   #     - name: Terraform Plan
   #       run: terraform plan -input=false \
-  #            -var="image_tag=${{ github.sha }}" \
+  #            -var="image_tag=${{ steps.image-tag.outputs.IMAGE_TAG }}" \
   #            -out=plan.out
 
   #     - name: Terraform Apply
