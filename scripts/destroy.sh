@@ -85,7 +85,7 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Execute destruction
-# destroy_infrastructure_stack "runtime"
+destroy_infrastructure_stack "runtime"
 destroy_infrastructure_stack "foundation"
 destroy_bootstrap
 
