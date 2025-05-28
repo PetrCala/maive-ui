@@ -34,10 +34,15 @@ const newVersion = versionUpdater.incrementVersion(
 	previousVersion,
 	semanticVersionLevel
 )
-console.log(
+
+// Log the version change for debugging
+console.error(
 	`Previous version: ${previousVersion}`,
 	`New version: ${newVersion}`
 )
+
+// Output only the new version for capture by shell script
+console.log(newVersion)
 
 // Update client version using npm command
 const packageJsonPath = path.join(
