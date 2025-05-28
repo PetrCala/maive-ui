@@ -59,15 +59,12 @@ jobs:
           git config --global user.name "${{ secrets.ADMIN_NAME }}"
           git remote set-url origin https://github.com/PetrCala/maive-ui.git
 
-          git checkout -b release
-          git pull origin release
-          git rebase master
-
       - name: Create new version
         run: |
+          git checkout -b release
           echo "Creating new version..."
           ./scripts/bumpVersion.sh ${{ needs.labelChecks.outputs.SEMVER_LEVEL }} # creates a commit
 
       - name: Propagate new version
         run: |
-          git push -u origin release
+          git push -u --force origin release
