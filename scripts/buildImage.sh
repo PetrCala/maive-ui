@@ -12,7 +12,7 @@ fi
 # Static
 build_key="$1"
 repository_name="localhost"
-image_name="artma"
+image_name="maive"
 dockerfile_tags=("flask:Flask/" "react:React/" "r:R/") # tag:project-folder
 
 # Call the function to get the package version
@@ -23,7 +23,7 @@ function buildImage() {
     image_folder=$2
     other_arg=$3
 
-    new_image_tag="$image_name/$image_key:v$version" # e.g. artma/flask:v1
+    new_image_tag="$image_name/$image_key:v$version" # e.g. maive/flask:v1
 
     if [ "$other_arg" == "force-rebuild" ]; then
         info "Deleting $new_image_tag"

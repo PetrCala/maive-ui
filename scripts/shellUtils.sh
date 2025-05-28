@@ -44,7 +44,6 @@ function title {
   printf "\n%s%s%s\n" "$TITLE" "$1" "$RESET"
 }
 
-
 function assert_equal {
   if [[ "$1" != "$2" ]]; then
     error "Assertion failed: $1 is not equal to $2"
@@ -69,50 +68,50 @@ function join_by_string {
 # Will make a path absolute, resolving any relative paths
 # example: get_abs_path "./foo/bar"
 get_abs_path() {
-    local the_path=$1
-    local -a path_elements
-    IFS='/' read -ra path_elements <<< "$the_path"
+  local the_path=$1
+  local -a path_elements
+  IFS='/' read -ra path_elements <<<"$the_path"
 
-    # If the path is already absolute, start with an empty string.
-    # We'll prepend the / later when reconstructing the path.
-    if [[ "$the_path" = /* ]]; then
-        abs_path=""
+  # If the path is already absolute, start with an empty string.
+  # We'll prepend the / later when reconstructing the path.
+  if [[ "$the_path" = /* ]]; then
+    abs_path=""
+  else
+    abs_path="$(pwd)"
+  fi
+
+  # Handle each path element
+  for element in "${path_elements[@]}"; do
+    if [ "$element" = "." ] || [ -z "$element" ]; then
+      continue
+    elif [ "$element" = ".." ]; then
+      # Remove the last element from abs_path
+      abs_path=$(dirname "$abs_path")
     else
-        abs_path="$(pwd)"
+      # Append element to the absolute path
+      abs_path="${abs_path}/${element}"
     fi
+  done
 
-    # Handle each path element
-    for element in "${path_elements[@]}"; do
-        if [ "$element" = "." ] || [ -z "$element" ]; then
-            continue
-        elif [ "$element" = ".." ]; then
-            # Remove the last element from abs_path
-            abs_path=$(dirname "$abs_path")
-        else
-            # Append element to the absolute path
-            abs_path="${abs_path}/${element}"
-        fi
-    done
+  # Remove any trailing '/'
+  while [[ $abs_path == */ ]]; do
+    abs_path=${abs_path%/}
+  done
 
-    # Remove any trailing '/'
-    while [[ $abs_path == */ ]]; do
-        abs_path=${abs_path%/}
-    done
+  # Special case for root
+  [ -z "$abs_path" ] && abs_path="/"
 
-    # Special case for root
-    [ -z "$abs_path" ] && abs_path="/"
+  # Special case to remove any starting '//' when the input path was absolute
+  abs_path=${abs_path/#\/\//\/}
 
-    # Special case to remove any starting '//' when the input path was absolute
-    abs_path=${abs_path/#\/\//\/}
-
-    echo "$abs_path"
+  echo "$abs_path"
 }
 
 function get_package_version {
   # Check if jq is installed
   if ! command -v jq &>/dev/null; then
-      echo "jq is not installed. Please install jq to parse JSON files."
-      exit 1
+    echo "jq is not installed. Please install jq to parse JSON files."
+    exit 1
   fi
 
   local package_json_path=$(get_abs_path "./package.json")
@@ -130,7 +129,7 @@ function get_package_version {
 # Check whether an image tag exists. Return True if the image exists, False otherwise.
 #
 # Example usage:
-#   my_image="localhost/artma/flask:v1"
+#   my_image="localhost/maive/flask:v1"
 #   if image_exists $my_image; then
 #     echo "Image exists"
 #   else

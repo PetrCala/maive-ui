@@ -24,7 +24,7 @@ else
 fi
 
 repository_name=${REPOSITORY_NAME:-"localhost"}
-image_name=${IMAGE_NAME:-"artma"}
+image_name=${IMAGE_NAME:-"maive"}
 package_version=$(get_package_version)
 
 # Static
@@ -36,7 +36,7 @@ export R_IMAGE_NAME="$repository_name/$image_name/r:v$package_version"
 if [ "$ENVIRONMENT" = "prod" ]; then
     export FLASK_ENV="production"
     export FLASK_RUN_HOST="flask-host" # Modify in the future - add secret manager
-    export FLASK_RUN_PORT="8080" # Possibly move these to the .env file?
+    export FLASK_RUN_PORT="8080"       # Possibly move these to the .env file?
     export R_HOST="r-host"
     export R_PORT="8787"
 elif [ "$ENVIRONMENT" = "dev" ]; then

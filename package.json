@@ -1,34 +1,34 @@
 {
-  "name": "artma",
-  "version": "0.0.7-0",
-  "description": "Automatic Replication Tools for Meta-Analysis",
-  "keywords": [],
-  "author": "Petr Cala",
-  "license": "AGPL",
-  "main": "index.js",
-  "directories": {
-    "test": "tests"
-  },
-  "scripts": {
-    "images:build": "./scripts/buildImage.sh all",
-    "images:rebuild": "./scripts/buildImage.sh all force-rebuild",
-    "images:rebuild-flask": "./scripts/buildImage.sh flask force-rebuild",
-    "images:rebuild-react": "./scripts/buildImage.sh react force-rebuild",
-    "images:rebuild-r": "./scripts/buildImage.sh r force-rebuild",
-    "images:rename": "./scripts/renameImages.sh",
-    "start:dev": "./scripts/composeUp.sh dev",
-    "start:prod": "./scripts/composeUp.sh prod",
-    "stop": "podman-compose down",
-    "remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
-    "bump:build": "./scripts/bumpVersion.sh BUILD && ./scripts/renameImages.sh",
-    "bump:patch": "./scripts/bumpVersion.sh PATCH && ./scripts/renameImages.sh",
-    "bump:minor": "./scripts/bumpVersion.sh MINOR && ./scripts/renameImages.sh",
-    "bump:major": "./scripts/bumpVersion.sh MAJOR && ./scripts/renameImages.sh"
-  },
-  "dependencies": {
-    "@actions/core": "^1.10.1",
-    "semver": "^7.5.4",
-    "underscore": "^1.13.6",
-    "yargs": "^17.7.2"
-  }
+	"name": "maive",
+	"version": "0.0.7-0",
+	"description": "Automatic Replication Tools for Meta-Analysis",
+	"keywords": [],
+	"author": "Petr Cala",
+	"license": "AGPL",
+	"main": "index.js",
+	"directories": {
+		"test": "tests"
+	},
+	"scripts": {
+		"images:build": "./scripts/buildImage.sh all",
+		"images:rebuild": "./scripts/buildImage.sh all force-rebuild",
+		"images:rebuild-flask": "./scripts/buildImage.sh flask force-rebuild",
+		"images:rebuild-react": "./scripts/buildImage.sh react force-rebuild",
+		"images:rebuild-r": "./scripts/buildImage.sh r force-rebuild",
+		"images:rename": "./scripts/renameImages.sh",
+		"start:dev": "./scripts/composeUp.sh dev",
+		"start:prod": "./scripts/composeUp.sh prod",
+		"stop": "podman-compose down",
+		"remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
+		"bump:build": "./scripts/bumpVersion.sh BUILD && ./scripts/renameImages.sh",
+		"bump:patch": "./scripts/bumpVersion.sh PATCH && ./scripts/renameImages.sh",
+		"bump:minor": "./scripts/bumpVersion.sh MINOR && ./scripts/renameImages.sh",
+		"bump:major": "./scripts/bumpVersion.sh MAJOR && ./scripts/renameImages.sh"
+	},
+	"dependencies": {
+		"@actions/core": "^1.10.1",
+		"semver": "^7.5.4",
+		"underscore": "^1.13.6",
+		"yargs": "^17.7.2"
+	}
 }

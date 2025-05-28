@@ -2,11 +2,11 @@
 set -e
 
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
-source "$SCRIPTS_DIR/shellUtils.sh";
+source "$SCRIPTS_DIR/shellUtils.sh"
 
 # Static
 repository_name="localhost"
-image_name="artma"
+image_name="maive"
 dockerfile_tags=("flask:Dockerfile-flask" "react:Dockerfile-react" "r:Dockerfile-r") # tag:dockerfile
 
 # Call the function to get the package version
@@ -15,9 +15,9 @@ version=$(get_package_version)
 info "Renaming existing images to version $version"
 # Iterate over Dockerfile types
 for entry in "${dockerfile_tags[@]}"; do
-    IFS=':' read -r key value <<< "$entry"
-    new_image_tag="$image_name/$key:v$version" # e.g. artma/flask:v1
-    
+    IFS=':' read -r key value <<<"$entry"
+    new_image_tag="$image_name/$key:v$version" # e.g. maive/flask:v1
+
     # List all versions of the image
     image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$key:" | sort -r)
 
