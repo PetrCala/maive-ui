@@ -11,6 +11,9 @@ permissions:
   contents: read
   pull-requests: write # to post plan as comment
 
+env:
+  PROJECT_NAME: maive
+
 jobs:
   runtime:
     runs-on: ubuntu-latest
@@ -57,7 +60,7 @@ jobs:
         with:
           context: ./apps/${{ matrix.service }}
           push: true
-          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ matrix.service }}:${{ steps.image-tag.outputs.IMAGE_TAG }}
+          tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ steps.image-tag.outputs.IMAGE_TAG }}
 
   # deploy:
   #   needs: build

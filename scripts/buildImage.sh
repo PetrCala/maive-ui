@@ -11,6 +11,7 @@ fi
 
 # Static
 BUILD_KEY="$1"
+PROJECT_NAME="maive"
 IMAGE_NAMES=("flask-api" "react-ui" "r-plumber")
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=$(aws configure get region)
@@ -28,7 +29,7 @@ function buildImage() {
     IMAGE_FOLDER=$2
     OTHER_ARG=$3
 
-    NEW_IMAGE_TAG="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_KEY:$IMAGE_TAG" # e.g. 1234567890.dkr.ecr.us-east-1.amazonaws.com/flask:1234567890
+    NEW_IMAGE_TAG="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-$IMAGE_KEY:$IMAGE_TAG" # e.g. 1234567890.dkr.ecr.us-east-1.amazonaws.com/maive-flask-api:1234567890
 
     if [ "$OTHER_ARG" == "force-rebuild" ]; then
         info "Deleting $NEW_IMAGE_TAG"
