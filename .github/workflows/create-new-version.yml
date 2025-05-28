@@ -45,6 +45,14 @@ jobs:
         with:
           token: ${{ secrets.ADMIN_TOKEN }}
 
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install npm packages
+        run: npm install
+
       - name: Create new version
         run: |
           echo "Creating new version..."
