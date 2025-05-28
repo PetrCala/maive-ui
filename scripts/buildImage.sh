@@ -46,8 +46,9 @@ fi
 image_built=false
 
 for entry in "${dockerfile_tags[@]}"; do
+    folder_path="./apps/$entry"
     if [[ "$entry" == "$build_key" || "$build_key" == "all" ]]; then
-        buildImage "$entry" $2
+        buildImage "$entry" "$folder_path" $2
         image_built=true
     fi
 done
