@@ -32,7 +32,7 @@ fi
 # Execute the version bump command
 node ./.github/libs/bumpVersion.js --semver $SEMVER_LEVEL
 
-NEW_VERSION=$(npm pkg get version)
+NEW_VERSION=$(jq -r .version 'package.json')
 
 # Use the NEW_VERSION variable in subsequent commands
 info "The new version is $NEW_VERSION"
