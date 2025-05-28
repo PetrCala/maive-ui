@@ -3,6 +3,8 @@ name: Release
 on:
   push:
     branches: [release]
+  pull_request:
+    branches: [release]
   workflow_dispatch: # for manual triggering - remove once the release is automated
 
 permissions:
