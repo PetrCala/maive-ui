@@ -7,7 +7,7 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 # Static
 repository_name="localhost"
 image_name="maive"
-dockerfile_tags=("flask-api/" "react-ui/" "r-plumber/")
+dockerfile_tags=("flask-api" "react-ui" "r-plumber")
 
 # Call the function to get the package version
 version=$(get_package_version)

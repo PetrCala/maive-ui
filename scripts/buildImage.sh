@@ -13,7 +13,7 @@ fi
 build_key="$1"
 repository_name="localhost"
 image_name="maive"
-dockerfile_tags=("flask-api/" "react-ui/" "r-plumber/")
+dockerfile_tags=("flask-api" "react-ui" "r-plumber")
 
 # Call the function to get the package version
 version=$(get_package_version)
@@ -46,7 +46,7 @@ fi
 image_built=false
 
 for entry in "${dockerfile_tags[@]}"; do
-    folder_path="./apps/$entry"
+    folder_path="./apps/$entry/"
     if [[ "$entry" == "$build_key" || "$build_key" == "all" ]]; then
         buildImage "$entry" "$folder_path" $2
         image_built=true
