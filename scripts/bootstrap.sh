@@ -26,8 +26,9 @@ if [ -z "AWS_REGION" ]; then
   exit 1
 fi
 
-read -p "Do you want to deploy the resources in the AWS_REGION region with account ID AWS_ACCOUNT_ID? (y/n): " CONFIRMATION
-if [[ "$CONFIRMATION" != "y" && "$CONFIRMATION" != "yes" ]]; then
+read -p "Do you want to deploy the resources in the $AWS_REGION region with account ID $AWS_ACCOUNT_ID? (y/N) " -n 1 -r
+echo
+if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   echo "Deployment aborted by the user."
   exit 1
 fi
