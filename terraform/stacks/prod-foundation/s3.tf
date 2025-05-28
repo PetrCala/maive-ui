@@ -14,10 +14,16 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "sse" {
 
 resource "aws_s3_bucket_lifecycle_configuration" "ttl" {
   bucket = aws_s3_bucket.data.id
+
   rule {
     id     = "expire-short-lived-data"
     status = "Enabled"
-    expiration { days = 7 }
+
+    filter {} # This applies the rule to all objects in the bucket
+
+    expiration {
+      days = 7
+    }
   }
 }
 
