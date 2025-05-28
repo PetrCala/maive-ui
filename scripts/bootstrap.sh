@@ -2,11 +2,10 @@
 set -euo pipefail
 
 # ---------------- CONFIG ----------------
-PROJECT_NAME="maive" # Change this to your project name
-REPO_NAME="PetrCala/maive-ui"
+PROJECT_NAME="maive"
 TF_DIR="terraform/stacks/prod-foundation"
-BUCKET_NAME="maive-tf-state"
-DDB_TABLE_NAME="maive-tf-locks"
+TF_STATE_BUCKET="${PROJECT_NAME}-tf-state"
+TF_STATE_TABLE="${PROJECT_NAME}-tf-locks"
 
 # Check if aws-cli is installed
 if ! command -v aws &>/dev/null; then
@@ -36,28 +35,28 @@ fi
 # === Functions ===
 
 bucket_exists() {
-  aws s3api head-bucket --bucket "$BUCKET_NAME" >/dev/null 2>&1
+  aws s3api head-bucket --bucket "$TF_STATE_BUCKET" >/dev/null 2>&1
 }
 
 ddb_table_exists() {
-  aws dynamodb describe-table --table-name "$DDB_TABLE_NAME" --region "$REGION" >/dev/null 2>&1
+  aws dynamodb describe-table --table-name "$TF_STATE_TABLE" --region "$REGION" >/dev/null 2>&1
 }
 
 # === Create S3 Bucket ===
 #
 if bucket_exists; then
-  echo "✅ S3 bucket '$BUCKET_NAME' already exists. Skipping creation."
+  echo "✅ S3 bucket '$TF_STATE_BUCKET' already exists. Skipping creation."
 else
-  echo "🚀 Creating S3 bucket: $BUCKET_NAME in region $REGION..."
+  echo "🚀 Creating S3 bucket: $TF_STATE_BUCKET in region $REGION..."
   aws s3api create-bucket \
-    --bucket "$BUCKET_NAME" \
+    --bucket "$TF_STATE_BUCKET" \
     --region "$REGION" \
     --create-bucket-configuration LocationConstraint="$REGION" \
     >/dev/null
 
   echo "🔐 Enabling default encryption on the bucket..."
   aws s3api put-bucket-encryption \
-    --bucket "$BUCKET_NAME" \
+    --bucket "$TF_STATE_BUCKET" \
     --server-side-encryption-configuration '{
       "Rules": [{
         "ApplyServerSideEncryptionByDefault": {
@@ -69,7 +68,7 @@ else
 
   echo "🔒 Blocking all public access on the bucket..."
   aws s3api put-public-access-block \
-    --bucket "$BUCKET_NAME" \
+    --bucket "$TF_STATE_BUCKET" \
     --public-access-block-configuration '{
       "BlockPublicAcls": true,
       "IgnorePublicAcls": true,
@@ -80,7 +79,7 @@ else
 
   echo "📆 Adding lifecycle rule to expire objects after 30 days..."
   aws s3api put-bucket-lifecycle-configuration \
-    --bucket "$BUCKET_NAME" \
+    --bucket "$TF_STATE_BUCKET" \
     --lifecycle-configuration '{
     "Rules": [
       {
@@ -101,11 +100,11 @@ fi
 # === Create DynamoDB Table ===
 
 if ddb_table_exists; then
-  echo "✅ DynamoDB table '$DDB_TABLE_NAME' already exists. Skipping creation."
+  echo "✅ DynamoDB table '$TF_STATE_TABLE' already exists. Skipping creation."
 else
-  echo "🚀 Creating DynamoDB table for state locking: $DDB_TABLE_NAME..."
+  echo "🚀 Creating DynamoDB table for state locking: $TF_STATE_TABLE..."
   aws dynamodb create-table \
-    --table-name "$DDB_TABLE_NAME" \
+    --table-name "$TF_STATE_TABLE" \
     --attribute-definitions AttributeName=LockID,AttributeType=S \
     --key-schema AttributeName=LockID,KeyType=HASH \
     --billing-mode PAY_PER_REQUEST \
@@ -114,7 +113,7 @@ else
 
   echo "🔒 Tagging DynamoDB table for automatic deletion after 30 days..."
   aws dynamodb tag-resource \
-    --resource-arn "$(aws dynamodb describe-table --table-name "$DDB_TABLE_NAME" --query "Table.TableArn" --output text)" \
+    --resource-arn "$(aws dynamodb describe-table --table-name "$TF_STATE_TABLE" --query "Table.TableArn" --output text)" \
     --tags Key=delete-after,Value="$(date -v '+30d' +%Y-%m-%d)" \
     --region "$REGION" \
     >/dev/null
