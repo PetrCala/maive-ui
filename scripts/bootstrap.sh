@@ -113,7 +113,24 @@ else
     >/dev/null
 
   echo "🔒 Waiting for the table to be created..."
-  sleep 10 # wait for the table to be created
+  poll_table_existence() {
+    local retries=12
+    local count=0
+    while [ $count -lt $retries ]; do
+      if aws dynamodb describe-table --table-name "$TF_STATE_TABLE" --region "$AWS_REGION" >/dev/null 2>&1; then
+        return 0
+      fi
+      sleep 5
+      count=$((count + 1))
+    done
+    return 1
+  }
+
+  echo "🔒 Waiting for the table to be created..."
+  if ! poll_table_existence; then
+    echo "❌ Failed to confirm table creation within the timeout period."
+    exit 1
+  fi
 
   echo "🔒 Tagging DynamoDB table for automatic deletion after 30 days..."
   aws dynamodb tag-resource \
@@ -122,6 +139,7 @@ else
     --region "$AWS_REGION" \
     >/dev/null
 fi
+
 # === Run Terraform ===
 
 echo "Running Terraform in $TF_DIR..."
