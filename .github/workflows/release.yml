@@ -70,9 +70,7 @@ jobs:
 
   #     - name: Terraform Plan
   #       run: terraform plan -input=false \
-  #            -var="react_image_tag=${{ github.sha }}" \
-  #            -var="flask_image_tag=${{ github.sha }}" \
-  #            -var="rplumber_image_tag=${{ github.sha }}" \
+  #            -var="image_tag=${{ github.sha }}" \
   #            -out=plan.out
 
   #     - name: Terraform Apply
