@@ -12,8 +12,8 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-REGION=$(aws configure get region)
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_REGION=$(aws configure get region)
 
 # Function to check if AWS credentials are configured
 check_aws_credentials() {
