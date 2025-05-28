@@ -113,6 +113,7 @@ else
     >/dev/null
 
   echo "🔒 Tagging DynamoDB table for automatic deletion after 30 days..."
+  sleep 5 # wait for the table to be created
   aws dynamodb tag-resource \
     --resource-arn "$(aws dynamodb describe-table --table-name "$TF_STATE_TABLE" --query "Table.TableArn" --output text)" \
     --tags Key=delete-after,Value="$(date -v '+30d' +%Y-%m-%d)" \
