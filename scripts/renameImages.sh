@@ -5,41 +5,41 @@ SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
 source "$SCRIPTS_DIR/shellUtils.sh"
 
 # Static
-repository_name="localhost"
-image_name="maive"
-image_names=("flask-api" "react-ui" "r-plumber")
+IMAGE_NAMES=("flask-api" "react-ui" "r-plumber")
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_REGION=$(aws configure get region)
 
 # Call the function to get the package version
-image_tag=$(git rev-parse --short HEAD)
+IMAGE_TAG=$(git rev-parse --short HEAD)
 
-info "Renaming existing images to tag $image_tag"
+info "Renaming existing images to tag $IMAGE_TAG"
 # Iterate over image names
-for entry in "${image_names[@]}"; do
-    new_image_tag="$image_name/$entry:$image_tag" # e.g. maive/flask:1234567890
+for ENTRY in "${IMAGE_NAMES[@]}"; do
+    NEW_IMAGE_TAG="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ENTRY:$IMAGE_TAG" # e.g. 1234567890.dkr.ecr.us-east-1.amazonaws.com/flask:1234567890
 
     # List all versions of the image
-    image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$entry:" | sort -r)
+    IMAGE_VERSIONS=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$ENTRY:" | sort -r)
 
     # Check if there are any versions of the image
-    if [ -n "$image_versions" ]; then
-        latest_image_tag=$(echo "$image_versions" | head -n 1)
+    if [ -n "$IMAGE_VERSIONS" ]; then
+        LATEST_IMAGE_TAG=$(echo "$IMAGE_VERSIONS" | head -n 1)
 
-        # Rename the latest version to new_image_tag if it's not already the latest
-        if [ "$latest_image_tag" != "$repository_name/$new_image_tag" ]; then
-            podman tag "$latest_image_tag" "$new_image_tag"
-            info "Renamed $latest_image_tag to $new_image_tag"
-            image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$entry:" | sort -r) # update
+        # Rename the latest version to NEW_IMAGE_TAG if it's not already the latest
+        if [ "$LATEST_IMAGE_TAG" != "$NEW_IMAGE_TAG" ]; then
+            podman tag "$LATEST_IMAGE_TAG" "$NEW_IMAGE_TAG"
+            info "Renamed $LATEST_IMAGE_TAG to $NEW_IMAGE_TAG"
+            IMAGE_VERSIONS=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$ENTRY:" | sort -r) # update
         else
-            info "Latest image $latest_image_tag already has the correct version"
+            info "Latest image $LATEST_IMAGE_TAG already has the correct version"
         fi
 
         # Delete all but the latest version
-        for image in $(echo "$image_versions" | tail -n +2); do
-            podman rmi "$image" >/dev/null
-            info "Deleted old version $image"
+        for IMAGE in $(echo "$IMAGE_VERSIONS" | tail -n +2); do
+            podman rmi "$IMAGE" >/dev/null
+            info "Deleted old version $IMAGE"
         done
     else
-        info "No existing images found for $new_image_tag".
+        info "No existing images found for $NEW_IMAGE_TAG".
         info "You can build the current image versions using 'npm run images:build'"
     fi
 
