@@ -17,6 +17,7 @@ env:
 
 jobs:
   build:
+    if: github.event.pull_request.merged == true && github.event.pull_request.labels.name == 'release'
     strategy:
       matrix:
         service: [react-ui, flask-api, r-plumber]
