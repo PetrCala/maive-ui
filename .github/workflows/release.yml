@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    branches: [release]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write   # to post plan as comment
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: infra/stacks/prod-runtime } }
+    steps: &tf
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with: { role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform }
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - run: terraform init -backend-config="key=prod-runtime.tfstate"
+
+      # no image tags yet – this run just (re)creates ALB, ECS *without* new rev
+      - run: terraform apply -auto-approve -lock-timeout=300
+
+  # build:
+  #   strategy:
+  #     matrix:
+  #       service: [react-ui, flask-api, r-plumber]
+  #   needs: runtime
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Build & push ${{ matrix.service }}
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         context: ./apps/${{ matrix.service }}
+  #         push: true
+  #         tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ matrix.service }}:${{ github.sha }}
+
+  # deploy:
+  #   needs: build
+  #   runs-on: ubuntu-latest
+  #   defaults:
+  #     run: { working-directory: infra/envs/prod }   # dev → point to dev dir
+  #   steps:
+  #     - uses: actions/checkout@v4
+
+  #     - name: Configure AWS credentials
+  #       uses: aws-actions/configure-aws-credentials@v4
+  #       with:
+  #         role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
+  #         aws-region: ${{ secrets.AWS_REGION }}
+
+  #     - name: Setup Terraform
+  #       uses: hashicorp/setup-terraform@v3
+  #       with: { terraform_version: ${{ env.TF_VERSION }} }
+
+  #     - name: Terraform Init
+  #       run: terraform init -backend-config="bucket=my-tf-state" -backend-config="key=prod.tfstate"
+
+  #     - name: Terraform Plan
+  #       run: terraform plan -input=false \
+  #            -var="react_image_tag=${{ github.sha }}" \
+  #            -var="flask_image_tag=${{ github.sha }}" \
+  #            -var="rplumber_image_tag=${{ github.sha }}" \
+  #            -out=plan.out
+
+  #     - name: Terraform Apply
+  #       if: github.ref == 'refs/heads/release'
+  #       run: terraform apply -input=false -auto-approve plan.out
