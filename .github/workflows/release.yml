@@ -50,7 +50,7 @@ jobs:
       - name: Set image tag
         id: image-tag
         run: |
-          echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Build & push ${{ matrix.service }}
         uses: docker/build-push-action@v5
@@ -76,7 +76,7 @@ jobs:
   #     - name: Set image tag
   #       id: image-tag
   #       run: |
-  #         echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+  #         echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
   #     - name: Setup Terraform
   #       uses: hashicorp/setup-terraform@v3
