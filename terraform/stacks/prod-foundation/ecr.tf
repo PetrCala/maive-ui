@@ -10,7 +10,7 @@ resource "aws_ecr_repository" "repos" {
   tags = { Project = var.project }
 }
 
-# Keep only the 20 most recent images
+# Keep only the 5 most recent images
 resource "aws_ecr_lifecycle_policy" "cleanup" {
   for_each   = aws_ecr_repository.repos
   repository = each.value.name
@@ -18,11 +18,11 @@ resource "aws_ecr_lifecycle_policy" "cleanup" {
     rules = [
       {
         rulePriority = 1
-        description  = "Retain last 20 images"
+        description  = "Retain last 5 images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = 20
+          countNumber = 5
         }
         action = { type = "expire" }
       }
