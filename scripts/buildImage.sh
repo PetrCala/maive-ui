@@ -13,17 +13,17 @@ fi
 build_key="$1"
 repository_name="localhost"
 image_name="maive"
-dockerfile_tags=("flask-api" "react-ui" "r-plumber")
+image_names=("flask-api" "react-ui" "r-plumber")
 
 # Call the function to get the package version
-version=$(get_package_version)
+image_tag=$(git rev-parse --short HEAD)
 
 function buildImage() {
     image_key=$1
     image_folder=$2
     other_arg=$3
 
-    new_image_tag="$image_name/$image_key:v$version" # e.g. maive/flask:v1
+    new_image_tag="$image_name/$image_key:$image_tag" # e.g. maive/flask:1234567890
 
     if [ "$other_arg" == "force-rebuild" ]; then
         info "Deleting $new_image_tag"
@@ -40,12 +40,12 @@ function buildImage() {
 }
 
 if [[ "$build_key" == "all" ]]; then
-    info "Building up all images for version $version"
+    info "Building up all images for tag $image_tag"
 fi
 
 image_built=false
 
-for entry in "${dockerfile_tags[@]}"; do
+for entry in "${image_names[@]}"; do
     folder_path="./apps/$entry/"
     if [[ "$entry" == "$build_key" || "$build_key" == "all" ]]; then
         buildImage "$entry" "$folder_path" $2

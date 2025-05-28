@@ -7,15 +7,15 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 # Static
 repository_name="localhost"
 image_name="maive"
-dockerfile_tags=("flask-api" "react-ui" "r-plumber")
+image_names=("flask-api" "react-ui" "r-plumber")
 
 # Call the function to get the package version
-version=$(get_package_version)
+image_tag=$(git rev-parse --short HEAD)
 
-info "Renaming existing images to version $version"
-# Iterate over Dockerfile types
-for entry in "${dockerfile_tags[@]}"; do
-    new_image_tag="$image_name/$entry:v$version" # e.g. maive/flask:v1
+info "Renaming existing images to tag $image_tag"
+# Iterate over image names
+for entry in "${image_names[@]}"; do
+    new_image_tag="$image_name/$entry:$image_tag" # e.g. maive/flask:1234567890
 
     # List all versions of the image
     image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$entry:" | sort -r)
