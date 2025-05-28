@@ -53,10 +53,10 @@ destroy_bootstrap() {
   # Check if the S3 bucket exists
   if aws s3api head-bucket --bucket "$TF_STATE_BUCKET" 2>/dev/null; then
     echo "Emptying S3 bucket: $TF_STATE_BUCKET"
-    aws s3 rm "s3://$TF_STATE_BUCKET" --recursive
+    aws s3 rm "s3://$TF_STATE_BUCKET" --recursive >/dev/null 2>&1
 
     echo "Deleting S3 bucket: $TF_STATE_BUCKET"
-    aws s3api delete-bucket --bucket "$TF_STATE_BUCKET" --region "$AWS_REGION"
+    aws s3api delete-bucket --bucket "$TF_STATE_BUCKET" --region "$AWS_REGION" >/dev/null 2>&1
   else
     echo "S3 bucket $TF_STATE_BUCKET does not exist"
   fi
@@ -64,7 +64,7 @@ destroy_bootstrap() {
   # Check if the DynamoDB table exists
   if aws dynamodb describe-table --table-name "$TF_STATE_TABLE" --region "$AWS_REGION" &>/dev/null; then
     echo "Deleting DynamoDB table: $TF_STATE_TABLE"
-    aws dynamodb delete-table --table-name "$TF_STATE_TABLE" --region "$AWS_REGION"
+    aws dynamodb delete-table --table-name "$TF_STATE_TABLE" --region "$AWS_REGION" >/dev/null 2>&1
   else
     echo "DynamoDB table $TF_STATE_TABLE does not exist"
   fi
