@@ -131,6 +131,7 @@ else
     return 1
   }
 
+  sleep 5 # wait by default
   if poll_table_existence; then
     echo "🔒 Tagging DynamoDB table for automatic deletion after 30 days..."
     aws dynamodb tag-resource \
