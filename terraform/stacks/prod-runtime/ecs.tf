@@ -55,6 +55,7 @@ resource "aws_ecs_task_definition" "ui" {
   memory                   = var.ui_task_mem
   network_mode             = "awsvpc"
   execution_role_arn       = aws_iam_role.task_exec.arn
+  task_role_arn            = aws_iam_role.task_exec.arn
 
   container_definitions = jsonencode([{
     name         = "ui"
@@ -97,6 +98,7 @@ resource "aws_ecs_task_definition" "api" {
   memory                   = var.api_task_mem
   network_mode             = "awsvpc"
   execution_role_arn       = aws_iam_role.task_exec.arn
+  task_role_arn            = aws_iam_role.task_exec.arn
 
   container_definitions = jsonencode([{
     name         = "api"
@@ -139,6 +141,7 @@ resource "aws_ecs_task_definition" "r" {
   memory                   = var.r_task_mem
   network_mode             = "awsvpc"
   execution_role_arn       = aws_iam_role.task_exec.arn
+  task_role_arn            = aws_iam_role.task_exec.arn
 
   container_definitions = jsonencode([{
     name         = "r"
