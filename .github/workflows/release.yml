@@ -23,12 +23,12 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      # - uses: hashicorp/setup-terraform@v3
 
-      - run: terraform init -backend-config="key=prod-runtime.tfstate"
+      # - run: terraform init -backend-config="key=prod-runtime.tfstate"
 
-      # no image tags yet – this run just (re)creates ALB, ECS *without* new rev
-      - run: terraform apply -auto-approve -lock-timeout=300
+      # # no image tags yet – this run just (re)creates ALB, ECS *without* new rev
+      # - run: terraform apply -auto-approve -lock-timeout=300
 
   build:
     strategy:
@@ -38,6 +38,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build & push ${{ matrix.service }}
         uses: docker/build-push-action@v5
