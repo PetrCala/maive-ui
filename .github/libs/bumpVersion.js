@@ -46,7 +46,8 @@ const packageJsonPath = path.join(
 	__dirname,
 	"..",
 	"..",
-	"React",
+	"app",
+	"react-ui",
 	"client",
 	"package.json"
 )
@@ -80,7 +81,7 @@ exec(
 	})
 
 // Read the contents of the setup.py file
-const setupPyPath = "./Flask/setup.py"
+const setupPyPath = "./app/flask-api/setup.py"
 const setupPyContents = fs.readFileSync(setupPyPath, "utf8")
 
 // Update the version in the setup.py file
