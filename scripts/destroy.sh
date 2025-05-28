@@ -51,7 +51,7 @@ destroy_bootstrap() {
   echo -e "${YELLOW}Destroying bootstrap resources...${NC}"
 
   # Check if the S3 bucket exists
-  if aws s3api head-bucket --bucket "$TF_STATE_BUCKET" 2>/dev/null; then
+  if aws s3api head-bucket --bucket "$TF_STATE_BUCKET" >/dev/null 2>&1; then
     echo "Emptying S3 bucket: $TF_STATE_BUCKET"
     aws s3 rm "s3://$TF_STATE_BUCKET" --recursive >/dev/null 2>&1
 

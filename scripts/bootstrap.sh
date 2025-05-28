@@ -127,6 +127,6 @@ fi
 echo "Running Terraform in $TF_DIR..."
 cd "$TF_DIR"
 terraform init -backend-config="key=prod-foundation.tfstate"
-terraform apply -var="project=$PROJECT_NAME" -var="region=AWS_REGION" -auto-approve -refresh=true
+terraform apply -var="project=$PROJECT_NAME" -var="region=$AWS_REGION" -auto-approve -refresh=true
 
 echo "✅ Bootstrap complete. gha-terraform role created and foundation deployed."
