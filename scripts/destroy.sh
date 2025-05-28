@@ -31,19 +31,16 @@ check_env_vars() {
   fi
 }
 
-# Function to destroy runtime infrastructure
-destroy_runtime() {
-  echo -e "${YELLOW}Destroying runtime infrastructure...${NC}"
-  cd terraform/stacks/prod-runtime
+destroy_infrastructure_stack() {
+  local stack=$1
+  echo -e "${YELLOW}Destroying ${stack} infrastructure...${NC}"
+  cd "terraform/stacks/prod-${stack}"
 
-  # Initialize Terraform with the remote state
-  terraform init -backend-config="key=prod-runtime.tfstate"
-
-  # Destroy the infrastructure
+  terraform init -backend-config="key=prod-${stack}.tfstate"
   terraform destroy -auto-approve
 
   cd - >/dev/null
-  echo -e "${GREEN}Runtime infrastructure destroyed successfully${NC}"
+  echo -e "${GREEN}${stack^} infrastructure destroyed successfully${NC}"
 }
 
 # Function to destroy bootstrap resources
@@ -88,7 +85,8 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # Execute destruction
-# destroy_runtime # Enable this after the runtime is ready
+# destroy_infrastructure_stack "runtime"
+destroy_infrastructure_stack "foundation"
 destroy_bootstrap
 
 echo -e "${GREEN}All infrastructure has been destroyed successfully${NC}"
