@@ -15,7 +15,7 @@ permissions:
 jobs:
   runtime:
     runs-on: ubuntu-latest
-    defaults: { run: { working-directory: infra/stacks/prod-runtime } }
+    defaults: { run: { working-directory: terraform/stacks/prod-runtime } }
     steps:
       - uses: actions/checkout@v4
 
