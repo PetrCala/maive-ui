@@ -4,7 +4,7 @@
 #* @usage curl --data "a=4&b=3" "http://localhost:8787/sum"
 #* @param msg The message to echo
 #* @get /echo
-function(msg="") {
+function(msg = "") {
   list(msg = paste0("The message is: '", msg, "'"))
 }
 
