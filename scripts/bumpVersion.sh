@@ -2,7 +2,7 @@
 set -e
 
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
-source "$SCRIPTS_DIR/shellUtils.sh";
+source "$SCRIPTS_DIR/shellUtils.sh"
 
 # Check if an argument is provided
 if [ $# -eq 0 ]; then
@@ -36,7 +36,7 @@ NEW_VERSION=$(node ./.github/libs/bumpVersion.js --semver $SEMVER_LEVEL)
 info "The new version is $NEW_VERSION"
 
 git add .
-git commit -m "Version update: $NEW_VERSION"
+git commit -m "build: version update: $NEW_VERSION"
 
 success "Version update complete!"
 success "Please push your changes to the remote repository using 'git push'."
