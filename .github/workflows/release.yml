@@ -14,7 +14,7 @@ jobs:
   runtime:
     runs-on: ubuntu-latest
     defaults: { run: { working-directory: infra/stacks/prod-runtime } }
-    steps: &tf
+    steps:
       - uses: actions/checkout@v4
 
       - uses: aws-actions/configure-aws-credentials@v4
