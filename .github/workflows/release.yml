@@ -1,9 +1,8 @@
 name: Release
 
 on:
-  push:
-    branches: [release]
   pull_request:
+    types: [closed]
     branches: [release]
 
 permissions:
@@ -44,7 +43,7 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ steps.image-tag.outputs.IMAGE_TAG }}
 
-  deploy:
+  plan:
     needs: build
     runs-on: ubuntu-latest
     defaults:

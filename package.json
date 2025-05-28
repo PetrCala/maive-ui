@@ -24,6 +24,7 @@
 		"cloud:init": "./scripts/bootstrap.sh",
 		"cloud:destroy": "./scripts/destroy.sh",
 		"map": "./scripts/mergeAndPush.sh",
+		"release": "./scripts/openReleasePR.sh",
 		"bump:build": "./scripts/bumpVersion.sh BUILD && ./scripts/renameImages.sh",
 		"bump:patch": "./scripts/bumpVersion.sh PATCH && ./scripts/renameImages.sh",
 		"bump:minor": "./scripts/bumpVersion.sh MINOR && ./scripts/renameImages.sh",
