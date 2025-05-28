@@ -21,6 +21,7 @@
 		"stop": "podman-compose down",
 		"remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
 		"init-cloud": "./scripts/bootstrap.sh",
+		"map": "./scripts/mergeAndPush.sh",
 		"bump:build": "./scripts/bumpVersion.sh BUILD && ./scripts/renameImages.sh",
 		"bump:patch": "./scripts/bumpVersion.sh PATCH && ./scripts/renameImages.sh",
 		"bump:minor": "./scripts/bumpVersion.sh MINOR && ./scripts/renameImages.sh",
