@@ -48,8 +48,8 @@ RELEASE_VERSION=$(jq -r .version 'package.json')
 SEMVER_LEVEL=$(echo "$SEMVER_LEVEL" | tr '[:upper:]' '[:lower:]') # to lowercase
 
 gh pr create \
-  --title "Release v$RELEASE_VERSION" \
-  --body "Release v$RELEASE_VERSION" \
+  --title "New version release" \
+  --body "" \
   --base $RELEASE_BRANCH \
   --head $CURRENT_BRANCH \
   --reviewer $REVIEWER \
