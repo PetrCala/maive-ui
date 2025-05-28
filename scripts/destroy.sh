@@ -40,7 +40,7 @@ destroy_infrastructure_stack() {
   terraform destroy -auto-approve
 
   cd - >/dev/null
-  echo -e "${GREEN}${stack^} infrastructure destroyed successfully${NC}"
+  echo -e "${GREEN}${stack} infrastructure destroyed successfully${NC}"
 }
 
 # Function to destroy bootstrap resources
