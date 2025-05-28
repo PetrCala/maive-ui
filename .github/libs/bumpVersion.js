@@ -68,7 +68,7 @@ exec(
 // Update main package.json version
 console.log(`Setting npm version to ${newVersion}`)
 exec(
-	`npm --no-git-tag-version version ${newVersion} -m "Update version to ${newVersion}"`
+	`npm --no-git-tag-version version ${newVersion} -m "build: update version to ${newVersion}"`
 )
 	.then(({ stdout }) => {
 		// NPM and native versions successfully updated, output new version

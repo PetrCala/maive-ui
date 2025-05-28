@@ -30,13 +30,15 @@ if [[ "$SEMVER_LEVEL" != "BUILD" && "$SEMVER_LEVEL" != "PATCH" && "$SEMVER_LEVEL
 fi
 
 # Execute the version bump command
-NEW_VERSION=$(node ./.github/libs/bumpVersion.js --semver $SEMVER_LEVEL)
+node ./.github/libs/bumpVersion.js --semver $SEMVER_LEVEL
+
+NEW_VERSION=$(npm pkg get version)
 
 # Use the NEW_VERSION variable in subsequent commands
 info "The new version is $NEW_VERSION"
 
 git add .
-git commit -m "build: version update: $NEW_VERSION"
+git commit -m "build: update version to $NEW_VERSION"
 
 success "Version update complete!"
 success "Please push your changes to the remote repository using 'git push'."
