@@ -7,7 +7,7 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 # Static
 repository_name="localhost"
 image_name="maive"
-dockerfile_tags=("flask:Dockerfile-flask" "react:Dockerfile-react" "r:Dockerfile-r") # tag:dockerfile
+dockerfile_tags=("flask-api/" "react-ui/" "r-plumber/")
 
 # Call the function to get the package version
 version=$(get_package_version)
@@ -15,11 +15,10 @@ version=$(get_package_version)
 info "Renaming existing images to version $version"
 # Iterate over Dockerfile types
 for entry in "${dockerfile_tags[@]}"; do
-    IFS=':' read -r key value <<<"$entry"
-    new_image_tag="$image_name/$key:v$version" # e.g. maive/flask:v1
+    new_image_tag="$image_name/$entry:v$version" # e.g. maive/flask:v1
 
     # List all versions of the image
-    image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$key:" | sort -r)
+    image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$entry:" | sort -r)
 
     # Check if there are any versions of the image
     if [ -n "$image_versions" ]; then
@@ -29,7 +28,7 @@ for entry in "${dockerfile_tags[@]}"; do
         if [ "$latest_image_tag" != "$repository_name/$new_image_tag" ]; then
             podman tag "$latest_image_tag" "$new_image_tag"
             info "Renamed $latest_image_tag to $new_image_tag"
-            image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$key:" | sort -r) # update
+            image_versions=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$image_name/$entry:" | sort -r) # update
         else
             info "Latest image $latest_image_tag already has the correct version"
         fi

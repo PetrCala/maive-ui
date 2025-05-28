@@ -13,7 +13,7 @@ fi
 build_key="$1"
 repository_name="localhost"
 image_name="maive"
-dockerfile_tags=("flask:Flask/" "react:React/" "r:R/") # tag:project-folder
+dockerfile_tags=("flask-api/" "react-ui/" "r-plumber/")
 
 # Call the function to get the package version
 version=$(get_package_version)
@@ -33,7 +33,7 @@ function buildImage() {
     # Check if the image already exists
     if ! image_exists "$repository_name/$new_image_tag" | grep -q "true" >/dev/null; then
         info "Building $new_image_tag"
-        podman build -t "$repository_name/$new_image_tag" "$value"
+        podman build -t "$repository_name/$new_image_tag" "$image_folder"
     else
         info "Image $new_image_tag already exists. Skipping build."
     fi
@@ -46,9 +46,8 @@ fi
 image_built=false
 
 for entry in "${dockerfile_tags[@]}"; do
-    IFS=':' read -r key value <<<"$entry"
-    if [[ "$key" == "$build_key" || "$build_key" == "all" ]]; then
-        buildImage "$key" "$value" $2
+    if [[ "$entry" == "$build_key" || "$build_key" == "all" ]]; then
+        buildImage "$entry" $2
         image_built=true
     fi
 done

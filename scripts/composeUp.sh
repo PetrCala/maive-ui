@@ -28,9 +28,9 @@ image_name=${IMAGE_NAME:-"maive"}
 package_version=$(get_package_version)
 
 # Static
-export FLASK_IMAGE_NAME="$repository_name/$image_name/flask:v$package_version"
-export REACT_IMAGE_NAME="$repository_name/$image_name/react:v$package_version"
-export R_IMAGE_NAME="$repository_name/$image_name/r:v$package_version"
+export FLASK_IMAGE_NAME="$repository_name/$image_name/flask-api:v$package_version"
+export REACT_IMAGE_NAME="$repository_name/$image_name/react-ui:v$package_version"
+export R_IMAGE_NAME="$repository_name/$image_name/r-plumber:v$package_version"
 
 # Set the application environment variables
 if [ "$ENVIRONMENT" = "prod" ]; then
