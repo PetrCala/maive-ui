@@ -59,7 +59,7 @@ jobs:
           git config --global user.name "${{ secrets.ADMIN_NAME }}"
           git remote set-url origin https://github.com/PetrCala/maive-ui.git
 
-          git checkout release
+          git checkout -b release
           git pull origin release
           git rebase master
 
