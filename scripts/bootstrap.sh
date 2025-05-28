@@ -77,6 +77,25 @@ else
       "RestrictPublicBuckets": true
     }' \
     >/dev/null
+
+  echo "📆 Adding lifecycle rule to expire objects after 30 days..."
+  aws s3api put-bucket-lifecycle-configuration \
+    --bucket "$BUCKET_NAME" \
+    --lifecycle-configuration '{
+    "Rules": [
+      {
+        "ID": "expire-objects-after-30-days",
+        "Status": "Enabled",
+        "Filter": {
+          "Prefix": ""
+        },
+        "Expiration": {
+          "Days": 30
+        }
+      }
+    ]
+  }' \
+    >/dev/null
 fi
 
 # === Create DynamoDB Table ===
@@ -92,8 +111,14 @@ else
     --billing-mode PAY_PER_REQUEST \
     --region "$REGION" \
     >/dev/null
-fi
 
+  echo "🔒 Tagging DynamoDB table for automatic deletion after 30 days..."
+  aws dynamodb tag-resource \
+    --resource-arn "$(aws dynamodb describe-table --table-name "$DDB_TABLE_NAME" --query "Table.TableArn" --output text)" \
+    --tags Key=delete-after,Value="$(date -d '+30 days' +%Y-%m-%d)" \
+    --region "$REGION"
+
+fi
 # === Run Terraform ===
 
 echo "Running Terraform in $TF_DIR..."
