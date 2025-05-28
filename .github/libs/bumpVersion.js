@@ -36,13 +36,10 @@ const newVersion = versionUpdater.incrementVersion(
 )
 
 // Log the version change for debugging
-console.error(
+console.log(
 	`Previous version: ${previousVersion}`,
 	`New version: ${newVersion}`
 )
-
-// Output only the new version for capture by shell script
-console.log(newVersion)
 
 // Update client version using npm command
 const packageJsonPath = path.join(
