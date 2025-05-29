@@ -7,9 +7,11 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 REVIEWER="PetrCala"
 
 usage() {
-  echo "Usage: $0 --semver <SEMVER_LEVEL>"
+  echo "Usage: $0  [-r | --release] --semver <SEMVER_LEVEL>"
   exit 1
 }
+
+READY_TO_BUILD=""
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -17,6 +19,10 @@ while [[ $# -gt 0 ]]; do
   --semver)
     SEMVER_LEVEL="$2"
     shift 2
+    ;;
+  -r | --release)
+    READY_TO_BUILD="true"
+    shift
     ;;
   *)
     usage
@@ -34,11 +40,11 @@ if [[ $(git status --porcelain) ]]; then
   exit 1
 fi
 
-RELEASE_BRANCH="release"
+RELEASE_BRANCH="master"
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-if [[ "$CURRENT_BRANCH" != "master" ]]; then
-  error "You are not on the master branch. Please switch to the master branch before running this script."
+if [[ "$CURRENT_BRANCH" == "$RELEASE_BRANCH" ]]; then
+  error "You are already on the $RELEASE_BRANCH branch. Please switch to another branch before running this script."
   exit 1
 fi
 
@@ -53,7 +59,7 @@ gh pr create \
   --base $RELEASE_BRANCH \
   --head $CURRENT_BRANCH \
   --reviewer $REVIEWER \
-  --label "v-$SEMVER_LEVEL" \
-  --label "release"
+  ${READY_TO_BUILD:+"--label release"} \
+  --label "v-$SEMVER_LEVEL"
 
 success "Release PR opened!"

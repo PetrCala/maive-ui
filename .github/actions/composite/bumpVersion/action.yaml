@@ -1,0 +1,74 @@
+name: "Bump Version"
+
+description: "Bump the package version"
+
+inputs:
+  SEMVER_LEVEL:
+    description: One of {patch, minor, major}
+    required: false
+    default: patch
+  DEPLOY_KEY:
+    required: true
+    description: 'A deploy key for committing'
+
+outputs:
+  NEW_VERSION:
+    description: The new version string
+    value: ${{ steps.bumpVersion.outputs.NEW_VERSION }}
+
+runs:
+  using: "composite"
+  
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Install npm packages
+      run: npm install
+      shell: bash
+
+    - name: Set up SSH
+      shell: bash
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ inputs.DEPLOY_KEY }}" > ~/.ssh/id_ed25519
+        chmod 600 ~/.ssh/id_ed25519
+        # ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+    - name: Configure SSH for GitHub
+      run: |
+        echo "Host github.com
+              HostName github.com
+              User git
+              IdentityFile ~/.ssh/id_ed25519
+              IdentitiesOnly yes
+              StrictHostKeyChecking no
+              " > ~/.ssh/config
+        chmod 600 ~/.ssh/config
+      shell: bash
+
+    - name: Set up Git
+      shell: bash
+      run: |
+        git config --global user.email "${{ secrets.ADMIN_EMAIL }}"
+        git config --global user.name "${{ secrets.ADMIN_NAME }}"
+
+    - name: Create new version
+      shell: bash
+      id: bumpVersion
+      run: |
+        echo "Creating new version..."
+        ./scripts/bumpVersion.sh ${{ inputs.SEMVER_LEVEL }} # creates a commit
+
+    - name: Push the changes
+      shell: bash
+      run: |
+        git remote set-url origin git@github.com:${{ github.repository }}.git
+        git pull --rebase origin master
+        git push origin master
+
