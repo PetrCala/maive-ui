@@ -55,10 +55,11 @@ SEMVER_LEVEL=$(echo "$SEMVER_LEVEL" | tr '[:upper:]' '[:lower:]') # to lowercase
 
 gh pr create \
   --title "New version release" \
-  --body "" \
-  --base $RELEASE_BRANCH \
-  --head $CURRENT_BRANCH \
-  --reviewer $REVIEWER \
-  --label "v-$SEMVER_LEVEL" ${READY_TO_BUILD:+"release"}
+  --body "Automated release PR" \
+  --base "$RELEASE_BRANCH" \
+  --head "$CURRENT_BRANCH" \
+  --reviewer "$REVIEWER" \
+  ${READY_TO_BUILD:+--label release} \
+  --label "v-$SEMVER_LEVEL"
 
 success "Release PR opened!"
