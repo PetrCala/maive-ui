@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="maive",
-    version='0.0.7-7',
+    version='0.0.7-8',
     description="Automatic Replication Tools for Meta-Analysis",
     packages=find_packages(),
     install_requires=[
