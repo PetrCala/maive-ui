@@ -18,6 +18,7 @@ env:
 jobs:
   labelChecks:
     runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == true }}
 
     outputs:
       READY_TO_BUILD: ${{ steps.labelCheck.outputs.READY_TO_BUILD }}
