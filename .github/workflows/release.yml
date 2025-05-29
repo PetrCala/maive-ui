@@ -32,7 +32,7 @@ jobs:
           ready_to_build="false"
 
           declare -A label_map=(
-            ["release:next-version"]="release"
+            ["release"]="ready_to_build"
           )
 
           for label in "${!label_map[@]}"; do
