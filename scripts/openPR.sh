@@ -59,7 +59,7 @@ gh pr create \
   --base $RELEASE_BRANCH \
   --head $CURRENT_BRANCH \
   --reviewer $REVIEWER \
-  ${READY_TO_BUILD:+"--label release"} \
+  ${READY_TO_BUILD:+"--label \"release\""} \
   --label "v-$SEMVER_LEVEL"
 
 success "Release PR opened!"
