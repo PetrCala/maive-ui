@@ -12,6 +12,7 @@ usage() {
 }
 
 READY_TO_BUILD=""
+SEMVER_LEVEL="build"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -29,10 +30,6 @@ while [[ $# -gt 0 ]]; do
     ;;
   esac
 done
-
-if [ -z "$SEMVER_LEVEL" ]; then
-  SEMVER_LEVEL="build"
-fi
 
 if [[ $(git status --porcelain) ]]; then
   error "There are unsaved changes. Please commit or stash your changes before running this script."
