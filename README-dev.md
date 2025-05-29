@@ -22,6 +22,7 @@
     - [Front-end](#front-end)
     - [Back end](#back-end)
     - [CI/CD](#cicd)
+- [Creating new releases](#creating-new-releases)
 - [Useful resources](#useful-resources)
 
 # Deploying the application
@@ -107,6 +108,18 @@ There are several pre-defined node scripts which should help you work with image
 ### CI/CD
 
 - Containers using Podman (or Docker)
+
+# Creating new releases
+
+All infrastructure is built and deployed to AWS through the `release.yml` workflow.
+
+You can trigger this by opening a PR against the `master` branch and tagging it with the `release` label. Upon successful merge, the `release.yml` workflow will be triggered.
+
+If you want to build a new specific semver verison, pass the relevant label, i.e. `v-build`, `v-patch`, `v-minor`, or `v-major`.
+
+To open the release PR automatically, call `npm run release`, and optionally pass the --semver flag with the desired semver level.
+
+As admin, can also close the PRs automatically using `npm run mergePR`.
 
 # Useful resources
 
