@@ -23,6 +23,7 @@
 		"remove-all-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep 'amazonaws.com/' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
 		"cloud:init": "./scripts/bootstrap.sh",
 		"cloud:destroy": "./scripts/destroy.sh",
+		"merge": "./scripts/openPR.sh",
 		"release": "./scripts/openPR.sh --release --semver",
 		"mergePR": "./scripts/mergePR.sh"
 	},
