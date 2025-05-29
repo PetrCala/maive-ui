@@ -31,8 +31,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [ -z "$SEMVER_LEVEL" ]; then
-  error "The --semver argument is required. Must be one of {BUILD, PATCH, MINOR, MAJOR}."
-  usage
+  SEMVER_LEVEL="build"
 fi
 
 if [[ $(git status --porcelain) ]]; then
@@ -48,7 +47,7 @@ if [[ "$CURRENT_BRANCH" == "$RELEASE_BRANCH" ]]; then
   exit 1
 fi
 
-info "Opening release PR from branch $CURRENT_BRANCH to branch $RELEASE_BRANCH..."
+info "Opening PR from branch $CURRENT_BRANCH to branch $RELEASE_BRANCH..."
 
 RELEASE_VERSION=$(jq -r .version 'package.json')
 SEMVER_LEVEL=$(echo "$SEMVER_LEVEL" | tr '[:upper:]' '[:lower:]') # to lowercase
