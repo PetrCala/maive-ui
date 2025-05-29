@@ -55,8 +55,8 @@ runs:
     - name: Set up Git
       shell: bash
       run: |
-        git config --global user.email "${{ secrets.ADMIN_EMAIL }}"
-        git config --global user.name "${{ secrets.ADMIN_NAME }}"
+        git config --global user.email "petr.cala@seznam.cz"
+        git config --global user.name "PetrCala"
 
     - name: Create new version
       shell: bash
