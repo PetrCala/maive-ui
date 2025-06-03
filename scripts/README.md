@@ -1,5 +1,15 @@
 # Scripts
 
+- [Scripts](#scripts)
+  - [`composeUp.sh`](#composeupsh)
+    - [Prerequisites](#prerequisites)
+    - [Usage](#usage)
+    - [Important Notes](#important-notes)
+    - [Troubleshooting](#troubleshooting)
+  - [`renameImages.sh`](#renameimagessh)
+  - [`bumpVersion.sh`](#bumpversionsh)
+  - [`buildImage.sh`](#buildimagesh)
+
 This folder contains a number of scripts necessary for continuous integration and automatic procedures related to this project. Here is an explanation of some of the crucial scripts in this folder:
 
 ## `composeUp.sh`
