@@ -5,7 +5,8 @@ from flask import Blueprint, jsonify
 
 from .. import bp
 
-@bp.route('/echo', methods=['GET'])
+
+@bp.route("/echo", methods=["GET"])
 def call_echo():
     r_api_url = os.getenv("R_API_URL")
 
@@ -13,7 +14,7 @@ def call_echo():
     url = f"{r_api_url}/echo"
 
     # Parameters to send (if any)
-    params = {'msg': 'hello'}
+    params = {"msg": "hello"}
 
     # Make the GET request
     response = requests.get(url, params=params)
@@ -24,4 +25,4 @@ def call_echo():
         data = response.json()
         return jsonify(data)
     else:
-        return jsonify({'error': 'Request failed'}), response.status_code
+        return jsonify({"error": "Request failed"}), response.status_code
