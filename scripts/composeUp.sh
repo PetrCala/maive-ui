@@ -146,7 +146,7 @@ cleanup() {
 # Trap Ctrl+C and call the cleanup function
 trap cleanup SIGINT
 
-info "Running all containers for tag $tag in $ENVIRONMENT environment..."
+info "Running all containers for tag $TAG in $ENVIRONMENT environment..."
 
 podman-compose up
 
