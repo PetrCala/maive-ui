@@ -39,7 +39,7 @@ fi
 IMAGE_NAME="maive"
 TAG="$(git rev-parse --short HEAD)"
 
-while [[ $# -gt 0 ]]; do
+while [[ $# -gt 1 ]]; do
     case $1 in
     -i | --image)
         IMAGE_NAME="$2"
