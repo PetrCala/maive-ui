@@ -2,6 +2,7 @@ import os
 
 from flask import Flask
 
+
 def create_app():
     app = Flask(__name__)
 
@@ -10,6 +11,7 @@ def create_app():
         from app.blueprints.scripts import bp as scripts_bp
         from app.blueprints.home import bp as home_bp
         from app.blueprints.r_api import bp as r_api_bp
+
         app.register_blueprint(auth_bp, url_prefix="/auth")
         app.register_blueprint(scripts_bp, url_prefix="/scripts")
         app.register_blueprint(home_bp, url_prefix="/")
@@ -17,6 +19,7 @@ def create_app():
 
     register_blueprints(app)
     return app
+
 
 if __name__ == "__main__":
     # Get environmental variables, or default if not set
