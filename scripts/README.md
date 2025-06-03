@@ -6,20 +6,22 @@ This folder contains a number of scripts necessary for continuous integration an
 
 Automate the process of setting up and running a multi-container Docker application in different environments (development or production). The script handles environment settings, checks for Docker images, and manages container orchestration using `podman-compose`.
 
-#### Prerequisites
+### Prerequisites
 
 - Ensure you have `bash`, `npm`, `podman-compose`, and Docker installed.
 - The script assumes the presence of `.env` file and other scripts (`shellUtils.sh`, `setenv.sh`) in the project structure.
 
-#### Usage
+### Usage
 
 1. **Running the Script:**
 
    - Navigate to the directory containing `composeUp.sh`.
    - Run the script using the command:
+
      ```bash
      ./composeUp.sh [environment]
      ```
+
      Replace `[environment]` with either `dev` for development or `prod` for production. If omitted, it defaults to `dev`.
 
 2. **Environment Argument:**
@@ -39,16 +41,16 @@ Automate the process of setting up and running a multi-container Docker applicat
      - Includes a cleanup function to stop and remove all containers if the script is interrupted (e.g., via Ctrl+C).
 
 4. **Important Variables:**
-   - `REPOSITORY_NAME`, `IMAGE_NAME`: Used to define Docker image names.
+   - `IMAGE_NAME`: Used to define Docker image names.
    - `BUILD_FLASK_IMAGE`, `BUILD_REACT_IMAGE`, `BUILD_R_IMAGE`: Control whether to build specific images.
 
-#### Important Notes
+### Important Notes
 
 - Ensure the `.env` file is correctly set up in the project root directory.
 - The script will exit with an error if the `.env` file is missing or required Docker images are not available and not built.
 - This script is intended for use with projects using Flask, React, and R with Docker.
 
-#### Troubleshooting
+### Troubleshooting
 
 - **Permission Denied:** Make sure the script has execution permissions (`chmod +x composeUp.sh`).
 - **Missing `.env` File:** Verify the `.env` file's presence in the project root.

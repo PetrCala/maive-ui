@@ -2,6 +2,11 @@
 # composeUp.sh
 set -e
 
+if ! podman info >/dev/null 2>&1; then
+    error "Podman is not running. Please start Podman and try again."
+    exit 1
+fi
+
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
 PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
 source "$SCRIPTS_DIR/shellUtils.sh"
@@ -23,14 +28,40 @@ else
     exit 1
 fi
 
-repository_name=${REPOSITORY_NAME:-"localhost"}
-image_name=${IMAGE_NAME:-"maive"}
-package_version=$(get_package_version)
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_REGION=$(aws configure get region)
+
+if [[ -z "$AWS_ACCOUNT_ID" || -z "$AWS_REGION" ]]; then
+    error "AWS account ID or region not found. Please run 'aws configure' to set your AWS credentials."
+    exit 1
+fi
+
+IMAGE_NAME="maive"
+TAG="$(git rev-parse --short HEAD)"
+
+while [[ $# -gt 0 ]]; do
+    case $1 in
+    -i | --image)
+        IMAGE_NAME="$2"
+        shift 2
+        ;;
+    -t | --tag)
+        TAG="$2"
+        shift 2
+        ;;
+    *)
+        error "Invalid option $1" >&2
+        shift
+        ;;
+    esac
+done
+
+REPOSITORY_NAME="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
 # Static
-export FLASK_IMAGE_NAME="$repository_name/$image_name/flask-api:v$package_version"
-export REACT_IMAGE_NAME="$repository_name/$image_name/react-ui:v$package_version"
-export R_IMAGE_NAME="$repository_name/$image_name/r-plumber:v$package_version"
+export FLASK_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-flask-api:$TAG"
+export REACT_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-react-ui:$TAG"
+export R_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-r-plumber:$TAG"
 
 # Set the application environment variables
 if [ "$ENVIRONMENT" = "prod" ]; then
@@ -94,7 +125,7 @@ cleanup() {
 # Trap Ctrl+C and call the cleanup function
 trap cleanup SIGINT
 
-info "Running all containers for version $package_version in $ENVIRONMENT environment..."
+info "Running all containers for tag $tag in $ENVIRONMENT environment..."
 
 podman-compose up
 
