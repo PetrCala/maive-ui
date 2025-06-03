@@ -36,6 +36,21 @@ if [[ -z "$AWS_ACCOUNT_ID" || -z "$AWS_REGION" ]]; then
     exit 1
 fi
 
+usage() {
+    cat <<EOF
+Usage: $0 [-i | --image <image_name>] [-t | --tag <tag>] <environment>
+
+Arguments:
+    <environment>    The environment to run the containers in (prod or dev) (default: dev)
+
+Options:
+    -i, --image <image_name>    The name of the image to use (default: maive)
+    -t, --tag <tag>            The tag of the image to use (default: git rev-parse --short HEAD)
+    -h, --help                 Show this help message and exit
+EOF
+    exit 1
+}
+
 IMAGE_NAME="maive"
 TAG="$(git rev-parse --short HEAD)"
 
@@ -49,9 +64,11 @@ while [[ $# -gt 1 ]]; do
         TAG="$2"
         shift 2
         ;;
+    -h | --help)
+        usage
+        ;;
     *)
-        error "Invalid option $1" >&2
-        shift
+        usage
         ;;
     esac
 done
@@ -99,7 +116,11 @@ if [ "$build_required" = true ]; then
         info "Building missing images as per BUILD_ variables..."
         npm run images:build
     else
-        read -p "Some of the local images are missing: ${missing_images[*]}. Do you want to build them now? (y/N) " response
+        echo "The following local images are missing:"
+        for image in "${missing_images[@]}"; do
+            echo "$image"
+        done
+        read -p "Do you want to build them now? (y/N) " response
         case "$response" in
         [yY][eE][sS] | [yY])
             info "Building missing images..."
