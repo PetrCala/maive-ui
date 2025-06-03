@@ -94,7 +94,7 @@ for image_name in "${image_names[@]}"; do
 done
 
 if [ "$build_required" = true ]; then
-    if [["$ENVIRONMENT" == "prod"]]; then
+    if [[ "$ENVIRONMENT" == "prod" ]]; then
         # Always build images in production
         info "Building missing images as per BUILD_ variables..."
         npm run images:build
