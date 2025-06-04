@@ -11,10 +11,12 @@ def create_app():
         from app.blueprints.scripts import bp as scripts_bp
         from app.blueprints.home import bp as home_bp
         from app.blueprints.r_api import bp as r_api_bp
+        from app.blueprints.upload import bp as upload_bp
 
         app.register_blueprint(scripts_bp, url_prefix="/scripts")
         app.register_blueprint(home_bp, url_prefix="/")
         app.register_blueprint(r_api_bp, url_prefix="/r_api")
+        app.register_blueprint(upload_bp, url_prefix="/upload")
 
     register_blueprints(app)
 
