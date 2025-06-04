@@ -1,3 +1,9 @@
+import tomllib
+from pathlib import Path
+
+with open(Path(__file__).parent.parent.parent / "pyproject.toml", "rb") as f:
+    project = tomllib.load(f)
+
 swagger_config = {
     "headers": [],
     "specs": [
@@ -17,14 +23,14 @@ swagger_config = {
 swagger_template = {
     "swagger": "2.0",
     "info": {
-        "title": "Flask API",
-        "description": "API documentation",
-        "version": "1.0.0",
-        "contact": {"email": "your-email@example.com"},
+        "title": "Maive UI API",
+        "description": "API documentation for Maive UI",
+        "version": project["tool"]["poetry"]["version"],
+        "contact": {"email": project["tool"]["poetry"]["authors"][0]},
     },
     "host": "localhost:8080",
     "basePath": "/",
-    "schemes": ["http"],
+    "schemes": ["http", "https"],
     "consumes": ["application/json"],
     "produces": ["application/json"],
 }
