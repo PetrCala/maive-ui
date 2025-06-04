@@ -1,6 +1,7 @@
 import os
-
 from flask import Flask
+from flasgger import Swagger
+from app.docs.swagger_config import swagger_config, swagger_template
 
 
 def create_app():
@@ -16,6 +17,7 @@ def create_app():
         app.register_blueprint(r_api_bp, url_prefix="/r_api")
 
     register_blueprints(app)
+
     return app
 
 
@@ -25,4 +27,5 @@ if __name__ == "__main__":
     host = os.getenv("FLASK_RUN_HOST", "0.0.0.0")
     port = int(os.getenv("FLASK_RUN_PORT", "8080"))
     app = create_app()
+    swagger = Swagger(app, config=swagger_config, template=swagger_template)
     app.run(debug=debug_mode, host=host, port=port)
