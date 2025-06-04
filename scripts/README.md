@@ -51,7 +51,6 @@ Automate the process of setting up and running a multi-container Docker applicat
      - Includes a cleanup function to stop and remove all containers if the script is interrupted (e.g., via Ctrl+C).
 
 4. **Important Variables:**
-   - `IMAGE_NAME`: Used to define Docker image names.
    - `BUILD_FLASK_IMAGE`, `BUILD_REACT_IMAGE`, `BUILD_R_IMAGE`: Control whether to build specific images.
 
 ### Important Notes

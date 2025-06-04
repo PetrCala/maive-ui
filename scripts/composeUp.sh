@@ -19,15 +19,6 @@ if [[ "$ENVIRONMENT" != "prod" && "$ENVIRONMENT" != "dev" ]]; then
     exit 1
 fi
 
-"$SCRIPTS_DIR/setenv.sh" $ENVIRONMENT # Set the .env file to the correct environment
-
-if [ -f "$PROJECT_ROOT/.env" ]; then
-    source "$PROJECT_ROOT/.env"
-else
-    error "Error: .env file not found."
-    exit 1
-fi
-
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=$(aws configure get region)
 
