@@ -5,7 +5,7 @@ bp = Blueprint("upload", __name__)
 s3_client = S3Client()
 
 
-@bp.route("/upload", methods=["POST"])
+@bp.route("/", methods=["POST"])
 def upload_file():
     """
     Upload a file to AWS S3
