@@ -105,7 +105,11 @@ resource "aws_ecs_task_definition" "api" {
     image        = "${local.ecr_urls["flask-api"]}:${var.image_tag}"
     portMappings = [{ containerPort = local.api_port, protocol = "tcp" }]
     environment = [
-      { name = "R_API_URL", value = "http://r:${local.r_port}" }
+      { name = "R_API_URL", value = "http://r:${local.r_port}" },
+      // AWS_ACCESS_KEY_ID
+      // AWS_SECRET_ACCESS_KEY
+      { name = "AWS_REGION", value = var.region },
+      { name = "AWS_BUCKET_NAME", value = data.terraform_remote_state.foundation.outputs.data_bucket_name }
     ]
     logConfiguration = {
       logDriver = "awslogs",
