@@ -8,6 +8,29 @@ from .. import bp
 
 @bp.route("/echo", methods=["GET"])
 def call_echo():
+    """
+    Echo endpoint that forwards requests to R API
+    ---
+    tags:
+      - R API
+    responses:
+      200:
+        description: Successfully received response from R API
+        schema:
+          type: object
+          properties:
+            msg:
+              type: string
+              example: "hello"
+      500:
+        description: Error occurred while communicating with R API
+        schema:
+          type: object
+          properties:
+            error:
+              type: string
+              example: "Request failed"
+    """
     r_api_url = os.getenv("R_API_URL")
 
     # The URL of your Plumber endpoint
