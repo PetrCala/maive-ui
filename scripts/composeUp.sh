@@ -11,22 +11,6 @@ SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
 PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
 source "$SCRIPTS_DIR/shellUtils.sh"
 
-# Set the environment. Pass 'dev' or 'prod' as an argument to this script.
-ENVIRONMENT=${1:-dev} # Default to 'dev' if no argument is provided
-
-if [[ "$ENVIRONMENT" != "prod" && "$ENVIRONMENT" != "dev" ]]; then
-    error "Invalid environment. Please provide either 'prod' or 'dev' as an argument."
-    exit 1
-fi
-
-AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-AWS_REGION=$(aws configure get region)
-
-if [[ -z "$AWS_ACCOUNT_ID" || -z "$AWS_REGION" ]]; then
-    error "AWS account ID or region not found. Please run 'aws configure' to set your AWS credentials."
-    exit 1
-fi
-
 usage() {
     cat <<EOF
 Usage: $0 [-i | --image <image_name>] [-t | --tag <tag>] <environment>
@@ -45,8 +29,10 @@ EOF
 IMAGE_NAME="maive"
 TAG="$(git rev-parse --short HEAD)"
 
-while [[ $# -gt 1 ]]; do
-    case $1 in
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
     -i | --image)
         IMAGE_NAME="$2"
         shift 2
@@ -58,11 +44,40 @@ while [[ $# -gt 1 ]]; do
     -h | --help)
         usage
         ;;
-    *)
+    --) # end of flags
+        shift
+        break
+        ;;
+    -*)
+        echo "Unknown option: $1" >&2
         usage
+        ;;
+    *) # Positional argument
+        POSITIONAL_ARGS+=("$1")
+        shift
         ;;
     esac
 done
+
+# Include any remaining args
+POSITIONAL_ARGS+=("$@")
+set -- "${POSITIONAL_ARGS[@]}"
+
+# Set the environment. Pass 'dev' or 'prod' as an argument to this script.
+ENVIRONMENT=${1:-dev} # Default to 'dev' if no argument is provided
+
+if [[ "$ENVIRONMENT" != "prod" && "$ENVIRONMENT" != "dev" ]]; then
+    error "Invalid environment. Please provide either 'prod' or 'dev' as an argument."
+    exit 1
+fi
+
+AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+AWS_REGION=$(aws configure get region)
+
+if [[ -z "$AWS_ACCOUNT_ID" || -z "$AWS_REGION" ]]; then
+    error "AWS account ID or region not found. Please run 'aws configure' to set your AWS credentials."
+    exit 1
+fi
 
 REPOSITORY_NAME="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
