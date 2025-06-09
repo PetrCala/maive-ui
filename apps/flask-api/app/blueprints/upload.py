@@ -29,6 +29,8 @@ def upload_excel():
         schema:
           type: object
           properties:
+            filename:
+              type: string
             plumber:
               type: object
       400:
@@ -43,8 +45,10 @@ def upload_excel():
     if file.filename == "":
         return jsonify({"error": "No file selected"}), 400
 
+    original_filename = secure_filename(file.filename)
+
     # persist ephemerally
-    fn = f"{uuid.uuid4()}_{secure_filename(file.filename)}"
+    fn = f"{uuid.uuid4()}_{original_filename}"
     tmp_path = Path(tempfile.gettempdir()) / fn
     file.save(tmp_path)  # writes to /tmp (instance storage)
 
@@ -63,7 +67,10 @@ def upload_excel():
             )
         r.raise_for_status()
         plumber_resp = r.json()
-        return {"plumber": plumber_resp}
+        return {
+            "filename": original_filename,
+            "plumber": plumber_resp,
+        }
 
     finally:
         # nuke the temp file regardless of outcome
