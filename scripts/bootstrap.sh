@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ---------------- CONFIG ----------------
+# ---------------- INPUTS ----------------
 PROJECT_NAME="maive"
+EMAIL="cala.p@seznam.cz"
+
+# ---------------- CONFIG ----------------
 TF_DIR="terraform/stacks/prod-foundation"
 TF_STATE_BUCKET="${PROJECT_NAME}-tf-state"
 TF_STATE_TABLE="${PROJECT_NAME}-tf-locks"
@@ -145,11 +148,18 @@ else
   fi
 fi
 
+# === Prepare env variables ===
+
+export TF_VAR_project="$PROJECT_NAME"
+export TF_VAR_region="$AWS_REGION"
+export TF_VAR_account_id="$AWS_ACCOUNT_ID"
+export TF_VAR_email="$EMAIL"
+
 # === Run Terraform ===
 
 echo "Running Terraform in $TF_DIR..."
 cd "$TF_DIR"
-terraform init -backend-config="key=prod-foundation.tfstate"
-terraform apply -var="project=$PROJECT_NAME" -var="region=$AWS_REGION" -auto-approve -refresh=true
+terragrunt init
+terragrunt run-all apply --auto-approve --refresh=true
 
 echo "✅ Bootstrap complete. gha-terraform role created and foundation deployed."

@@ -15,7 +15,7 @@ resource "aws_budgets_budget" "monthly_limit" {
     notification_type          = "ACTUAL"
     threshold                  = 10
     threshold_type             = "PERCENTAGE"
-    subscriber_email_addresses = [var.budget_alarm_email]
+    subscriber_email_addresses = [var.email]
   }
 
   tags = {

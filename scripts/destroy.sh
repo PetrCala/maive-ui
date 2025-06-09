@@ -1,8 +1,10 @@
 #!/bin/bash
 set -euo pipefail
 
-# Configuration
+# ---------------- INPUTS ----------------
 PROJECT_NAME="maive"
+EMAIL="cala.p@seznam.cz"
+
 TF_STATE_BUCKET="${PROJECT_NAME}-tf-state"
 TF_STATE_TABLE="${PROJECT_NAME}-tf-locks"
 
@@ -36,8 +38,8 @@ destroy_infrastructure_stack() {
   echo -e "${YELLOW}Destroying ${stack} infrastructure...${NC}"
   cd "terraform/stacks/prod-${stack}"
 
-  terraform init -backend-config="key=prod-${stack}.tfstate"
-  terraform destroy -auto-approve
+  terragrunt init
+  terragrunt destroy -auto-approve
 
   cd - >/dev/null
   echo -e "${GREEN}${stack} infrastructure destroyed successfully${NC}"
@@ -83,6 +85,13 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   echo -e "${RED}Operation cancelled${NC}"
   exit 1
 fi
+
+# === Prepare env variables ===
+
+export TF_VAR_project="$PROJECT_NAME"
+export TF_VAR_region="$AWS_REGION"
+export TF_VAR_account_id="$AWS_ACCOUNT_ID"
+export TF_VAR_email="$EMAIL"
 
 # Execute destruction
 destroy_infrastructure_stack "runtime"

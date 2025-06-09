@@ -1,16 +1,17 @@
-variable "aws_account_id" {
-  type        = string
-  description = "The AWS account ID"
+variable "account_id" {
+  type = string
 }
 
 variable "region" {
-  type    = string
-  default = "eu-central-1"
+  type = string
 }
 
 variable "project" {
-  type    = string
-  default = "maive"
+  type = string
+}
+
+variable "email" {
+  type = string
 }
 
 variable "image_tag" {
