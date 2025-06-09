@@ -1,15 +1,17 @@
-# variable "account_id" {
-#   type = string
-# }
+variable "account_id" {
+  type = string
+}
 
 variable "region" {
-  type    = string
-  default = "eu-central-1"
+  type = string
 }
 
 variable "project" {
-  type    = string
-  default = "maive"
+  type = string
+}
+
+variable "email" {
+  type = string
 }
 
 variable "services" {
@@ -30,9 +32,4 @@ variable "github_repo" {
 variable "release_branch" {
   type    = string
   default = "release"
-}
-
-variable "budget_alarm_email" {
-  type    = string
-  default = "cala.p@seznam.cz"
 }
