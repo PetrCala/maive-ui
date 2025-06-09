@@ -1,6 +1,7 @@
 variable "trusted_office_cidr" {
   description = "CIDR block that is allowed to reach the private subnets (e.g. VPN / office)."
   type        = string
+  default     = "80.188.248.78/32" # Temporary
 }
 
 module "vpc" {
