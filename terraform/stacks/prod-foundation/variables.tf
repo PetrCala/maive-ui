@@ -1,3 +1,7 @@
+# variable "account_id" {
+#   type = string
+# }
+
 variable "region" {
   type    = string
   default = "eu-central-1"
@@ -26,4 +30,9 @@ variable "github_repo" {
 variable "release_branch" {
   type    = string
   default = "release"
+}
+
+variable "budget_alarm_email" {
+  type    = string
+  default = "cala.p@seznam.cz"
 }
