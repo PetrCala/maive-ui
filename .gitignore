@@ -93,6 +93,9 @@ node_modules/
 # Terragrunt
 **/.terragrunt-cache/
 **/.terragrunt.d/
+**/provider.tf
+**/backend.tf
+**/versions.tf
 
 # Other
 **/bun.lockb
