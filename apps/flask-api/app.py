@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, Blueprint
 from flasgger import Swagger
 from app.docs.swagger_config import swagger_config, swagger_template
 
@@ -13,10 +13,14 @@ def create_app():
         from app.blueprints.r_api import bp as r_api_bp
         from app.blueprints.upload import bp as upload_bp
 
-        app.register_blueprint(scripts_bp, url_prefix="/scripts")
-        app.register_blueprint(home_bp, url_prefix="/")
-        app.register_blueprint(r_api_bp, url_prefix="/r_api")
-        app.register_blueprint(upload_bp, url_prefix="/upload")
+        api_bp = Blueprint("api", __name__, url_prefix="/api")
+
+        api_bp.register_blueprint(scripts_bp, url_prefix="/scripts")
+        api_bp.register_blueprint(home_bp, url_prefix="/")
+        api_bp.register_blueprint(r_api_bp, url_prefix="/r_api")
+        api_bp.register_blueprint(upload_bp, url_prefix="/upload")
+
+        app.register_blueprint(api_bp, url_prefix="/api")
 
     register_blueprints(app)
 
