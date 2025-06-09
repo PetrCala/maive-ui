@@ -11,6 +11,7 @@
 - [Deploying the application](#deploying-the-application)
   - [Initial deploy to cloud](#initial-deploy-to-cloud)
   - [Deploying the app stack](#deploying-the-app-stack)
+  - [Destroying the architecture](#destroying-the-architecture)
 - [How to run locally](#how-to-run-locally)
   - [Prerequisites](#prerequisites)
   - [Steps](#steps)
@@ -36,11 +37,15 @@ We also recommend you [create a profile](https://docs.aws.amazon.com/cli/v1/user
 Before the application stack can be deployed, you must first deploy the infra foundation:
 
 1. Make sure you are logged in to the account you want to deploy the resources for. Confirm this by calling `aws sts get-caller-identity`.
-1. Run `npm run init-cloud`. This will deploy the foundation infrastructure such as S3, ECR, VPC, etc.
+1. Run `npm run cloud:init`. This will deploy the foundation infrastructure such as S3, ECR, VPC, etc.
 
 ## Deploying the app stack
 
 The applications are built and deployed automatically upno each pull request to the `release` branch. To release a new (or initial) version of the app, simply open a pull request against the `release` branch and follow the instructions.
+
+## Destroying the architecture
+
+To destroy the existing architecture, simply run `npm run cloud:destroy`. This will teardown both application, and infrastructure services.
 
 # How to run locally
 
