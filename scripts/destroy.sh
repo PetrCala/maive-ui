@@ -92,6 +92,7 @@ export TF_VAR_project="$PROJECT_NAME"
 export TF_VAR_region="$AWS_REGION"
 export TF_VAR_account_id="$AWS_ACCOUNT_ID"
 export TF_VAR_email="$EMAIL"
+export TF_VAR_image_tag="$(git rev-parse --short HEAD)"
 
 # Execute destruction
 destroy_infrastructure_stack "runtime"

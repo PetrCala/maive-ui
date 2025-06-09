@@ -27,8 +27,8 @@ remote_state {
     bucket = local.tfstate_name
     key = local.key
     region = local.region
+    use_lockfile = true
     encrypt = true
-    dynamodb_table = local.tfstate_name
   }
 }
 
@@ -43,7 +43,6 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.50"
     }
-    }
   }
 
   required_version = "~> 1.12"
@@ -56,7 +55,7 @@ generate "provider" {
   if_exists = "overwrite_terragrunt"
   contents = <<EOF
 provider "aws" {
-  region = local.region
+  region = var.region
 }
 EOF
 }
