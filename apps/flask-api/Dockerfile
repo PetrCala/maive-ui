@@ -1,28 +1,40 @@
-# Builder stage
-FROM python:3.12-slim as build
+# syntax=docker/dockerfile:1
 
-WORKDIR /opt/build
+#######################
+# 1️⃣  Builder stage  #
+#######################
+FROM python:3.12-slim AS builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends build-essential git curl && rm -rf /var/lib/apt/lists/*
+# Install build tools and Poetry
+RUN apt-get update &&
+  apt-get install -y --no-install-recommends build-essential git curl &&
+  rm -rf /var/lib/apt/lists/* &&
+  pip install --no-cache-dir "poetry==2.1.1"
 
-RUN pip install --no-cache-dir "poetry==2.1.1"
+WORKDIR /opt/app
 
-# Copy poetry and application files
+# Only copy files needed to resolve dependencies first
 COPY pyproject.toml poetry.lock* ./
-COPY app.py ./app.py
-COPY app ./app
 
-RUN poetry config virtualenvs.create false && poetry install --without docs,dev --no-interaction --no-ansi
+# Install production dependencies directly into the global interpreter
+RUN poetry config virtualenvs.create false &&
+  poetry install --without docs,dev --no-interaction --no-ansi
 
-# Final stage
+# Copy the rest of the source tree
+COPY . .
+
+#######################
+# 2️⃣  Runtime stage  #
+#######################
 FROM python:3.12-slim
 
-COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=build /opt/build/app.py /app.py
-COPY --from=build /opt/build/app /app
+# Copy the installed dependencies
+COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 
-# Make port 8080 available
+# Copy the application code
+COPY --from=builder /opt/app /var/task
+
+WORKDIR /var/task
 EXPOSE 8080
 
-# Run the application
 CMD ["python", "app.py"]
