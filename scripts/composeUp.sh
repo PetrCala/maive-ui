@@ -108,10 +108,11 @@ fi
 image_names=("$FLASK_IMAGE_NAME" "$REACT_IMAGE_NAME" "$R_IMAGE_NAME")
 missing_images=()
 build_required=false
+base_image_names=("flask-api" "react-ui" "r-plumber")
 
-for image_name in "${image_names[@]}"; do
-    if ! image_exists "$image_name" | grep -q "true" >/dev/null; then
-        missing_images+=("$image_name")
+for i in "${!image_names[@]}"; do
+    if ! image_exists "${image_names[$i]}" | grep -q "true" >/dev/null; then
+        missing_images+=("${base_image_names[$i]}")
         build_required=true
     fi
 done
@@ -126,7 +127,7 @@ if [ "$build_required" = true ]; then
     else
         echo "The following local images are missing:"
         for image in "${missing_images[@]}"; do
-            echo "$image"
+            echo "$REPOSITORY_NAME/$IMAGE_NAME-$image:$TAG"
         done
         read -p "Do you want to build them now? (y/N) " response
         case "$response" in
