@@ -122,7 +122,7 @@ if [ "$build_required" = true ]; then
         # Always build images in production
         info "Building missing images as per BUILD_ variables..."
         for image in "${missing_images[@]}"; do
-            ./scripts/buildImage.sh --tag $TAG --force-rebuild "$image"
+            ./scripts/buildImage.sh --tag $TAG "$image"
         done
     else
         echo "The following local images are missing:"
@@ -134,7 +134,7 @@ if [ "$build_required" = true ]; then
         [yY][eE][sS] | [yY])
             info "Building missing images..."
             for image in "${missing_images[@]}"; do
-                ./scripts/buildImage.sh --tag $TAG --force-rebuild "$image"
+                ./scripts/buildImage.sh --tag $TAG "$image"
             done
             ;;
         *)
