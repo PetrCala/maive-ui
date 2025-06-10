@@ -120,7 +120,9 @@ if [ "$build_required" = true ]; then
     if [[ "$ENVIRONMENT" == "prod" ]]; then
         # Always build images in production
         info "Building missing images as per BUILD_ variables..."
-        npm run images:build -- --force-rebuild
+        for image in "${missing_images[@]}"; do
+            ./scripts/buildImage.sh --tag $TAG --force-rebuild "$image"
+        done
     else
         echo "The following local images are missing:"
         for image in "${missing_images[@]}"; do
@@ -130,7 +132,9 @@ if [ "$build_required" = true ]; then
         case "$response" in
         [yY][eE][sS] | [yY])
             info "Building missing images..."
-            npm run images:build -- --force-rebuild
+            for image in "${missing_images[@]}"; do
+                ./scripts/buildImage.sh --tag $TAG --force-rebuild "$image"
+            done
             ;;
         *)
             error "Required images are missing. Exiting..."
