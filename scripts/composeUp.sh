@@ -2,14 +2,14 @@
 # composeUp.sh
 set -e
 
+SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
+PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
+source "$SCRIPTS_DIR/shellUtils.sh"
+
 if ! podman info >/dev/null 2>&1; then
     error "Podman is not running. Please start Podman and try again."
     exit 1
 fi
-
-SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
-PROJECT_ROOT=$(dirname "$SCRIPTS_DIR")
-source "$SCRIPTS_DIR/shellUtils.sh"
 
 usage() {
     cat <<EOF
