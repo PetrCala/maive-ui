@@ -1,11 +1,8 @@
-import os
-from pathlib import Path
+import pandas as pd
 import tempfile
-import uuid
-import requests
+from pathlib import Path
 from flask import Blueprint, request, jsonify
 from werkzeug.utils import secure_filename
-from app import config
 
 bp = Blueprint("upload", __name__)
 
@@ -13,7 +10,7 @@ bp = Blueprint("upload", __name__)
 @bp.route("", methods=["POST"])
 def upload_excel():
     """
-    Upload a file to R plumber
+    Upload a csv file to the server
     ---
     tags:
       - upload
@@ -31,8 +28,19 @@ def upload_excel():
           properties:
             filename:
               type: string
-            plumber:
-              type: object
+            filepath:
+              type: string
+            preview:
+              type: array
+              items:
+                type: object
+                properties:
+                  [
+                    {
+                      "name": "string",
+                      "value": "string",
+                    }
+                  ]
       400:
         description: No file provided or invalid request
       500:
@@ -41,40 +49,19 @@ def upload_excel():
     if "file" not in request.files:
         return jsonify({"error": "No file provided"}), 400
 
-    file = request.files["file"]
-    if file.filename == "":
+    f = request.files["file"]
+    if f.filename == "":
         return jsonify({"error": "No file selected"}), 400
 
-    original_filename = secure_filename(file.filename)
+    filename = secure_filename(f.filename)
+    tmp_path = Path(tempfile.gettempdir()) / filename
+    f.save(tmp_path)
 
-    # persist ephemerally
-    fn = f"{uuid.uuid4()}_{original_filename}"
-    tmp_path = Path(tempfile.gettempdir()) / fn
-    file.save(tmp_path)  # writes to /tmp (instance storage)
+    df = pd.read_csv(tmp_path, nrows=20)
+    preview = df.to_dict(orient="records")
 
-    try:
-        with open(tmp_path, "rb") as fp:
-            r = requests.post(
-                config.R_API_URL,
-                timeout=30,
-                files={
-                    "file": (
-                        fn,
-                        fp,
-                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    )
-                },
-            )
-        r.raise_for_status()
-        plumber_resp = r.json()
-        return {
-            "filename": original_filename,
-            "plumber": plumber_resp,
-        }
-
-    finally:
-        # nuke the temp file regardless of outcome
-        try:
-            tmp_path.unlink()
-        except FileNotFoundError:
-            pass
+    return {
+        "filename": filename,
+        "filepath": str(tmp_path),
+        "preview": preview,
+    }
