@@ -109,4 +109,4 @@ if [ $IMAGE_BUILT == false ]; then
     exit 1
 fi
 
-success "Done building images!"
+success "Image built: $IMAGE_URL"
