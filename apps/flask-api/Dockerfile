@@ -1,34 +1,25 @@
 # Builder stage
-FROM python:3.12-slim as builder
+FROM python:3.12-slim as build
 
-# Install poetry
-RUN pip install poetry==2.1.1
+WORKDIR /opt/build
 
-# Set working directory
-WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential git curl && rm -rf /var/lib/apt/lists/*
 
-# Copy poetry files
+RUN pip install --no-cache-dir "poetry==2.1.1"
+
+# Copy poetry and application files
 COPY pyproject.toml poetry.lock* ./
+COPY app.py ./app.py
+COPY app ./app
 
-# Configure poetry to not use a virtual environment
-RUN poetry config virtualenvs.create false
-
-# Install dependencies
-RUN poetry install --no-interaction --no-ansi --without docs,dev
+RUN poetry config virtualenvs.create false && poetry install --without docs,dev --no-interaction --no-ansi
 
 # Final stage
 FROM python:3.12-slim
 
-# Set working directory
-WORKDIR /app
-
-# Copy only necessary files from builder
-COPY --from=builder /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
-COPY --from=builder /usr/local/bin /usr/local/bin
-
-# Copy application code
-COPY app.py .
-COPY app/ ./app/
+COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=build /opt/build/app.py /app.py
+COPY --from=build /opt/build/app /app
 
 # Make port 8080 available
 EXPOSE 8080
