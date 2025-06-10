@@ -6,10 +6,7 @@
 FROM python:3.12-slim AS builder
 
 # Install build tools and Poetry
-RUN apt-get update &&
-  apt-get install -y --no-install-recommends build-essential git curl &&
-  rm -rf /var/lib/apt/lists/* &&
-  pip install --no-cache-dir "poetry==2.1.1"
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential git curl && rm -rf /var/lib/apt/lists/* && pip install --no-cache-dir "poetry==2.1.1"
 
 WORKDIR /opt/app
 
@@ -17,8 +14,7 @@ WORKDIR /opt/app
 COPY pyproject.toml poetry.lock* ./
 
 # Install production dependencies directly into the global interpreter
-RUN poetry config virtualenvs.create false &&
-  poetry install --without docs,dev --no-interaction --no-ansi
+RUN poetry config virtualenvs.create false && poetry install --without docs,dev --no-interaction --no-ansi
 
 # Copy the rest of the source tree
 COPY . .
