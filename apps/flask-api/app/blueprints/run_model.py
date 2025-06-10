@@ -1,22 +1,58 @@
-# @app.post("/api/run-model")
-# def run_model():
-#     data = request.get_json()
-#     file_id = data.get("file_id")
+import requests
+import pandas as pd
+from flask import Blueprint, request
 
-#     if not file_id or file_id not in FILE_STORE:
-#         return {"error": "Invalid file_id"}, 400
+bp = Blueprint("run_model", __name__)
 
-#     file_path = FILE_STORE[file_id]
 
-#     # Read & transform file
-#     df = pd.read_excel(file_path)
-#     cleaned_df = preprocess_for_model(df)
+@bp.route("", methods=["POST"])
+def run_model():
+    """
+    Run the model on the given file
+    ---
+    tags:
+      - run-model
+    parameters:
+      - name: filepath
+        in: formData
+        type: string
+        required: true
+        description: The path to the file to run the model on
+    responses:
+      200:
+        description: Model run successfully
+        schema:
+          type: object
+          properties:
+            summary:
+              type: string
+            plots:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  value:
+                    type: string
+    """
+    data = request.get_json()
+    filepath = data.get("filepath")
 
-#     # Forward to Plumber
-#     files = {"file": ("input.csv", cleaned_df.to_csv(index=False), "text/csv")}
-#     resp = requests.post("http://r-model/run", files=files)
-#     return resp.json()
+    if not filepath:
+        return {"error": "Invalid filepath"}, 400
+
+    # Read & transform file
+    df = pd.read_csv(filepath)
+    # cleaned_df = preprocess_for_model(df) # TODO
+    cleaned_df = df
+
+    # Forward to Plumber
+    files = {"file": ("input.csv", cleaned_df.to_csv(index=False), "text/csv")}
+    resp = requests.post("http://r-model/run", files=files)
+    return resp.json()
+
 
 # POST /api/run-model
-# Body: { "file_id": "...", "cleaning": { ... } }
+# Body: { "filepath": "...", "cleaning": { ... } }
 # ↳ { "summary": ..., "plots": [...] }
