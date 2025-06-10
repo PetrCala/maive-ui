@@ -4,6 +4,55 @@ set -e
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
 source "$SCRIPTS_DIR/shellUtils.sh"
 
+usage() {
+    cat <<EOF
+Usage: $0 [-f | --force-rebuild] [-t | --tag <tag>] <image_name>
+
+Options:
+    -f, --force-rebuild        Force rebuild the image
+    -t, --tag <tag>            The tag of the image to use (default: git rev-parse --short HEAD)
+    -h, --help                 Show this help message and exit
+EOF
+    exit 1
+}
+
+FORCE_REBUILD=false
+TAG="$(git rev-parse --short HEAD)"
+
+POSITIONAL_ARGS=()
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+    -f | --force-rebuild)
+        FORCE_REBUILD=true
+        shift
+        ;;
+    -t | --tag)
+        TAG="$2"
+        shift 2
+        ;;
+    -h | --help)
+        usage
+        ;;
+    --) # end of flags
+        shift
+        break
+        ;;
+    -*)
+        echo "Unknown option: $1" >&2
+        usage
+        ;;
+    *) # Positional argument
+        POSITIONAL_ARGS+=("$1")
+        shift
+        ;;
+    esac
+done
+
+# Include any remaining args
+POSITIONAL_ARGS+=("$@")
+set -- "${POSITIONAL_ARGS[@]}"
+
 if [[ -z "$1" ]]; then
     error "You must provide either an image name to rebuild, or 'all' to rebuild all images."
     exit 1
@@ -21,32 +70,28 @@ if [[ -z "$AWS_ACCOUNT_ID" || -z "$AWS_REGION" ]]; then
     exit 1
 fi
 
-# Call the function to get the package version
-IMAGE_TAG=$(git rev-parse --short HEAD)
-
 function buildImage() {
     IMAGE_KEY=$1
     IMAGE_FOLDER=$2
-    OTHER_ARG=$3
 
-    NEW_IMAGE_TAG="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-$IMAGE_KEY:$IMAGE_TAG" # e.g. 1234567890.dkr.ecr.us-east-1.amazonaws.com/maive-flask-api:1234567890
+    IMAGE_URL="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-$IMAGE_KEY:$TAG"
 
-    if [ "$OTHER_ARG" == "force-rebuild" ]; then
-        info "Deleting $NEW_IMAGE_TAG"
-        podman rmi "$NEW_IMAGE_TAG" || true
+    if [ "$FORCE_REBUILD" == true ]; then
+        info "Deleting $IMAGE_URL"
+        podman rmi "$IMAGE_URL" || true
     fi
 
     # Check if the image already exists
-    if ! image_exists "$NEW_IMAGE_TAG" | grep -q "true" >/dev/null; then
-        info "Building $NEW_IMAGE_TAG"
-        podman build -t "$NEW_IMAGE_TAG" "$IMAGE_FOLDER"
+    if ! image_exists "$IMAGE_URL" | grep -q "true" >/dev/null; then
+        info "Building $IMAGE_URL"
+        podman build -t "$IMAGE_URL" "$IMAGE_FOLDER"
     else
-        info "Image $NEW_IMAGE_TAG already exists. Skipping build."
+        info "Image $IMAGE_URL already exists. Skipping build."
     fi
 }
 
 if [[ "$BUILD_KEY" == "all" ]]; then
-    info "Building up all images for tag $IMAGE_TAG"
+    info "Building up all images for tag $TAG"
 fi
 
 IMAGE_BUILT=false
@@ -54,7 +99,7 @@ IMAGE_BUILT=false
 for ENTRY in "${IMAGE_NAMES[@]}"; do
     FOLDER_PATH="./apps/$ENTRY/"
     if [[ "$ENTRY" == "$BUILD_KEY" || "$BUILD_KEY" == "all" ]]; then
-        buildImage "$ENTRY" "$FOLDER_PATH" "$2"
+        buildImage "$ENTRY" "$FOLDER_PATH"
         IMAGE_BUILT=true
     fi
 done
