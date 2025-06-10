@@ -12,6 +12,7 @@ def create_app():
         from app.blueprints.home import bp as home_bp
         from app.blueprints.r_api import bp as r_api_bp
         from app.blueprints.upload import bp as upload_bp
+        from app.blueprints.run_model import bp as run_model_bp
 
         api_bp = Blueprint("api", __name__, url_prefix="/api")
 
@@ -19,6 +20,7 @@ def create_app():
         api_bp.register_blueprint(home_bp, url_prefix="/")
         api_bp.register_blueprint(r_api_bp, url_prefix="/r_api")
         api_bp.register_blueprint(upload_bp, url_prefix="/upload")
+        api_bp.register_blueprint(run_model_bp, url_prefix="/run-model")
 
         app.register_blueprint(api_bp, url_prefix="/api")
 
