@@ -1,6 +1,7 @@
 import os
 import boto3
 from botocore.exceptions import ClientError
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 
@@ -14,7 +15,7 @@ class S3Client:
         )
         self.bucket_name = os.getenv("AWS_BUCKET_NAME")
 
-    def upload_file(self, file, folder="uploads"):
+    def upload_file(self, file: FileStorage, folder: str = "uploads") -> dict:
         """
         Upload a file to S3 bucket
 
