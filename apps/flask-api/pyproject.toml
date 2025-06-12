@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "maive"
-version = "0.0.7-11"
+version = "0.0.7-12"
 description = "Automatic Replication Tools for Meta-Analysis"
 authors = ["Petr Cala <cala.p@seznam.cz>"]
 packages = [{ include = "app" }]
