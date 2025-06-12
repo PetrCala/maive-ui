@@ -24,6 +24,10 @@
     - [Back end](#back-end)
     - [CI/CD](#cicd)
 - [Creating new releases](#creating-new-releases)
+- [Commit message formatting](#commit-message-formatting)
+  - [Allowed Types](#allowed-types)
+  - [Rules](#rules)
+  - [Examples](#examples)
 - [Useful resources](#useful-resources)
 
 # Deploying the application
@@ -125,6 +129,54 @@ If you want to build a new specific semver verison, pass the relevant label, i.e
 To open the release PR automatically, call `npm run release`, and optionally pass the --semver flag with the desired semver level.
 
 As admin, can also close the PRs automatically using `npm run mergePR`.
+
+# Commit message formatting
+
+This project uses conventional commit messages to maintain a clean and consistent git history. All commit messages must follow the conventional commit format:
+
+```bash
+<type>: <description>
+```
+
+## Allowed Types
+
+The following types are allowed:
+
+- `build`: Changes that affect the build system or external dependencies
+- `chore`: Changes to the build process or auxiliary tools
+- `ci`: Changes to CI configuration files and scripts
+- `docs`: Documentation only changes
+- `feat`: A new feature
+- `fix`: A bug fix
+- `perf`: A code change that improves performance
+- `refactor`: A code change that neither fixes a bug nor adds a feature
+- `revert`: Reverts a previous commit
+- `style`: Changes that do not affect the meaning of the code
+- `test`: Adding missing tests or correcting existing tests
+
+## Rules
+
+1. The commit message must start with one of the allowed types followed by a colon and a space
+2. The total length of the commit message header (first line) must not exceed 100 characters
+3. For breaking changes, include a `BREAKING CHANGE:` footer in the commit message
+
+## Examples
+
+✅ Valid commit messages:
+
+```bash
+feat: add support for custom linting rules
+fix: resolve authentication token expiration
+docs: update API documentation
+```
+
+❌ Invalid commit messages:
+
+```bash
+added new feature
+fixed bug
+update docs
+```
 
 # Useful resources
 
