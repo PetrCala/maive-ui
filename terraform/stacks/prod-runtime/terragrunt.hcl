@@ -5,7 +5,7 @@ locals {
   email=get_env("TF_VAR_email")
   tfstate_name="${local.project}-tf-state"
   image_tag=get_env("TF_VAR_image_tag")
-  key = "${local.project}/${local.region}/terraform/${local.project}/prod-runtime.tfstate"
+  key = "${local.project}/prod-runtime.tfstate"
 }
 
 inputs = {
