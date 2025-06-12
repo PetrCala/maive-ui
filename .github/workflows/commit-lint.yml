@@ -1,0 +1,55 @@
+name: Lint PR Commit Messages
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint-commits:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Ensures full commit history is available
+
+      - name: Lint commit messages in PR
+        run: |
+          #!/bin/bash
+          set -e
+
+          BASE_REF="${{ github.event.pull_request.base.sha }}"
+          HEAD_REF="${{ github.event.pull_request.head.sha }}"
+
+          echo "🔁 Comparing commits between $BASE_REF and $HEAD_REF"
+          COMMITS=$(git log --format="%H" "$BASE_REF".."$HEAD_REF")
+
+          PREFIXES="build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test"
+          PATTERN="^($PREFIXES): .+"
+          MAX_LENGTH=100
+
+          for COMMIT in $COMMITS; do
+            COMMIT_MSG=$(git log -1 --pretty=format:"%s" "$COMMIT")
+            echo "🔍 Checking: $COMMIT_MSG"
+
+            if ! echo "$COMMIT_MSG" | grep -Eq "$PATTERN"; then
+              echo ""
+              echo "❌ Invalid commit message format in commit $COMMIT"
+              echo "   '$COMMIT_MSG'"
+              echo ""
+              echo "✅ Use the Conventional Commit format:"
+              echo "   <type>: <description>"
+              echo "🔧 Allowed types: $PREFIXES"
+              exit 1
+            fi
+
+            if [ ${#COMMIT_MSG} -gt $MAX_LENGTH ]; then
+              echo ""
+              echo "❌ Commit message is too long in commit $COMMIT"
+              echo "   Length: ${#COMMIT_MSG} (max allowed is $MAX_LENGTH)"
+              exit 1
+            fi
+          done
+
+          echo "✅ All commit messages in the PR are valid!"
