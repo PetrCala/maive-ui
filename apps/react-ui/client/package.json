@@ -9,20 +9,22 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/xlsx": "^0.0.35",
+    "next": "14.0.4",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.0.4"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "autoprefixer": "^10.0.1",
-    "postcss": "^8",
-    "tailwindcss": "^3.3.0",
+    "bun-types": "latest",
     "eslint": "^8",
     "eslint-config-next": "14.0.4",
-    "bun-types": "latest"
+    "postcss": "^8",
+    "tailwindcss": "^3.3.0",
+    "typescript": "^5"
   }
 }

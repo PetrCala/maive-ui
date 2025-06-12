@@ -19,26 +19,18 @@ export default function UploadPage() {
 		event.preventDefault()
 		if (!selectedFile) return
 
-		const formData = new FormData()
-		formData.append("file", selectedFile)
-
-		try {
-			const response = await fetch("/api/upload", {
-				method: "POST",
-				body: formData,
-			})
-
-			if (!response.ok) {
-				throw new Error("Upload failed")
-			}
-
-			const data = await response.json()
-			// Navigate to model configuration page with the file path
-			router.push(`/model?filepath=${encodeURIComponent(data.filepath)}`)
-		} catch (error) {
-			console.error("Upload error:", error)
-			// TODO: Add proper error handling UI
+		// Convert file to base64 for URL state
+		const reader = new FileReader()
+		reader.onload = () => {
+			const base64Data = reader.result as string
+			// Navigate to model page with file data
+			router.push(
+				`/model?filename=${encodeURIComponent(
+					selectedFile.name
+				)}&data=${encodeURIComponent(base64Data)}`
+			)
 		}
+		reader.readAsDataURL(selectedFile)
 	}
 
 	// const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
