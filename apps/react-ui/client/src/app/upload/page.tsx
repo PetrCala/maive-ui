@@ -3,9 +3,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { ThemeToggle } from "../components/ThemeToggle"
+import { useRouter } from "next/navigation"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
+	const router = useRouter()
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files && event.target.files[0]) {
@@ -17,8 +19,26 @@ export default function UploadPage() {
 		event.preventDefault()
 		if (!selectedFile) return
 
-		// TODO: Implement file upload logic here
-		console.log("File selected:", selectedFile.name)
+		const formData = new FormData()
+		formData.append("file", selectedFile)
+
+		try {
+			const response = await fetch("/api/upload", {
+				method: "POST",
+				body: formData,
+			})
+
+			if (!response.ok) {
+				throw new Error("Upload failed")
+			}
+
+			const data = await response.json()
+			// Navigate to model configuration page with the file path
+			router.push(`/model?filepath=${encodeURIComponent(data.filepath)}`)
+		} catch (error) {
+			console.error("Upload error:", error)
+			// TODO: Add proper error handling UI
+		}
 	}
 
 	// const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
