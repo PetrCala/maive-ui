@@ -27,7 +27,7 @@
 		"cloud:destroy": "./scripts/destroy.sh",
 		"release": "./scripts/openPR.sh --release",
 		"openPR": "./scripts/openPR.sh",
-		"mergePR": "gh pr merge --auto --rebase --delete-branch"
+		"mergePR": "gh pr merge --rebase --delete-branch"
 	},
 	"dependencies": {
 		"@actions/core": "^1.10.1",
