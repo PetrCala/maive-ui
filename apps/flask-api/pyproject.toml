@@ -18,6 +18,7 @@ redis = "^6.2.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.3.4"
+pylint = "^3.3.7"
 
 [tool.poetry.group.docs.dependencies]
 sphinx = ">=4.0.0"
