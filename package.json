@@ -19,6 +19,7 @@
 		"start:dev": "./scripts/composeUp.sh dev",
 		"start:prod": "./scripts/composeUp.sh prod",
 		"api:dev": "source apps/flask-api/.venv/bin/activate && FLASK_ENV=development FLASK_RUN_HOST=0.0.0.0 FLASK_RUN_PORT=8080 python3 apps/flask-api/app.py",
+		"api:lint": "cd apps/flask-api && ./scripts/lint.sh",
 		"ui:dev": "cd apps/react-ui/client && npm run dev",
 		"stop": "podman-compose down",
 		"remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
