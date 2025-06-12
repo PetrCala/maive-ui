@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ThemeToggle } from "../components/ThemeToggle"
+import * as XLSX from "xlsx"
 
 interface ModelParameters {
 	learningRate: number
@@ -14,7 +15,8 @@ interface ModelParameters {
 
 export default function ModelPage() {
 	const searchParams = useSearchParams()
-	const filepath = searchParams?.get("filepath") ?? null
+	const filename = searchParams?.get("filename")
+	const fileData = searchParams?.get("data")
 	const [preview, setPreview] = useState<string[][]>([])
 	const [loading, setLoading] = useState(false)
 	const [parameters, setParameters] = useState<ModelParameters>({
@@ -25,21 +27,33 @@ export default function ModelPage() {
 	})
 
 	useEffect(() => {
-		if (filepath) {
-			fetchPreview()
+		if (fileData) {
+			processFileData()
 		}
-	}, [filepath])
+	}, [fileData])
 
-	const fetchPreview = async () => {
+	const processFileData = () => {
 		try {
-			const response = await fetch(
-				`/api/preview?filepath=${encodeURIComponent(filepath!)}`
-			)
-			if (!response.ok) throw new Error("Failed to fetch preview")
-			const data = await response.json()
-			setPreview(data.preview)
+			// Remove the data URL prefix (e.g., "data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,")
+			const base64Data = fileData!.split(",")[1]
+			const binaryData = atob(base64Data)
+			const bytes = new Uint8Array(binaryData.length)
+			for (let i = 0; i < binaryData.length; i++) {
+				bytes[i] = binaryData.charCodeAt(i)
+			}
+
+			// Read the Excel file
+			const workbook = XLSX.read(bytes, { type: "array" })
+			const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
+			const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
+
+			// Convert to string[][] and take first 5 rows for preview
+			const previewData = (jsonData as any[])
+				.slice(0, 5)
+				.map((row) => row.map((cell: unknown) => String(cell)))
+			setPreview(previewData)
 		} catch (error) {
-			console.error("Error fetching preview:", error)
+			console.error("Error processing file:", error)
 		}
 	}
 
@@ -59,7 +73,7 @@ export default function ModelPage() {
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					filepath,
+					fileData,
 					parameters,
 				}),
 			})
@@ -75,7 +89,7 @@ export default function ModelPage() {
 		}
 	}
 
-	if (!filepath) {
+	if (!fileData) {
 		return (
 			<main className="flex min-h-screen flex-col items-center justify-center p-24">
 				<div className="text-center">
@@ -101,7 +115,7 @@ export default function ModelPage() {
 
 				<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
 					<h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-						File Preview
+						File Preview: {filename}
 					</h1>
 					<div className="overflow-x-auto">
 						<table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
