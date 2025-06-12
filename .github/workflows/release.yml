@@ -69,6 +69,10 @@ jobs:
     outputs:
       NEW_VERSION: ${{ steps.bumpVersion.outputs.NEW_VERSION }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
       - name: Bump version
         id: bumpVersion
         uses: ./.github/actions/composite/bumpVersion
