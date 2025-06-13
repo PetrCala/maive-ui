@@ -16,6 +16,12 @@ function() {
   hist(rand)
 }
 
+#* Health check
+#* @get /ping
+function() {
+  list(status = "ok", time = format(Sys.time(), tz = "UTC"))
+}
+
 #* Return the sum of two numbers
 #* @usage curl "http://localhost:8787/echo?msg=hello"
 #* @param a The first number to add
