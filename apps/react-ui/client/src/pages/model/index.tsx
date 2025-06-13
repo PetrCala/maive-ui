@@ -67,16 +67,19 @@ export default function ModelPage() {
 	const handleRunModel = async () => {
 		setLoading(true)
 		try {
-			const response = await fetch("/api/run-model", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					fileData,
-					parameters,
-				}),
-			})
+			const response = await fetch(
+				`${process.env.NEXT_PUBLIC_R_API_URL}/run-model`,
+				{
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({
+						fileData,
+						parameters,
+					}),
+				}
+			)
 
 			if (!response.ok) throw new Error("Failed to run model")
 			const result = await response.json()

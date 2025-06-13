@@ -24,3 +24,11 @@ function() {
 function(a, b) {
   as.numeric(a) + as.numeric(b)
 }
+
+#* Run the model
+#* @post /run-model
+function(fileData, parameters) {
+  print(fileData)
+  print(parameters)
+  list(msg = "Model run successfully")
+}

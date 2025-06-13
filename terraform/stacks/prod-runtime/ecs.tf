@@ -62,7 +62,7 @@ resource "aws_ecs_task_definition" "ui" {
     image        = "${local.ecr_urls["react-ui"]}:${var.image_tag}"
     portMappings = [{ containerPort = local.ui_port, protocol = "tcp" }]
     environment = [
-      { name = "REACT_APP_API_URL", value = "http://${aws_lb.api.dns_name}" }
+      { name = "NEXT_PUBLIC_R_API_URL", value = "http://r:${local.r_port}" },
     ]
     logConfiguration = {
       logDriver = "awslogs",
