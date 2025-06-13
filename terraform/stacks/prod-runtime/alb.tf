@@ -31,18 +31,18 @@ resource "aws_lb_listener" "ui_http" {
   }
 }
 
-# Internal ALB for API
-resource "aws_lb" "api" {
-  name               = "${var.project}-api-alb"
+# Internal ALB for R
+resource "aws_lb" "r" {
+  name               = "${var.project}-r-alb"
   internal           = true
   load_balancer_type = "application"
-  security_groups    = [module.sg_api_alb.security_group_id]
+  security_groups    = [module.sg_r_alb.security_group_id]
   subnets            = local.private_subnets
 }
 
-resource "aws_lb_target_group" "api" {
-  name        = "${var.project}-api-tg"
-  port        = local.api_port
+resource "aws_lb_target_group" "r" {
+  name        = "${var.project}-r-tg"
+  port        = local.r_port
   protocol    = "HTTP"
   target_type = "ip"
   vpc_id      = local.vpc_id
@@ -52,13 +52,13 @@ resource "aws_lb_target_group" "api" {
   }
 }
 
-resource "aws_lb_listener" "api_http" {
-  load_balancer_arn = aws_lb.api.arn
+resource "aws_lb_listener" "r_http" {
+  load_balancer_arn = aws_lb.r.arn
   port              = 80
   protocol          = "HTTP"
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.api.arn
+    target_group_arn = aws_lb_target_group.r.arn
   }
 }
 
