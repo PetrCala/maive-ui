@@ -25,10 +25,17 @@ export default function ModelPage() {
 	const [preview, setPreview] = useState<string[][]>([])
 	const [loading, setLoading] = useState(false)
 	const [parameters, setParameters] = useState<ModelParameters>({
-		modelType: "MAIVE",
-		includeStudyDummies: false,
-		standardErrorTreatment: "not_clustered",
-		computeAndersonRubin: false,
+		modelType:
+			(searchParams?.get("modelType") as ModelParameters["modelType"]) ||
+			"MAIVE",
+		includeStudyDummies:
+			searchParams?.get("includeStudyDummies") === "true" || false,
+		standardErrorTreatment:
+			(searchParams?.get(
+				"standardErrorTreatment"
+			) as ModelParameters["standardErrorTreatment"]) || "not_clustered",
+		computeAndersonRubin:
+			searchParams?.get("computeAndersonRubin") === "true" || false,
 	})
 	const router = useRouter()
 
