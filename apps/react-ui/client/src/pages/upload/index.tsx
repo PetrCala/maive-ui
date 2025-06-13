@@ -73,7 +73,7 @@ export default function UploadPage() {
 								<input
 									id="file-upload"
 									type="file"
-									accept=".xlsx,.xls"
+									accept=".xlsx,.xls,.csv"
 									onChange={handleFileChange}
 									className="block w-full text-sm text-gray-500
 										file:mr-4 file:py-2 file:px-4
