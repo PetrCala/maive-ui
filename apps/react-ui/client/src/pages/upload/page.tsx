@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ThemeToggle } from "../../components/ThemeToggle"
+import { ThemeToggle } from "@components/ThemeToggle"
 import { useRouter } from "next/navigation"
 
 export default function UploadPage() {

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Providers } from "../providers"
+import { Providers } from "@providers/index"
 
 export default function Home() {
 	return (

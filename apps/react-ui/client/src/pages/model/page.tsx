@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import { ThemeToggle } from "../../components/ThemeToggle"
+import { ThemeToggle } from "@components/ThemeToggle"
 import * as XLSX from "xlsx"
 
 interface ModelParameters {
