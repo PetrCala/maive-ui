@@ -155,7 +155,7 @@ export default function ResultsPage() {
 								</div>
 								<div>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
-										Significance
+										Significant at 5% level
 									</p>
 									<p
 										className={`text-lg font-medium ${
@@ -164,9 +164,7 @@ export default function ResultsPage() {
 												: "text-red-600"
 										}`}
 									>
-										{parsedResults.publicationBias.isSignificant
-											? "Significant"
-											: "Not Significant"}
+										{parsedResults.publicationBias.isSignificant ? "Yes" : "No"}
 									</p>
 								</div>
 							</div>
