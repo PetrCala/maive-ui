@@ -1,4 +1,5 @@
 /// <reference types="vitest" />
+import { faker } from "@faker-js/faker"
 import { describe, it, expect, vi } from "vitest"
 // import { describe, it, expect, vi } from "vitest"
 // import { render, screen } from "@testing-library/react"
@@ -26,18 +27,25 @@ const generateMockResults = () => {
 	const funnelPlotBase64 = canvas.toDataURL("image/png")?.split(",")[1] ?? ""
 
 	return {
-		effectEstimate: 0.5,
-		standardError: 0.1,
+		effectEstimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+		standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 		isSignificant: true,
-		andersonRubinCI: [0.3, 0.7],
+		andersonRubinCI: [
+			faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+			faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+		],
 		publicationBias: {
-			estimate: 0.1,
-			standardError: 0.05,
-			isSignificant: false,
+			estimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+			standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+			isSignificant: faker.datatype.boolean(),
 		},
-		firstStageFTest: 15.5,
+		firstStageFTest: faker.number.float({
+			min: 0,
+			max: 100,
+			multipleOf: 0.0001,
+		}),
 		hausmanTest: {
-			statistic: 2.3,
+			statistic: faker.number.float({ min: 0, max: 100, multipleOf: 0.0001 }),
 			rejectsNull: false,
 		},
 		funnelPlot: funnelPlotBase64,
