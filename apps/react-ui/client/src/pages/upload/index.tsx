@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { ThemeToggle } from "@components/ThemeToggle"
 import { useRouter } from "next/navigation"
 
 export default function UploadPage() {
@@ -47,7 +46,6 @@ export default function UploadPage() {
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-			<ThemeToggle />
 			<div className="max-w-2xl w-full">
 				<Link
 					href="/"
