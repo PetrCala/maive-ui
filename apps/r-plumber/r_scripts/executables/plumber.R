@@ -34,6 +34,16 @@ function(a, b) {
 #* Run the model
 #* @post /run-model
 function(file_data, parameters) {
+  library("ggplot2")
+
+  test_data <- data.frame(x = seq(-10, 10, length.out = 100), y = dnorm(seq(-10, 10, length.out = 100)))
+
+  ggplot(test_data, aes(x = x, y = y)) +
+    geom_line() +
+    ggtitle("Placeholder Graph") +
+    xlab("X-axis") +
+    ylab("Density")
+
   # Parse the parameters
   params <- jsonlite::fromJSON(parameters)
 
@@ -54,7 +64,7 @@ function(file_data, parameters) {
       statistic = 2.3456,
       rejectsNull = FALSE
     ),
-    funnelPlot = "base64_encoded_plot_data" # TODO: Generate actual funnel plot
+    funnelPlot = ggplot2::ggsave(filename = NULL, plot = last_plot(), device = "png", type = "cairo", width = 6, height = 4, units = "in", dpi = 300, bg = "white", path = NULL, limitsize = TRUE, scale = 1, encoding = "base64")
   )
 
   return(result)
