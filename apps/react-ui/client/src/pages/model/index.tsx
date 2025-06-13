@@ -61,7 +61,7 @@ export default function ModelPage() {
 			// Check if studyID column exists and update standard error treatment accordingly
 			const headers = previewData[0] || []
 			const hasStudyID = headers.some((header: string) =>
-				header.toLowerCase().includes("studyid")
+				/\bstudy[\s_-]?id\b/i.test(header)
 			)
 			if (hasStudyID) {
 				setParameters((prev) => ({
