@@ -1,8 +1,17 @@
 "use client"
 
 import Link from "next/link"
+import { Providers } from "../providers"
 
 export default function Home() {
+	return (
+		<Providers>
+			<HomeContent />
+		</Providers>
+	)
+}
+
+function HomeContent() {
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
 			{/* <ThemeToggle /> */}
