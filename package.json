@@ -19,6 +19,7 @@
 		"start:prod": "./scripts/composeUp.sh prod",
 		"r:dev": "cd apps/r-plumber && Rscript r_scripts/host.R",
 		"ui:dev": "cd apps/react-ui/client && npm run dev",
+		"ui:test": "cd apps/react-ui/client && npm run test",
 		"stop": "podman-compose down",
 		"remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
 		"remove-all-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep 'amazonaws.com/' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
