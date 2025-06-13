@@ -115,7 +115,7 @@ export default function ModelPage() {
 
 	return (
 		<main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-			<ThemeToggle />
+			{/* <ThemeToggle /> */}
 			<div className="max-w-4xl w-full">
 				<Link
 					href="/upload"
