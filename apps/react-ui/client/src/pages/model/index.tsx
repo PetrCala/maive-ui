@@ -75,8 +75,8 @@ export default function ModelPage() {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({
-						fileData,
-						parameters,
+						file_data: fileData,
+						parameters: parameters,
 					}),
 				}
 			)
