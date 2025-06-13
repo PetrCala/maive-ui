@@ -82,33 +82,26 @@ fi
 REPOSITORY_NAME="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
 # Static
-export FLASK_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-flask-api:$TAG"
 export REACT_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-react-ui:$TAG"
 export R_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-r-plumber:$TAG"
 
 # Set the application environment variables
 if [ "$ENVIRONMENT" = "prod" ]; then
-    export FLASK_ENV="production"
-    export FLASK_RUN_HOST="flask-host" # Modify in the future - add secret manager
-    export FLASK_RUN_PORT="8080"       # Possibly move these to the .env file?
     export R_HOST="r-host"
     export R_PORT="8787"
 elif [ "$ENVIRONMENT" = "dev" ]; then
-    export FLASK_ENV="development"
-    export FLASK_RUN_HOST="0.0.0.0"
-    export FLASK_RUN_PORT="8080"
     export R_HOST="0.0.0.0"
     export R_PORT="8787"
 else
-    error "Invalid flask environment. Exiting..."
+    error "Invalid environment. Exiting..."
     exit 1
 fi
 
 # Check if images exist
-image_names=("$FLASK_IMAGE_NAME" "$REACT_IMAGE_NAME" "$R_IMAGE_NAME")
+image_names=("$REACT_IMAGE_NAME" "$R_IMAGE_NAME")
 missing_images=()
 build_required=false
-base_image_names=("flask-api" "react-ui" "r-plumber")
+base_image_names=("react-ui" "r-plumber")
 
 for i in "${!image_names[@]}"; do
     if ! image_exists "${image_names[$i]}" | grep -q "true" >/dev/null; then

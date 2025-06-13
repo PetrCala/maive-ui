@@ -32,18 +32,6 @@ variable "ui_task_mem" {
   default     = 1024
 }
 
-variable "api_task_cpu" {
-  type        = number
-  description = "The CPU of the API task"
-  default     = 512
-}
-
-variable "api_task_mem" {
-  type        = number
-  description = "The memory of the API task"
-  default     = 1024
-}
-
 variable "r_task_cpu" {
   type        = number
   description = "The CPU of the R task"

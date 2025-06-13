@@ -56,10 +56,6 @@ cover/
 *.mo
 *.pot
 
-# Flask
-instance/
-.webassets-cache
-
 # R
 **/*.Rapp.history
 

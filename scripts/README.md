@@ -44,20 +44,20 @@ Automate the process of setting up and running a multi-container Docker applicat
 
    - **Environment Setup:** The script sources environmental variables and settings based on the specified environment.
    - **Image Check and Build:**
-     - Checks if required Docker images (`FLASK_IMAGE_NAME`, `REACT_IMAGE_NAME`, `R_IMAGE_NAME`) are available.
+     - Checks if required Docker images (`REACT_IMAGE_NAME`, `R_IMAGE_NAME`) are available.
      - If any images are missing, it offers to build them depending on the `BUILD_*_IMAGE` environment variables or user confirmation.
    - **Containers Management:**
      - Uses `podman-compose` to manage containers.
      - Includes a cleanup function to stop and remove all containers if the script is interrupted (e.g., via Ctrl+C).
 
 4. **Important Variables:**
-   - `BUILD_FLASK_IMAGE`, `BUILD_REACT_IMAGE`, `BUILD_R_IMAGE`: Control whether to build specific images.
+   - `BUILD_REACT_IMAGE`, `BUILD_R_IMAGE`: Control whether to build specific images.
 
 ### Important Notes
 
 - Ensure the `.env` file is correctly set up in the project root directory.
 - The script will exit with an error if the `.env` file is missing or required Docker images are not available and not built.
-- This script is intended for use with projects using Flask, React, and R with Docker.
+- This script is intended for use with projects using React, and R with Docker.
 
 ### Troubleshooting
 
@@ -126,7 +126,7 @@ Usage: `./buildImage.sh [image-name] [force-rebuild]`
 
 Arguments:
 
-- `image-name`: Name of the image to build (one of `flask`, `react`, `r`, `all`). If set to `all`, all images will be built.
+- `image-name`: Name of the image to build (one of `react`, `r`, `all`). If set to `all`, all images will be built.
 - `force-rebuild` (optional): If provided, rebuilds the specified image instead.
 
 Example:

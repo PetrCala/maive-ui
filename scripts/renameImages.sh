@@ -6,7 +6,7 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 
 # Static
 PROJECT_NAME="maive"
-IMAGE_NAMES=("flask-api" "react-ui" "r-plumber")
+IMAGE_NAMES=("react-ui" "r-plumber")
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=$(aws configure get region)
 
@@ -16,7 +16,7 @@ IMAGE_TAG=$(git rev-parse --short HEAD)
 info "Renaming existing images to tag $IMAGE_TAG"
 # Iterate over image names
 for ENTRY in "${IMAGE_NAMES[@]}"; do
-    NEW_IMAGE_TAG="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-$ENTRY:$IMAGE_TAG" # e.g. 1234567890.dkr.ecr.us-east-1.amazonaws.com/maive-flask-api:1234567890
+    NEW_IMAGE_TAG="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$PROJECT_NAME-$ENTRY:$IMAGE_TAG" # e.g. 1234567890.dkr.ecr.us-east-1.amazonaws.com/maive-react-ui:1234567890
 
     # List all versions of the image
     IMAGE_VERSIONS=$(podman images --format "{{.Repository}}:{{.Tag}}" | grep "$ENTRY:" | sort -r)

@@ -61,7 +61,7 @@ fi
 # Static
 BUILD_KEY="$1"
 PROJECT_NAME="maive"
-IMAGE_NAMES=("flask-api" "react-ui" "r-plumber")
+IMAGE_NAMES=("react-ui" "r-plumber")
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=$(aws configure get region)
 

@@ -65,7 +65,6 @@ To destroy the existing architecture, simply run `npm run cloud:destroy`. This w
 - Run `npm run start:dev`. This will build all necessary images, and start up relevant containers in a development environment. For production environment, execute `npm run start:prod` instead.
 - Individual parts of the application can be accessed from your browser or from the terminal under these domains:
   - **React application:** `127.0.0.1:3000`
-  - **Flask application:** `127.0.0.1:8080`
   - **R:** `127.0.0.1:8787`
 
 ## Notes
@@ -111,7 +110,6 @@ There are several pre-defined node scripts which should help you work with image
 
 ### Back end
 
-- Flask
 - R API endpoint through [Plumber](https://www.rplumber.io)
 
 ### CI/CD
