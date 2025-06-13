@@ -27,8 +27,8 @@ function(a, b) {
 
 #* Run the model
 #* @post /run-model
-function(fileData, parameters) {
-  print(fileData)
+function(file_data, parameters) {
+  print(file_data)
   print(parameters)
   list(msg = "Model run successfully")
 }
