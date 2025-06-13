@@ -30,7 +30,7 @@ export default function ModelPage() {
 		if (fileData) {
 			processFileData()
 		}
-	}, [fileData])
+	}, [fileData]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	const processFileData = () => {
 		try {
