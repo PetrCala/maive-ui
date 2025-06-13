@@ -7,10 +7,13 @@ import * as XLSX from "xlsx"
 import { useRouter } from "next/navigation"
 
 interface ModelParameters {
-	learningRate: number
-	epochs: number
-	batchSize: number
-	validationSplit: number
+	includeStudyDummies: boolean
+	standardErrorTreatment:
+		| "not_clustered"
+		| "clustered"
+		| "clustered_cr2"
+		| "bootstrap"
+	computeAndersonRubin: boolean
 }
 
 export default function ModelPage() {
@@ -20,10 +23,9 @@ export default function ModelPage() {
 	const [preview, setPreview] = useState<string[][]>([])
 	const [loading, setLoading] = useState(false)
 	const [parameters, setParameters] = useState<ModelParameters>({
-		learningRate: 0.001,
-		epochs: 100,
-		batchSize: 32,
-		validationSplit: 0.2,
+		includeStudyDummies: false,
+		standardErrorTreatment: "not_clustered",
+		computeAndersonRubin: false,
 	})
 	const router = useRouter()
 
@@ -53,6 +55,18 @@ export default function ModelPage() {
 				.slice(0, 5)
 				.map((row) => row.map((cell: unknown) => String(cell)))
 			setPreview(previewData)
+
+			// Check if studyID column exists and update standard error treatment accordingly
+			const headers = previewData[0] || []
+			const hasStudyID = headers.some((header: string) =>
+				header.toLowerCase().includes("studyid")
+			)
+			if (hasStudyID) {
+				setParameters((prev) => ({
+					...prev,
+					standardErrorTreatment: "bootstrap",
+				}))
+			}
 		} catch (error) {
 			console.error("Error processing file:", error)
 		}
@@ -60,7 +74,7 @@ export default function ModelPage() {
 
 	const handleParameterChange = (
 		param: keyof ModelParameters,
-		value: number
+		value: string | boolean
 	) => {
 		setParameters((prev) => ({ ...prev, [param]: value }))
 	}
@@ -163,74 +177,94 @@ export default function ModelPage() {
 						Model Parameters
 					</h2>
 					<div className="space-y-6">
-						<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+						<div className="grid grid-cols-1 gap-6">
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Learning Rate
+									Include Study Dummies
 								</label>
-								<input
-									type="number"
-									step="0.001"
-									min="0.0001"
-									max="1"
-									value={parameters.learningRate}
+								<div className="flex space-x-4">
+									<label className="inline-flex items-center">
+										<input
+											type="radio"
+											checked={parameters.includeStudyDummies}
+											onChange={() =>
+												handleParameterChange("includeStudyDummies", true)
+											}
+											className="form-radio text-blue-600"
+										/>
+										<span className="ml-2 text-gray-700 dark:text-gray-300">
+											Yes
+										</span>
+									</label>
+									<label className="inline-flex items-center">
+										<input
+											type="radio"
+											checked={!parameters.includeStudyDummies}
+											onChange={() =>
+												handleParameterChange("includeStudyDummies", false)
+											}
+											className="form-radio text-blue-600"
+										/>
+										<span className="ml-2 text-gray-700 dark:text-gray-300">
+											No
+										</span>
+									</label>
+								</div>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+									Standard Error Treatment
+								</label>
+								<select
+									value={parameters.standardErrorTreatment}
 									onChange={(e) =>
 										handleParameterChange(
-											"learningRate",
-											parseFloat(e.target.value)
+											"standardErrorTreatment",
+											e.target.value
 										)
 									}
-									className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-								/>
+									className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+								>
+									<option value="not_clustered">Not Clustered</option>
+									<option value="clustered">Clustered</option>
+									<option value="clustered_cr2">Clustered using CR2</option>
+									<option value="bootstrap">Bootstrap</option>
+								</select>
 							</div>
+
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Epochs
+									Compute Anderson-Rubin Confidence Interval
 								</label>
-								<input
-									type="number"
-									min="1"
-									max="1000"
-									value={parameters.epochs}
-									onChange={(e) =>
-										handleParameterChange("epochs", parseInt(e.target.value))
-									}
-									className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Batch Size
-								</label>
-								<input
-									type="number"
-									min="1"
-									max="256"
-									value={parameters.batchSize}
-									onChange={(e) =>
-										handleParameterChange("batchSize", parseInt(e.target.value))
-									}
-									className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-								/>
-							</div>
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Validation Split
-								</label>
-								<input
-									type="number"
-									step="0.1"
-									min="0.1"
-									max="0.5"
-									value={parameters.validationSplit}
-									onChange={(e) =>
-										handleParameterChange(
-											"validationSplit",
-											parseFloat(e.target.value)
-										)
-									}
-									className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-								/>
+								<div className="flex space-x-4">
+									<label className="inline-flex items-center">
+										<input
+											type="radio"
+											checked={parameters.computeAndersonRubin}
+											onChange={() =>
+												handleParameterChange("computeAndersonRubin", true)
+											}
+											className="form-radio text-blue-600"
+										/>
+										<span className="ml-2 text-gray-700 dark:text-gray-300">
+											Yes
+										</span>
+									</label>
+									<label className="inline-flex items-center">
+										<input
+											type="radio"
+											checked={!parameters.computeAndersonRubin}
+											onChange={() =>
+												handleParameterChange("computeAndersonRubin", false)
+											}
+											className="form-radio text-blue-600"
+										/>
+										<span className="ml-2 text-gray-700 dark:text-gray-300">
+											No
+										</span>
+									</label>
+								</div>
 							</div>
 						</div>
 
