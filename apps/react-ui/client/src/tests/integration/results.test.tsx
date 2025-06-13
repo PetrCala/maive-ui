@@ -30,10 +30,13 @@ const generateMockResults = () => {
 		effectEstimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 		standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 		isSignificant: true,
-		andersonRubinCI: [
-			faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
-			faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
-		],
+		andersonRubinCI:
+			Math.random() > 0.5
+				? [
+						faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+						faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+				  ]
+				: undefined,
 		publicationBias: {
 			estimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 			standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
