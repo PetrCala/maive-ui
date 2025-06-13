@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import * as XLSX from "xlsx"
 import { useRouter } from "next/navigation"
+import { generateMockResults, isDevelopmentMode } from "@utils/mockData"
 
 interface ModelParameters {
 	modelType: "MAIVE" | "WAIVE"
@@ -84,22 +85,30 @@ export default function ModelPage() {
 	const handleRunModel = async () => {
 		setLoading(true)
 		try {
-			const response = await fetch(
-				`${process.env.NEXT_PUBLIC_R_API_URL}/run-model`,
-				{
-					method: "POST",
-					headers: {
-						"Content-Type": "application/json",
-					},
-					body: JSON.stringify({
-						file_data: fileData,
-						parameters: parameters,
-					}),
-				}
-			)
+			let result
 
-			if (!response.ok) throw new Error("Failed to run model")
-			const result = await response.json()
+			if (isDevelopmentMode()) {
+				// Use mock data in development mode
+				result = generateMockResults()
+			} else {
+				// Make actual API call in production
+				const response = await fetch(
+					`${process.env.NEXT_PUBLIC_R_API_URL}/run-model`,
+					{
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							file_data: fileData,
+							parameters: parameters,
+						}),
+					}
+				)
+
+				if (!response.ok) throw new Error("Failed to run model")
+				result = await response.json()
+			}
 
 			// Redirect to results page with the model output
 			const searchParams = new URLSearchParams({
