@@ -90,53 +90,6 @@ resource "aws_ecs_service" "ui" {
   enable_execute_command = true
 }
 
-# ---------------- Flask API ----------------
-resource "aws_ecs_task_definition" "api" {
-  family                   = "${var.project}-api"
-  requires_compatibilities = ["FARGATE"]
-  cpu                      = var.api_task_cpu
-  memory                   = var.api_task_mem
-  network_mode             = "awsvpc"
-  execution_role_arn       = aws_iam_role.task_exec.arn
-  task_role_arn            = aws_iam_role.task_exec.arn
-
-  container_definitions = jsonencode([{
-    name         = "api"
-    image        = "${local.ecr_urls["flask-api"]}:${var.image_tag}"
-    portMappings = [{ containerPort = local.api_port, protocol = "tcp" }]
-    environment = [
-      { name = "R_API_URL", value = "http://r:${local.r_port}" },
-      // AWS_ACCESS_KEY_ID
-      // AWS_SECRET_ACCESS_KEY
-      { name = "AWS_REGION", value = var.region },
-      { name = "AWS_BUCKET_NAME", value = data.terraform_remote_state.foundation.outputs.data_bucket_name }
-    ]
-    logConfiguration = {
-      logDriver = "awslogs",
-      options   = { awslogs-group = "/ecs/${var.project}/flask-api", awslogs-region = var.region, awslogs-stream-prefix = "ecs" }
-    }
-  }])
-}
-
-resource "aws_ecs_service" "api" {
-  name            = "${var.project}-api"
-  cluster         = aws_ecs_cluster.this.id
-  task_definition = aws_ecs_task_definition.api.arn
-  desired_count   = 2
-  launch_type     = "FARGATE"
-  network_configuration {
-    subnets          = local.private_subnets
-    security_groups  = [module.sg_api_tasks.security_group_id]
-    assign_public_ip = false
-  }
-  load_balancer {
-    target_group_arn = aws_lb_target_group.api.arn
-    container_name   = "api"
-    container_port   = local.api_port
-  }
-  enable_execute_command = true
-}
-
 # ---------------- R plumber ----------------
 resource "aws_ecs_task_definition" "r" {
   family                   = "${var.project}-r-plumber"

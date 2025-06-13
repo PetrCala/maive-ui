@@ -16,7 +16,7 @@ variable "email" {
 
 variable "services" {
   type    = list(string)
-  default = ["react-ui", "flask-api", "r-plumber"]
+  default = ["react-ui", "r-plumber"]
 }
 
 variable "log_retention_days" {

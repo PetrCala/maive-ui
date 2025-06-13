@@ -129,7 +129,7 @@ function get_package_version {
 # Check whether an image tag exists. Return True if the image exists, False otherwise.
 #
 # Example usage:
-#   my_image="localhost/maive/flask:v1"
+#   my_image="localhost/maive/react-ui:v1"
 #   if image_exists $my_image; then
 #     echo "Image exists"
 #   else

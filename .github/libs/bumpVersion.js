@@ -80,17 +80,4 @@ exec(
 		core.setFailed("An error occurred in the `npm version` command")
 	})
 
-// Read the contents of the pyproject.toml file
-const pyprojectPath = "./apps/flask-api/pyproject.toml"
-const pyprojectContents = fs.readFileSync(pyprojectPath, "utf8")
-
-// Update the version in the pyproject.toml file
-const newPyprojectContents = pyprojectContents.replace(
-	/version\s*=\s*['"][^'"]+['"]/i,
-	`version = "${newVersion}"`
-)
-
-// Write the updated contents back to the pyproject.toml file
-fs.writeFileSync(pyprojectPath, newPyprojectContents, "utf8")
-
-console.log(`Successfully updated version in pyproject.toml to ${newVersion}`)
+console.log(`Successfully updated version in package.json to ${newVersion}`)

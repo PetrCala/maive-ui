@@ -85,7 +85,7 @@ jobs:
     if: ${{ needs.labelChecks.outputs.READY_TO_BUILD == 'true' && needs.bumpVersion.outputs.NEW_VERSION != '' }}
     strategy:
       matrix:
-        service: [react-ui, flask-api, r-plumber]
+        service: [react-ui, r-plumber]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

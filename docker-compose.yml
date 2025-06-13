@@ -1,20 +1,5 @@
 version: "3.8"
 services:
-  flask:
-    image: ${FLASK_IMAGE_NAME}
-    build:
-      context: ./apps/flask-api
-      dockerfile: Dockerfile
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./apps/flask-api:/app
-    environment:
-      - FLASK_ENV=${FLASK_ENV}
-      - FLASK_RUN_HOST=${FLASK_RUN_HOST}
-      - FLASK_RUN_PORT=${FLASK_RUN_PORT}
-      - R_API_URL=http://r:${R_PORT} # URL to the R API
-
   react:
     image: ${REACT_IMAGE_NAME}
     build:
@@ -25,7 +10,7 @@ services:
     volumes:
       - ./apps/react-ui/client:/client
     environment:
-      - REACT_APP_API_URL=http://flask:${FLASK_RUN_PORT} # URL to the Flask API
+      - NEXT_PUBLIC_R_API_URL=http://r:${R_PORT} # URL to the R API
 
   r:
     image: ${R_IMAGE_NAME}
