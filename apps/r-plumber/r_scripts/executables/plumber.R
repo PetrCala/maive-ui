@@ -67,5 +67,5 @@ function(file_data, parameters) {
     funnelPlot = ggplot2::ggsave(filename = NULL, plot = last_plot(), device = "png", type = "cairo", width = 6, height = 4, units = "in", dpi = 300, bg = "white", path = NULL, limitsize = TRUE, scale = 1, encoding = "base64")
   )
 
-  return(result)
+  result
 }
