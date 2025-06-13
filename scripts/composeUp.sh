@@ -140,10 +140,9 @@ fi
 
 # Function to clean up containers on Ctrl+C
 cleanup() {
-    info "Stopping containers..."
-    podman-compose down
+    # info "Stopping containers..."
+    # podman-compose down # Happens automatically
     info "Successfully stopped and removed all containers."
-    success "Done."
     exit 0
 }
 

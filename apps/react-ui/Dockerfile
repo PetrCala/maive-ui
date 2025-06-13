@@ -1,26 +1,14 @@
-# Use a Node base image
-FROM node:21-alpine
-
-# Set the working directory in the container
-WORKDIR /client
-
-# Copy package.json and package-lock.json
-COPY client/package*.json /client
-
-# Install project dependencies
+# Stage 1: Build
+FROM node:21-alpine AS builder
+WORKDIR /app
+COPY client/package*.json ./
 RUN npm install
-
-# Copy the client directory contents into the container at /client
-COPY client/ /client
-
-# Build the app
+COPY client/ ./
 RUN npm run build
 
-# Install serve to serve the static files
-RUN npm install -g serve
-
-# Make port 3000 available to the world outside this container
+# Stage 2: Run
+FROM node:21-alpine
+WORKDIR /app
+COPY --from=builder /app ./
 EXPOSE 3000
-
-# Run the app
-CMD ["serve", "-s", "build"]
+CMD ["npm", "run", "start"]
