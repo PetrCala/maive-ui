@@ -97,47 +97,6 @@ else
     exit 1
 fi
 
-# Check if images exist
-image_names=("$REACT_IMAGE_NAME" "$R_IMAGE_NAME")
-missing_images=()
-build_required=false
-base_image_names=("react-ui" "r-plumber")
-
-for i in "${!image_names[@]}"; do
-    if ! image_exists "${image_names[$i]}" | grep -q "true" >/dev/null; then
-        missing_images+=("${base_image_names[$i]}")
-        build_required=true
-    fi
-done
-
-if [ "$build_required" = true ]; then
-    if [[ "$ENVIRONMENT" == "prod" ]]; then
-        # Always build images in production
-        info "Building missing images as per BUILD_ variables..."
-        for image in "${missing_images[@]}"; do
-            ./scripts/buildImage.sh --tag $TAG "$image"
-        done
-    else
-        echo "The following local images are missing:"
-        for image in "${missing_images[@]}"; do
-            echo "$REPOSITORY_NAME/$IMAGE_NAME-$image:$TAG"
-        done
-        read -p "Do you want to build them now? (y/N) " response
-        case "$response" in
-        [yY][eE][sS] | [yY])
-            info "Building missing images..."
-            for image in "${missing_images[@]}"; do
-                ./scripts/buildImage.sh --tag $TAG "$image"
-            done
-            ;;
-        *)
-            error "Required images are missing. Exiting..."
-            exit 1
-            ;;
-        esac
-    fi
-fi
-
 # Function to clean up containers on Ctrl+C
 cleanup() {
     # info "Stopping containers..."
@@ -151,6 +110,6 @@ trap cleanup SIGINT
 
 info "Running all containers for tag $TAG in $ENVIRONMENT environment..."
 
-podman-compose up
+podman-compose up --build
 
 exit 0
