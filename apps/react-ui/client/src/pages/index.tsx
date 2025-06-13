@@ -1,6 +1,23 @@
 import Link from "next/link"
 
 export default function Home() {
+	const pingServer = async () => {
+		const response = await fetch(`${process.env.NEXT_PUBLIC_R_API_URL}/ping`)
+		const data = await response.json()
+		alert(`Status: ${data.status}, Time: ${data.time}`)
+	}
+
+	const PingButton = () => {
+		return (
+			<button
+				onClick={pingServer}
+				className="mt-6 inline-block px-8 py-4 text-lg font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+			>
+				Ping Server
+			</button>
+		)
+	}
+
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
 			<div className="max-w-2xl text-center">
@@ -16,6 +33,7 @@ export default function Home() {
 				>
 					Upload Your Data
 				</Link>
+				<PingButton />
 			</div>
 		</main>
 	)
