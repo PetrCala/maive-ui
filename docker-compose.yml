@@ -1,26 +1,33 @@
 version: "3.8"
 services:
   react:
-    image: ${REACT_IMAGE_NAME}
+    image: ${REACT_IMAGE_NAME} # tag is set by composeUp.sh
     build:
       context: ./apps/react-ui
       dockerfile: Dockerfile
+    working_dir: /app # ← matches WORKDIR in Dockerfile
+    command: npm run dev # CRA / Next.js hot-reload server
     ports:
       - "3000:3000"
-    volumes:
-      - ./apps/react-ui/client:/client
     environment:
-      - NEXT_PUBLIC_R_API_URL=http://r:${R_PORT} # URL to the R API
+      - NEXT_PUBLIC_R_API_URL=http://r:${R_PORT}
+      - CHOKIDAR_USEPOLLING=true # Node file-watch works in a mount
+    volumes:
+      # Bind-mount the *exact* directory used in the image.
+      # “:Z” lets Podman relabel the files so SELinux allows RW access.
+      - ./apps/react-ui/client:/app:Z
 
   r:
     image: ${R_IMAGE_NAME}
     build:
       context: ./apps/r-plumber
       dockerfile: Dockerfile
+    working_dir: /r_scripts # matches WORKDIR in Dockerfile
+    command: Rscript host.R
     ports:
       - "8787:8787"
-    volumes:
-      - ./apps/r-plumber/r_scripts:/r_scripts
     environment:
       - R_HOST=${R_HOST}
       - R_PORT=${R_PORT}
+    volumes:
+      - ./apps/r-plumber/r_scripts:/r_scripts:Z
