@@ -7,6 +7,7 @@ import * as XLSX from "xlsx"
 import { useRouter } from "next/navigation"
 
 interface ModelParameters {
+	modelType: "MAIVE" | "WAIVE"
 	includeStudyDummies: boolean
 	standardErrorTreatment:
 		| "not_clustered"
@@ -23,6 +24,7 @@ export default function ModelPage() {
 	const [preview, setPreview] = useState<string[][]>([])
 	const [loading, setLoading] = useState(false)
 	const [parameters, setParameters] = useState<ModelParameters>({
+		modelType: "MAIVE",
 		includeStudyDummies: false,
 		standardErrorTreatment: "not_clustered",
 		computeAndersonRubin: false,
@@ -178,6 +180,22 @@ export default function ModelPage() {
 					</h2>
 					<div className="space-y-6">
 						<div className="grid grid-cols-1 gap-6">
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+									Model Type
+								</label>
+								<select
+									value={parameters.modelType}
+									onChange={(e) =>
+										handleParameterChange("modelType", e.target.value)
+									}
+									className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+								>
+									<option value="MAIVE">MAIVE</option>
+									<option value="WAIVE">WAIVE</option>
+								</select>
+							</div>
+
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 									Include Study Dummies
