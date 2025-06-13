@@ -1,16 +1,12 @@
 import "./globals.css"
-import { ThemeProvider } from "./providers"
+import { ThemeProvider } from "../providers/ThemeProvider"
 
 export const metadata = {
 	title: "MAIVE Estimator",
 	description: "Advanced data analysis and estimation tool",
 }
 
-export default function RootLayout({
-	children,
-}: {
-	children: React.ReactNode
-}) {
+export default function Layout({ children }: { children: React.ReactNode }) {
 	return (
 		<html lang="en" suppressHydrationWarning>
 			<body>

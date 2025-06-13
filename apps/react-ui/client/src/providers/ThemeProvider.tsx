@@ -11,7 +11,7 @@ type ThemeContextType = {
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined)
 
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+function ThemeProvider({ children }: { children: React.ReactNode }) {
 	const [theme, setTheme] = useState<Theme>("light")
 
 	useEffect(() => {
@@ -41,10 +41,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 	)
 }
 
-export function useTheme() {
+function useTheme() {
 	const context = useContext(ThemeContext)
 	if (context === undefined) {
 		throw new Error("useTheme must be used within a ThemeProvider")
 	}
 	return context
 }
+
+export { ThemeContext, ThemeProvider, useTheme }
+export type { Theme, ThemeContextType }
