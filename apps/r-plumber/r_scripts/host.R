@@ -1,16 +1,14 @@
 # host.R
 
-print("In host.R")
+cli::cli_alert_info("In host.R")
 
-# See: https://www.rplumber.io
-library("plumber")
-
-print("Plumber library successfully loaded")
+library("plumber") # nolint: undesirable_function_linter.
+cli::cli_alert_success("Plumber library successfully loaded")
 
 # Load the docker-compose environment variables
-R_HOST <- Sys.getenv("R_HOST") || "0.0.0.0"
-R_PORT <- as.numeric(Sys.getenv("R_PORT")) || 8787
+R_HOST <- Sys.getenv("R_HOST")
+R_PORT <- as.numeric(Sys.getenv("R_PORT"))
 
 # #* @apiTitle R API
-plumber::pr("executables/plumber.R") %>%
-  plumber::pr_run(host = R_HOST, port = R_PORT)
+pr("executables/plumber.R") %>%
+  pr_run(host = R_HOST, port = R_PORT)

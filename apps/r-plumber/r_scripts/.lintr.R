@@ -5,7 +5,7 @@ linters <- c(
     # https://lintr.r-lib.org/reference/index.html#individual-linters
     #
     # All default box linters
-    defaults = box.linters::box_default_linters,
+    defaults = lintr::linters_with_defaults(),
     # Set indentation to 8 spaces
     indentation_linter = lintr::indentation_linter(2),
     # Check that all commas are followed by spaces, but do not have spaces before them.
