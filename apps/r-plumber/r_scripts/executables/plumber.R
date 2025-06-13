@@ -34,7 +34,28 @@ function(a, b) {
 #* Run the model
 #* @post /run-model
 function(file_data, parameters) {
-  print(file_data)
-  print(parameters)
-  list(msg = "Model run successfully")
+  # Parse the parameters
+  params <- jsonlite::fromJSON(parameters)
+
+  # TODO: Implement actual model logic here
+  # This is a placeholder response structure
+  result <- list(
+    effectEstimate = 0.5234,
+    standardError = 0.1234,
+    isSignificant = TRUE,
+    andersonRubinCI = c(0.2345, 0.8123),
+    publicationBias = list(
+      estimate = 0.1234,
+      standardError = 0.0567,
+      isSignificant = FALSE
+    ),
+    firstStageFTest = 15.6789,
+    hausmanTest = list(
+      statistic = 2.3456,
+      rejectsNull = FALSE
+    ),
+    funnelPlot = "base64_encoded_plot_data" # TODO: Generate actual funnel plot
+  )
+
+  return(result)
 }

@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { ThemeToggle } from "@components/ThemeToggle"
 import * as XLSX from "xlsx"
+import { useRouter } from "next/navigation"
 
 interface ModelParameters {
 	learningRate: number
@@ -25,6 +26,7 @@ export default function ModelPage() {
 		batchSize: 32,
 		validationSplit: 0.2,
 	})
+	const router = useRouter()
 
 	useEffect(() => {
 		if (fileData) {
@@ -83,8 +85,14 @@ export default function ModelPage() {
 
 			if (!response.ok) throw new Error("Failed to run model")
 			const result = await response.json()
-			// TODO: Handle model results (e.g., show plots, summary)
-			console.log("Model results:", result)
+
+			// Redirect to results page with the model output
+			const searchParams = new URLSearchParams({
+				results: JSON.stringify(result),
+				fileData: fileData || "",
+				parameters: JSON.stringify(parameters),
+			})
+			router.push(`/results?${searchParams.toString()}`)
 		} catch (error) {
 			console.error("Error running model:", error)
 		} finally {
