@@ -2,7 +2,6 @@
 
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
-import { ThemeToggle } from "@components/ThemeToggle"
 
 interface ModelResults {
 	effectEstimate: number
@@ -54,7 +53,6 @@ export default function ResultsPage() {
 
 	return (
 		<main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-			<ThemeToggle />
 			<div className="max-w-4xl w-full">
 				<div className="flex justify-between items-center mb-8">
 					<Link
@@ -107,7 +105,7 @@ export default function ResultsPage() {
 								</div>
 								<div>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
-										Significance
+										Significant at 5% level
 									</p>
 									<p
 										className={`text-lg font-medium ${
@@ -116,9 +114,7 @@ export default function ResultsPage() {
 												: "text-red-600"
 										}`}
 									>
-										{parsedResults.isSignificant
-											? "Significant"
-											: "Not Significant"}
+										{parsedResults.isSignificant ? "Yes" : "No"}
 									</p>
 								</div>
 								<div>
