@@ -192,7 +192,7 @@ export default function ResultsPage() {
 							<h2 className="text-xl font-semibold mb-4">Funnel Plot</h2>
 							<div className="flex justify-center">
 								<Image
-									src={`data:image/png;base64,${parsedResults.funnelPlot}`}
+									src={parsedResults.funnelPlot}
 									alt="Funnel Plot"
 									width={400}
 									height={300}
