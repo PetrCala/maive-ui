@@ -2,6 +2,7 @@
 
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image"
 
 interface ModelResults {
 	effectEstimate: number
@@ -190,9 +191,11 @@ export default function ResultsPage() {
 						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
 							<h2 className="text-xl font-semibold mb-4">Funnel Plot</h2>
 							<div className="flex justify-center">
-								<img
+								<Image
 									src={`data:image/png;base64,${parsedResults.funnelPlot}`}
 									alt="Funnel Plot"
+									width={400}
+									height={300}
 									className="max-w-full h-auto"
 								/>
 							</div>
