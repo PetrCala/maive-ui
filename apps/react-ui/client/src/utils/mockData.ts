@@ -1,23 +1,8 @@
 import { faker } from "@faker-js/faker"
+import mockFunnelPlot from "./mockFunnelPlot"
 
 export const generateMockResults = () => {
-	// Generate a simple funnel plot using a canvas
-	const canvas = document.createElement("canvas")
-	canvas.width = 400
-	canvas.height = 300
-	const ctx = canvas.getContext("2d")
-	if (ctx) {
-		ctx.fillStyle = "white"
-		ctx.fillRect(0, 0, canvas.width, canvas.height)
-		ctx.strokeStyle = "black"
-		ctx.beginPath()
-		ctx.moveTo(200, 0)
-		ctx.lineTo(200, 300)
-		ctx.moveTo(0, 150)
-		ctx.lineTo(400, 150)
-		ctx.stroke()
-	}
-	const funnelPlotBase64 = canvas.toDataURL("image/png")?.split(",")[1] ?? ""
+	const funnelPlotBase64 = mockFunnelPlot
 
 	return {
 		effectEstimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
