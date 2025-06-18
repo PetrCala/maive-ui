@@ -96,6 +96,7 @@ export default function ModelPage() {
 
 			if (isDevelopmentMode()) {
 				// Use mock data in development mode
+				console.debug("Using mock data in development mode")
 				result = generateMockResults()
 			} else {
 				// Make actual API call in production
