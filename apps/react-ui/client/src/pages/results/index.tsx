@@ -204,24 +204,18 @@ export default function ResultsPage() {
 				</div>
 
 				<div className="flex justify-end items-center mt-8">
-					{/* <button
-						onClick={handleRerunModel}
-						className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-					>
-						← Back to Model
-					</button> */}
 					<div className="space-x-4">
-						<button
-							onClick={handleRerunModel}
-							className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-						>
-							Rerun Model
-						</button>
 						<button
 							onClick={handleNewUpload}
 							className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
 						>
 							Upload New Data
+						</button>
+						<button
+							onClick={handleRerunModel}
+							className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+						>
+							Rerun Model
 						</button>
 					</div>
 				</div>
