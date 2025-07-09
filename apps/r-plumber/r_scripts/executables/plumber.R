@@ -31,6 +31,15 @@ function(a, b) {
   as.numeric(a) + as.numeric(b)
 }
 
+
+#' data dat can be imported from an excel file via: dat <- read_excel("inputdata.xlsx") and consists of:
+#' \itemize{
+#'   \item estimates: bs
+#'   \item standard errors: sebs
+#'   \item number of observations: Ns
+#'   \item optional: study_id
+#' }
+
 #* Run the model
 #* @post /run-model
 function(file_data, parameters) {
