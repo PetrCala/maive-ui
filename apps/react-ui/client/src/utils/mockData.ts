@@ -14,7 +14,7 @@ export const generateMockResults = () => {
 						faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 						faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 				  ]
-				: undefined,
+				: "NA",
 		publicationBias: {
 			estimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 			standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
