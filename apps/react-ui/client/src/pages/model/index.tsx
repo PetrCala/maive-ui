@@ -81,14 +81,13 @@ export default function ModelPage() {
 	const handleRunModel = async () => {
 		setLoading(true)
 		try {
-			let result
+			let result: { data?: any; error?: any; message?: string }
 
 			if (isDevelopmentMode()) {
 				// Use mock data in development mode
 				console.debug("Using mock data in development mode")
-				result = generateMockResults()
+				result = { data: generateMockResults() }
 			} else {
-				// Make actual API call in production
 				const response = await fetch(
 					`${process.env.NEXT_PUBLIC_R_API_URL}/run-model`,
 					{
@@ -107,15 +106,24 @@ export default function ModelPage() {
 				result = await response.json()
 			}
 
+			if (result.error) {
+				throw new Error(result.message)
+			}
+
 			// Redirect to results page with the model output
+			const results = result.data
 			const searchParams = new URLSearchParams({
-				results: JSON.stringify(result),
+				results: JSON.stringify(results),
 				fileData: fileData || "",
 				parameters: JSON.stringify(parameters),
 			})
 			router.push(`/results?${searchParams.toString()}`)
 		} catch (error) {
 			console.error("Error running model:", error)
+			alert(
+				"An error occurred while running the model: " +
+					(error instanceof Error ? error.message : String(error))
+			)
 		} finally {
 			setLoading(false)
 		}

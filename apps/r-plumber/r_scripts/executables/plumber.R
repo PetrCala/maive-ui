@@ -20,14 +20,36 @@ function() {
 function(file_data, parameters) {
   # nolint start: undesirable_function_linter.
   # MAIVE dependencies
-  library("varhandle")
-  library("pracma")
-  library("sandwich")
+  # library("varhandle")
+  # library("pracma")
+  # library("sandwich")
+  source("../modules/funnel_plot.R", local = TRUE)
   # nolint end: undesirable_function_linter.
 
-  # Load the modules
-  files <- list.files("../modules", pattern = "\\.R$", full.names = TRUE)
-  lapply(files, source, local = TRUE) # nolint: undesirable_function_linter.
+  # TEST
+  result <- list(
+    effectEstimate = 1,
+    standardError = 0.1,
+    isSignificant = TRUE, # Double check this
+    andersonRubinCI = c(0.9, 1.1), # c(int, int) or "NA"
+    publicationBias = list(
+      estimate = 1,
+      standardError = 0.1,
+      isSignificant = FALSE
+    ),
+    firstStageFTest = 1,
+    hausmanTest = list(
+      statistic = 1,
+      rejectsNull = FALSE
+    ),
+    funnelPlot = get_funnel_plot(
+      effect = c(1, 2, 3, 4, 5),
+      se = c(0.1, 0.2, 0.3, 0.4, 0.5)
+    )
+  )
+  return(list(data = results))
+  # END TEST
+
 
   df <- jsonlite::fromJSON(file_data)
 
@@ -100,5 +122,5 @@ function(file_data, parameters) {
     funnelPlot = funnel_plot
   )
 
-  result
+  list(data = result)
 }
