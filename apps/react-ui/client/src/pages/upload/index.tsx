@@ -22,9 +22,9 @@ export default function UploadPage() {
 		const reader = new FileReader()
 		reader.onload = () => {
 			const base64Data = reader.result as string
-			// Navigate to model page with file data
+			// Navigate to validation page with file data
 			router.push(
-				`/model?filename=${encodeURIComponent(
+				`/validation?filename=${encodeURIComponent(
 					selectedFile.name
 				)}&data=${encodeURIComponent(base64Data)}`
 			)
