@@ -27,7 +27,7 @@ function(file_data, parameters) {
   # nolint end: undesirable_function_linter.
 
   # TEST
-  result <- list(
+  results <- list(
     effectEstimate = 1,
     standardError = 0.1,
     isSignificant = TRUE, # Double check this
@@ -104,7 +104,7 @@ function(file_data, parameters) {
   # maive_res <- list("beta" = round(beta, 3), "SE" = round(betase, 3), "F-test" = F_hac, "beta_standard" = round(beta0, 3), "SE_standard" = round(beta0se, 3), "Hausman" = round(Hausman, 3), "Chi2" = round(Chi2, 3), "SE_instrumented" = sebs2fit1^(1 / 2), "AR_CI" = b0_CI_AR)
 
   # TODO: Add the rest of the results
-  result <- list(
+  results <- list(
     effectEstimate = maive_res$beta,
     standardError = maive_res$SE,
     isSignificant = maive_res[["F-test"]] > 1.96, # Double check this
@@ -121,6 +121,5 @@ function(file_data, parameters) {
     ),
     funnelPlot = funnel_plot
   )
-
-  list(data = result)
+  list(data = results)
 }
