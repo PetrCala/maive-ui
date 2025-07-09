@@ -148,6 +148,12 @@ export default function ModelPage() {
 					<h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
 						Model Parameters
 					</h1>
+					<div className="mb-6">
+						<p className="text-gray-700 dark:text-gray-300 mb-2">
+							Please select the model type and parameters you would like to use.
+						</p>
+					</div>
+
 					<div className="space-y-6">
 						<div className="grid grid-cols-1 gap-6">
 							<div>
