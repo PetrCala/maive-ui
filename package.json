@@ -17,7 +17,7 @@
 		"images:rename": "./scripts/renameImages.sh",
 		"start:dev": "./scripts/composeUp.sh dev",
 		"start:prod": "./scripts/composeUp.sh prod",
-		"r:dev": "cd apps/r-plumber/r_scripts && Rscript host.R",
+		"r:dev": "export R_HOST=127.0.0.1 && export R_PORT=8787 && cd apps/r-plumber/r_scripts && Rscript host.R",
 		"ui:dev": "cd apps/react-ui/client && npm run dev",
 		"ui:test": "cd apps/react-ui/client && npm run test",
 		"stop": "podman-compose down",
