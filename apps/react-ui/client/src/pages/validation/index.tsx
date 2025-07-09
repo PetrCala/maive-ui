@@ -464,7 +464,8 @@ export default function ValidationPage() {
 							onClick={() => {
 								window.location.href = "/upload"
 							}}
-							className="px-6 py-3 text-blue-600 border border-blue-600 font-semibold rounded-lg bg-white hover:bg-blue-50 dark:bg-gray-900 dark:hover:bg-gray-800 dark:text-blue-400 dark:border-blue-400 transition-all duration-200 shadow-md hover:shadow-lg"
+							// className="px-6 py-3 text-blue-600 border border-blue-600 font-semibold rounded-lg bg-white hover:bg-blue-50 dark:bg-gray-900 dark:hover:bg-gray-800 dark:text-blue-400 dark:border-blue-400 transition-all duration-200 shadow-md hover:shadow-lg"
+							className="px-6 py-3 text-white font-semibold rounded-lg transition-all duration-200 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
 						>
 							Reupload Your Data
 						</button>
