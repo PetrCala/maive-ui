@@ -14,66 +14,74 @@ function() {
   list(status = "ok", time = format(Sys.time(), tz = "UTC"))
 }
 #* Run the model
+#* @param file_data The file data to run the model on, passed as a JSON string
+#* @param parameters The parameters to run the model on
 #* @post /run-model
 function(file_data, parameters) {
-  library("ggplot2")
-  library("MAIVE")
+  # nolint start: undesirable_function_linter.
+  # MAIVE dependencies
+  library("varhandle")
+  library("pracma")
+  library("sandwich")
+  # nolint end: undesirable_function_linter.
 
-  # Parse the parameters
-  params <- jsonlite::fromJSON(parameters)
+  # Load the modules
+  files <- list.files("../modules", pattern = "\\.R$", full.names = TRUE)
+  lapply(files, source, local = TRUE) # nolint: undesirable_function_linter.
 
-  ### TEST DATA ###
-  use_test_data <- TRUE
-  if (use_test_data) {
-    file_data <- data.frame(
-      effect = rnorm(100),
-      se = rnorm(100),
-      n_obs = rnorm(100)
-    )
-    parameters <- list(
-      method = "XXX",
-      weight = "XXX",
-      instrument = "XXX",
-    )
-  }
+  df <- jsonlite::fromJSON(file_data)
 
-  # Prepare the data for MAIVE
-  file_data <- tolower(file_data)
-  file_data[] <- lapply(file_data, as.numeric)
+  colnames(df) <- tolower(colnames(df))
+  df[] <- lapply(df, as.numeric)
 
   new_colnames <- c("bs", "sebs", "Ns")
-  if (length(colnames(file_data)) == 4) {
+  if (length(colnames(df)) == 4) {
     new_colnames <- c(new_colnames, "study_id") # Optional column
   }
-  if (length(colnames(file_data)) != length(new_colnames)) {
+  if (length(colnames(df)) != length(new_colnames)) {
     return(list(
       error = TRUE,
       message = "The file must have between 3 and 4 columns (bs, sebs, Ns, and optionally study_id)."
     ))
   }
-  colnames(file_data) <- new_colnames
+  colnames(df) <- new_colnames
+
+  # Parse and validate the parameters
+  params <- jsonlite::fromJSON(parameters)
+
+  expected_parameters <- c("modelType", "includeStudyDummies", "standardErrorTreatment", "computeAndersonRubin")
+  if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
+    return(list(
+      error = TRUE,
+      message = paste0("The parameters must include the following: ", paste(expected_parameters, collapse = ", "))
+    ))
+  }
+
+  model_type <- params$modelType # MAIVE or WAIVE
+  should_include_study_dummies <- if (isTRUE(params$includeStudyDummies)) 1 else 0
+  standard_error_treatment <- params$standardErrorTreatment # not_clustered, clustered, clustered_cr2, bootstrap
+  should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
 
   # Run the model
-  maive_res <- maive(
-    dat = file_data,
+  maive_res <- MAIVE::maive(
+    dat = df,
     # TODO: Add parameters from the UI
-    method = 0, # PET=0, PEESE=1, PET-PEESE=2, EK=3
+    method = 1, # PET=0, PEESE=1, PET-PEESE=2, EK=3
     weight = 0, # no weights=0, inverse-variance weights=1, adjusted weights=2
     instrument = 0, # no=0, yes=1
     studylevel = 0, # none=0, study fixed effects=1, cluster-robust standard errors=2
-    AR = 0 # 0 = no AR, 1 = AR
+    AR = should_use_ar # 0 = no AR, 1 = AR
   )
 
-  ggplot(test_data, aes(x = x, y = y)) +
-    geom_line() +
-    ggtitle("Placeholder Graph") +
-    xlab("X-axis") +
-    ylab("Density")
+  funnel_plot <- get_funnel_plot(
+    effect = df$bs,
+    se = df$sebs
+  )
 
   # This is the package response structure
   # maive_res <- list("beta" = round(beta, 3), "SE" = round(betase, 3), "F-test" = F_hac, "beta_standard" = round(beta0, 3), "SE_standard" = round(beta0se, 3), "Hausman" = round(Hausman, 3), "Chi2" = round(Chi2, 3), "SE_instrumented" = sebs2fit1^(1 / 2), "AR_CI" = b0_CI_AR)
 
-  # TODO
+  # TODO: Add the rest of the results
   result <- list(
     effectEstimate = maive_res$beta,
     standardError = maive_res$SE,
@@ -89,7 +97,7 @@ function(file_data, parameters) {
       statistic = maive_res$Hausman,
       rejectsNull = FALSE
     ),
-    funnelPlot = get_mock_funnel_plot()
+    funnelPlot = funnel_plot
   )
 
   result
