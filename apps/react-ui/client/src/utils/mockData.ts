@@ -20,11 +20,14 @@ export const generateMockResults = () => {
 			standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 			isSignificant: faker.datatype.boolean(),
 		},
-		firstStageFTest: faker.number.float({
-			min: 0,
-			max: 100,
-			multipleOf: 0.0001,
-		}),
+		firstStageFTest:
+			Math.random() > 0.5
+				? "NA"
+				: faker.number.float({
+						min: 0,
+						max: 100,
+						multipleOf: 0.0001,
+				  }),
 		hausmanTest: {
 			statistic: faker.number.float({ min: 0, max: 100, multipleOf: 0.0001 }),
 			rejectsNull: false,
