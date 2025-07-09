@@ -54,7 +54,7 @@ export default function ModelPage() {
 				const workbook = XLSX.read(bytes, { type: "array" })
 				const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
 				const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
-				const headers = (jsonData as any[])[0] || []
+				const headers = (jsonData as any[])[0] ?? []
 				const hasStudyID = headers.some((header: string) =>
 					/\bstudy[\s_-]?id\b/i.test(header)
 				)
@@ -64,7 +64,20 @@ export default function ModelPage() {
 						standardErrorTreatment: "bootstrap",
 					}))
 				}
-				setFileDataJson(jsonData)
+
+				const records = (jsonData as any[])
+					.slice(1) // skip header row
+					.map((row) =>
+						headers.reduce(
+							(obj: Record<string, any>, h: string, idx: number) => {
+								obj[h] = row[idx] // map cell → corresponding header
+								return obj
+							},
+							{} as Record<string, any>
+						)
+					)
+
+				setFileDataJson(records)
 			} catch (error) {
 				console.error("Error processing file:", error)
 			}
@@ -96,8 +109,8 @@ export default function ModelPage() {
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							file_data: fileDataJson,
-							parameters: parameters,
+							file_data: JSON.stringify(fileDataJson),
+							parameters: JSON.stringify(parameters),
 						}),
 					}
 				)
@@ -112,6 +125,7 @@ export default function ModelPage() {
 
 			// Redirect to results page with the model output
 			const results = result.data
+			console.log("results", results)
 			const searchParams = new URLSearchParams({
 				results: JSON.stringify(results),
 				fileData: fileData || "",
