@@ -1,6 +1,11 @@
 # Install packages from CRAN
-# packages <- c("") # Add packages here
-# install.packages(packages, dependencies = TRUE)
+packages <- c()
+maive_packages <- c(
+  "varhandle",
+  "pracma",
+  "sandwich"
+)
+install.packages(c(packages, maive_packages), dependencies = TRUE)
 
 # Install the MAIVE package
 maive_repo_name <- "meta-analysis-es/maive"
