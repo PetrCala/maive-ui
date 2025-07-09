@@ -31,15 +31,6 @@ function(a, b) {
   as.numeric(a) + as.numeric(b)
 }
 
-
-#' data dat can be imported from an excel file via: dat <- read_excel("inputdata.xlsx") and consists of:
-#' \itemize{
-#'   \item estimates: bs
-#'   \item standard errors: sebs
-#'   \item number of observations: Ns
-#'   \item optional: study_id
-#' }
-
 #* Run the model
 #* @post /run-model
 function(file_data, parameters) {
@@ -104,14 +95,14 @@ function(file_data, parameters) {
   result <- list(
     effectEstimate = maive_res$beta,
     standardError = maive_res$SE,
-    isSignificant = maive_res$F_test > 1.96, # Double check this
+    isSignificant = maive_res[["F-test"]] > 1.96, # Double check this
     andersonRubinCI = maive_res$AR_CI, # c(int, int) or "NA"
     publicationBias = list(
-      estimate = 0.1234,
-      standardError = 0.0567,
+      estimate = maive_res$beta_standard,
+      standardError = maive_res$SE_standard,
       isSignificant = FALSE
     ),
-    firstStageFTest = 15.6789,
+    firstStageFTest = maive_res[["F-test"]],
     hausmanTest = list(
       statistic = maive_res$Hausman,
       rejectsNull = FALSE
