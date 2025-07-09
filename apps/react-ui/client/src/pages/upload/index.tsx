@@ -32,18 +32,6 @@ export default function UploadPage() {
 		reader.readAsDataURL(selectedFile)
 	}
 
-	// const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-	// 	const file = e.target.files?.[0]
-	// 	if (!file) return
-
-	// 	const data = new FormData()
-	// 	data.append("file", file)
-
-	// 	const res = await fetch("/api/upload", { method: "POST", body: data })
-	// 	const json = await res.json()
-	// 	setPreview(json.preview) // first 20 rows ↓
-	// }
-
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
 			<div className="max-w-2xl w-full">
