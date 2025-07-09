@@ -6,7 +6,7 @@ cli::cli_alert_success("Plumber library successfully loaded")
 R_HOST <- Sys.getenv("R_HOST")
 R_PORT <- as.numeric(Sys.getenv("R_PORT"))
 
-pr <- plumb("executables/plumber.R")
+pr <- plumber::plumb("executables/plumber.R")
 
 # ---- GLOBAL CORS FILTER -------------------------------------------------
 pr$filter("cors", function(req, res) {
