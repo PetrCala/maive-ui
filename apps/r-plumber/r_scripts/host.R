@@ -21,6 +21,7 @@ pr$filter("cors", function(req, res) {
   # 2. If this is the pre-flight, return a blank 200 *right now*
   if (identical(req$REQUEST_METHOD, "OPTIONS")) {
     res$status <- 200
+    res$body <- ""
     return(res)
   }
 
