@@ -107,7 +107,7 @@ export default function ModelPage() {
 			}
 
 			if (result.error) {
-				throw new Error(result.message)
+				throw new Error(result?.message || "Failed to run model")
 			}
 
 			// Redirect to results page with the model output
