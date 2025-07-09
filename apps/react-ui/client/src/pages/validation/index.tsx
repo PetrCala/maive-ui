@@ -16,6 +16,15 @@ interface ValidationResult {
 	messages: ValidationMessage[]
 }
 
+// TO IMPLEMENT:
+// #' data dat can be imported from an excel file via: dat <- read_excel("inputdata.xlsx") and consists of:
+// #' \itemize{
+// #'   \item estimates: bs
+// #'   \item standard errors: sebs
+// #'   \item number of observations: Ns
+// #'   \item optional: study_id
+// #' }
+
 export default function ValidationPage() {
 	const searchParams = useSearchParams()
 	const filename = searchParams?.get("filename")
@@ -81,6 +90,8 @@ export default function ValidationPage() {
 	): ValidationResult => {
 		const messages: ValidationMessage[] = []
 		const headers = previewData[0] || []
+		const requiredColumns = ["effect", "se", "n_obs"]
+		const optionalColumns = ["study_id"]
 
 		// Check if file has data
 		if (fullData.length <= 1) {
@@ -99,64 +110,129 @@ export default function ValidationPage() {
 			})
 		}
 
+		const minimumColumns = requiredColumns.length
+		const maximumColumns = minimumColumns + optionalColumns.length
+		if (headers.length < minimumColumns || headers.length > maximumColumns) {
+			messages.push({
+				type: "error",
+				message: `The file must have between ${minimumColumns} and ${maximumColumns} columns (${requiredColumns.join(
+					", "
+				)}${
+					optionalColumns.length > 0
+						? ", and optionally " + optionalColumns.join(", ")
+						: ""
+				}).`,
+			})
+		}
+
 		// Check for required columns (basic validation)
-		const requiredColumns = ["effect", "se", "instrument"]
-		const missingColumns = requiredColumns.filter(
-			(required) =>
-				!headers.some((header) =>
-					header.toLowerCase().includes(required.toLowerCase())
-				)
-		)
+		const findMissingColumns = (columns: string[], headers: string[]) =>
+			columns.filter(
+				(col) =>
+					!headers.some((header) =>
+						header.toLowerCase().includes(col.toLowerCase())
+					)
+			)
+
+		const missingColumns = findMissingColumns(requiredColumns, headers)
+		const missingOptionalColumns = findMissingColumns(optionalColumns, headers)
 
 		if (missingColumns.length > 0) {
 			messages.push({
 				type: "error",
 				message: `Missing required columns: ${missingColumns.join(
 					", "
-				)}. The file should contain columns for effect estimates, standard errors, and instruments.`,
+				)}. The file must contain columns for effect estimates, standard errors, and number of observations.`,
 			})
 		}
 
-		// Check for numeric data in effect and se columns
-		const effectColIndex = headers.findIndex((header) =>
-			header.toLowerCase().includes("effect")
-		)
-		const seColIndex = headers.findIndex((header) =>
-			header.toLowerCase().includes("se")
-		)
-
-		if (effectColIndex !== -1 && seColIndex !== -1) {
-			const hasNonNumericEffect = fullData.slice(1).some((row) => {
-				const value = row[effectColIndex]
-				return value !== undefined && value !== null && isNaN(Number(value))
+		if (missingOptionalColumns.length > 0) {
+			messages.push({
+				type: "warning",
+				message: `Missing optional columns: ${missingOptionalColumns.join(
+					", "
+				)}. This column is optional and will be ignored. You can still continue without it.`,
 			})
+		}
 
-			const hasNonNumericSE = fullData.slice(1).some((row) => {
-				const value = row[seColIndex]
-				return value !== undefined && value !== null && isNaN(Number(value))
-			})
+		const columnChecks = [
+			{
+				name: "effect",
+				index: headers.findIndex((header) =>
+					header.toLowerCase().includes("effect")
+				),
+				errorMsg:
+					"The effect column contains non-numeric values. All effect estimates must be numbers.",
+			},
+			{
+				name: "se",
+				index: headers.findIndex((header) =>
+					header.toLowerCase().includes("se")
+				),
+				errorMsg:
+					"The standard error column contains non-numeric values. All standard errors must be numbers.",
+			},
+			{
+				name: "n_obs",
+				index: headers.findIndex((header) =>
+					header.toLowerCase().includes("n_obs")
+				),
+				errorMsg:
+					"The number of observations column contains non-numeric values. All number of observations must be numbers.",
+			},
+			{
+				name: "study_id",
+				index: headers.findIndex((header) =>
+					header.toLowerCase().includes("study_id")
+				),
+				errorMsg:
+					"The study ID column contains non-numeric values. All study IDs must be numbers.",
+				optional: true,
+			},
+		]
 
-			if (hasNonNumericEffect) {
-				messages.push({
-					type: "error",
-					message:
-						"The effect column contains non-numeric values. All effect estimates must be numbers.",
+		// Only check required columns if all are present
+		const requiredColsPresent = columnChecks
+			.filter((col) => !col.optional)
+			.every((col) => col.index !== -1)
+
+		if (requiredColsPresent) {
+			columnChecks
+				.filter((col) => !col.optional)
+				.forEach((col) => {
+					const hasNonNumeric = fullData.slice(1).some((row) => {
+						const value = row[col.index]
+						return value !== undefined && value !== null && isNaN(Number(value))
+					})
+					if (hasNonNumeric) {
+						messages.push({
+							type: "error",
+							message: col.errorMsg,
+						})
+					}
 				})
-			}
+		}
 
-			if (hasNonNumericSE) {
+		// Check optional study_id column if present
+		const studyIdCol = columnChecks.find((col) => col.name === "study_id")
+		if (studyIdCol && studyIdCol.index !== -1) {
+			const hasNonNumeric = fullData.slice(1).some((row) => {
+				const value = row[studyIdCol.index]
+				return value !== undefined && value !== null && isNaN(Number(value))
+			})
+			if (hasNonNumeric) {
 				messages.push({
 					type: "error",
-					message:
-						"The standard error column contains non-numeric values. All standard errors must be numbers.",
+					message: studyIdCol.errorMsg,
 				})
 			}
 		}
 
 		// Check for negative standard errors
+		const seColIndex = columnChecks.find((col) => col.name === "se")?.index
 		if (seColIndex !== -1) {
 			const hasNegativeSE = fullData.slice(1).some((row) => {
-				const value = Number(row[seColIndex])
+				const value = seColIndex !== undefined ? Number(row[seColIndex]) : NaN
 				return !isNaN(value) && value < 0
 			})
 
@@ -187,7 +263,7 @@ export default function ValidationPage() {
 		}
 
 		// Check for reasonable data size
-		if (fullData.length > 1000) {
+		if (fullData.length > 2000) {
 			messages.push({
 				type: "warning",
 				message:
