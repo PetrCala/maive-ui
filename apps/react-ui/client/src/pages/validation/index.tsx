@@ -17,15 +17,6 @@ interface ValidationResult {
 	containsInfo?: boolean
 }
 
-// TO IMPLEMENT:
-// #' data dat can be imported from an excel file via: dat <- read_excel("inputdata.xlsx") and consists of:
-// #' \itemize{
-// #'   \item estimates: bs
-// #'   \item standard errors: sebs
-// #'   \item number of observations: Ns
-// #'   \item optional: study_id
-// #' }
-
 export default function ValidationPage() {
 	const searchParams = useSearchParams()
 	const filename = searchParams?.get("filename")
