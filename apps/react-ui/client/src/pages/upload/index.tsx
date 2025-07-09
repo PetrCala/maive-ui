@@ -46,6 +46,44 @@ export default function UploadPage() {
 					<h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
 						Upload Your Data
 					</h1>
+					<div className="mb-6">
+						<p className="text-gray-700 dark:text-gray-300 mb-2">
+							Please ensure your data file meets the following requirements:
+						</p>
+						<ul className="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1">
+							<li>
+								The file must be in <strong>.xlsx</strong>,{" "}
+								<strong>.xls</strong>, or <strong>.csv</strong> format.
+							</li>
+							<li>The first row should contain column headers.</li>
+							<li>
+								Required columns: <strong>effect</strong>, <strong>se</strong>,
+								and <strong>n_obs</strong>.
+							</li>
+							<li>
+								Optional columns: <strong>study_id</strong>.
+							</li>
+							<li>
+								<strong>No additional columns</strong> are allowed.
+							</li>
+							<li>
+								The <strong>effect</strong> column represents the effect
+								estimate. It must contain only numbers.
+							</li>
+							<li>
+								The <strong>se</strong> column represents the standard error. It
+								must contain only non-negative numbers.
+							</li>
+							<li>
+								The <strong>n_obs</strong> column represents the number of
+								observations. It must contain only positive numbers.
+							</li>
+							<li>
+								The <strong>study_id</strong> column represents the study ID. It
+								must contain only numbers.
+							</li>
+						</ul>
+					</div>
 
 					<form onSubmit={handleSubmit} className="space-y-6">
 						<div className="space-y-2">
