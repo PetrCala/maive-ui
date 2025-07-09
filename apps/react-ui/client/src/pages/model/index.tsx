@@ -23,6 +23,7 @@ export default function ModelPage() {
 	const filename = searchParams?.get("filename")
 	const fileData = searchParams?.get("data")
 	const [loading, setLoading] = useState(false)
+	const [fileDataJson, setFileDataJson] = useState<any>(null)
 	const [parameters, setParameters] = useState<ModelParameters>({
 		modelType:
 			(searchParams?.get("modelType") as ModelParameters["modelType"]) ||
@@ -63,6 +64,7 @@ export default function ModelPage() {
 						standardErrorTreatment: "bootstrap",
 					}))
 				}
+				setFileDataJson(jsonData)
 			} catch (error) {
 				console.error("Error processing file:", error)
 			}
@@ -95,7 +97,7 @@ export default function ModelPage() {
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							file_data: fileData,
+							file_data: fileDataJson,
 							parameters: parameters,
 						}),
 					}
