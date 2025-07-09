@@ -7,6 +7,7 @@ R_HOST <- Sys.getenv("R_HOST")
 R_PORT <- as.numeric(Sys.getenv("R_PORT"))
 
 pr <- plumber::plumb("executables/plumber.R")
+pr$setSerializer(plumber::serializer_unboxed_json())
 
 # ---- GLOBAL CORS FILTER -------------------------------------------------
 pr$filter("cors", function(req, res) {
