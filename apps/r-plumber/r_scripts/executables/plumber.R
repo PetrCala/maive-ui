@@ -42,7 +42,25 @@ function(file_data, parameters) {
       message = "The file must have between 3 and 4 columns (bs, sebs, Ns, and optionally study_id)."
     ))
   }
-  colnames(df) <- new_colnames
+
+  name_map <- c(
+    "effect" = "bs",
+    "se" = "sebs",
+    "n_obs" = "Ns",
+    "study_id" = "study_id"
+  )
+  final_order <- c("bs", "sebs", "Ns", "study_id")
+
+  # Rename using the mapping (keep only matching columns)
+  old_names <- names(df)
+  matched_old_names <- intersect(old_names, names(name_map))
+  names(df)[match(matched_old_names, names(df))] <- name_map[matched_old_names]
+
+  # Keep only columns in desired order that actually exist
+  existing_order <- intersect(final_order, names(df))
+  df <- df[, existing_order, drop = FALSE]
+
+  df <- df[rowSums(is.na(df)) != ncol(df), ] # Drop rows with all NAs
 
   expected_parameters <- c("modelType", "includeStudyDummies", "standardErrorTreatment", "computeAndersonRubin")
   if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
