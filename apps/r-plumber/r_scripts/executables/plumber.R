@@ -98,10 +98,9 @@ function(file_data, parameters) {
     ylab("Density")
 
   # This is the package response structure
-  maive_res <- list("beta" = round(beta, 3), "SE" = round(betase, 3), "F-test" = F_hac, "beta_standard" = round(beta0, 3), "SE_standard" = round(beta0se, 3), "Hausman" = round(Hausman, 3), "Chi2" = round(Chi2, 3), "SE_instrumented" = sebs2fit1^(1 / 2), "AR_CI" = b0_CI_AR)
+  # maive_res <- list("beta" = round(beta, 3), "SE" = round(betase, 3), "F-test" = F_hac, "beta_standard" = round(beta0, 3), "SE_standard" = round(beta0se, 3), "Hausman" = round(Hausman, 3), "Chi2" = round(Chi2, 3), "SE_instrumented" = sebs2fit1^(1 / 2), "AR_CI" = b0_CI_AR)
 
-  # TODO: Implement actual model logic here
-  # This is a placeholder response structure
+  # TODO
   result <- list(
     effectEstimate = maive_res$beta,
     standardError = maive_res$SE,
