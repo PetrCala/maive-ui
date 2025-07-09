@@ -14,7 +14,7 @@ interface ModelResults {
 		standardError: number
 		isSignificant: boolean
 	}
-	firstStageFTest: number
+	firstStageFTest: number | "NA"
 	hausmanTest: {
 		statistic: number
 		rejectsNull: boolean
@@ -156,16 +156,20 @@ export default function ResultsPage() {
 									<p className="text-sm text-gray-600 dark:text-gray-300">
 										First Stage F-Test
 									</p>
-									<p
-										className={`text-lg font-medium ${
-											parsedResults.firstStageFTest > 10
-												? "text-green-600"
-												: "text-red-600"
-										}`}
-									>
-										{parsedResults.firstStageFTest.toFixed(4)}
-										{parsedResults.firstStageFTest > 10 && " (Strong)"}
-									</p>
+									{parsedResults.firstStageFTest === "NA" ? (
+										<p className="text-lg font-medium">NA</p>
+									) : (
+										<p
+											className={`text-lg font-medium ${
+												parsedResults.firstStageFTest > 10
+													? "text-green-600"
+													: "text-red-600"
+											}`}
+										>
+											{parsedResults.firstStageFTest.toFixed(4)}
+											{parsedResults.firstStageFTest > 10 && " (Strong)"}
+										</p>
+									)}
 								</div>
 								<div>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
