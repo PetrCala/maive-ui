@@ -1,4 +1,5 @@
 cli
+devtools
 dplyr
 ggplot2
 plumber

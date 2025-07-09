@@ -8,7 +8,7 @@ interface ModelResults {
 	effectEstimate: number
 	standardError: number
 	isSignificant: boolean
-	andersonRubinCI?: [number, number]
+	andersonRubinCI: [number, number] | "NA"
 	publicationBias: {
 		estimate: number
 		standardError: number
@@ -95,13 +95,13 @@ export default function ResultsPage() {
 										{parsedResults.isSignificant ? "Yes" : "No"}
 									</p>
 								</div>
-								{parsedResults.andersonRubinCI && (
+								{typeof parsedResults.andersonRubinCI === "object" && (
 									<div>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											Anderson-Rubin 95% CI
 										</p>
 										<p className="text-lg font-medium">
-											[{parsedResults.andersonRubinCI[0].toFixed(4)},{" "}
+											[{parsedResults.andersonRubinCI[0].toFixed(4)},
 											{parsedResults.andersonRubinCI[1].toFixed(4)}]
 										</p>
 									</div>
