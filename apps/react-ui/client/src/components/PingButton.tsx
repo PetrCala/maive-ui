@@ -1,6 +1,5 @@
 /**
  * A button that pings the server and alerts the user with the status and time.
- * Only visible in development mode.
  * @returns A button that pings the server and alerts the user with the status and time.
  */
 export default function PingButton() {
