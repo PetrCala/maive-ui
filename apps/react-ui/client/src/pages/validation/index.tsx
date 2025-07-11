@@ -28,6 +28,9 @@ export default function ValidationPage() {
 	const [loading, setLoading] = useState(true)
 	const [uploadedData, setUploadedData] = useState<any>(null)
 	const router = useRouter()
+	// Local state for this component's uploaded data.
+	// The global store's setUploadedData is renamed to setStoreData to avoid conflicts.
+	// Use local state for component logic and rendering; use the store function for global updates.
 	const { setUploadedData: setStoreData } = useDataStore()
 
 	useEffect(() => {
