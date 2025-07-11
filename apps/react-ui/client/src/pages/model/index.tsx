@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { generateMockResults, isDevelopmentMode } from "@utils/mockData"
+import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
 import { useDataStore, dataCache } from "@/store/dataStore"
 
 interface ModelParameters {
@@ -93,9 +93,9 @@ export default function ModelPage() {
 		try {
 			let result: { data?: any; error?: any; message?: string }
 
-			if (isDevelopmentMode()) {
+			if (shouldUseMockResults()) {
 				// Use mock data in development mode
-				console.debug("Using mock data in development mode")
+				console.debug("Generating mock results in development mode")
 				result = { data: generateMockResults() }
 			} else {
 				const response = await fetch(

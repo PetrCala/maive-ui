@@ -1,7 +1,31 @@
 import { faker } from "@faker-js/faker"
 import mockFunnelPlot from "./mockFunnelPlot"
 
-export const generateMockResults = () => {
+// Generate mock CSV data for development
+const generateMockCSVFile = (): File => {
+	// Generate 10-20 rows of realistic data
+	const numRows = faker.number.int({ min: 10, max: 20 })
+
+	// Create CSV content
+	const headers = ["effect", "se", "n_obs", "study_id"]
+	const csvRows = [headers.join(",")]
+
+	for (let i = 0; i < numRows; i++) {
+		const effect = faker.number.float({ min: -2, max: 2, multipleOf: 0.001 })
+		const se = faker.number.float({ min: 0.01, max: 0.5, multipleOf: 0.001 })
+		const nObs = faker.number.int({ min: 50, max: 1000 })
+		const studyId = i + 1
+
+		csvRows.push(`${effect},${se},${nObs},${studyId}`)
+	}
+
+	const csvContent = csvRows.join("\n")
+	const blob = new Blob([csvContent], { type: "text/csv" })
+
+	return new File([blob], "mock_data.csv", { type: "text/csv" })
+}
+
+const generateMockResults = () => {
 	const funnelPlotBase64 = mockFunnelPlot
 
 	return {
@@ -36,9 +60,11 @@ export const generateMockResults = () => {
 	}
 }
 
-export const isDevelopmentMode = () => {
+const shouldUseMockResults = () => {
 	return (
 		process.env.NODE_ENV === "development" &&
 		process.env.NEXT_PUBLIC_USE_MOCK_DATA === "true"
 	)
 }
+
+export { generateMockCSVFile, generateMockResults, shouldUseMockResults }
