@@ -63,17 +63,3 @@ export const processUploadedFile = async (
 		reader.readAsDataURL(file)
 	})
 }
-
-// Convert data back to base64 for API calls
-export const dataToBase64 = (data: any[]): string => {
-	// Create a simple CSV-like structure for the API
-	const headers = Object.keys(data[0] || {})
-	const csvData = [
-		headers,
-		...data.map((row) => headers.map((header) => row[header])),
-	]
-
-	// Convert to base64
-	const csvString = csvData.map((row) => row.join(",")).join("\n")
-	return btoa(csvString)
-}
