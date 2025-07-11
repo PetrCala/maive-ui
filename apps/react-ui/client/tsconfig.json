@@ -24,6 +24,7 @@
 			"@components/*": ["./src/components/*"],
 			"@pages/*": ["./src/pages/*"],
 			"@styles/*": ["./src/styles/*"],
+			"@store/*": ["./src/store/*"],
 			"@tests/*": ["./src/tests/*"],
 			"@utils/*": ["./src/utils/*"]
 		}
