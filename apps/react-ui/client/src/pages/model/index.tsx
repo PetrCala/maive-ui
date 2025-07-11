@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -24,17 +24,10 @@ export default function ModelPage() {
 	const [loading, setLoading] = useState(false)
 	const [uploadedData, setUploadedData] = useState<any>(null)
 	const [parameters, setParameters] = useState<ModelParameters>({
-		modelType:
-			(searchParams?.get("modelType") as ModelParameters["modelType"]) ||
-			"MAIVE",
-		includeStudyDummies:
-			searchParams?.get("includeStudyDummies") === "true" || false,
-		standardErrorTreatment:
-			(searchParams?.get(
-				"standardErrorTreatment"
-			) as ModelParameters["standardErrorTreatment"]) || "not_clustered",
-		computeAndersonRubin:
-			searchParams?.get("computeAndersonRubin") === "true" || false,
+		modelType: "MAIVE",
+		includeStudyDummies: false,
+		standardErrorTreatment: "not_clustered",
+		computeAndersonRubin: false,
 	})
 	const router = useRouter()
 
@@ -43,6 +36,16 @@ export default function ModelPage() {
 			loadDataFromStore()
 		}
 	}, [dataId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+	useMemo(() => {
+		if (searchParams?.get("parameters")) {
+			const parsed = JSON.parse(
+				decodeURIComponent(searchParams.get("parameters") || "{}")
+			) as ModelParameters
+			const params = { ...parameters, ...parsed }
+			setParameters(params)
+		}
+	}, [searchParams]) // eslint-disable-line react-hooks/exhaustive-deps
 
 	const loadDataFromStore = () => {
 		try {
