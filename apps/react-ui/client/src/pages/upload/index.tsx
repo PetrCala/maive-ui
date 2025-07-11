@@ -3,12 +3,9 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useDataStore, dataCache } from "@/store/dataStore"
-import {
-	generateDataId,
-	processUploadedFile,
-	generateMockCSVFile,
-} from "@/utils/dataUtils"
+import { useDataStore, dataCache } from "@store/dataStore"
+import { generateDataId, processUploadedFile } from "@utils/dataUtils"
+import { generateMockCSVFile } from "@utils/mockData"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
