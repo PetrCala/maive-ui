@@ -40,7 +40,7 @@ const generateMockResults = () => {
 				  ]
 				: "NA",
 		publicationBias: {
-			estimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+			estimate: faker.number.float({ min: -2, max: 2, multipleOf: 0.0001 }),
 			standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
 			isSignificant: faker.datatype.boolean(),
 		},
