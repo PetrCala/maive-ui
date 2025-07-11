@@ -161,10 +161,11 @@ export default function MAIVEInfoModal({
 						<div className="space-y-3">
 							<div className="border-l-4 border-blue-500 pl-4">
 								<h4 className="font-semibold text-gray-900 dark:text-white">
-									Original MAIVE Paper
+									MAIVE Website
 								</h4>
 								<p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-									The foundational paper introducing the MAIVE estimator.
+									View the MAIVE website for more information about the
+									estimator.
 								</p>
 								<a
 									href={CONST.MAIVE_URL}
@@ -172,10 +173,26 @@ export default function MAIVEInfoModal({
 									rel="noopener noreferrer"
 									className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
 								>
-									View Paper →
+									View Website →
 								</a>
 							</div>
 							<div className="border-l-4 border-green-500 pl-4">
+								<h4 className="font-semibold text-gray-900 dark:text-white">
+									Original MAIVE Paper
+								</h4>
+								<p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+									The foundational paper introducing the MAIVE estimator.
+								</p>
+								<a
+									href={CONST.MAIVE_GITHUB_URL}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="text-green-600 dark:text-green-400 hover:underline text-sm"
+								>
+									View Paper →
+								</a>
+							</div>
+							<div className="border-l-4 border-purple-500 pl-4">
 								<h4 className="font-semibold text-gray-900 dark:text-white">
 									GitHub Repository
 								</h4>
@@ -187,29 +204,11 @@ export default function MAIVEInfoModal({
 									href={CONST.MAIVE_GITHUB_URL}
 									target="_blank"
 									rel="noopener noreferrer"
-									className="text-green-600 dark:text-green-400 hover:underline text-sm"
+									className="text-purple-600 dark:text-purple-400 hover:underline text-sm"
 								>
-									Visit MAIVE on GitHub →
+									Visit GitHub →
 								</a>
 							</div>
-							{/* <div className="border-l-4 border-purple-500 pl-4">
-								<h4 className="font-semibold text-gray-900 dark:text-white">
-									Case Studies
-								</h4>
-								<p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-									Real-world applications and examples of MAIVE in action
-								</p>
-								<a
-									href="#"
-									className="text-purple-600 dark:text-purple-400 hover:underline text-sm"
-									onClick={(e) => {
-										e.preventDefault()
-										alert("Case studies link would be added here")
-									}}
-								>
-									Explore Case Studies →
-								</a>
-							</div> */}
 						</div>
 					</section>
 
