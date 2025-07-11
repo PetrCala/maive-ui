@@ -1,4 +1,4 @@
-import PingButton from "@/components/PingButton"
+import PingButton from "@components/PingButton"
 import Link from "next/link"
 
 export default function Home() {
