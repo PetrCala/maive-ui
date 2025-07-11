@@ -3,8 +3,8 @@ import mockFunnelPlot from "./mockFunnelPlot"
 
 // Generate mock CSV data for development
 const generateMockCSVFile = (): File => {
-	// Generate 10-20 rows of realistic data
-	const numRows = faker.number.int({ min: 10, max: 20 })
+	// Generate 10-2000 rows of realistic data
+	const numRows = faker.number.int({ min: 10, max: 2000 })
 
 	// Create CSV content
 	const headers = ["effect", "se", "n_obs", "study_id"]
@@ -13,11 +13,12 @@ const generateMockCSVFile = (): File => {
 	for (let i = 0; i < numRows; i++) {
 		const effect = faker.number.float({ min: -2, max: 2, multipleOf: 0.001 })
 		const se = faker.number.float({ min: 0.01, max: 0.5, multipleOf: 0.001 })
-		const nObs = faker.number.int({ min: 50, max: 1000 })
-		const studyId = i + 1
+		const nObs = faker.number.int({ min: 50, max: 10000 })
+		const studyId = Math.floor(i / 5) + 1
 
 		csvRows.push(`${effect},${se},${nObs},${studyId}`)
 	}
+	console.log(csvRows)
 
 	const csvContent = csvRows.join("\n")
 	const blob = new Blob([csvContent], { type: "text/csv" })
