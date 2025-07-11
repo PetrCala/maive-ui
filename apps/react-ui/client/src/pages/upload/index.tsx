@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation"
 import { useDataStore, dataCache } from "@store/dataStore"
 import { generateDataId, processUploadedFile } from "@utils/dataUtils"
 import { generateMockCSVFile } from "@utils/mockData"
-import SuccessIndicator from "@/components/SuccessIndicator"
+import SuccessIndicator from "@components/SuccessIndicator"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
