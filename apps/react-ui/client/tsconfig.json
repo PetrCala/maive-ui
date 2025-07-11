@@ -19,7 +19,7 @@
 			}
 		],
 		"paths": {
-			"@/*": ["./src/*"],
+			"@src/*": ["./src/*"],
 			"@providers/*": ["./src/providers/*"],
 			"@components/*": ["./src/components/*"],
 			"@pages/*": ["./src/pages/*"],

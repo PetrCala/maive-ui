@@ -1,4 +1,4 @@
-import { useState } from "react"
+import CONST from "@src/CONST"
 
 interface MAIVEInfoModalProps {
 	isOpen: boolean
@@ -164,38 +164,35 @@ export default function MAIVEInfoModal({
 									Original MAIVE Paper
 								</h4>
 								<p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-									The foundational paper introducing the MAIVE methodology
+									The foundational paper introducing the MAIVE estimator.
 								</p>
 								<a
-									href="#"
+									href={CONST.MAIVE_URL}
+									target="_blank"
+									rel="noopener noreferrer"
 									className="text-blue-600 dark:text-blue-400 hover:underline text-sm"
-									onClick={(e) => {
-										e.preventDefault()
-										alert("Paper link would be added here")
-									}}
 								>
 									View Paper →
 								</a>
 							</div>
 							<div className="border-l-4 border-green-500 pl-4">
 								<h4 className="font-semibold text-gray-900 dark:text-white">
-									Technical Documentation
+									GitHub Repository
 								</h4>
 								<p className="text-sm text-gray-600 dark:text-gray-300 mb-2">
-									Detailed technical specifications and implementation guide
+									View the source code, technical documentation, and contribute
+									on GitHub.
 								</p>
 								<a
-									href="#"
+									href={CONST.MAIVE_GITHUB_URL}
+									target="_blank"
+									rel="noopener noreferrer"
 									className="text-green-600 dark:text-green-400 hover:underline text-sm"
-									onClick={(e) => {
-										e.preventDefault()
-										alert("Documentation link would be added here")
-									}}
 								>
-									Read Documentation →
+									Visit MAIVE on GitHub →
 								</a>
 							</div>
-							<div className="border-l-4 border-purple-500 pl-4">
+							{/* <div className="border-l-4 border-purple-500 pl-4">
 								<h4 className="font-semibold text-gray-900 dark:text-white">
 									Case Studies
 								</h4>
@@ -212,7 +209,7 @@ export default function MAIVEInfoModal({
 								>
 									Explore Case Studies →
 								</a>
-							</div>
+							</div> */}
 						</div>
 					</section>
 
