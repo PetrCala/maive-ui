@@ -264,9 +264,8 @@ export default function ValidationPage() {
 		}
 
 		// If no errors, add success message
-		const nonInfoMessages = messages.filter((msg) => msg.type !== "info")
-		const hasErrors = nonInfoMessages.some((msg) => msg.type === "error")
-		if (!hasErrors && nonInfoMessages.length === 0) {
+		const hasErrors = messages.some((msg) => msg.type === "error")
+		if (!hasErrors) {
 			messages.push({
 				type: "success",
 				message: "Your data is valid and ready for analysis!",
