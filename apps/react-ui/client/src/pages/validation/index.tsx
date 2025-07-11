@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import * as XLSX from "xlsx"
+import { useDataStore, dataCache } from "@store/dataStore"
 
 interface ValidationMessage {
 	type: "success" | "error" | "warning" | "info"
@@ -19,55 +19,68 @@ interface ValidationResult {
 
 export default function ValidationPage() {
 	const searchParams = useSearchParams()
-	const filename = searchParams?.get("filename")
-	const fileData = searchParams?.get("data")
+	const dataId = searchParams?.get("dataId")
 	const [preview, setPreview] = useState<string[][]>([])
 	const [validationResult, setValidationResult] = useState<ValidationResult>({
 		isValid: false,
 		messages: [],
 	})
 	const [loading, setLoading] = useState(true)
+	const [uploadedData, setUploadedData] = useState<any>(null)
 	const router = useRouter()
+	const { setUploadedData: setStoreData } = useDataStore()
 
 	useEffect(() => {
-		if (fileData) {
-			processFileData()
+		if (dataId) {
+			loadDataFromStore()
 		}
-	}, [fileData]) // eslint-disable-line react-hooks/exhaustive-deps
+	}, [dataId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-	const processFileData = () => {
+	const loadDataFromStore = () => {
 		try {
-			// Remove the data URL prefix
-			const base64Data = fileData!.split(",")[1]
-			const binaryData = atob(base64Data)
-			const bytes = new Uint8Array(binaryData.length)
-			for (let i = 0; i < binaryData.length; i++) {
-				bytes[i] = binaryData.charCodeAt(i)
+			// Try to get data from cache first
+			let data = dataCache.get(dataId!)
+
+			// If not in cache, try to get from store
+			if (!data) {
+				const storeData = useDataStore.getState().uploadedData
+				if (storeData && storeData.id === dataId) {
+					data = storeData
+					// Also put it back in cache
+					dataCache.set(dataId, data)
+				}
 			}
 
-			// Read the Excel file
-			const workbook = XLSX.read(bytes, { type: "array" })
-			const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-			const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
+			if (!data) {
+				throw new Error("Data not found")
+			}
 
-			// Convert to string[][] and take first 5 rows for preview
-			const previewData = (jsonData as any[])
-				.slice(0, 5)
-				.map((row) => row.map((cell: unknown) => String(cell)))
+			setUploadedData(data)
+
+			// Convert data to preview format
+			const headers = Object.keys(data.data[0] || {})
+			const previewData = [
+				headers,
+				...data.data
+					.slice(0, 4)
+					.map((row: any) =>
+						headers.map((header: string) => String(row[header] || ""))
+					),
+			]
 			setPreview(previewData)
 
 			// Validate the data
-			const validation = validateData(previewData, jsonData as any[])
+			const validation = validateData(previewData, data.data)
 			setValidationResult(validation)
 		} catch (error) {
-			console.error("Error processing file:", error)
+			console.error("Error loading data:", error)
 			setValidationResult({
 				isValid: false,
 				messages: [
 					{
 						type: "error",
 						message:
-							"Failed to process the uploaded file. Please ensure it's a valid Excel or CSV file.",
+							"Failed to load the uploaded data. Please try uploading again.",
 					},
 				],
 			})
@@ -86,7 +99,7 @@ export default function ValidationPage() {
 		const optionalColumns = ["study_id"]
 
 		// Check if file has data
-		if (fullData.length <= 1) {
+		if (fullData.length === 0) {
 			messages.push({
 				type: "error",
 				message:
@@ -192,8 +205,8 @@ export default function ValidationPage() {
 			columnChecks
 				.filter((col) => !col.optional)
 				.forEach((col) => {
-					const hasNonNumeric = fullData.slice(1).some((row) => {
-						const value = row[col.index]
+					const hasNonNumeric = fullData.some((row) => {
+						const value = row[headers[col.index]]
 						return value !== undefined && value !== null && isNaN(Number(value))
 					})
 					if (hasNonNumeric) {
@@ -208,8 +221,8 @@ export default function ValidationPage() {
 		// Check optional study_id column if present
 		const studyIdCol = columnChecks.find((col) => col.name === "study_id")
 		if (studyIdCol && studyIdCol.index !== -1) {
-			const hasNonNumeric = fullData.slice(1).some((row) => {
-				const value = row[studyIdCol.index]
+			const hasNonNumeric = fullData.some((row) => {
+				const value = row[headers[studyIdCol.index]]
 				return value !== undefined && value !== null && isNaN(Number(value))
 			})
 			if (hasNonNumeric) {
@@ -223,8 +236,9 @@ export default function ValidationPage() {
 		// Check for negative standard errors
 		const seColIndex = columnChecks.find((col) => col.name === "se")?.index
 		if (seColIndex !== -1) {
-			const hasNegativeSE = fullData.slice(1).some((row) => {
-				const value = seColIndex !== undefined ? Number(row[seColIndex]) : NaN
+			const hasNegativeSE = fullData.some((row) => {
+				const value =
+					seColIndex !== undefined ? Number(row[headers[seColIndex]]) : NaN
 				return !isNaN(value) && value < 0
 			})
 
@@ -238,13 +252,11 @@ export default function ValidationPage() {
 		}
 
 		// Check for missing values
-		const hasMissingValues = fullData
-			.slice(1)
-			.some((row) =>
-				row.some(
-					(cell: unknown) => cell === undefined || cell === null || cell === ""
-				)
+		const hasMissingValues = fullData.some((row) =>
+			Object.values(row).some(
+				(cell: unknown) => cell === undefined || cell === null || cell === ""
 			)
+		)
 
 		if (hasMissingValues) {
 			messages.push({
@@ -280,20 +292,16 @@ export default function ValidationPage() {
 	}
 
 	const handleContinue = () => {
-		if (validationResult.isValid) {
-			router.push(
-				`/model?filename=${encodeURIComponent(
-					filename || ""
-				)}&data=${encodeURIComponent(fileData || "")}`
-			)
+		if (validationResult.isValid && uploadedData) {
+			router.push(`/model?dataId=${dataId}`)
 		}
 	}
 
-	if (!fileData) {
+	if (!dataId) {
 		return (
 			<main className="flex min-h-screen flex-col items-center justify-center p-24">
 				<div className="text-center">
-					<h1 className="text-2xl font-bold mb-4">No file selected</h1>
+					<h1 className="text-2xl font-bold mb-4">No data selected</h1>
 					<Link href="/upload" className="text-blue-600 hover:text-blue-700">
 						Go back to upload
 					</Link>
@@ -327,7 +335,7 @@ export default function ValidationPage() {
 
 				<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
 					<h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-						Data Validation: {filename}
+						Data Validation: {uploadedData?.filename}
 					</h1>
 
 					{/* File Preview */}
