@@ -28,6 +28,8 @@ export default function ResultsPage() {
 	const results = searchParams?.get("results")
 	const dataId = searchParams?.get("dataId")
 	const parameters = searchParams?.get("parameters")
+	const shouldDisplayAndersonRubinCI =
+		parameters && JSON.parse(parameters)?.computeAndersonRubin === true
 
 	if (!results) {
 		return (
@@ -95,14 +97,17 @@ export default function ResultsPage() {
 										{parsedResults.isSignificant ? "Yes" : "No"}
 									</p>
 								</div>
-								{typeof parsedResults.andersonRubinCI === "object" && (
+								{!!shouldDisplayAndersonRubinCI && (
 									<div>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											Anderson-Rubin 95% CI
 										</p>
 										<p className="text-lg font-medium">
-											[{parsedResults.andersonRubinCI[0].toFixed(4)},
-											{parsedResults.andersonRubinCI[1].toFixed(4)}]
+											{typeof parsedResults.andersonRubinCI === "object"
+												? `[${parsedResults.andersonRubinCI[0].toFixed(
+														4
+												  )}, ${parsedResults.andersonRubinCI[1].toFixed(4)}]`
+												: "NA"}
 										</p>
 									</div>
 								)}
