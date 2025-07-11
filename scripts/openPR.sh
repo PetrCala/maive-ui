@@ -12,7 +12,7 @@ usage() {
 }
 
 READY_TO_BUILD=""
-SEMVER_LEVEL="build"
+SEMVER_LEVEL="patch"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
