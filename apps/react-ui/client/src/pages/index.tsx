@@ -18,7 +18,7 @@ export default function Home() {
 					Upload Your Data
 				</Link>
 			</div>
-			<PingButton />
+			{process.env.NODE_ENV === "development" && <PingButton />}
 		</main>
 	)
 }
