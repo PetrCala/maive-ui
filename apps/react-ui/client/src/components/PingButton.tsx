@@ -4,10 +4,6 @@
  * @returns A button that pings the server and alerts the user with the status and time.
  */
 export default function PingButton() {
-	if (process.env.NODE_ENV !== "development") {
-		return null
-	}
-
 	const pingServer = async () => {
 		if (!process.env.NEXT_PUBLIC_R_API_URL) {
 			alert("NEXT_PUBLIC_R_API_URL is not set")
