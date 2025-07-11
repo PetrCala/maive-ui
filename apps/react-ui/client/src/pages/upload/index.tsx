@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation"
 import { useDataStore, dataCache } from "@store/dataStore"
 import { generateDataId, processUploadedFile } from "@utils/dataUtils"
 import { generateMockCSVFile } from "@utils/mockData"
+import SuccessIndicator from "@/components/SuccessIndicator"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -140,15 +141,18 @@ export default function UploadPage() {
 										cursor-pointer
 										transition-colors duration-200"
 								/>
-								{process.env.NODE_ENV === "development" && (
-									<button
-										type="button"
-										onClick={handleGenerateMockData}
-										className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-900/70 transition-colors duration-200"
-									>
-										Generate Mock Data
-									</button>
-								)}
+								{process.env.NODE_ENV === "development" &&
+									(!selectedFile ? (
+										<button
+											type="button"
+											onClick={handleGenerateMockData}
+											className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-900/70 transition-colors duration-200"
+										>
+											Generate Mock Data
+										</button>
+									) : (
+										<SuccessIndicator />
+									))}
 							</div>
 						</div>
 
