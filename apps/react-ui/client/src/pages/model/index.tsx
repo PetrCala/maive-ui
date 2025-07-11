@@ -22,7 +22,6 @@ export default function ModelPage() {
 	const searchParams = useSearchParams()
 	const dataId = searchParams?.get("dataId")
 	const [loading, setLoading] = useState(false)
-	const [fileDataJson, setFileDataJson] = useState<any>(null)
 	const [uploadedData, setUploadedData] = useState<any>(null)
 	const [parameters, setParameters] = useState<ModelParameters>({
 		modelType:
@@ -65,7 +64,6 @@ export default function ModelPage() {
 			}
 
 			setUploadedData(data)
-			setFileDataJson(data.data)
 
 			// Check if studyID column exists and update standard error treatment accordingly
 			const headers = Object.keys(data.data[0] || {})
@@ -108,7 +106,7 @@ export default function ModelPage() {
 							"Content-Type": "application/json",
 						},
 						body: JSON.stringify({
-							file_data: JSON.stringify(fileDataJson),
+							file_data: JSON.stringify(uploadedData.data),
 							parameters: JSON.stringify(parameters),
 						}),
 					}
