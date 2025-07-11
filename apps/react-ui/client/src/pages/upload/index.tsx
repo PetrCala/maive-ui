@@ -3,10 +3,14 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
+import { useDataStore, dataCache } from "@/store/dataStore"
+import { generateDataId, processUploadedFile } from "@/utils/dataUtils"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
+	const [isProcessing, setIsProcessing] = useState(false)
 	const router = useRouter()
+	const { setUploadedData } = useDataStore()
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files && event.target.files[0]) {
@@ -18,18 +22,37 @@ export default function UploadPage() {
 		event.preventDefault()
 		if (!selectedFile) return
 
-		// Convert file to base64 for URL state
-		const reader = new FileReader()
-		reader.onload = () => {
-			const base64Data = reader.result as string
-			// Navigate to validation page with file data
-			router.push(
-				`/validation?filename=${encodeURIComponent(
-					selectedFile.name
-				)}&data=${encodeURIComponent(base64Data)}`
+		setIsProcessing(true)
+		try {
+			// Process the uploaded file
+			const { data, base64Data } = await processUploadedFile(selectedFile)
+
+			// Generate unique ID for this data
+			const dataId = generateDataId()
+
+			// Create the uploaded data object
+			const uploadedData = {
+				id: dataId,
+				filename: selectedFile.name,
+				data: data,
+				base64Data: base64Data,
+				uploadedAt: new Date(),
+			}
+
+			// Store in Zustand store and cache
+			setUploadedData(uploadedData)
+			dataCache.set(dataId, uploadedData)
+
+			// Navigate to validation page with data ID
+			router.push(`/validation?dataId=${dataId}`)
+		} catch (error) {
+			console.error("Error processing file:", error)
+			alert(
+				"Failed to process the uploaded file. Please ensure it's a valid Excel or CSV file."
 			)
+		} finally {
+			setIsProcessing(false)
 		}
-		reader.readAsDataURL(selectedFile)
 	}
 
 	return (
@@ -116,15 +139,15 @@ export default function UploadPage() {
 
 						<button
 							type="submit"
-							disabled={!selectedFile}
+							disabled={!selectedFile || isProcessing}
 							className={`w-full px-6 py-3 text-white font-semibold rounded-lg
 								${
-									selectedFile
+									selectedFile && !isProcessing
 										? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
 										: "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
 								} transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
 						>
-							Upload and Process
+							{isProcessing ? "Processing..." : "Upload and Process"}
 						</button>
 					</form>
 				</div>
