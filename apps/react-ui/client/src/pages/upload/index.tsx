@@ -4,7 +4,11 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useDataStore, dataCache } from "@/store/dataStore"
-import { generateDataId, processUploadedFile } from "@/utils/dataUtils"
+import {
+	generateDataId,
+	processUploadedFile,
+	generateMockCSVFile,
+} from "@/utils/dataUtils"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -16,6 +20,11 @@ export default function UploadPage() {
 		if (event.target.files && event.target.files[0]) {
 			setSelectedFile(event.target.files[0])
 		}
+	}
+
+	const handleGenerateMockData = () => {
+		const mockFile = generateMockCSVFile()
+		setSelectedFile(mockFile)
 	}
 
 	const handleSubmit = async (event: React.FormEvent) => {
@@ -116,13 +125,13 @@ export default function UploadPage() {
 							>
 								Select your data file
 							</label>
-							<div className="mt-1">
+							<div className="mt-1 flex gap-3">
 								<input
 									id="file-upload"
 									type="file"
 									accept=".xlsx,.xls,.csv"
 									onChange={handleFileChange}
-									className="block w-full text-sm text-gray-500
+									className="block flex-1 text-sm text-gray-500
 										file:mr-4 file:py-2 file:px-4
 										file:rounded-full file:border-0
 										file:text-sm file:font-semibold
@@ -134,6 +143,15 @@ export default function UploadPage() {
 										cursor-pointer
 										transition-colors duration-200"
 								/>
+								{process.env.NODE_ENV === "development" && (
+									<button
+										type="button"
+										onClick={handleGenerateMockData}
+										className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-900/70 transition-colors duration-200"
+									>
+										Generate Mock Data
+									</button>
+								)}
 							</div>
 						</div>
 
