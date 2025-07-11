@@ -18,7 +18,6 @@ const generateMockCSVFile = (): File => {
 
 		csvRows.push(`${effect},${se},${nObs},${studyId}`)
 	}
-	console.log(csvRows)
 
 	const csvContent = csvRows.join("\n")
 	const blob = new Blob([csvContent], { type: "text/csv" })
