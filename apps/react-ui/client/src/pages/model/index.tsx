@@ -3,9 +3,9 @@
 import { useState, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
-import * as XLSX from "xlsx"
 import { useRouter } from "next/navigation"
 import { generateMockResults, isDevelopmentMode } from "@utils/mockData"
+import { useDataStore, dataCache } from "@/store/dataStore"
 
 interface ModelParameters {
 	modelType: "MAIVE" | "WAIVE"
@@ -20,10 +20,10 @@ interface ModelParameters {
 
 export default function ModelPage() {
 	const searchParams = useSearchParams()
-	const filename = searchParams?.get("filename")
-	const fileData = searchParams?.get("data")
+	const dataId = searchParams?.get("dataId")
 	const [loading, setLoading] = useState(false)
 	const [fileDataJson, setFileDataJson] = useState<any>(null)
+	const [uploadedData, setUploadedData] = useState<any>(null)
 	const [parameters, setParameters] = useState<ModelParameters>({
 		modelType:
 			(searchParams?.get("modelType") as ModelParameters["modelType"]) ||
@@ -40,49 +40,48 @@ export default function ModelPage() {
 	const router = useRouter()
 
 	useEffect(() => {
-		if (fileData) {
-			// Check if studyID column exists and update standard error treatment accordingly
-			try {
-				const base64Data = fileData!.split(",")[1]
-				const binaryData = atob(base64Data)
-				const bytes = new Uint8Array(binaryData.length)
-				for (let i = 0; i < binaryData.length; i++) {
-					bytes[i] = binaryData.charCodeAt(i)
-				}
-
-				// Read the Excel file to check for studyID
-				const workbook = XLSX.read(bytes, { type: "array" })
-				const firstSheet = workbook.Sheets[workbook.SheetNames[0]]
-				const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 })
-				const headers = (jsonData as any[])[0] ?? []
-				const hasStudyID = headers.some((header: string) =>
-					/\bstudy[\s_-]?id\b/i.test(header)
-				)
-				if (hasStudyID) {
-					setParameters((prev) => ({
-						...prev,
-						standardErrorTreatment: "bootstrap",
-					}))
-				}
-
-				const records = (jsonData as any[])
-					.slice(1) // skip header row
-					.map((row) =>
-						headers.reduce(
-							(obj: Record<string, any>, h: string, idx: number) => {
-								obj[h] = row[idx] // map cell → corresponding header
-								return obj
-							},
-							{} as Record<string, any>
-						)
-					)
-
-				setFileDataJson(records)
-			} catch (error) {
-				console.error("Error processing file:", error)
-			}
+		if (dataId) {
+			loadDataFromStore()
 		}
-	}, [fileData]) // eslint-disable-line react-hooks/exhaustive-deps
+	}, [dataId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+	const loadDataFromStore = () => {
+		try {
+			// Try to get data from cache first
+			let data = dataCache.get(dataId!)
+
+			// If not in cache, try to get from store
+			if (!data) {
+				const storeData = useDataStore.getState().uploadedData
+				if (storeData && storeData.id === dataId) {
+					data = storeData
+					// Also put it back in cache
+					dataCache.set(dataId, data)
+				}
+			}
+
+			if (!data) {
+				throw new Error("Data not found")
+			}
+
+			setUploadedData(data)
+			setFileDataJson(data.data)
+
+			// Check if studyID column exists and update standard error treatment accordingly
+			const headers = Object.keys(data.data[0] || {})
+			const hasStudyID = headers.some((header: string) =>
+				/\bstudy[\s_-]?id\b/i.test(header)
+			)
+			if (hasStudyID) {
+				setParameters((prev) => ({
+					...prev,
+					standardErrorTreatment: "bootstrap",
+				}))
+			}
+		} catch (error) {
+			console.error("Error loading data:", error)
+		}
+	}
 
 	const handleParameterChange = (
 		param: keyof ModelParameters,
@@ -127,7 +126,7 @@ export default function ModelPage() {
 			const results = result.data
 			const searchParams = new URLSearchParams({
 				results: JSON.stringify(results),
-				fileData: fileData || "",
+				dataId: dataId || "",
 				parameters: JSON.stringify(parameters),
 			})
 			router.push(`/results?${searchParams.toString()}`)
@@ -142,11 +141,11 @@ export default function ModelPage() {
 		}
 	}
 
-	if (!fileData) {
+	if (!dataId) {
 		return (
 			<main className="flex min-h-screen flex-col items-center justify-center p-24">
 				<div className="text-center">
-					<h1 className="text-2xl font-bold mb-4">No file selected</h1>
+					<h1 className="text-2xl font-bold mb-4">No data selected</h1>
 					<Link href="/upload" className="text-blue-600 hover:text-blue-700">
 						Go back to upload
 					</Link>
@@ -159,9 +158,7 @@ export default function ModelPage() {
 		<main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
 			<div className="max-w-4xl w-full">
 				<Link
-					href={`/validation?filename=${encodeURIComponent(
-						filename || ""
-					)}&data=${encodeURIComponent(fileData || "")}`}
+					href={`/validation?dataId=${dataId}`}
 					className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
 				>
 					← Back to Validation

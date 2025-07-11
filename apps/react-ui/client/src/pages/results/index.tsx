@@ -26,7 +26,7 @@ export default function ResultsPage() {
 	const searchParams = useSearchParams()
 	const router = useRouter()
 	const results = searchParams?.get("results")
-	const fileData = searchParams?.get("fileData")
+	const dataId = searchParams?.get("dataId")
 	const parameters = searchParams?.get("parameters")
 
 	if (!results) {
@@ -45,7 +45,7 @@ export default function ResultsPage() {
 	const parsedResults: ModelResults = JSON.parse(results)
 
 	const handleRerunModel = () => {
-		router.push(`/model?data=${fileData}&parameters=${parameters}`)
+		router.push(`/model?dataId=${dataId}&parameters=${parameters}`)
 	}
 
 	const handleNewUpload = () => {
