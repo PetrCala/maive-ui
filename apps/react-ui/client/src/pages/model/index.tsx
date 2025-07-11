@@ -5,7 +5,7 @@ import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
-import { useDataStore, dataCache } from "@/store/dataStore"
+import { useDataStore, dataCache } from "@store/dataStore"
 
 interface ModelParameters {
 	modelType: "MAIVE" | "WAIVE"

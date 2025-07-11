@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
 import { describe, it, expect, vi } from "vitest"
 import "@testing-library/jest-dom"
-import { generateMockResults } from "@/utils/mockData"
+import { generateMockResults } from "@utils/mockData"
 
 describe("Placeholder test", () => {
 	it("should pass", () => {
