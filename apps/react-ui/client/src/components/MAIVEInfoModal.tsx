@@ -184,7 +184,7 @@ export default function MAIVEInfoModal({
 									The foundational paper introducing the MAIVE estimator.
 								</p>
 								<a
-									href={CONST.MAIVE_GITHUB_URL}
+									href={CONST.MAIVE_PAPER_URL}
 									target="_blank"
 									rel="noopener noreferrer"
 									className="text-green-600 dark:text-green-400 hover:underline text-sm"
