@@ -54,6 +54,7 @@ const generateMockResults = () => {
 				  }),
 		hausmanTest: {
 			statistic: faker.number.float({ min: 0, max: 100, multipleOf: 0.0001 }),
+			criticalValue: 3.841,
 			rejectsNull: false,
 		},
 		funnelPlot: funnelPlotBase64,
