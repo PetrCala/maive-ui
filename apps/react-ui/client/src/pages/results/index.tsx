@@ -20,6 +20,7 @@ interface ModelResults {
 		criticalValue: number
 		rejectsNull: boolean
 	}
+	seInstrumented: number[]
 	funnelPlot: string // Base64 encoded image
 }
 
