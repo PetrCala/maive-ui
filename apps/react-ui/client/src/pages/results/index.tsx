@@ -73,46 +73,44 @@ export default function ResultsPage() {
 								{RESULTS_CONFIG.effectEstimate.title}
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
-								<Tooltip
-									content={
-										RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.effectEstimate.metrics.estimate.label}
-										</p>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{RESULTS_CONFIG.effectEstimate.metrics.estimate.label}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip
+										}
+									>
 										<p className="text-lg font-medium">
 											{parsedResults.effectEstimate.toFixed(4)}
 										</p>
-									</div>
-								</Tooltip>
-								<Tooltip
-									content={
-										RESULTS_CONFIG.effectEstimate.metrics.standardError.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{
-												RESULTS_CONFIG.effectEstimate.metrics.standardError
-													.label
-											}
-										</p>
+									</Tooltip>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{RESULTS_CONFIG.effectEstimate.metrics.standardError.label}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.effectEstimate.metrics.standardError
+												.tooltip
+										}
+									>
 										<p className="text-lg font-medium">
 											{parsedResults.standardError.toFixed(4)}
 										</p>
-									</div>
-								</Tooltip>
-								<Tooltip
-									content={
-										RESULTS_CONFIG.effectEstimate.metrics.significance.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.effectEstimate.metrics.significance.label}
-										</p>
+									</Tooltip>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{RESULTS_CONFIG.effectEstimate.metrics.significance.label}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.effectEstimate.metrics.significance.tooltip
+										}
+									>
 										<p
 											className={`text-lg font-medium ${
 												parsedResults.isSignificant
@@ -122,22 +120,22 @@ export default function ResultsPage() {
 										>
 											{parsedResults.isSignificant ? "Yes" : "No"}
 										</p>
-									</div>
-								</Tooltip>
+									</Tooltip>
+								</div>
 								{!!shouldDisplayAndersonRubinCI && (
-									<Tooltip
-										content={
-											RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
-												.tooltip
-										}
-									>
-										<div>
-											<p className="text-sm text-gray-600 dark:text-gray-300">
-												{
-													RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
-														.label
-												}
-											</p>
+									<div>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{
+												RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
+													.label
+											}
+										</p>
+										<Tooltip
+											content={
+												RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
+													.tooltip
+											}
+										>
 											<p className="text-lg font-medium">
 												{typeof parsedResults.andersonRubinCI === "object"
 													? `[${parsedResults.andersonRubinCI[0].toFixed(
@@ -145,8 +143,8 @@ export default function ResultsPage() {
 													  )}, ${parsedResults.andersonRubinCI[1].toFixed(4)}]`
 													: "NA"}
 											</p>
-										</div>
-									</Tooltip>
+										</Tooltip>
+									</div>
 								)}
 							</div>
 						</div>
@@ -157,49 +155,45 @@ export default function ResultsPage() {
 								{RESULTS_CONFIG.publicationBias.title}
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
-								<Tooltip
-									content={
-										RESULTS_CONFIG.publicationBias.metrics.estimate.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.publicationBias.metrics.estimate.label}
-										</p>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{RESULTS_CONFIG.publicationBias.metrics.estimate.label}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.publicationBias.metrics.estimate.tooltip
+										}
+									>
 										<p className="text-lg font-medium">
 											{parsedResults.publicationBias.estimate.toFixed(4)}
 										</p>
-									</div>
-								</Tooltip>
-								<Tooltip
-									content={
-										RESULTS_CONFIG.publicationBias.metrics.standardError.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{
-												RESULTS_CONFIG.publicationBias.metrics.standardError
-													.label
-											}
-										</p>
+									</Tooltip>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{RESULTS_CONFIG.publicationBias.metrics.standardError.label}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.publicationBias.metrics.standardError
+												.tooltip
+										}
+									>
 										<p className="text-lg font-medium">
 											{parsedResults.publicationBias.standardError.toFixed(4)}
 										</p>
-									</div>
-								</Tooltip>
-								<Tooltip
-									content={
-										RESULTS_CONFIG.publicationBias.metrics.significance.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{
-												RESULTS_CONFIG.publicationBias.metrics.significance
-													.label
-											}
-										</p>
+									</Tooltip>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{RESULTS_CONFIG.publicationBias.metrics.significance.label}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.publicationBias.metrics.significance
+												.tooltip
+										}
+									>
 										<p
 											className={`text-lg font-medium ${
 												parsedResults.publicationBias.isSignificant
@@ -211,8 +205,8 @@ export default function ResultsPage() {
 												? "Yes"
 												: "No"}
 										</p>
-									</div>
-								</Tooltip>
+									</Tooltip>
+								</div>
 							</div>
 						</div>
 
@@ -222,15 +216,15 @@ export default function ResultsPage() {
 								{RESULTS_CONFIG.diagnosticTests.title}
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
-								<Tooltip
-									content={
-										RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.label}
-										</p>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.label}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.tooltip
+										}
+									>
 										<p
 											className={`text-lg font-medium ${
 												parsedResults.hausmanTest.rejectsNull
@@ -243,39 +237,39 @@ export default function ResultsPage() {
 												? " (Rejects Null)"
 												: " (Fails to Reject Null)"}
 										</p>
-									</div>
-								</Tooltip>
-								<Tooltip
-									content={
-										RESULTS_CONFIG.diagnosticTests.metrics.hausmanCriticalValue
-											.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{
-												RESULTS_CONFIG.diagnosticTests.metrics
-													.hausmanCriticalValue.label
-											}
-										</p>
+									</Tooltip>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{
+											RESULTS_CONFIG.diagnosticTests.metrics
+												.hausmanCriticalValue.label
+										}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.diagnosticTests.metrics
+												.hausmanCriticalValue.tooltip
+										}
+									>
 										<p className="text-lg font-medium">
 											{parsedResults.hausmanTest.criticalValue.toFixed(4)}
 										</p>
-									</div>
-								</Tooltip>
-								<Tooltip
-									content={
-										RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
-											.tooltip
-									}
-								>
-									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{
-												RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
-													.label
-											}
-										</p>
+									</Tooltip>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{
+											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
+												.label
+										}
+									</p>
+									<Tooltip
+										content={
+											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
+												.tooltip
+										}
+									>
 										{parsedResults.firstStageFTest === "NA" ? (
 											<p className="text-lg font-medium">NA</p>
 										) : (
@@ -290,28 +284,28 @@ export default function ResultsPage() {
 												{parsedResults.firstStageFTest > 10 && " (Strong)"}
 											</p>
 										)}
-									</div>
-								</Tooltip>
+									</Tooltip>
+								</div>
 							</div>
 						</div>
 
 						{/* Funnel Plot */}
-						<Tooltip content={RESULTS_CONFIG.funnelPlot.tooltip}>
-							<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+							<Tooltip content={RESULTS_CONFIG.funnelPlot.tooltip}>
 								<h2 className="text-xl font-semibold mb-4">
 									{RESULTS_CONFIG.funnelPlot.title}
 								</h2>
-								<div className="flex justify-center">
-									<Image
-										src={parsedResults.funnelPlot}
-										alt="Funnel Plot"
-										width={400}
-										height={300}
-										className="max-w-full h-auto"
-									/>
-								</div>
+							</Tooltip>
+							<div className="flex justify-center">
+								<Image
+									src={parsedResults.funnelPlot}
+									alt="Funnel Plot"
+									width={400}
+									height={300}
+									className="max-w-full h-auto"
+								/>
 							</div>
-						</Tooltip>
+						</div>
 					</div>
 				</div>
 
