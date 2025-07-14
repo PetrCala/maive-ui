@@ -16,7 +16,10 @@ export default function Tooltip({
 	className = "",
 }: TooltipProps) {
 	const [isVisible, setIsVisible] = useState(false)
-	const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 })
+	const [tooltipPosition, setTooltipPosition] = useState<{
+		x: number
+		y: number
+	} | null>(null)
 	const triggerRef = useRef<HTMLDivElement>(null)
 	const tooltipRef = useRef<HTMLDivElement>(null)
 
@@ -46,13 +49,22 @@ export default function Tooltip({
 		}
 
 		if (isVisible) {
+			// Initialize position based on trigger element
+			if (triggerRef.current && !tooltipPosition) {
+				const triggerRect = triggerRef.current.getBoundingClientRect()
+				setTooltipPosition({
+					x: triggerRect.left + triggerRect.width / 2,
+					y: triggerRect.top - 10,
+				})
+			}
+
 			document.addEventListener("mousemove", handleMouseMove)
 		}
 
 		return () => {
 			document.removeEventListener("mousemove", handleMouseMove)
 		}
-	}, [isVisible])
+	}, [isVisible, tooltipPosition])
 
 	const handleMouseEnter = () => {
 		setIsVisible(true)
@@ -60,6 +72,7 @@ export default function Tooltip({
 
 	const handleMouseLeave = () => {
 		setIsVisible(false)
+		setTooltipPosition(null)
 	}
 
 	return (
@@ -70,7 +83,7 @@ export default function Tooltip({
 			onMouseLeave={handleMouseLeave}
 		>
 			{children}
-			{isVisible && (
+			{isVisible && tooltipPosition && (
 				<div
 					ref={tooltipRef}
 					className="fixed z-50 px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg max-w-xs pointer-events-none transition-opacity duration-200"
