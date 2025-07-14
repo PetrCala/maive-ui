@@ -17,6 +17,7 @@ interface ModelResults {
 	firstStageFTest: number | "NA"
 	hausmanTest: {
 		statistic: number
+		criticalValue: number
 		rejectsNull: boolean
 	}
 	funnelPlot: string // Base64 encoded image
@@ -159,6 +160,33 @@ export default function ResultsPage() {
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
+										Hausman Test
+									</p>
+									<p
+										className={`text-lg font-medium ${
+											parsedResults.hausmanTest.rejectsNull
+												? "text-red-600"
+												: "text-green-600"
+										}`}
+									>
+										{parsedResults.hausmanTest.statistic.toFixed(4)}
+										{parsedResults.hausmanTest.rejectsNull
+											? " (Rejects Null)"
+											: " (Fails to Reject Null)"}
+									</p>
+								</div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										Hausman Test Critical Value
+									</p>
+									<p className="text-lg font-medium">
+										{parsedResults.hausmanTest.criticalValue.toFixed(4)}
+									</p>
+								</div>
+							</div>
+							<div>
+								<div>
+									<p className="text-sm text-gray-600 dark:text-gray-300">
 										First Stage F-Test
 									</p>
 									{parsedResults.firstStageFTest === "NA" ? (
@@ -175,23 +203,6 @@ export default function ResultsPage() {
 											{parsedResults.firstStageFTest > 10 && " (Strong)"}
 										</p>
 									)}
-								</div>
-								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										Hausman Test
-									</p>
-									<p
-										className={`text-lg font-medium ${
-											parsedResults.hausmanTest.rejectsNull
-												? "text-red-600"
-												: "text-green-600"
-										}`}
-									>
-										{parsedResults.hausmanTest.statistic.toFixed(4)}
-										{parsedResults.hausmanTest.rejectsNull
-											? " (Rejects Null)"
-											: " (Fails to Reject Null)"}
-									</p>
 								</div>
 							</div>
 						</div>

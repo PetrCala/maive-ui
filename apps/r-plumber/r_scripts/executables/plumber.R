@@ -119,6 +119,7 @@ function(file_data, parameters) {
     firstStageFTest = maive_res[["F-test"]],
     hausmanTest = list(
       statistic = maive_res$Hausman,
+      criticalValue = maive_res$Chi2,
       rejectsNull = maive_res$Hausman >= maive_res$Chi2
     ),
     funnelPlot = funnel_plot
