@@ -83,7 +83,7 @@ export default function ResultsPage() {
 				uploadedData.data,
 				parsedResults.seInstrumented,
 				uploadedData.filename,
-				uploadedData.filename.split(".").pop() || "csv"
+				true
 			)
 		} catch (error) {
 			console.error("Error exporting data:", error)
