@@ -125,7 +125,6 @@ export default function ModelPage() {
 
 			// Redirect to results page with the model output
 			const results = result.data
-			console.log("results", results)
 			const searchParams = new URLSearchParams({
 				results: JSON.stringify(results),
 				dataId: dataId || "",
