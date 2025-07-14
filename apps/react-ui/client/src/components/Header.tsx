@@ -1,7 +1,7 @@
 "use client"
 
-import HelpIcon from "./Icons/HelpIcon"
-import HomeIcon from "./Icons/HomeIcon"
+import HelpIcon from "@components/Icons/HelpIcon"
+import HomeIcon from "@components/Icons/HomeIcon"
 
 interface HeaderProps {
 	showHomeIcon?: boolean
