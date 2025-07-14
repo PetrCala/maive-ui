@@ -106,7 +106,6 @@ function(file_data, parameters) {
   pb_se <- maive_res$SE_standard
   pb_is_significant <- get_est_is_significant(pb_est, pb_se)
 
-  # TODO: Add the rest of the results
   results <- list(
     effectEstimate = est,
     standardError = se,
