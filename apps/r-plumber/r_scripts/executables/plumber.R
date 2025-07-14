@@ -94,11 +94,15 @@ function(file_data, parameters) {
   # This is the package response structure
   # maive_res <- list("beta" = round(beta, 3), "SE" = round(betase, 3), "F-test" = F_hac, "beta_standard" = round(beta0, 3), "SE_standard" = round(beta0se, 3), "Hausman" = round(Hausman, 3), "Chi2" = round(Chi2, 3), "SE_instrumented" = sebs2fit1^(1 / 2), "AR_CI" = b0_CI_AR)
 
+  est <- maive_res$beta
+  se <- maive_res$SE
+  is_significant <- if (se > 0) est / se >= 1.96 else TRUE
+
   # TODO: Add the rest of the results
   results <- list(
-    effectEstimate = maive_res$beta,
-    standardError = maive_res$SE,
-    isSignificant = maive_res[["F-test"]] > 1.96, # Double check this
+    effectEstimate = est,
+    standardError = se,
+    isSignificant = is_significant,
     andersonRubinCI = maive_res$AR_CI, # c(int, int) or "NA"
     publicationBias = list(
       estimate = maive_res$beta_standard,
@@ -108,7 +112,7 @@ function(file_data, parameters) {
     firstStageFTest = maive_res[["F-test"]],
     hausmanTest = list(
       statistic = maive_res$Hausman,
-      rejectsNull = FALSE
+      rejectsNull = maive_res$Hausman >= maive_res$Chi2
     ),
     funnelPlot = funnel_plot
   )
