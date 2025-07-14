@@ -86,7 +86,7 @@ export default function Tooltip({
 			{isVisible && tooltipPosition && (
 				<div
 					ref={tooltipRef}
-					className="fixed z-50 px-3 py-2 text-sm text-white bg-gray-900 dark:bg-gray-700 rounded-lg shadow-lg max-w-xs pointer-events-none transition-opacity duration-200"
+					className="fixed z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
 					style={{
 						left: tooltipPosition.x,
 						top: tooltipPosition.y,
@@ -94,7 +94,7 @@ export default function Tooltip({
 				>
 					{content}
 					{/* Arrow */}
-					<div className="absolute w-2 h-2 bg-gray-900 dark:bg-gray-700 transform rotate-45 -top-1 -left-1"></div>
+					<div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
 				</div>
 			)}
 		</div>
