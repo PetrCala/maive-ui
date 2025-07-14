@@ -64,13 +64,25 @@ export const processUploadedFile = async (
 	})
 }
 
-// Export data with instrumented standard errors
+/**
+ * Export data with instrumented standard errors
+ * @param originalData - The original data
+ * @param seInstrumented - The instrumented standard errors
+ * @param filename - The filename
+ * @param shouldAddSalt - Whether to add a salt to the filename, making it unique
+ */
 export const exportDataWithInstrumentedSE = (
 	originalData: any[],
 	seInstrumented: number[],
 	filename: string,
-	originalFormat: string
+	shouldAddSalt: boolean = true
 ): void => {
+	if (originalData.length !== seInstrumented.length) {
+		throw new Error(
+			"Original data and instrumented SE must have the same length"
+		)
+	}
+
 	// Create a copy of the original data and add the instrumented SE column
 	const exportData = originalData.map((row, index) => ({
 		...row,
@@ -96,7 +108,11 @@ export const exportDataWithInstrumentedSE = (
 
 	// Generate new filename
 	const baseName = filename.replace(/\.[^/.]+$/, "") // Remove extension
-	const newFilename = `${baseName}_with_instrumented_se.${fileExtension}`
+	const now = new Date()
+	const salt = shouldAddSalt
+		? `_${now.toISOString().replace(/[-:T]/g, "").slice(0, 13)}` // e.g., "_20240611_1530" (YYYYMMDDHHmm)
+		: ""
+	const newFilename = `${baseName}_with_instrumented_se${salt}.${fileExtension}`
 
 	if (fileExtension === "csv") {
 		// Export as CSV
