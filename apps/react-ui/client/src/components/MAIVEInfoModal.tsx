@@ -3,11 +3,13 @@ import CONST from "@src/CONST"
 interface MAIVEInfoModalProps {
 	isOpen: boolean
 	onClose: () => void
+	shouldShowGettingStarted?: boolean
 }
 
 export default function MAIVEInfoModal({
 	isOpen,
 	onClose,
+	shouldShowGettingStarted = false,
 }: MAIVEInfoModalProps) {
 	if (!isOpen) return null
 
@@ -213,30 +215,43 @@ export default function MAIVEInfoModal({
 					</section>
 
 					{/* Getting Started Section */}
-					<section>
-						<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-							Getting Started
-						</h3>
-						<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
-							Ready to check your data for spurious precision? Upload your
-							dataset and let MAIVE analyze it for you. The process is simple
-							and provides clear, actionable results.
-						</p>
-						<div className="flex gap-3">
-							<button
-								onClick={onClose}
-								className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-							>
-								Upload Your Data
-							</button>
-							<button
-								onClick={onClose}
-								className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-							>
-								Close
-							</button>
-						</div>
-					</section>
+					{!!shouldShowGettingStarted ? (
+						<section>
+							<h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
+								Getting Started
+							</h3>
+							<p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-4">
+								Ready to check your data for spurious precision? Upload your
+								dataset and let MAIVE analyze it for you. The process is simple
+								and provides clear, actionable results.
+							</p>
+							<div className="flex gap-3">
+								<button
+									onClick={onClose}
+									className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+								>
+									Upload Your Data
+								</button>
+								<button
+									onClick={onClose}
+									className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+								>
+									Close
+								</button>
+							</div>
+						</section>
+					) : (
+						<section>
+							<div className="flex gap-3">
+								<button
+									onClick={onClose}
+									className="px-6 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+								>
+									Close
+								</button>
+							</div>
+						</section>
+					)}
 				</div>
 			</div>
 		</div>

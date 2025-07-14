@@ -52,6 +52,7 @@ export default function Home() {
 			<MAIVEInfoModal
 				isOpen={isModalOpen}
 				onClose={() => setIsModalOpen(false)}
+				shouldShowGettingStarted={true}
 			/>
 		</main>
 	)
