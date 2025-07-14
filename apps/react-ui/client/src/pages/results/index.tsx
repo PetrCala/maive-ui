@@ -5,6 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import Tooltip from "@components/Tooltip"
 import { RESULTS_CONFIG } from "@utils/resultsConfig"
+import { useDataStore, dataCache } from "@store/dataStore"
+import { exportDataWithInstrumentedSE } from "@utils/dataUtils"
 
 interface ModelResults {
 	effectEstimate: number
@@ -56,6 +58,37 @@ export default function ResultsPage() {
 
 	const handleNewUpload = () => {
 		router.push("/upload")
+	}
+
+	const handleExportData = () => {
+		if (!dataId) {
+			alert("No data available for export")
+			return
+		}
+
+		try {
+			// Get the original data from cache or store
+			let uploadedData = dataCache.get(dataId!)
+			if (!uploadedData) {
+				const storeData = useDataStore.getState().uploadedData
+				if (!storeData || storeData.id !== dataId) {
+					alert("Original data not found. Please upload your data again.")
+					return
+				}
+				uploadedData = storeData
+			}
+
+			// Export the data with instrumented standard errors
+			exportDataWithInstrumentedSE(
+				uploadedData.data,
+				parsedResults.seInstrumented,
+				uploadedData.filename,
+				uploadedData.filename.split(".").pop() || "csv"
+			)
+		} catch (error) {
+			console.error("Error exporting data:", error)
+			alert("Failed to export data. Please try again.")
+		}
 	}
 
 	return (
@@ -311,6 +344,14 @@ export default function ResultsPage() {
 
 				<div className="flex justify-end items-center mt-8">
 					<div className="space-x-4">
+						<Tooltip content="Export your original data with instrumented standard errors added as a new column. The file will be in the same format as your original upload (.csv, .xlsx, etc.).">
+							<button
+								onClick={handleExportData}
+								className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+							>
+								Export Data with Instrumented SE
+							</button>
+						</Tooltip>
 						<button
 							onClick={handleNewUpload}
 							className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
