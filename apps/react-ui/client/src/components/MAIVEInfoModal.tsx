@@ -227,7 +227,10 @@ export default function MAIVEInfoModal({
 							</p>
 							<div className="flex gap-3">
 								<button
-									onClick={onClose}
+									onClick={() => {
+										window.location.href = "/upload"
+										onClose()
+									}}
 									className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
 								>
 									Upload Your Data
