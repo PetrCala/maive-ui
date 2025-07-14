@@ -184,8 +184,6 @@ export default function ResultsPage() {
 										{parsedResults.hausmanTest.criticalValue.toFixed(4)}
 									</p>
 								</div>
-							</div>
-							<div>
 								<div>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
 										First Stage F-Test
