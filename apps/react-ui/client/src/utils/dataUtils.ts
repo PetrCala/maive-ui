@@ -63,3 +63,84 @@ export const processUploadedFile = async (
 		reader.readAsDataURL(file)
 	})
 }
+
+// Export data with instrumented standard errors
+export const exportDataWithInstrumentedSE = (
+	originalData: any[],
+	seInstrumented: number[],
+	filename: string,
+	originalFormat: string
+): void => {
+	// Create a copy of the original data and add the instrumented SE column
+	const exportData = originalData.map((row, index) => ({
+		...row,
+		se_instrumented: seInstrumented[index] || null,
+	}))
+
+	// Determine the file extension and MIME type based on original format
+	let fileExtension: string
+	let mimeType: string
+
+	if (filename.toLowerCase().endsWith(".xlsx")) {
+		fileExtension = "xlsx"
+		mimeType =
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	} else if (filename.toLowerCase().endsWith(".xls")) {
+		fileExtension = "xls"
+		mimeType = "application/vnd.ms-excel"
+	} else {
+		// Default to CSV
+		fileExtension = "csv"
+		mimeType = "text/csv"
+	}
+
+	// Generate new filename
+	const baseName = filename.replace(/\.[^/.]+$/, "") // Remove extension
+	const newFilename = `${baseName}_with_instrumented_se.${fileExtension}`
+
+	if (fileExtension === "csv") {
+		// Export as CSV
+		const headers = Object.keys(exportData[0] || {})
+		const csvContent = [
+			headers.join(","),
+			...exportData.map((row) =>
+				headers
+					.map((header) => {
+						const value = row[header]
+						// Handle values that need quotes (contain commas, quotes, or newlines)
+						if (
+							typeof value === "string" &&
+							(value.includes(",") ||
+								value.includes('"') ||
+								value.includes("\n"))
+						) {
+							return `"${value.replace(/"/g, '""')}"`
+						}
+						return value
+					})
+					.join(",")
+			),
+		].join("\n")
+
+		const blob = new Blob([csvContent], { type: mimeType })
+		downloadFile(blob, newFilename)
+	} else {
+		// Export as Excel
+		const workbook = XLSX.utils.book_new()
+		const worksheet = XLSX.utils.json_to_sheet(exportData)
+		XLSX.utils.book_append_sheet(workbook, worksheet, "Data")
+		XLSX.writeFile(workbook, newFilename)
+	}
+}
+
+// Helper function to trigger file download
+const downloadFile = (blob: Blob, filename: string): void => {
+	const url = URL.createObjectURL(blob)
+	const link = document.createElement("a")
+	link.href = url
+	link.download = filename
+	document.body.appendChild(link)
+	link.click()
+	document.body.removeChild(link)
+	URL.revokeObjectURL(url)
+}
