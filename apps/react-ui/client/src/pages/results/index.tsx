@@ -344,14 +344,12 @@ export default function ResultsPage() {
 
 				<div className="flex justify-end items-center mt-8">
 					<div className="space-x-4">
-						<Tooltip content="Export your original data with instrumented standard errors added as a new column. The file will be in the same format as your original upload (.csv, .xlsx, etc.).">
-							<button
-								onClick={handleExportData}
-								className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-							>
-								Export Data with Instrumented SE
-							</button>
-						</Tooltip>
+						<button
+							onClick={handleExportData}
+							className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+						>
+							Export Data with Instrumented SE
+						</button>
 						<button
 							onClick={handleNewUpload}
 							className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
