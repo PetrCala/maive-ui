@@ -99,7 +99,8 @@ export default function ModelPage() {
 			if (shouldUseMockResults()) {
 				// Use mock data in development mode
 				console.debug("Generating mock results in development mode")
-				result = { data: generateMockResults() }
+				const nrow = uploadedData.data.length
+				result = { data: generateMockResults(nrow) }
 			} else {
 				const response = await fetch(
 					`${process.env.NEXT_PUBLIC_R_API_URL}/run-model`,

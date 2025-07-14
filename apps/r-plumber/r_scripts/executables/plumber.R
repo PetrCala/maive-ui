@@ -122,6 +122,7 @@ function(file_data, parameters) {
       criticalValue = maive_res$Chi2,
       rejectsNull = maive_res$Hausman >= maive_res$Chi2
     ),
+    seInstrumented = maive_res$SE_instrumented,
     funnelPlot = funnel_plot
   )
   list(data = results)

@@ -25,7 +25,12 @@ const generateMockCSVFile = (): File => {
 	return new File([blob], "mock_data.csv", { type: "text/csv" })
 }
 
-const generateMockResults = () => {
+/**
+ * Generate mock results for a given number of rows.
+ * @param nrow - The number of rows in the data.
+ * @returns The mock results.
+ */
+const generateMockResults = (nrow: number) => {
 	const funnelPlotBase64 = mockFunnelPlot
 
 	return {
@@ -57,6 +62,9 @@ const generateMockResults = () => {
 			criticalValue: 3.841,
 			rejectsNull: false,
 		},
+		seInstrumented: Array.from({ length: nrow }, () =>
+			faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 })
+		),
 		funnelPlot: funnelPlotBase64,
 	}
 }

@@ -11,7 +11,7 @@ describe("Placeholder test", () => {
 
 // Helper function to generate a test URL
 export const generateTestUrl = () => {
-	const mockResults = generateMockResults()
+	const mockResults = generateMockResults(100)
 	const mockFileData = "mock-file-data"
 	const mockParameters = "mock-parameters"
 
