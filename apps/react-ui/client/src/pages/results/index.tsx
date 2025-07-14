@@ -193,7 +193,7 @@ export default function ResultsPage() {
 									) : (
 										<p
 											className={`text-lg font-medium ${
-												parsedResults.firstStageFTest > 10
+												parsedResults.firstStageFTest >= 10
 													? "text-green-600"
 													: "text-red-600"
 											}`}
