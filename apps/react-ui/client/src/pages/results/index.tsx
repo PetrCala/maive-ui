@@ -333,8 +333,8 @@ export default function ResultsPage() {
 								<Image
 									src={parsedResults.funnelPlot}
 									alt="Funnel Plot"
-									width={400}
-									height={300}
+									width={500}
+									height={400}
 									className="max-w-full h-auto"
 								/>
 							</div>
