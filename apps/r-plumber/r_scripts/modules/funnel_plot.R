@@ -1,8 +1,3 @@
-#' Return a number as either an integer if it is one, or a decimal if it is not
-#'
-#' Used when plotting graphs for prettier tick labels (10, 20, 25.243, 30,...)
-int_or_decimal <- function(x) if (x == floor(x)) as.integer(x) else x
-
 #' Round a number until one of two scenarios
 #'  1. The number is a float - the last decimal point is non-zero, or there are no decimal points
 #'  2. The number is an integer - do not round, the number is returned as an integer
@@ -38,7 +33,7 @@ round_to_non_zero <- function(num) {
 generate_funnel_ticks <- function(input_vec, add_zero = TRUE, theme = "blue") {
   lower_bound <- input_vec[1]
   upper_bound <- input_vec[2]
-  mean_value <- input_vec[3]
+  intercept_value <- if (length(input_vec) == 3) input_vec[3] else NULL
 
   ticks <- c(lower_bound, upper_bound) # Base ticks
   if (add_zero && !(0 %in% ticks) && (0 > lower_bound) && (0 < upper_bound)) {
@@ -54,18 +49,34 @@ generate_funnel_ticks <- function(input_vec, add_zero = TRUE, theme = "blue") {
   }
 
   # Add the mean value and sort the vector
-  funnel_ticks <- sort(c(ticks, mean_value))
+  funnel_ticks <- if (!is.null(intercept_value)) c(ticks, intercept_value) else ticks
+  funnel_ticks <- sort(funnel_ticks)
 
   # Create the color vector
   x_axis_tick_text <- rep("black", length(funnel_ticks))
-  mean_index <- which(funnel_ticks == mean_value)
-  x_axis_tick_text[mean_index] <- if (theme %in% c("blue", "green")) "red" else "blue"
+  if (!is.null(intercept_value)) {
+    intercept_index <- which(funnel_ticks == intercept_value)
+    x_axis_tick_text[intercept_index] <- if (theme %in% c("blue", "green")) "red" else "blue"
+  }
 
   # Round all ticks to 2 decimal points, and remove trailing zeros
   funnel_ticks <- round(funnel_ticks, 2)
   funnel_ticks <- vapply(funnel_ticks, round_to_non_zero, FUN.VALUE = 1)
 
-  return(list("funnel_ticks" = funnel_ticks, "x_axis_tick_text" = x_axis_tick_text))
+  # Format tick labels with color using HTML for ggtext::element_markdown
+  funnel_tick_labels <- vapply(
+    seq_along(funnel_ticks),
+    function(i) {
+      sprintf("<span style='color:%s'>%s</span>", x_axis_tick_text[i], funnel_ticks[i])
+    },
+    FUN.VALUE = character(1)
+  )
+
+  return(list(
+    "funnel_ticks" = funnel_ticks,
+    "x_axis_tick_text" = x_axis_tick_text,
+    "funnel_tick_labels" = funnel_tick_labels
+  ))
 }
 get_theme <- function(theme, x_axis_tick_text = "black") {
   # Validate the theme
@@ -109,9 +120,12 @@ get_colors <- function(theme) {
 
 #' Get a mock funnel plot
 #'
+#' @param effect [numeric] The effect size
+#' @param se [numeric] The standard error
+#' @param intercept [numeric] The intercept of the funnel plot. If NULL, no intercept is plotted.
 #' @return A base64 encoded string of the funnel plot
 #' @export
-get_funnel_plot <- function(effect, se) {
+get_funnel_plot <- function(effect, se, intercept = NULL) {
   precision <- 1 / se^2
 
   # Filter out the outliers
@@ -122,26 +136,17 @@ get_funnel_plot <- function(effect, se) {
   precision_to_log <- FALSE
 
 
-  theme_color <- switch(theme,
-    blue = "#DCEEF3",
-    yellow = "#FFFFD1",
-    green = "#D1FFD1",
-    red = "#FFD1D1",
-    purple = "#E6D1FF",
-    cli::cli_abort("Invalid theme type.")
-  )
-
-
   # Get visual bounds and tick colors
   funnel_x_lbound <- min(effect)
   funnel_x_ubound <- max(effect)
-  mean_x_tick <- mean(effect)
 
   # Generate and extract the info
-  base_funnel_ticks <- c(funnel_x_lbound, funnel_x_ubound, mean_x_tick) # c(lbound, ubound, mean)
+  base_funnel_ticks <- c(funnel_x_lbound, funnel_x_ubound) # c(lbound, ubound)
+  if (!is.null(intercept)) base_funnel_ticks <- c(base_funnel_ticks, intercept)
   funnel_visual_info <- generate_funnel_ticks(base_funnel_ticks, add_zero = add_zero, theme = theme)
   funnel_ticks <- funnel_visual_info$funnel_ticks
   funnel_tick_text <- funnel_visual_info$x_axis_tick_text
+  funnel_tick_labels <- funnel_visual_info$funnel_tick_labels
 
   # Get the theme to use
   current_theme <- get_theme(theme, x_axis_tick_text = funnel_tick_text)
@@ -153,19 +158,6 @@ get_funnel_plot <- function(effect, se) {
     precision <- log(precision)
   }
 
-  theme_color <- "#DCEEF3"
-  ggplot2::theme(
-    axis.line = ggplot2::element_line(color = "black", linewidth = 0.5, linetype = "solid"),
-    axis.text.x = ggtext::element_markdown(color = funnel_tick_text, size = 16),
-    axis.text.y = ggtext::element_markdown(color = "black", size = 16),
-    axis.title.x = ggplot2::element_text(size = 18),
-    axis.title.y = ggplot2::element_text(size = 18),
-    legend.text = ggplot2::element_text(size = 14),
-    panel.background = ggplot2::element_rect(fill = "white"),
-    panel.grid.major.x = ggplot2::element_line(color = theme_color),
-    plot.background = ggplot2::element_rect(fill = theme_color)
-  )
-
   x_title <- "Effect"
   y_title <- "Precision"
 
@@ -174,11 +166,11 @@ get_funnel_plot <- function(effect, se) {
     ggplot2::aes(x = effect, y = precision) # nolint: object_usage_linter.
   ) +
     ggplot2::geom_point(color = point_color) +
-    ggplot2::geom_vline(ggplot2::aes(xintercept = base::mean(effect)), color = vline_color, linewidth = 0.5) +
     ggplot2::labs(title = NULL, x = x_title, y = y_title) +
-    # ggplot2::scale_x_continuous(breaks = funnel_ticks, labels = int_or_decimal) + # Display integers as integers, floats as floats
-    ggplot2::scale_x_continuous(breaks = funnel_ticks) +
+    ggplot2::scale_x_continuous(breaks = funnel_ticks, labels = funnel_tick_labels) +
     current_theme
+
+  if (!is.null(intercept)) p <- p + ggplot2::geom_vline(ggplot2::aes(xintercept = intercept), color = vline_color, linewidth = 0.5)
 
   tmp <- tempfile(fileext = ".png")
   png(tmp, width = 800, height = 600, res = 96)
