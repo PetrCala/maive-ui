@@ -88,7 +88,7 @@ function(file_data, parameters) {
 
   funnel_plot <- get_funnel_plot(
     effect = df$bs,
-    se = df$sebs
+    se = maive_res$SE_instrumented
   )
 
   # This is the package response structure
