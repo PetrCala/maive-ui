@@ -88,7 +88,8 @@ function(file_data, parameters) {
 
   funnel_plot <- get_funnel_plot(
     effect = df$bs,
-    se = maive_res$SE_instrumented
+    se = maive_res$SE_instrumented,
+    intercept = maive_res$beta # ASK: double check which coef to use
   )
 
   # This is the package response structure
