@@ -1,4 +1,5 @@
 const CONST = {
+	WAIVE_ENABLED: false, // feature flag
 	MAIVE_URL: "https://meta-analysis.cz/maive/",
 	MAIVE_PAPER_URL: "https://meta-analysis.cz/maive/maive.pdf",
 	MAIVE_GITHUB_URL: "https://github.com/meta-analysis-es/maive",

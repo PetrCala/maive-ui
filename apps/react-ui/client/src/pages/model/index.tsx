@@ -6,6 +6,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
 import { useDataStore, dataCache } from "@store/dataStore"
+import CONST from "@src/CONST"
 
 interface ModelParameters {
 	modelType: "MAIVE" | "WAIVE"
@@ -184,16 +185,20 @@ export default function ModelPage() {
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 									Model Type
 								</label>
-								<select
-									value={parameters.modelType}
-									onChange={(e) =>
-										handleParameterChange("modelType", e.target.value)
-									}
-									className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-								>
-									<option value="MAIVE">MAIVE</option>
-									<option value="WAIVE">WAIVE</option>
-								</select>
+								{CONST.WAIVE_ENABLED ? (
+									<select
+										value={parameters.modelType}
+										onChange={(e) =>
+											handleParameterChange("modelType", e.target.value)
+										}
+										className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+									>
+										<option value="MAIVE">MAIVE</option>
+										<option value="WAIVE">WAIVE</option>
+									</select>
+								) : (
+									<p>{parameters.modelType}</p>
+								)}
 							</div>
 
 							<div>
@@ -353,6 +358,7 @@ function AdvancedOptions({
 						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 							MAIVE Method
 						</label>
+						{}
 						<select
 							value={maiveMethod}
 							onChange={(e) =>
