@@ -27,15 +27,10 @@ export const RESULTS_CONFIG = {
 	publicationBias: {
 		title: "Publication Bias Analysis",
 		metrics: {
-			estimate: {
-				label: "Estimate",
+			pValue: {
+				label: "p-value",
 				tooltip:
-					"The estimated magnitude of publication bias in the data. Positive values suggest selective reporting of significant results.",
-			},
-			standardError: {
-				label: "Standard Error",
-				tooltip:
-					"The uncertainty in the publication bias estimate. Used to assess the reliability of the publication bias detection.",
+					"The p-value of the test for publication bias / p-hacking based on instrumented FAT. Values below 0.05 suggest publication bias / p-hacking.",
 			},
 			significance: {
 				label: "Significant at 5% level",

@@ -81,8 +81,9 @@ function(file_data, parameters) {
     method = 3, # PET=1, PEESE=2, PET-PEESE=3 (default), EK=4
     weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
     instrument = 1, # no=0, yes=1 (default)
-    studylevel = should_include_study_dummies, # none=0, study fixed effects=1, cluster-robust standard errors=2
-    AR = should_use_ar # 0 = no AR, 1 = AR
+    studylevel = should_include_study_dummies, # 0 none, 1 fixed effects, 2 cluster (default)
+    SE = 0, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
+    AR = should_use_ar # 0 = no AR, 1 = AR (default)
   )
 
   funnel_plot <- get_funnel_plot(
@@ -94,17 +95,12 @@ function(file_data, parameters) {
   # This is the package response structure
   # maive_res <- list("beta" = round(beta, 3), "SE" = round(betase, 3), "F-test" = F_hac, "beta_standard" = round(beta0, 3), "SE_standard" = round(beta0se, 3), "Hausman" = round(Hausman, 3), "Chi2" = round(Chi2, 3), "SE_instrumented" = sebs2fit1^(1 / 2), "AR_CI" = b0_CI_AR)
 
-  get_est_is_significant <- function(est, se) {
-    if (se > 0) est / se >= 1.96 else TRUE
-  }
-
   est <- maive_res$beta
   se <- maive_res$SE
-  est_is_significant <- get_est_is_significant(est, se)
+  est_is_significant <- if (se > 0) est / se >= 1.96 else TRUE
 
-  pb_est <- maive_res$beta_standard
-  pb_se <- maive_res$SE_standard
-  pb_is_significant <- get_est_is_significant(pb_est, pb_se)
+  pub_bias_p_value <- maive_res[["pub bias p-value"]]
+  pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
 
   results <- list(
     effectEstimate = est,
@@ -112,8 +108,7 @@ function(file_data, parameters) {
     isSignificant = est_is_significant,
     andersonRubinCI = maive_res$AR_CI, # c(int, int) or "NA"
     publicationBias = list(
-      estimate = pb_est,
-      standardError = pb_se,
+      pValue = pub_bias_p_value,
       isSignificant = pb_is_significant
     ),
     firstStageFTest = maive_res[["F-test"]],
