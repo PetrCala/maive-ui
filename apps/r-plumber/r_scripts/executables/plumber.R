@@ -61,7 +61,13 @@ function(file_data, parameters) {
 
   df <- df[rowSums(is.na(df)) != ncol(df), ] # Drop rows with all NAs
 
-  expected_parameters <- c("modelType", "includeStudyDummies", "standardErrorTreatment", "computeAndersonRubin")
+  expected_parameters <- c(
+    "modelType",
+    "includeStudyDummies",
+    "standardErrorTreatment",
+    "computeAndersonRubin",
+    "maiveMethod"
+  )
   if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
     return(list(
       error = TRUE,
@@ -73,11 +79,17 @@ function(file_data, parameters) {
   should_include_study_dummies <- if (isTRUE(params$includeStudyDummies)) 1 else 0
   standard_error_treatment <- params$standardErrorTreatment # not_clustered, clustered, clustered_cr2, bootstrap
   should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
+  maive_method <- switch(params$maiveMethod,
+    "PET" = 1,
+    "PEESE" = 2,
+    "PET-PEESE" = 3,
+    "EK" = 4
+  )
 
   # Run the model
   maive_res <- MAIVE::maive(
     dat = df,
-    method = 3, # PET=1, PEESE=2, PET-PEESE=3 (default), EK=4
+    method = maive_method,
     weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
     instrument = 1, # no=0, yes=1 (default)
     studylevel = should_include_study_dummies, # 0 none, 1 fixed effects, 2 cluster (default)
