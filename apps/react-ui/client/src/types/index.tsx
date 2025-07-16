@@ -1,21 +1,16 @@
-const MODEL_TYPES = ["MAIVE", "WAIVE"] as const
-const MAIVE_METHODS = ["PET", "PEESE", "PET-PEESE", "EK"] as const
+import CONST from "@src/CONST"
 
 /**
  * Parameters for running the MAIVE model
  */
 interface ModelParameters {
-	modelType: (typeof MODEL_TYPES)[number]
+	modelType: (typeof CONST.MODEL_TYPES)[keyof typeof CONST.MODEL_TYPES]
 	includeStudyDummies: boolean
 	includeStudyClustering: boolean
 	standardErrorTreatment:
-		| "not_clustered"
-		| "clustered"
-		| "clustered_cr2"
-		| "bootstrap"
+		| (typeof CONST.STANDARD_ERROR_TREATMENTS)[keyof typeof CONST.STANDARD_ERROR_TREATMENTS]["KEY"]
 	computeAndersonRubin: boolean
-	maiveMethod: (typeof MAIVE_METHODS)[number]
+	maiveMethod: (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
 }
 
-export { MODEL_TYPES, MAIVE_METHODS }
 export type { ModelParameters }
