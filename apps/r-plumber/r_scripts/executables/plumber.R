@@ -64,6 +64,7 @@ function(file_data, parameters) {
   expected_parameters <- c(
     "modelType",
     "includeStudyDummies",
+    "includeStudyClustering",
     "standardErrorTreatment",
     "computeAndersonRubin",
     "maiveMethod"
