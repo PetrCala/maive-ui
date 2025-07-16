@@ -3,5 +3,6 @@ devtools
 dplyr
 ggplot2
 jsonlite
+metafor
 plumber
 tidyverse
