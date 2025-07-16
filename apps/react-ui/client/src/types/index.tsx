@@ -8,7 +8,7 @@ interface ModelParameters {
 	modelType: DeepValueOf<typeof CONST.MODEL_TYPES>
 	includeStudyDummies: boolean
 	includeStudyClustering: boolean
-	standardErrorTreatment: (typeof CONST.STANDARD_ERROR_TREATMENTS)[keyof typeof CONST.STANDARD_ERROR_TREATMENTS]["KEY"]
+	standardErrorTreatment: (typeof CONST.STANDARD_ERROR_TREATMENTS)[keyof typeof CONST.STANDARD_ERROR_TREATMENTS]["VALUE"]
 	computeAndersonRubin: boolean
 	maiveMethod: DeepValueOf<typeof CONST.MAIVE_METHODS>
 	shouldUseInstrumenting: boolean

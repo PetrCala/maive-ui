@@ -21,12 +21,12 @@ export default function ModelPage() {
 	const [loading, setLoading] = useState(false)
 	const [uploadedData, setUploadedData] = useState<any>(null)
 	const [parameters, setParameters] = useState<ModelParameters>({
-		modelType: "MAIVE",
+		modelType: CONST.MODEL_TYPES.MAIVE,
 		includeStudyDummies: false,
 		includeStudyClustering: false,
-		standardErrorTreatment: "not_clustered",
+		standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
 		computeAndersonRubin: false,
-		maiveMethod: "PET-PEESE",
+		maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
 		shouldUseInstrumenting: true,
 	})
 	const router = useRouter()
@@ -228,8 +228,8 @@ export default function ModelPage() {
 								}
 								options={Object.values(CONST.STANDARD_ERROR_TREATMENTS).map(
 									(treatment) => ({
-										value: treatment.KEY,
-										label: treatment.LABEL,
+										value: treatment.VALUE,
+										label: treatment.TEXT,
 									})
 								)}
 							/>
