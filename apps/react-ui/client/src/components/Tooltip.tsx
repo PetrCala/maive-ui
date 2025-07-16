@@ -7,6 +7,7 @@ interface TooltipProps {
 	content: string
 	position?: "top" | "bottom" | "left" | "right"
 	className?: string
+	visible?: boolean // if set, controls visibility externally
 }
 
 function Tooltip({
@@ -14,6 +15,7 @@ function Tooltip({
 	content,
 	position = "top",
 	className = "",
+	visible,
 }: TooltipProps) {
 	const [isVisible, setIsVisible] = useState(false)
 	const [tooltipPosition, setTooltipPosition] = useState<{
@@ -67,12 +69,14 @@ function Tooltip({
 	}, [isVisible, tooltipPosition])
 
 	const handleMouseEnter = () => {
-		setIsVisible(true)
+		if (visible === undefined) setIsVisible(true)
 	}
 
 	const handleMouseLeave = () => {
-		setIsVisible(false)
-		setTooltipPosition(null)
+		if (visible === undefined) {
+			setIsVisible(false)
+			setTooltipPosition(null)
+		}
 	}
 
 	return (
@@ -83,7 +87,7 @@ function Tooltip({
 			onMouseLeave={handleMouseLeave}
 		>
 			{children}
-			{isVisible && tooltipPosition && (
+			{(visible !== undefined ? visible : isVisible) && tooltipPosition && (
 				<div
 					ref={tooltipRef}
 					className="fixed z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
