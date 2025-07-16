@@ -20,9 +20,8 @@ function() {
 function(file_data, parameters) {
   # nolint start: undesirable_function_linter.
   # MAIVE dependencies
-  library("varhandle")
-  library("pracma")
-  library("sandwich")
+  maive_deps <- c("clubSandwich", "varhandle", "pracma", "sandwich", "metafor")
+  lapply(maive_deps, library, character.only = TRUE)
   source("../modules/funnel_plot.R", local = TRUE)
   # nolint end: undesirable_function_linter.
 
