@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
 import { useDataStore, dataCache } from "@store/dataStore"
 import HelpButton from "@src/components/Icons/HelpIcon"
+import Alert from "@src/components/Alert"
 import type { ModelParameters } from "@src/types"
 import AdvancedOptions from "@src/components/Model/AdvancedOptions"
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal"
@@ -330,6 +331,13 @@ export default function ModelPage() {
 										</span>
 									</label>
 								</div>
+								{parameters.computeAndersonRubin && (
+									<Alert
+										message="This option enables heavy computation and may significantly increase processing time."
+										type="warning"
+										className="mt-3"
+									/>
+								)}
 							</div>
 						</div>
 

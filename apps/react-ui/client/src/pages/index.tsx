@@ -1,4 +1,4 @@
-import PingButton from "@components/PingButton"
+import PingButton from "@src/components/Buttons/PingButton"
 import MAIVEInfoModal from "@components/MAIVEInfoModal"
 import Link from "next/link"
 import { useState } from "react"
