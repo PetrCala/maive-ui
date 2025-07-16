@@ -77,15 +77,29 @@ function(file_data, parameters) {
   }
 
   model_type <- params$modelType # MAIVE or WAIVE
-  should_include_study_dummies <- if (isTRUE(params$includeStudyDummies)) 1 else 0
-  standard_error_treatment <- params$standardErrorTreatment # not_clustered, clustered, clustered_cr2, bootstrap
-  should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
+
+  study_dummies <- if (isTRUE(params$includeStudyDummies)) 1 else 0
+  study_clustering <- if (isTRUE(params$includeStudyClustering)) 1 else 0
+  studylevel <- if (study_clustering == 1) {
+    if (study_dummies == 1) 3 else 2
+  } else {
+    if (study_dummies == 1) 1 else 0
+  }
+
+  standard_error_treatment <- switch(params$standardErrorTreatment,
+    "not_clustered" = 0,
+    "clustered" = 1,
+    "clustered_cr2" = 2,
+    "bootstrap" = 3
+  )
   maive_method <- switch(params$maiveMethod,
     "PET" = 1,
     "PEESE" = 2,
     "PET-PEESE" = 3,
     "EK" = 4
   )
+  should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
+
 
   # Run the model
   maive_res <- MAIVE::maive(
@@ -93,8 +107,8 @@ function(file_data, parameters) {
     method = maive_method,
     weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
     instrument = 1, # no=0, yes=1 (default)
-    studylevel = should_include_study_dummies, # 0 none, 1 fixed effects, 2 cluster (default)
-    SE = 0, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
+    studylevel = studylevel,
+    SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
     AR = should_use_ar # 0 = no AR, 1 = AR (default)
   )
 
