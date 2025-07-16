@@ -78,11 +78,10 @@ function(file_data, parameters) {
   # Run the model
   maive_res <- MAIVE::maive(
     dat = df,
-    # TODO: Add parameters from the UI
-    method = 1, # PET=0, PEESE=1, PET-PEESE=2, EK=3
-    weight = 0, # no weights=0, inverse-variance weights=1, adjusted weights=2
-    instrument = 1, # no=0, yes=1
-    studylevel = 0, # none=0, study fixed effects=1, cluster-robust standard errors=2
+    method = 3, # PET=1, PEESE=2, PET-PEESE=3 (default), EK=4
+    weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
+    instrument = 1, # no=0, yes=1 (default)
+    studylevel = should_include_study_dummies, # none=0, study fixed effects=1, cluster-robust standard errors=2
     AR = should_use_ar # 0 = no AR, 1 = AR
   )
 
