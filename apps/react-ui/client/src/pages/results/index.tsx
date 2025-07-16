@@ -14,8 +14,7 @@ interface ModelResults {
 	isSignificant: boolean
 	andersonRubinCI: [number, number] | "NA"
 	publicationBias: {
-		estimate: number
-		standardError: number
+		pValue: number
 		isSignificant: boolean
 	}
 	firstStageFTest: number | "NA"
@@ -190,30 +189,15 @@ export default function ResultsPage() {
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.publicationBias.metrics.estimate.label}
+										{RESULTS_CONFIG.publicationBias.metrics.pValue.label}
 									</p>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.publicationBias.metrics.estimate.tooltip
+											RESULTS_CONFIG.publicationBias.metrics.pValue.tooltip
 										}
 									>
 										<p className="text-lg font-medium">
-											{parsedResults.publicationBias.estimate.toFixed(4)}
-										</p>
-									</Tooltip>
-								</div>
-								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.publicationBias.metrics.standardError.label}
-									</p>
-									<Tooltip
-										content={
-											RESULTS_CONFIG.publicationBias.metrics.standardError
-												.tooltip
-										}
-									>
-										<p className="text-lg font-medium">
-											{parsedResults.publicationBias.standardError.toFixed(4)}
+											{parsedResults.publicationBias.pValue.toFixed(4)}
 										</p>
 									</Tooltip>
 								</div>
