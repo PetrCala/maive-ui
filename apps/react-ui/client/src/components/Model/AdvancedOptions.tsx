@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { MAIVE_METHODS } from "@src/types"
 import type { ModelParameters } from "@src/types"
+import CONST from "@src/CONST"
 
 export default function AdvancedOptions({
 	maiveMethod,
@@ -51,10 +52,11 @@ export default function AdvancedOptions({
 							}
 							className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 						>
-							<option value="PET">PET</option>
-							<option value="PEESE">PEESE</option>
-							<option value="PET-PEESE">PET-PEESE</option>
-							<option value="EK">EK</option>
+							{Object.values(CONST.MAIVE_METHODS).map((method) => (
+								<option key={method} value={method}>
+									{method}
+								</option>
+							))}
 						</select>
 					</div>
 				</div>

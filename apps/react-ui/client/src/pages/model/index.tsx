@@ -11,6 +11,7 @@ import type { ModelParameters } from "@src/types"
 import AdvancedOptions from "@src/components/Model/AdvancedOptions"
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal"
 import CONFIG from "@src/CONFIG"
+import CONST from "@src/CONST"
 
 export default function ModelPage() {
 	const searchParams = useSearchParams()
@@ -191,8 +192,11 @@ export default function ModelPage() {
 										}
 										className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 									>
-										<option value="MAIVE">MAIVE</option>
-										<option value="WAIVE">WAIVE</option>
+										{Object.values(CONST.MODEL_TYPES).map((type) => (
+											<option key={type} value={type}>
+												{type}
+											</option>
+										))}
 									</select>
 								) : (
 									<p>{parameters.modelType}</p>
@@ -281,10 +285,15 @@ export default function ModelPage() {
 									}
 									className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 								>
-									<option value="not_clustered">Not Clustered</option>
-									<option value="clustered">Clustered</option>
-									<option value="clustered_cr2">Clustered using CR2</option>
-									<option value="bootstrap">Bootstrap</option>
+									{Object.values(CONST.STANDARD_ERROR_TREATMENTS).map(
+										(
+											treatment: (typeof CONST.STANDARD_ERROR_TREATMENTS)[keyof typeof CONST.STANDARD_ERROR_TREATMENTS]
+										) => (
+											<option key={treatment.KEY} value={treatment.KEY}>
+												{treatment.LABEL}
+											</option>
+										)
+									)}
 								</select>
 							</div>
 
