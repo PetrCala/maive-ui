@@ -1,5 +1,5 @@
 import { useState } from "react"
-import type { ModelParameters } from "@src/types"
+import type { DeepValueOf, ModelParameters } from "@src/types"
 import { YesNoSelect, DropdownSelect } from "@src/components/Options"
 import CONST from "@src/CONST"
 
@@ -8,7 +8,7 @@ export default function AdvancedOptions({
 	shouldUseInstrumenting,
 	handleParameterChange,
 }: {
-	maiveMethod: (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
+	maiveMethod: DeepValueOf<typeof CONST.MAIVE_METHODS>
 	shouldUseInstrumenting: boolean
 	handleParameterChange: (
 		param: keyof ModelParameters,
@@ -49,7 +49,7 @@ export default function AdvancedOptions({
 						onChange={(value) =>
 							handleParameterChange(
 								"maiveMethod",
-								value as (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
+								value as DeepValueOf<typeof CONST.MAIVE_METHODS>
 							)
 						}
 						options={Object.values(CONST.MAIVE_METHODS).map((method) => ({
