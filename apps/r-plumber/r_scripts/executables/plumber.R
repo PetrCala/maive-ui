@@ -91,9 +91,6 @@ function(file_data, parameters) {
     intercept = maive_res$beta # ASK: double check which coef to use
   )
 
-  # This is the package response structure
-  # maive_res <- list("beta" = round(beta, 3), "SE" = round(betase, 3), "F-test" = F_hac, "beta_standard" = round(beta0, 3), "SE_standard" = round(beta0se, 3), "Hausman" = round(Hausman, 3), "Chi2" = round(Chi2, 3), "SE_instrumented" = sebs2fit1^(1 / 2), "AR_CI" = b0_CI_AR)
-
   est <- maive_res$beta
   se <- maive_res$SE
   est_is_significant <- if (se > 0) est / se >= 1.96 else TRUE
