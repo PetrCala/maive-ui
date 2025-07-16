@@ -1,13 +1,14 @@
 import { useState } from "react"
-import { MAIVE_METHODS } from "@src/types"
 import type { ModelParameters } from "@src/types"
 import CONST from "@src/CONST"
 
 export default function AdvancedOptions({
 	maiveMethod,
+	shouldUseInstrumenting,
 	handleParameterChange,
 }: {
-	maiveMethod: (typeof MAIVE_METHODS)[number]
+	maiveMethod: (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
+	shouldUseInstrumenting: boolean
 	handleParameterChange: (
 		param: keyof ModelParameters,
 		value: string | boolean
@@ -48,7 +49,11 @@ export default function AdvancedOptions({
 						<select
 							value={maiveMethod}
 							onChange={(e) =>
-								handleParameterChange("maiveMethod", e.target.value)
+								handleParameterChange(
+									"maiveMethod",
+									e.target
+										.value as (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
+								)
 							}
 							className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
 						>
@@ -58,6 +63,39 @@ export default function AdvancedOptions({
 								</option>
 							))}
 						</select>
+					</div>
+					<div>
+						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+							Use Instrumenting
+						</label>
+						<div className="flex space-x-4">
+							<label className="inline-flex items-center">
+								<input
+									type="radio"
+									checked={shouldUseInstrumenting}
+									onChange={() =>
+										handleParameterChange("shouldUseInstrumenting", true)
+									}
+									className="form-radio text-blue-600"
+								/>
+								<span className="ml-2 text-gray-700 dark:text-gray-300">
+									Yes
+								</span>
+							</label>
+							<label className="inline-flex items-center">
+								<input
+									type="radio"
+									checked={!shouldUseInstrumenting}
+									onChange={() =>
+										handleParameterChange("shouldUseInstrumenting", false)
+									}
+									className="form-radio text-blue-600"
+								/>
+								<span className="ml-2 text-gray-700 dark:text-gray-300">
+									No
+								</span>
+							</label>
+						</div>
 					</div>
 				</div>
 			)}

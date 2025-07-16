@@ -67,7 +67,8 @@ function(file_data, parameters) {
     "includeStudyClustering",
     "standardErrorTreatment",
     "computeAndersonRubin",
-    "maiveMethod"
+    "maiveMethod",
+    "shouldUseInstrumenting"
   )
   if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
     return(list(
@@ -98,6 +99,7 @@ function(file_data, parameters) {
     "PET-PEESE" = 3,
     "EK" = 4
   )
+  instrument <- if (isTRUE(params$shouldUseInstrumenting)) 1 else 0
   should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
 
 
@@ -106,7 +108,7 @@ function(file_data, parameters) {
     dat = df,
     method = maive_method,
     weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
-    instrument = 1, # no=0, yes=1 (default)
+    instrument = instrument, # no=0, yes=1 (default)
     studylevel = studylevel,
     SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
     AR = should_use_ar # 0 = no AR, 1 = AR (default)
