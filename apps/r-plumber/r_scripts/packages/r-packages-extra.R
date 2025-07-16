@@ -1,6 +1,7 @@
 # Install packages from CRAN
 packages <- c()
 maive_packages <- c(
+  "clubSandwich",
   "varhandle",
   "pracma",
   "sandwich"
