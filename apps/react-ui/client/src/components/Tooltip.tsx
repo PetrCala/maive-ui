@@ -9,7 +9,7 @@ interface TooltipProps {
 	className?: string
 }
 
-export default function Tooltip({
+function Tooltip({
 	children,
 	content,
 	position = "top",
@@ -100,3 +100,6 @@ export default function Tooltip({
 		</div>
 	)
 }
+
+export type { TooltipProps }
+export default Tooltip
