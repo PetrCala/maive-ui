@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation"
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
 import { useDataStore, dataCache } from "@store/dataStore"
 import CONST from "@src/CONST"
+import HelpButton from "@components/Icons/HelpIcon"
+import ParametersHelpModal from "./ParametersHelpModal"
 
 interface ModelParameters {
 	modelType: "MAIVE" | "WAIVE"
@@ -170,9 +172,13 @@ export default function ModelPage() {
 				</Link>
 
 				<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-					<h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-						Model Parameters
-					</h1>
+					<div className="flex items-center mb-6">
+						<h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
+							Model Parameters
+						</h1>
+						{/* TODO show this button later */}
+						{/* <HelpButton modalComponent={ParametersHelpModal} /> */}
+					</div>
 					<div className="mb-6">
 						<p className="text-gray-700 dark:text-gray-300 mb-2">
 							Please select the model type and parameters you would like to use.
@@ -358,7 +364,6 @@ function AdvancedOptions({
 						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 							MAIVE Method
 						</label>
-						{}
 						<select
 							value={maiveMethod}
 							onChange={(e) =>
