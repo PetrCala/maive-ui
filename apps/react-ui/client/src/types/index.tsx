@@ -11,6 +11,7 @@ interface ModelParameters {
 		| (typeof CONST.STANDARD_ERROR_TREATMENTS)[keyof typeof CONST.STANDARD_ERROR_TREATMENTS]["KEY"]
 	computeAndersonRubin: boolean
 	maiveMethod: (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
+	shouldUseInstrumenting: boolean
 }
 
 export type { ModelParameters }

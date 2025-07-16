@@ -334,6 +334,7 @@ export default function ModelPage() {
 
 						<AdvancedOptions
 							maiveMethod={parameters.maiveMethod}
+							shouldUseInstrumenting={parameters.shouldUseInstrumenting}
 							handleParameterChange={handleParameterChange}
 						/>
 
