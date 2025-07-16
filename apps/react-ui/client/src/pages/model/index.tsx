@@ -7,20 +7,8 @@ import { useRouter } from "next/navigation"
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
 import { useDataStore, dataCache } from "@store/dataStore"
 import CONST from "@src/CONST"
-import HelpButton from "@components/Icons/HelpIcon"
-import ParametersHelpModal from "./ParametersHelpModal"
-
-interface ModelParameters {
-	modelType: "MAIVE" | "WAIVE"
-	includeStudyDummies: boolean
-	standardErrorTreatment:
-		| "not_clustered"
-		| "clustered"
-		| "clustered_cr2"
-		| "bootstrap"
-	computeAndersonRubin: boolean
-	maiveMethod: "PET" | "PEESE" | "PET-PEESE" | "EK"
-}
+import type { ModelParameters } from "@src/types"
+import AdvancedOptions from "@src/components/Model/AdvancedOptions"
 
 export default function ModelPage() {
 	const searchParams = useSearchParams()
@@ -30,6 +18,7 @@ export default function ModelPage() {
 	const [parameters, setParameters] = useState<ModelParameters>({
 		modelType: "MAIVE",
 		includeStudyDummies: false,
+		includeStudyClustering: false,
 		standardErrorTreatment: "not_clustered",
 		computeAndersonRubin: false,
 		maiveMethod: "PET-PEESE",
@@ -209,7 +198,7 @@ export default function ModelPage() {
 
 							<div>
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Include Study Dummies
+									Include Study Level Fixed Effects
 								</label>
 								<div className="flex space-x-4">
 									<label className="inline-flex items-center">
@@ -231,6 +220,40 @@ export default function ModelPage() {
 											checked={!parameters.includeStudyDummies}
 											onChange={() =>
 												handleParameterChange("includeStudyDummies", false)
+											}
+											className="form-radio text-blue-600"
+										/>
+										<span className="ml-2 text-gray-700 dark:text-gray-300">
+											No
+										</span>
+									</label>
+								</div>
+							</div>
+
+							<div>
+								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+									Include Study Level Clustering
+								</label>
+								<div className="flex space-x-4">
+									<label className="inline-flex items-center">
+										<input
+											type="radio"
+											checked={parameters.includeStudyClustering}
+											onChange={() =>
+												handleParameterChange("includeStudyClustering", true)
+											}
+											className="form-radio text-blue-600"
+										/>
+										<span className="ml-2 text-gray-700 dark:text-gray-300">
+											Yes
+										</span>
+									</label>
+									<label className="inline-flex items-center">
+										<input
+											type="radio"
+											checked={!parameters.includeStudyClustering}
+											onChange={() =>
+												handleParameterChange("includeStudyClustering", false)
 											}
 											className="form-radio text-blue-600"
 										/>
@@ -297,7 +320,6 @@ export default function ModelPage() {
 							</div>
 						</div>
 
-						{/* Advanced Options Collapsible Section */}
 						<AdvancedOptions
 							maiveMethod={parameters.maiveMethod}
 							handleParameterChange={handleParameterChange}
@@ -319,66 +341,5 @@ export default function ModelPage() {
 				</div>
 			</div>
 		</main>
-	)
-}
-
-function AdvancedOptions({
-	maiveMethod,
-	handleParameterChange,
-}: {
-	maiveMethod: "PET" | "PEESE" | "PET-PEESE" | "EK"
-	handleParameterChange: (
-		param: keyof ModelParameters,
-		value: string | boolean
-	) => void
-}) {
-	const [open, setOpen] = useState(false)
-	return (
-		<div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
-			<button
-				onClick={() => setOpen((prev) => !prev)}
-				className="flex items-center text-blue-600 dark:text-blue-400 font-semibold focus:outline-none"
-				aria-expanded={open}
-			>
-				<span className="mr-2">Advanced Options</span>
-				<svg
-					className={`w-4 h-4 transform transition-transform duration-200 ${
-						open ? "rotate-90" : "rotate-0"
-					}`}
-					fill="none"
-					stroke="currentColor"
-					viewBox="0 0 24 24"
-					xmlns="http://www.w3.org/2000/svg"
-				>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						strokeWidth={2}
-						d="M9 5l7 7-7 7"
-					/>
-				</svg>
-			</button>
-			{open && (
-				<div className="mt-4 space-y-4">
-					<div>
-						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							MAIVE Method
-						</label>
-						<select
-							value={maiveMethod}
-							onChange={(e) =>
-								handleParameterChange("maiveMethod", e.target.value)
-							}
-							className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-						>
-							<option value="PET">PET</option>
-							<option value="PEESE">PEESE</option>
-							<option value="PET-PEESE">PET-PEESE</option>
-							<option value="EK">EK</option>
-						</select>
-					</div>
-				</div>
-			)}
-		</div>
 	)
 }
