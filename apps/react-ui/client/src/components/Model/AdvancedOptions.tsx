@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { ModelParameters } from "@src/types"
+import { YesNoSelect, DropdownSelect } from "@src/components/Options"
 import CONST from "@src/CONST"
 
 export default function AdvancedOptions({
@@ -42,61 +43,27 @@ export default function AdvancedOptions({
 			</button>
 			{open && (
 				<div className="mt-4 space-y-4">
-					<div>
-						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							MAIVE Method
-						</label>
-						<select
-							value={maiveMethod}
-							onChange={(e) =>
-								handleParameterChange(
-									"maiveMethod",
-									e.target
-										.value as (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
-								)
-							}
-							className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-						>
-							{Object.values(CONST.MAIVE_METHODS).map((method) => (
-								<option key={method} value={method}>
-									{method}
-								</option>
-							))}
-						</select>
-					</div>
-					<div>
-						<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-							Use Instrumenting
-						</label>
-						<div className="flex space-x-4">
-							<label className="inline-flex items-center">
-								<input
-									type="radio"
-									checked={shouldUseInstrumenting}
-									onChange={() =>
-										handleParameterChange("shouldUseInstrumenting", true)
-									}
-									className="form-radio text-blue-600"
-								/>
-								<span className="ml-2 text-gray-700 dark:text-gray-300">
-									Yes
-								</span>
-							</label>
-							<label className="inline-flex items-center">
-								<input
-									type="radio"
-									checked={!shouldUseInstrumenting}
-									onChange={() =>
-										handleParameterChange("shouldUseInstrumenting", false)
-									}
-									className="form-radio text-blue-600"
-								/>
-								<span className="ml-2 text-gray-700 dark:text-gray-300">
-									No
-								</span>
-							</label>
-						</div>
-					</div>
+					<DropdownSelect
+						label="MAIVE Method"
+						value={maiveMethod}
+						onChange={(value) =>
+							handleParameterChange(
+								"maiveMethod",
+								value as (typeof CONST.MAIVE_METHODS)[keyof typeof CONST.MAIVE_METHODS]
+							)
+						}
+						options={Object.values(CONST.MAIVE_METHODS).map((method) => ({
+							value: method,
+							label: method,
+						}))}
+					/>
+					<YesNoSelect
+						label="Use Instrumenting"
+						value={shouldUseInstrumenting}
+						onChange={(value) =>
+							handleParameterChange("shouldUseInstrumenting", value)
+						}
+					/>
 				</div>
 			)}
 		</div>
