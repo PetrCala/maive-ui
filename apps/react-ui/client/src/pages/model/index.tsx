@@ -11,6 +11,7 @@ import Alert from "@src/components/Alert"
 import type { ModelParameters } from "@src/types"
 import AdvancedOptions from "@src/components/Model/AdvancedOptions"
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal"
+import { YesNoSelect, DropdownSelect } from "@src/components/Options"
 import CONFIG from "@src/CONFIG"
 import CONST from "@src/CONST"
 
@@ -182,155 +183,65 @@ export default function ModelPage() {
 
 					<div className="space-y-6">
 						<div className="grid grid-cols-1 gap-6">
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Model Type
-								</label>
-								{CONFIG.WAIVE_ENABLED ? (
-									<select
-										value={parameters.modelType}
-										onChange={(e) =>
-											handleParameterChange("modelType", e.target.value)
-										}
-										className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-									>
-										{Object.values(CONST.MODEL_TYPES).map((type) => (
-											<option key={type} value={type}>
-												{type}
-											</option>
-										))}
-									</select>
-								) : (
-									<p>{parameters.modelType}</p>
-								)}
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Include Study Level Fixed Effects
-								</label>
-								<div className="flex space-x-4">
-									<label className="inline-flex items-center">
-										<input
-											type="radio"
-											checked={parameters.includeStudyDummies}
-											onChange={() =>
-												handleParameterChange("includeStudyDummies", true)
-											}
-											className="form-radio text-blue-600"
-										/>
-										<span className="ml-2 text-gray-700 dark:text-gray-300">
-											Yes
-										</span>
-									</label>
-									<label className="inline-flex items-center">
-										<input
-											type="radio"
-											checked={!parameters.includeStudyDummies}
-											onChange={() =>
-												handleParameterChange("includeStudyDummies", false)
-											}
-											className="form-radio text-blue-600"
-										/>
-										<span className="ml-2 text-gray-700 dark:text-gray-300">
-											No
-										</span>
-									</label>
-								</div>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Include Study Level Clustering
-								</label>
-								<div className="flex space-x-4">
-									<label className="inline-flex items-center">
-										<input
-											type="radio"
-											checked={parameters.includeStudyClustering}
-											onChange={() =>
-												handleParameterChange("includeStudyClustering", true)
-											}
-											className="form-radio text-blue-600"
-										/>
-										<span className="ml-2 text-gray-700 dark:text-gray-300">
-											Yes
-										</span>
-									</label>
-									<label className="inline-flex items-center">
-										<input
-											type="radio"
-											checked={!parameters.includeStudyClustering}
-											onChange={() =>
-												handleParameterChange("includeStudyClustering", false)
-											}
-											className="form-radio text-blue-600"
-										/>
-										<span className="ml-2 text-gray-700 dark:text-gray-300">
-											No
-										</span>
-									</label>
-								</div>
-							</div>
-
-							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Standard Error Treatment
-								</label>
-								<select
-									value={parameters.standardErrorTreatment}
-									onChange={(e) =>
-										handleParameterChange(
-											"standardErrorTreatment",
-											e.target.value
-										)
+							{CONFIG.WAIVE_ENABLED ? (
+								<DropdownSelect
+									label="Model Type"
+									value={parameters.modelType}
+									onChange={(value) =>
+										handleParameterChange("modelType", value)
 									}
-									className="w-48 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-								>
-									{Object.values(CONST.STANDARD_ERROR_TREATMENTS).map(
-										(
-											treatment: (typeof CONST.STANDARD_ERROR_TREATMENTS)[keyof typeof CONST.STANDARD_ERROR_TREATMENTS]
-										) => (
-											<option key={treatment.KEY} value={treatment.KEY}>
-												{treatment.LABEL}
-											</option>
-										)
-									)}
-								</select>
-							</div>
+									options={Object.values(CONST.MODEL_TYPES).map((type) => ({
+										value: type,
+										label: type,
+									}))}
+								/>
+							) : (
+								<div>
+									<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+										Model Type
+									</label>
+									<p>{parameters.modelType}</p>
+								</div>
+							)}
+
+							<YesNoSelect
+								label="Include Study Level Fixed Effects"
+								value={parameters.includeStudyDummies}
+								onChange={(value) =>
+									handleParameterChange("includeStudyDummies", value)
+								}
+							/>
+
+							<YesNoSelect
+								label="Include Study Level Clustering"
+								value={parameters.includeStudyClustering}
+								onChange={(value) =>
+									handleParameterChange("includeStudyClustering", value)
+								}
+							/>
+
+							<DropdownSelect
+								label="Standard Error Treatment"
+								value={parameters.standardErrorTreatment}
+								onChange={(value) =>
+									handleParameterChange("standardErrorTreatment", value)
+								}
+								options={Object.values(CONST.STANDARD_ERROR_TREATMENTS).map(
+									(treatment) => ({
+										value: treatment.KEY,
+										label: treatment.LABEL,
+									})
+								)}
+							/>
 
 							<div>
-								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-									Compute Anderson-Rubin Confidence Interval
-								</label>
-								<div className="flex space-x-4">
-									<label className="inline-flex items-center">
-										<input
-											type="radio"
-											checked={parameters.computeAndersonRubin}
-											onChange={() =>
-												handleParameterChange("computeAndersonRubin", true)
-											}
-											className="form-radio text-blue-600"
-										/>
-										<span className="ml-2 text-gray-700 dark:text-gray-300">
-											Yes
-										</span>
-									</label>
-									<label className="inline-flex items-center">
-										<input
-											type="radio"
-											checked={!parameters.computeAndersonRubin}
-											onChange={() =>
-												handleParameterChange("computeAndersonRubin", false)
-											}
-											className="form-radio text-blue-600"
-										/>
-										<span className="ml-2 text-gray-700 dark:text-gray-300">
-											No
-										</span>
-									</label>
-								</div>
+								<YesNoSelect
+									label="Compute Anderson-Rubin Confidence Interval"
+									value={parameters.computeAndersonRubin}
+									onChange={(value) =>
+										handleParameterChange("computeAndersonRubin", value)
+									}
+								/>
 								{parameters.computeAndersonRubin && (
 									<Alert
 										message="This option enables heavy computation and may significantly increase processing time."
