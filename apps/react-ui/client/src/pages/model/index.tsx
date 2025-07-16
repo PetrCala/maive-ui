@@ -25,6 +25,7 @@ export default function ModelPage() {
 		standardErrorTreatment: "not_clustered",
 		computeAndersonRubin: false,
 		maiveMethod: "PET-PEESE",
+		shouldUseInstrumenting: true,
 	})
 	const router = useRouter()
 
