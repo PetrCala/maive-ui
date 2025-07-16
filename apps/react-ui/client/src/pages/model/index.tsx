@@ -6,9 +6,11 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
 import { useDataStore, dataCache } from "@store/dataStore"
-import CONST from "@src/CONST"
+import HelpButton from "@src/components/Icons/HelpIcon"
 import type { ModelParameters } from "@src/types"
 import AdvancedOptions from "@src/components/Model/AdvancedOptions"
+import ParametersHelpModal from "@src/components/Model/ParametersHelpModal"
+import CONFIG from "@src/CONFIG"
 
 export default function ModelPage() {
 	const searchParams = useSearchParams()
@@ -165,8 +167,9 @@ export default function ModelPage() {
 						<h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
 							Model Parameters
 						</h1>
-						{/* TODO show this button later */}
-						{/* <HelpButton modalComponent={ParametersHelpModal} /> */}
+						{CONFIG.SHOULD_SHOW_MODEL_PARAMS_HELP_MODAL && (
+							<HelpButton modalComponent={ParametersHelpModal} />
+						)}
 					</div>
 					<div className="mb-6">
 						<p className="text-gray-700 dark:text-gray-300 mb-2">
@@ -180,7 +183,7 @@ export default function ModelPage() {
 								<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
 									Model Type
 								</label>
-								{CONST.WAIVE_ENABLED ? (
+								{CONFIG.WAIVE_ENABLED ? (
 									<select
 										value={parameters.modelType}
 										onChange={(e) =>
