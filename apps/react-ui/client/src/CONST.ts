@@ -15,20 +15,20 @@ const CONST = {
 	},
 	STANDARD_ERROR_TREATMENTS: {
 		NOT_CLUSTERED: {
-			KEY: "not_clustered",
-			LABEL: "Not Clustered",
+			VALUE: "not_clustered",
+			TEXT: "Not Clustered",
 		},
 		CLUSTERED: {
-			KEY: "clustered",
-			LABEL: "Clustered",
+			VALUE: "clustered",
+			TEXT: "Clustered",
 		},
 		CLUSTERED_CR2: {
-			KEY: "clustered_cr2",
-			LABEL: "Clustered using CR2",
+			VALUE: "clustered_cr2",
+			TEXT: "Clustered using CR2",
 		},
 		BOOTSTRAP: {
-			KEY: "bootstrap",
-			LABEL: "Bootstrap",
+			VALUE: "bootstrap",
+			TEXT: "Bootstrap",
 		},
 	},
 } as const
