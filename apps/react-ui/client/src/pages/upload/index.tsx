@@ -10,6 +10,7 @@ import SuccessIndicator from "@components/SuccessIndicator"
 import { useDropzone } from "react-dropzone"
 import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa"
 
+// Standalone function to get the file icon component based on filename
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
 	const [isProcessing, setIsProcessing] = useState(false)
@@ -74,6 +75,17 @@ export default function UploadPage() {
 			setIsProcessing(false)
 		}
 	}
+
+	const getFileIconComponent = (filename: string, size: number = 24) => {
+		if (filename.endsWith('.csv')) {
+			return <FaFileCsv className="text-blue-500" size={size} />
+		} else if (filename.endsWith('.xls') || filename.endsWith('.xlsx')) {
+			return <FaFileExcel className="text-green-600" size={size} />
+		} else {
+			return <FaFileAlt className="text-gray-400" size={size} />
+		}
+	}
+
 
 	return (
 		<main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
@@ -158,13 +170,7 @@ export default function UploadPage() {
 										<div className="mt-2 w-full border-2 border-gray-400 dark:border-gray-600 rounded-xl px-6 py-4 text-base flex items-center shadow-lg font-semibold bg-white dark:bg-gray-900/40">
 											{/* Icon */}
 											<span className="mr-4 text-2xl flex-shrink-0">
-												{selectedFile.name.endsWith('.csv') ? (
-													<FaFileCsv className="text-blue-500" />
-												) : selectedFile.name.endsWith('.xls') || selectedFile.name.endsWith('.xlsx') ? (
-													<FaFileExcel className="text-green-600" />
-												) : (
-													<FaFileAlt className="text-gray-400" />
-												)}
+												{getFileIconComponent(selectedFile.name)}
 											</span>
 											{/* Filename */}
 											<span className="text-blue-700 dark:text-blue-300 font-medium truncate max-w-xs" title={selectedFile.name}>
