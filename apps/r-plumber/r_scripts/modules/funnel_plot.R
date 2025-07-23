@@ -1,3 +1,5 @@
+PLOT_RES <- 96
+
 #' Get the default options for the funnel plot
 #'
 #' @return A list of options
@@ -92,7 +94,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL) {
 #' @param ... Arguments to pass to get_funnel_plot
 #' @return A list of the dimensions of the plot
 #' @export
-get_plot_dims <- function(..., res = 96) {
+get_plot_dims <- function(..., res = PLOT_RES) {
   get_funnel_plot(...)
   plot_dims <- par("din") # current device size in inches # nolint: undesirable_function_linter.
   width_px <- plot_dims[1] * res
@@ -106,7 +108,7 @@ get_plot_dims <- function(..., res = 96) {
 #' @param res Resolution of the plot in pixels per inch (optional, default 96)
 #' @return A list of the data URI, width, and height of the plot
 #' @export
-get_funnel_plot_data <- function(..., res = 96) {
+get_funnel_plot_data <- function(..., res = PLOT_RES) {
   width_px <- res * 7
   height_px <- res * 7
 
