@@ -29,10 +29,32 @@ get_funnel_plot_opts <- function() {
     legend_inset = 0.01,
     text_color = "black",
     legend_bg = "white",
-    legend_position = "topright",
+    legend_position = "bottomright",
     legend_bty = "o"
   )
 }
+
+
+#' Dynamically set xlim so that the lower bound is a bit below the minimum effect,
+#' and the upper bound is shifted to the right to avoid legend overlap.
+#' @returns A list with the two padding values
+get_funnel_padding <- function(effect) {
+  # Set padding at either side - between 0 and 1, percentage of the effect range
+  left_padding <- 0
+  right_padding <- 0.25
+
+  effect_all <- c(effect, effect) # both base and adjusted
+  min_effect <- min(effect_all, na.rm = TRUE)
+  max_effect <- max(effect_all, na.rm = TRUE)
+  effect_range <- max_effect - min_effect
+  xlim_pad_left <- left_padding * effect_range
+  xlim_pad_right <- right_padding * effect_range
+  list(
+    lower = min_effect - xlim_pad_left,
+    upper = max_effect + xlim_pad_right
+  )
+}
+
 
 #' Get a funnel plot using metafor
 #'
@@ -56,6 +78,8 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL) {
   # vline_color <- "red"
   # if (!is.null(intercept)) p <- p + ggplot2::geom_vline(ggplot2::aes(xintercept = intercept), color = vline_color, linewidth = 0.5)
 
+  padding <- get_funnel_padding(effect)
+
   # Create the funnel plot
   p <- metafor::funnel(
     x = x,
@@ -68,6 +92,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL) {
     yaxis = funnel_opts$yaxis,
     xlab = funnel_opts$xlab,
     ylab = funnel_opts$ylab,
+    xlim = c(padding$lower, padding$upper), # shift plot to the left to avoid legend overlap
     # atransf = exp, # x axis labels to exponential
     # refline2 = 0.142, # To add a second reference line
     refline = mean(effect),
