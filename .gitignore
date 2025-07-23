@@ -97,4 +97,4 @@ node_modules/
 # Other
 **/bun.lockb
 notes/
-**/.pdf
+**/*.pdf
