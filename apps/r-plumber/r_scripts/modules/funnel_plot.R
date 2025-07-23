@@ -1,4 +1,4 @@
-PLOT_RES <- 96
+PLOT_RES <- 96 # Changes the resolution of the plot in pixels per inch; also changes the plot size
 
 #' Get the default options for the funnel plot
 #'
