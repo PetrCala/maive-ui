@@ -25,6 +25,8 @@ interface ModelResults {
 	}
 	seInstrumented: number[]
 	funnelPlot: string // Base64 encoded image
+	funnelPlotWidth: number
+	funnelPlotHeight: number
 }
 
 export default function ResultsPage() {
@@ -317,8 +319,8 @@ export default function ResultsPage() {
 								<Image
 									src={parsedResults.funnelPlot}
 									alt="Funnel Plot"
-									width={500}
-									height={400}
+									width={Math.min(parsedResults.funnelPlotWidth, 1000)}
+									height={Math.min(parsedResults.funnelPlotHeight, 1000)}
 									className="max-w-full h-auto"
 								/>
 							</div>

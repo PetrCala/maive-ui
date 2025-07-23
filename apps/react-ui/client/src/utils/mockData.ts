@@ -66,6 +66,8 @@ const generateMockResults = (nrow: number) => {
 			faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 })
 		),
 		funnelPlot: funnelPlotBase64,
+		funnelPlotWidth: 672,
+		funnelPlotHeight: 672,
 	}
 }
 

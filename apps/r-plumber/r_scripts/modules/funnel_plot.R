@@ -87,15 +87,32 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL) {
   return(p)
 }
 
+#' Get the dimensions of the plot
+#'
+#' @param ... Arguments to pass to get_funnel_plot
+#' @return A list of the dimensions of the plot
+#' @export
+get_plot_dims <- function(..., res = 96) {
+  get_funnel_plot(...)
+  plot_dims <- par("din") # current device size in inches # nolint: undesirable_function_linter.
+  width_px <- plot_dims[1] * res
+  height_px <- plot_dims[2] * res
+  list(width_px = width_px, height_px = height_px)
+}
+
 #' Get a funnel plot using metafor and return a base64 encoded string
 #'
 #' @param ... Arguments to pass to get_funnel_plot
-#' @return A base64 encoded string of the funnel plot
+#' @param res Resolution of the plot in pixels per inch (optional, default 96)
+#' @return A list of the data URI, width, and height of the plot
 #' @export
-get_funnel_plot_uri <- function(...) {
+get_funnel_plot_data <- function(..., res = 96) {
+  width_px <- res * 7
+  height_px <- res * 7
+
   tmp <- tempfile(fileext = ".png")
-  png(tmp, width = 800, height = 600, res = 96)
-  get_funnel_plot(...)
+  png(tmp, width = width_px, height = height_px, res = res)
+  get_funnel_plot(...) # This will plot directly to the PNG device
   dev.off()
 
   raw_png <- readBin(tmp, "raw", n = file.info(tmp)$size)
@@ -105,5 +122,9 @@ get_funnel_plot_uri <- function(...) {
     "data:image/png;base64,",
     base64enc::base64encode(raw_png)
   )
-  data_uri
+  list(
+    data_uri = data_uri,
+    width_px = width_px,
+    height_px = height_px
+  )
 }
