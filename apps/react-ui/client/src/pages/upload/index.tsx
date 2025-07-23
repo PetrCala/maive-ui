@@ -133,26 +133,34 @@ export default function UploadPage() {
 								Upload your data file
 							</label>
 							<div className="mt-1 flex gap-3">
-								<div {...getRootProps()} className="flex flex-1 flex-row items-center border-2 border-dashed border-blue-400 rounded-lg p-6 min-h-[120px] transition-colors duration-200 bg-blue-50 dark:bg-blue-900/30 hover:border-blue-600 focus:border-blue-600 cursor-pointer select-none">
-									<input {...getInputProps()} />
-									<div className="flex-1 flex flex-col items-start justify-center">
-										<p className="text-blue-700 dark:text-blue-200 text-base font-medium">
-											{isDragActive ? "Drop the file here..." : "Drag and drop your file here"}
-										</p>
-										<p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-											Max size: 200MB &nbsp;|&nbsp; .csv, .xls, .xlsx 
-										</p>
+								<div className = "flex-grow">
+									<div {...getRootProps()} className="flex flex-1 flex-row items-center border-2 border-dashed border-blue-400 rounded-lg p-6 min-h-[120px] transition-colors duration-200 bg-blue-50 dark:bg-blue-900/30 hover:border-blue-600 focus:border-blue-600 cursor-pointer select-none">
+										<input {...getInputProps()} />
+										<div className="flex-1 flex flex-col items-start justify-center">
+											<p className="text-blue-700 dark:text-blue-200 text-base font-medium">
+												{isDragActive ? "Drop the file here..." : "Drag and drop your file here"}
+											</p>
+											<p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+												Max size: 200MB &nbsp;|&nbsp; .csv, .xls, .xlsx 
+											</p>
+										</div>
+										<button
+											type="button"
+											onClick={open}
+											className="ml-8 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-base file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 hover:file:text-blue-900 dark:file:bg-blue-800/60 dark:file:text-blue-200 dark:hover:file:bg-blue-900/80 dark:hover:file:text-blue-100 dark:text-gray-500 cursor-pointer transition-colors duration-200 px-4 py-2 text-base font-bold bg-blue-100 text-blue-800 rounded-full border-0 shadow-sm hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800/80 dark:hover:text-blue-100"
+											style={{ minWidth: 120 }}
+										>
+											Choose File
+										</button>
 									</div>
-									<button
-										type="button"
-										onClick={open}
-										className="ml-8 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-base file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 hover:file:text-blue-900 dark:file:bg-blue-800/60 dark:file:text-blue-200 dark:hover:file:bg-blue-900/80 dark:hover:file:text-blue-100 dark:text-gray-500 cursor-pointer transition-colors duration-200 px-4 py-2 text-base font-bold bg-blue-100 text-blue-800 rounded-full border-0 shadow-sm hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800/80 dark:hover:text-blue-100"
-										style={{ minWidth: 120 }}
-									>
-										Choose File
-									</button>
+									{selectedFile && (
+										<div className="mt-2 w-full bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex flex-col">
+											<span className="font-medium">Selected file:</span>
+											<span>{selectedFile.name} ({(selectedFile.size/1024/1024).toFixed(2)} MB)</span>
+										</div>
+									)}
 								</div>
-								{process.env.NODE_ENV === "development" &&
+								{process.env.NODE_ENV !== "development" &&
 									(!selectedFile ? (
 										<button
 											type="button"
@@ -165,12 +173,6 @@ export default function UploadPage() {
 										<SuccessIndicator />
 									))}
 							</div>
-							{selectedFile && (
-								<div className="mt-2 w-full bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex flex-col">
-									<span className="font-medium">Selected file:</span>
-									<span>{selectedFile.name} ({(selectedFile.size/1024/1024).toFixed(2)} MB)</span>
-								</div>
-							)}
 						</div>
 
 						<button
