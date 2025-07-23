@@ -1,50 +1,31 @@
-import { useEffect, useState } from "react"
 import Alert from "./Alert"
 
-interface AlertPopupProps {
-	message: string
-	type?: "info" | "success" | "warning" | "error"
-	duration?: number // ms
+export type AlertLevel = "info" | "success" | "warning" | "error"
+
+export interface AlertPopupProps {
+  message: string
+  type?: AlertLevel
+  open: boolean
+  onClose: () => void
+  duration?: number // ms
 }
 
 const FADE_DURATION = 300 // ms
 
-const AlertPopup = ({ message, type = "info", duration = 2500 }: AlertPopupProps) => {
-	const [visible, setVisible] = useState(true)
-	const [show, setShow] = useState(false)
-
-	useEffect(() => {
-		setShow(true)
-	}, [])
-
-	useEffect(() => {
-		if (!visible) return
-		const timer = setTimeout(() => setShow(false), duration)
-		return () => clearTimeout(timer)
-	}, [visible, duration])
-
-	// After fade-out, unmount
-	useEffect(() => {
-		if (show) return
-		const timer = setTimeout(() => setVisible(false), FADE_DURATION)
-		return () => clearTimeout(timer)
-	}, [show])
-
-	if (!visible) return null
-
-	return (
-		<div
-			style={{ pointerEvents: "auto" }}
-			className={`transition-opacity duration-300 ${show ? "opacity-100" : "opacity-0"}`}
-		>
-			<Alert
-				message={message}
-				type={type}
-				standalone
-				onClick={() => setShow(false)}
-			/>
-		</div>
-	)
+const AlertPopup = ({ message, type = "info", open, onClose, duration = 2500 }: AlertPopupProps) => {
+  return open ? (
+    <div
+      style={{ pointerEvents: "auto", transition: `opacity ${FADE_DURATION}ms` }}
+      className={`opacity-100 transition-opacity duration-300`}
+    >
+      <Alert
+        message={message}
+        type={type}
+        standalone
+        onClick={onClose}
+      />
+    </div>
+  ) : null
 }
 
 export default AlertPopup 
