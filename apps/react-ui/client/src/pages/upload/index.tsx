@@ -147,7 +147,7 @@ export default function UploadPage() {
 							</label>
 							<div className="mt-1 flex gap-3">
 								<div className = "flex-grow">
-									<div {...getRootProps()} className="flex flex-1 flex-row items-center border-2 border-dashed border-blue-400 rounded-lg p-6 min-h-[120px] transition-colors duration-200 bg-blue-50 dark:bg-blue-900/30 hover:border-blue-600 focus:border-blue-600 cursor-pointer select-none">
+									<div {...getRootProps()} className="flex flex-1 flex-row items-center border-2 border-dashed border-blue-400 rounded-lg p-6 min-h-[60px] transition-colors duration-200 bg-blue-50 dark:bg-blue-900/30 hover:border-blue-600 focus:border-blue-600 cursor-pointer select-none">
 										<input {...getInputProps()} />
 										<div className="flex-1 flex flex-col items-start justify-center">
 											<p className="text-blue-700 dark:text-blue-200 text-base font-medium">
