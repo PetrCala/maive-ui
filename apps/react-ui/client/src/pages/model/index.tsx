@@ -178,7 +178,7 @@ export default function ModelPage() {
 				</Link>
 
 				{/* Card transition: parameters or loading */}
-				<div className="min-h-[400px] w-full flex items-center justify-center">
+				<div className="min-h-[400px] w-full items-center justify-center">
 					{loading ? (
 						<LoadingCard />
 					) : (
