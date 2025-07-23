@@ -7,6 +7,7 @@ import { useDataStore, dataCache } from "@store/dataStore"
 import { generateDataId, processUploadedFile } from "@utils/dataUtils"
 import { generateMockCSVFile } from "@utils/mockData"
 import SuccessIndicator from "@components/SuccessIndicator"
+import { useDropzone } from "react-dropzone"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -14,11 +15,22 @@ export default function UploadPage() {
 	const router = useRouter()
 	const { setUploadedData } = useDataStore()
 
-	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		if (event.target.files && event.target.files[0]) {
-			setSelectedFile(event.target.files[0])
+	const onDrop = (acceptedFiles: File[]) => {
+		if (acceptedFiles && acceptedFiles[0]) {
+			setSelectedFile(acceptedFiles[0])
 		}
 	}
+	const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
+		onDrop,
+		accept: {
+			".csv": [".csv"],
+			".xls": [".xls"],
+			".xlsx": [".xlsx"],
+		},
+		multiple: false,
+		noClick: true,
+		noKeyboard: true,
+	})
 
 	const handleGenerateMockData = () => {
 		const mockFile = generateMockCSVFile()
@@ -117,36 +129,35 @@ export default function UploadPage() {
 
 					<form onSubmit={handleSubmit} className="space-y-6">
 						<div className="space-y-2">
-							<label
-								htmlFor="file-upload"
-								className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-							>
-								Select your data file
+							<label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+								Upload your data file
 							</label>
 							<div className="mt-1 flex gap-3">
-								<input
-									id="file-upload"
-									type="file"
-									accept=".xlsx,.xls,.csv"
-									onChange={handleFileChange}
-									className="block flex-1 text-sm text-gray-500
-										file:mr-4 file:py-2 file:px-4
-										file:rounded-full file:border-0
-										file:text-sm file:font-semibold
-										file:bg-blue-50 file:text-blue-700
-										hover:file:bg-blue-100
-										dark:file:bg-blue-900/50 dark:file:text-blue-300
-										dark:hover:file:bg-blue-900/70
-										dark:text-gray-400
-										cursor-pointer
-										transition-colors duration-200"
-								/>
+								<div {...getRootProps()} className="flex flex-1 flex-row items-center border-2 border-dashed border-blue-400 rounded-lg p-6 min-h-[120px] transition-colors duration-200 bg-blue-50 dark:bg-blue-900/30 hover:border-blue-600 focus:border-blue-600 cursor-pointer select-none">
+									<input {...getInputProps()} />
+									<div className="flex-1 flex flex-col items-start justify-center">
+										<p className="text-blue-700 dark:text-blue-200 text-base font-medium">
+											{isDragActive ? "Drop the file here..." : "Drag and drop your file here"}
+										</p>
+										<p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+											Max size: 200MB &nbsp;|&nbsp; .csv, .xls, .xlsx 
+										</p>
+									</div>
+									<button
+										type="button"
+										onClick={open}
+										className="ml-8 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-base file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 hover:file:text-blue-900 dark:file:bg-blue-800/60 dark:file:text-blue-200 dark:hover:file:bg-blue-900/80 dark:hover:file:text-blue-100 dark:text-gray-500 cursor-pointer transition-colors duration-200 px-4 py-2 text-base font-bold bg-blue-100 text-blue-800 rounded-full border-0 shadow-sm hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800/80 dark:hover:text-blue-100"
+										style={{ minWidth: 120 }}
+									>
+										Choose File
+									</button>
+								</div>
 								{process.env.NODE_ENV === "development" &&
 									(!selectedFile ? (
 										<button
 											type="button"
 											onClick={handleGenerateMockData}
-											className="px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-900/70 transition-colors duration-200"
+											className="ml-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-900/70 transition-colors duration-200 flex-shrink-0"
 										>
 											Generate Mock Data
 										</button>
@@ -154,6 +165,12 @@ export default function UploadPage() {
 										<SuccessIndicator />
 									))}
 							</div>
+							{selectedFile && (
+								<div className="mt-2 w-full bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex flex-col">
+									<span className="font-medium">Selected file:</span>
+									<span>{selectedFile.name} ({(selectedFile.size/1024/1024).toFixed(2)} MB)</span>
+								</div>
+							)}
 						</div>
 
 						<button
