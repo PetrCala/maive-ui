@@ -158,8 +158,8 @@ export default function ModelPage() {
 	}
 
 	return (
-		<main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-			<div className="max-w-4xl w-full">
+		<main className="flex flex-1 flex-col items-center w-full min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+			<div className="max-w-4xl w-full p-6 md:p-12 lg:p-24">
 				<Link
 					href={`/validation?dataId=${dataId}`}
 					className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
@@ -173,7 +173,7 @@ export default function ModelPage() {
 					<div className={`absolute inset-0 transition-all duration-500 ${loading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'} z-10`}
 						aria-hidden={loading}
 					>
-						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
 							<div className="flex flex-col gap-6">
 								<div className="flex items-center mb-6">
 									<h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
@@ -279,7 +279,7 @@ export default function ModelPage() {
 					<div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center ${loading ? 'opacity-100 scale-100 z-20' : 'opacity-0 scale-95 pointer-events-none'}`}
 						aria-hidden={!loading}
 					>
-						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full">
+						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full max-h-[90vh] overflow-y-auto">
 							<svg className="animate-spin h-12 w-12 text-blue-600 dark:text-blue-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
