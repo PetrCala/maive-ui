@@ -154,7 +154,7 @@ export default function UploadPage() {
 										</button>
 									</div>
 									{selectedFile && (
-										<div className="mt-2 w-full bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-200 flex flex-col">
+										<div className="mt-2 w-full border-2 border-gray-400 dark:border-gray-600 rounded-xl px-6 py-4 text-base text-gray-900 dark:text-gray-100 flex flex-col shadow-lg font-semibold">
 											<span className="font-medium">Selected file:</span>
 											<span>{selectedFile.name} ({(selectedFile.size/1024/1024).toFixed(2)} MB)</span>
 										</div>
