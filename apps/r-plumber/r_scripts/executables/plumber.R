@@ -121,7 +121,7 @@ function(file_data, parameters) {
   pub_bias_p_value <- maive_res[["pub bias p-value"]]
   pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
 
-  funnel_plot <- get_funnel_plot_uri(
+  funnel_plot_data <- get_funnel_plot_data(
     effect = df$bs,
     se = df$sebs,
     se_adjusted = maive_res$SE_instrumented,
@@ -144,7 +144,9 @@ function(file_data, parameters) {
       rejectsNull = maive_res$Hausman >= maive_res$Chi2
     ),
     seInstrumented = maive_res$SE_instrumented,
-    funnelPlot = funnel_plot
+    funnelPlot = funnel_plot_data$data_uri,
+    funnelPlotWidth = funnel_plot_data$width_px,
+    funnelPlotHeight = funnel_plot_data$height_px
   )
   list(data = results)
 }
