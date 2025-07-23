@@ -8,6 +8,7 @@ import { generateDataId, processUploadedFile } from "@utils/dataUtils"
 import { generateMockCSVFile } from "@utils/mockData"
 import SuccessIndicator from "@components/SuccessIndicator"
 import { useDropzone } from "react-dropzone"
+import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa"
 
 export default function UploadPage() {
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -154,9 +155,25 @@ export default function UploadPage() {
 										</button>
 									</div>
 									{selectedFile && (
-										<div className="mt-2 w-full border-2 border-gray-400 dark:border-gray-600 rounded-xl px-6 py-4 text-base text-gray-900 dark:text-gray-100 flex flex-col shadow-lg font-semibold">
-											<span className="font-medium">Selected file:</span>
-											<span>{selectedFile.name} ({(selectedFile.size/1024/1024).toFixed(2)} MB)</span>
+										<div className="mt-2 w-full border-2 border-gray-400 dark:border-gray-600 rounded-xl px-6 py-4 text-base flex items-center shadow-lg font-semibold bg-white dark:bg-gray-900/40">
+											{/* Icon */}
+											<span className="mr-4 text-2xl flex-shrink-0">
+												{selectedFile.name.endsWith('.csv') ? (
+													<FaFileCsv className="text-blue-500" />
+												) : selectedFile.name.endsWith('.xls') || selectedFile.name.endsWith('.xlsx') ? (
+													<FaFileExcel className="text-green-600" />
+												) : (
+													<FaFileAlt className="text-gray-400" />
+												)}
+											</span>
+											{/* Filename */}
+											<span className="text-blue-700 dark:text-blue-300 font-medium truncate max-w-xs" title={selectedFile.name}>
+												{selectedFile.name}
+											</span>
+											{/* File size */}
+											<span className="ml-auto text-gray-500 dark:text-gray-400 font-normal text-sm">
+												{(selectedFile.size/1024/1024).toFixed(2)} MB
+											</span>
 										</div>
 									)}
 								</div>
