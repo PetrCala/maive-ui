@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -30,10 +30,19 @@ export default function ModelPage() {
 		shouldUseInstrumenting: true,
 	})
 	const router = useRouter()
+	const abortControllerRef = useRef<AbortController | null>(null)
+	const isMountedRef = useRef(true)
 
 	useEffect(() => {
+		isMountedRef.current = true
 		if (dataId) {
 			loadDataFromStore()
+		}
+		return () => {
+			isMountedRef.current = false
+			if (abortControllerRef.current) {
+				abortControllerRef.current.abort()
+			}
 		}
 	}, [dataId]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -94,6 +103,7 @@ export default function ModelPage() {
 	const handleRunModel = async () => {
 		window.scrollTo({ top: 0, behavior: "smooth" }) // Scroll to top of page
 		setLoading(true)
+		abortControllerRef.current = new AbortController()
 		try {
 			let result: { data?: any; error?: any; message?: string }
 
@@ -114,6 +124,7 @@ export default function ModelPage() {
 							file_data: JSON.stringify(uploadedData.data),
 							parameters: JSON.stringify(parameters),
 						}),
+						signal: abortControllerRef.current.signal,
 					}
 				)
 
@@ -132,15 +143,26 @@ export default function ModelPage() {
 				dataId: dataId || "",
 				parameters: JSON.stringify(parameters),
 			})
-			router.push(`/results?${searchParams.toString()}`)
-		} catch (error) {
+			if (isMountedRef.current) {
+				router.push(`/results?${searchParams.toString()}`)
+			}
+		} catch (error: any) {
+			if (error.name === "AbortError") {
+				console.log("Model run aborted due to navigation or unmount.")
+				return
+			}
 			console.error("Error running model:", error)
-			alert(
-				"An error occurred while running the model: " +
+			if (isMountedRef.current) {
+				alert(
+					"An error occurred while running the model: " +
 					(error instanceof Error ? error.message : String(error))
-			)
+				)
+			}
 		} finally {
-			setLoading(false)
+			if (isMountedRef.current) {
+				setLoading(false)
+			}
+			abortControllerRef.current = null
 		}
 	}
 
