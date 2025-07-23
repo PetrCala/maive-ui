@@ -319,8 +319,8 @@ export default function ResultsPage() {
 								<Image
 									src={parsedResults.funnelPlot}
 									alt="Funnel Plot"
-									width={Math.min(parsedResults.funnelPlotWidth, 1000)}
-									height={Math.min(parsedResults.funnelPlotHeight, 1000)}
+									width={Math.min(parsedResults.funnelPlotWidth, 800)}
+									height={Math.min(parsedResults.funnelPlotHeight, 800)}
 									className="max-w-full h-auto"
 								/>
 							</div>
