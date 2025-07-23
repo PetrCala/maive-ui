@@ -204,7 +204,7 @@ export default function ModelPage() {
 					{loading ? (
 						<LoadingCard />
 					) : (
-						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto transition-all duration-500 opacity-100 scale-100">
+						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
 							<div className="flex flex-col gap-6">
 								<div className="flex items-center mb-3">
 									<h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
