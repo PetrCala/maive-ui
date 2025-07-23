@@ -114,18 +114,19 @@ function(file_data, parameters) {
     AR = should_use_ar # 0 = no AR, 1 = AR (default)
   )
 
-  funnel_plot <- get_funnel_plot(
-    effect = df$bs,
-    se = maive_res$SE_instrumented,
-    intercept = maive_res$beta # ASK: double check which coef to use
-  )
-
   est <- maive_res$beta
   se <- maive_res$SE
   est_is_significant <- if (se > 0) est / se >= 1.96 else TRUE
 
   pub_bias_p_value <- maive_res[["pub bias p-value"]]
   pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
+
+  funnel_plot <- get_funnel_plot_uri(
+    effect = df$bs,
+    se = df$sebs,
+    se_adjusted = maive_res$SE_instrumented,
+    intercept = maive_res$beta # ASK: double check which coef to use
+  )
 
   results <- list(
     effectEstimate = est,
