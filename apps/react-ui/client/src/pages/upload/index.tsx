@@ -160,7 +160,7 @@ export default function UploadPage() {
 										</div>
 									)}
 								</div>
-								{process.env.NODE_ENV !== "development" &&
+								{process.env.NODE_ENV === "development" &&
 									(!selectedFile ? (
 										<button
 											type="button"
