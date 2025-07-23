@@ -144,6 +144,16 @@ export default function ModelPage() {
 		}
 	}
 
+	const LoadingCard = () => (
+		<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full max-h-[90vh] overflow-y-auto transition-all duration-500 opacity-100 scale-100">
+			<svg className="animate-spin h-12 w-12 text-blue-600 dark:text-blue-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+				<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+				<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+			</svg>
+			<span className="text-lg font-medium text-gray-700 dark:text-gray-200">Running Model... Please wait.</span>
+		</div>
+	)
+
 	if (!dataId) {
 		return (
 			<main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -168,14 +178,13 @@ export default function ModelPage() {
 				</Link>
 
 				{/* Card transition: parameters or loading */}
-				<div className="relative min-h-[400px]">
-					{/* Parameters card */}
-					<div className={`absolute inset-0 transition-all duration-500 ${loading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'} z-10`}
-						aria-hidden={loading}
-					>
-						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto">
+				<div className="min-h-[400px] w-full flex items-center justify-center">
+					{loading ? (
+						<LoadingCard />
+					) : (
+						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 max-h-[90vh] overflow-y-auto transition-all duration-500 opacity-100 scale-100">
 							<div className="flex flex-col gap-6">
-								<div className="flex items-center mb-6">
+								<div className="flex items-center mb-3">
 									<h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
 										Model Parameters
 									</h1>
@@ -183,7 +192,7 @@ export default function ModelPage() {
 										<HelpButton modalComponent={ParametersHelpModal} />
 									)}
 								</div>
-								<div className="mb-6">
+								<div className="mb-3">
 									<p className="text-gray-700 dark:text-gray-300 mb-2">
 										Please select the model type and parameters you would like to use.
 									</p>
@@ -274,19 +283,7 @@ export default function ModelPage() {
 								</div>
 							</div>
 						</div>
-					</div>
-					{/* Loading card */}
-					<div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center ${loading ? 'opacity-100 scale-100 z-20' : 'opacity-0 scale-95 pointer-events-none'}`}
-						aria-hidden={!loading}
-					>
-						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full max-h-[90vh] overflow-y-auto">
-							<svg className="animate-spin h-12 w-12 text-blue-600 dark:text-blue-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-							</svg>
-							<span className="text-lg font-medium text-gray-700 dark:text-gray-200">Running Model... Please wait.</span>
-						</div>
-					</div>
+					)}
 				</div>
 			</div>
 		</main>
