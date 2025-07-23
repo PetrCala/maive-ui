@@ -12,9 +12,9 @@ import type { ModelParameters } from "@src/types"
 import AdvancedOptions from "@src/components/Model/AdvancedOptions"
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal"
 import { YesNoSelect, DropdownSelect } from "@src/components/Options"
+import { useGlobalAlert } from "@src/components/GlobalAlertProvider"
 import CONFIG from "@src/CONFIG"
 import CONST from "@src/CONST"
-import AlertPopup from "@src/components/AlertPopup"
 
 export default function ModelPage() {
 	const searchParams = useSearchParams()
@@ -33,7 +33,7 @@ export default function ModelPage() {
 	const router = useRouter()
 	const abortControllerRef = useRef<AbortController | null>(null)
 	const isMountedRef = useRef(true)
-	const [showAbortAlert, setShowAbortAlert] = useState(false)
+	const { showAlert } = useGlobalAlert()
 
 	useEffect(() => {
 		isMountedRef.current = true
@@ -151,7 +151,7 @@ export default function ModelPage() {
 		} catch (error: any) {
 			if (error.name === "AbortError") {
 				console.log("Model run aborted due to navigation or unmount.")
-				setShowAbortAlert(true)
+				showAlert("Model run was aborted.", "warning")
 				return
 			}
 			console.error("Error running model:", error)
@@ -311,9 +311,6 @@ export default function ModelPage() {
 					)}
 				</div>
 			</div>
-			{showAbortAlert && (
-				<AlertPopup message="Model run was aborted." type="warning" />
-			)}
 		</main>
 	)
 }
