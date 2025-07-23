@@ -92,6 +92,7 @@ export default function ModelPage() {
 	}
 
 	const handleRunModel = async () => {
+		window.scrollTo({ top: 0, behavior: "smooth" }) // Scroll to top of page
 		setLoading(true)
 		try {
 			let result: { data?: any; error?: any; message?: string }
@@ -166,110 +167,125 @@ export default function ModelPage() {
 					← Back to Validation
 				</Link>
 
-				<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-					<div className="flex items-center mb-6">
-						<h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
-							Model Parameters
-						</h1>
-						{CONFIG.SHOULD_SHOW_MODEL_PARAMS_HELP_MODAL && (
-							<HelpButton modalComponent={ParametersHelpModal} />
-						)}
-					</div>
-					<div className="mb-6">
-						<p className="text-gray-700 dark:text-gray-300 mb-2">
-							Please select the model type and parameters you would like to use.
-						</p>
-					</div>
-
-					<div className="space-y-6">
-						<div className="grid grid-cols-1 gap-6">
-							{CONFIG.WAIVE_ENABLED ? (
-								<DropdownSelect
-									label="Model Type"
-									value={parameters.modelType}
-									onChange={(value) =>
-										handleParameterChange("modelType", value)
-									}
-									options={Object.values(CONST.MODEL_TYPES).map((type) => ({
-										value: type,
-										label: type,
-									}))}
-								/>
-							) : (
-								<div>
-									<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-										Model Type
-									</label>
-									<p>{parameters.modelType}</p>
+				{/* Card transition: parameters or loading */}
+				<div className="relative min-h-[400px]">
+					{/* Parameters card */}
+					<div className={`absolute inset-0 transition-all duration-500 ${loading ? 'opacity-0 scale-95 pointer-events-none' : 'opacity-100 scale-100'} z-10`}
+						aria-hidden={loading}
+					>
+						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
+							<div className="flex flex-col gap-6">
+								<div className="flex items-center mb-6">
+									<h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
+										Model Parameters
+									</h1>
+									{CONFIG.SHOULD_SHOW_MODEL_PARAMS_HELP_MODAL && (
+										<HelpButton modalComponent={ParametersHelpModal} />
+									)}
 								</div>
-							)}
-
-							<YesNoSelect
-								label="Include Study Level Fixed Effects"
-								value={parameters.includeStudyDummies}
-								onChange={(value) =>
-									handleParameterChange("includeStudyDummies", value)
-								}
-							/>
-
-							<YesNoSelect
-								label="Include Study Level Clustering"
-								value={parameters.includeStudyClustering}
-								onChange={(value) =>
-									handleParameterChange("includeStudyClustering", value)
-								}
-							/>
-
-							<DropdownSelect
-								label="Standard Error Treatment"
-								value={parameters.standardErrorTreatment}
-								onChange={(value) =>
-									handleParameterChange("standardErrorTreatment", value)
-								}
-								options={Object.values(CONST.STANDARD_ERROR_TREATMENTS).map(
-									(treatment) => ({
-										value: treatment.VALUE,
-										label: treatment.TEXT,
-									})
-								)}
-							/>
-
-							<div>
-								<YesNoSelect
-									label="Compute Anderson-Rubin Confidence Interval"
-									value={parameters.computeAndersonRubin}
-									onChange={(value) =>
-										handleParameterChange("computeAndersonRubin", value)
-									}
-								/>
-								{parameters.computeAndersonRubin && (
-									<Alert
-										message="This option enables heavy computation and may significantly increase processing time."
-										type="warning"
-										className="mt-3"
+								<div className="mb-6">
+									<p className="text-gray-700 dark:text-gray-300 mb-2">
+										Please select the model type and parameters you would like to use.
+									</p>
+								</div>
+								<div className="space-y-6">
+									<div className="grid grid-cols-1 gap-6">
+										{CONFIG.WAIVE_ENABLED ? (
+											<DropdownSelect
+												label="Model Type"
+												value={parameters.modelType}
+												onChange={(value) =>
+													handleParameterChange("modelType", value)
+												}
+												options={Object.values(CONST.MODEL_TYPES).map((type) => ({
+													value: type,
+													label: type,
+												}))}
+											/>
+										) : (
+											<div>
+												<label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+													Model Type
+												</label>
+												<p>{parameters.modelType}</p>
+											</div>
+										)}
+										<YesNoSelect
+											label="Include Study Level Fixed Effects"
+											value={parameters.includeStudyDummies}
+											onChange={(value) =>
+												handleParameterChange("includeStudyDummies", value)
+											}
+										/>
+										<YesNoSelect
+											label="Include Study Level Clustering"
+											value={parameters.includeStudyClustering}
+											onChange={(value) =>
+												handleParameterChange("includeStudyClustering", value)
+											}
+										/>
+										<DropdownSelect
+											label="Standard Error Treatment"
+											value={parameters.standardErrorTreatment}
+											onChange={(value) =>
+												handleParameterChange("standardErrorTreatment", value)
+											}
+											options={Object.values(CONST.STANDARD_ERROR_TREATMENTS).map(
+												(treatment) => ({
+													value: treatment.VALUE,
+													label: treatment.TEXT,
+												})
+											)}
+										/>
+										<div>
+											<YesNoSelect
+												label="Compute Anderson-Rubin Confidence Interval"
+												value={parameters.computeAndersonRubin}
+												onChange={(value) =>
+													handleParameterChange("computeAndersonRubin", value)
+												}
+											/>
+											{parameters.computeAndersonRubin && (
+												<Alert
+													message="This option enables heavy computation and may significantly increase processing time."
+													type="warning"
+													className="mt-3"
+												/>
+											)}
+										</div>
+									</div>
+									<AdvancedOptions
+										maiveMethod={parameters.maiveMethod}
+										shouldUseInstrumenting={parameters.shouldUseInstrumenting}
+										handleParameterChange={handleParameterChange}
 									/>
-								)}
+									<button
+										onClick={handleRunModel}
+										disabled={loading}
+										className={`w-full px-6 py-3 text-white font-semibold rounded-lg
+											${
+												loading
+													? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
+													: "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
+											} transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
+									>
+										{loading ? "Running Model..." : "Run Model"}
+									</button>
+								</div>
 							</div>
 						</div>
-
-						<AdvancedOptions
-							maiveMethod={parameters.maiveMethod}
-							shouldUseInstrumenting={parameters.shouldUseInstrumenting}
-							handleParameterChange={handleParameterChange}
-						/>
-
-						<button
-							onClick={handleRunModel}
-							disabled={loading}
-							className={`w-full px-6 py-3 text-white font-semibold rounded-lg
-								${
-									loading
-										? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
-										: "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-								} transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
-						>
-							{loading ? "Running Model..." : "Run Model"}
-						</button>
+					</div>
+					{/* Loading card */}
+					<div className={`absolute inset-0 transition-all duration-500 flex items-center justify-center ${loading ? 'opacity-100 scale-100 z-20' : 'opacity-0 scale-95 pointer-events-none'}`}
+						aria-hidden={!loading}
+					>
+						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full">
+							<svg className="animate-spin h-12 w-12 text-blue-600 dark:text-blue-400 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+								<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+								<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+							</svg>
+							<span className="text-lg font-medium text-gray-700 dark:text-gray-200">Running Model... Please wait.</span>
+						</div>
 					</div>
 				</div>
 			</div>
