@@ -7,25 +7,43 @@ interface AlertPopupProps {
 	duration?: number // ms
 }
 
-const AlertPopup = ({ message, type = "info", duration = 4000 }: AlertPopupProps) => {
+const FADE_DURATION = 300 // ms
+
+const AlertPopup = ({ message, type = "info", duration = 2500 }: AlertPopupProps) => {
 	const [visible, setVisible] = useState(true)
+	const [show, setShow] = useState(false)
+
+	useEffect(() => {
+		setShow(true)
+	}, [])
 
 	useEffect(() => {
 		if (!visible) return
-		const timer = setTimeout(() => setVisible(false), duration)
+		const timer = setTimeout(() => setShow(false), duration)
 		return () => clearTimeout(timer)
 	}, [visible, duration])
+
+	// After fade-out, unmount
+	useEffect(() => {
+		if (show) return
+		const timer = setTimeout(() => setVisible(false), FADE_DURATION)
+		return () => clearTimeout(timer)
+	}, [show])
 
 	if (!visible) return null
 
 	return (
-		<Alert
-			message={message}
-			type={type}
-			standalone
-			onClick={() => setVisible(false)}
-			className="transition-opacity duration-300"
-		/>
+		<div
+			style={{ pointerEvents: "auto" }}
+			className={`transition-opacity duration-300 ${show ? "opacity-100" : "opacity-0"}`}
+		>
+			<Alert
+				message={message}
+				type={type}
+				standalone
+				onClick={() => setShow(false)}
+			/>
+		</div>
 	)
 }
 
