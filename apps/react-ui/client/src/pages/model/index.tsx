@@ -309,15 +309,8 @@ export default function ModelPage() {
 									/>
 									<button
 										onClick={handleRunModel}
-										disabled={loading}
-										className={`w-full px-6 py-3 text-white font-semibold rounded-lg
-											${
-												loading
-													? "bg-gray-400 dark:bg-gray-600 cursor-not-allowed"
-													: "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-											} transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
-									>
-										{loading ? "Running Model..." : "Run Model"}
+										className={`w-full px-6 py-3 text-white font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}>
+										Run Model
 									</button>
 								</div>
 							</div>
