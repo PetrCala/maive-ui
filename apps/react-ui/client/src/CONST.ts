@@ -31,6 +31,8 @@ const CONST = {
 			TEXT: "Bootstrap",
 		},
 	},
+	MOCK_DATA_ROWS_MIN: 10,
+	MOCK_DATA_ROWS_MAX: 200,
 } as const
 
 export default CONST

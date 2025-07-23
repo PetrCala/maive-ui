@@ -1,10 +1,11 @@
 import { faker } from "@faker-js/faker"
 import mockFunnelPlot from "./mockFunnelPlot"
+import CONST from "@src/CONST"
 
 // Generate mock CSV data for development
 const generateMockCSVFile = (): File => {
 	// Generate 10-2000 rows of realistic data
-	const numRows = faker.number.int({ min: 10, max: 2000 })
+	const numRows = faker.number.int({ min: CONST.MOCK_DATA_ROWS_MIN, max: CONST.MOCK_DATA_ROWS_MAX })
 
 	// Create CSV content
 	const headers = ["effect", "se", "n_obs", "study_id"]
