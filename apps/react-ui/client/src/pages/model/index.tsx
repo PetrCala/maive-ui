@@ -22,7 +22,6 @@ export default function ModelPage() {
 	const dataId = searchParams?.get("dataId")
 	const [loading, setLoading] = useState(false)
 	const [hasRunModel, setHasRunModel] = useState(false)
-	const [runError, setRunError] = useState<string | null>(null)
 	const [uploadedData, setUploadedData] = useState<any>(null)
 	const [parameters, setParameters] = useState<ModelParameters>({
 		modelType: CONST.MODEL_TYPES.MAIVE,
@@ -109,7 +108,6 @@ export default function ModelPage() {
 		window.scrollTo({ top: 0, behavior: "smooth" }) // Scroll to top of page
 		setLoading(true)
 		setHasRunModel(true)
-		setRunError(null)
 		abortControllerRef.current = new AbortController()
 		try {
 			let result: { data?: any; error?: any; message?: string }
@@ -157,7 +155,6 @@ export default function ModelPage() {
 			if (error.name === "AbortError") {
 				console.log("Model run aborted due to navigation or unmount.")
 				showAlert("Model run was aborted.", "warning")
-				setRunError("Model run was aborted.")
 				setLoading(false)
 				setHasRunModel(false)
 				return
@@ -167,8 +164,7 @@ export default function ModelPage() {
 				const msg =
 					"An error occurred while running the model: " +
 					(error instanceof Error ? error.message : String(error))
-				alert(msg)
-				setRunError(msg)
+				showAlert(msg, "error")
 				setLoading(false)
 				setHasRunModel(false)
 			}
@@ -227,7 +223,7 @@ export default function ModelPage() {
 
 				{/* Card transition: parameters or loading */}
 				<div className="min-h-[400px] w-full items-center justify-center">
-					{(loading || hasRunModel) && !runError ? (
+					{(loading || hasRunModel) ? (
 						<LoadingCard />
 					) : (
 						<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
@@ -245,9 +241,6 @@ export default function ModelPage() {
 										Please select the model type and parameters you would like to use.
 									</p>
 								</div>
-								{runError && (
-									<Alert message={runError} type="error" className="mb-4" />
-								)}
 								<div className="space-y-6">
 									<div className="grid grid-cols-1 gap-6">
 										{CONFIG.WAIVE_ENABLED ? (
