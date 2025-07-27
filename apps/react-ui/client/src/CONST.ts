@@ -2,6 +2,7 @@ const CONST = {
 	MAIVE_URL: "https://meta-analysis.cz/maive/",
 	MAIVE_PAPER_URL: "https://meta-analysis.cz/maive/maive.pdf",
 	MAIVE_GITHUB_URL: "https://github.com/meta-analysis-es/maive",
+	APP_DISPLAY_NAME: "MAIVE UI",
 
 	MODEL_TYPES: {
 		MAIVE: "MAIVE",

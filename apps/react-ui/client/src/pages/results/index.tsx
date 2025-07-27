@@ -2,11 +2,13 @@
 
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import Head from "next/head"
 import Image from "next/image"
 import Tooltip from "@components/Tooltip"
 import { RESULTS_CONFIG } from "@utils/resultsConfig"
 import { useDataStore, dataCache } from "@store/dataStore"
 import { exportDataWithInstrumentedSE } from "@utils/dataUtils"
+import CONST from "@src/CONST"
 
 interface ModelResults {
 	effectEstimate: number
@@ -40,14 +42,19 @@ export default function ResultsPage() {
 
 	if (!results) {
 		return (
-			<main className="flex min-h-screen flex-col items-center justify-center p-24">
-				<div className="text-center">
-					<h1 className="text-2xl font-bold mb-4">No results available</h1>
-					<Link href="/upload" className="text-blue-600 hover:text-blue-700">
-						Go back to upload
-					</Link>
-				</div>
-			</main>
+			<>
+				<Head>
+					<title>MAIVE UI - Results</title>
+				</Head>
+				<main className="flex min-h-screen flex-col items-center justify-center p-24">
+					<div className="text-center">
+						<h1 className="text-2xl font-bold mb-4">No results available</h1>
+						<Link href="/upload" className="text-blue-600 hover:text-blue-700">
+							Go back to upload
+						</Link>
+					</div>
+				</main>
+			</>
 		)
 	}
 
@@ -93,7 +100,11 @@ export default function ResultsPage() {
 	}
 
 	return (
-		<main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
+		<>
+			<Head>
+				<title>{CONST.APP_DISPLAY_NAME} - Results</title>
+			</Head>
+			<main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
 			<div className="max-w-4xl w-full space-y-8">
 				<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
 					<h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
@@ -352,5 +363,6 @@ export default function ResultsPage() {
 				</div>
 			</div>
 		</main>
+		</>
 	)
 }
