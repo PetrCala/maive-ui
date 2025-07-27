@@ -15,7 +15,7 @@ maive_repo_name <- "maive"
 if (install_forked) {
   cli::cli_alert_info("Installing MAIVE from the forked repository")
   forked_owner <- "PetrCala"
-  forked_tag_name <- "ui-v0.1.0"
+  forked_tag_name <- "ui-v0.1.0-qfi" # quadratic-fit-info
   devtools::install_github(repo = paste0(forked_owner, "/", maive_repo_name), ref = forked_tag_name)
 } else {
   cli::cli_alert_info("Installing MAIVE from the original GitHub repository")
