@@ -121,7 +121,16 @@ function(file_data, parameters) {
   pub_bias_p_value <- maive_res[["pub bias p-value"]]
   pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
 
-  is_quadratic_fit <- maive_res$is_quadratic_fit # A custom field added to the maive function
+  tryCatch(
+    {
+      is_quadratic_fit <- maive_res$is_quadratic_fit # A custom field added to the maive function
+    },
+    error = function(e) {
+      cli::cli_alert_warning("The is_quadratic_fit field is not available in the maive function. Setting it to TRUE.")
+      is_quadratic_fit <- TRUE
+    }
+  )
+
   funnel_plot_data <- get_funnel_plot_data(
     effect = df$bs,
     se = df$sebs,
