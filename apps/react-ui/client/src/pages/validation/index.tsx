@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation"
 import { useDataStore, dataCache } from "@store/dataStore"
 import Alert from "@src/components/Alert"
 import CONST from "@src/CONST"
+import { useGlobalAlert } from "@src/components/GlobalAlertProvider"
 
 interface ValidationMessage {
 	type: "success" | "error" | "warning" | "info"
@@ -31,6 +32,7 @@ export default function ValidationPage() {
 	const [loading, setLoading] = useState(true)
 	const [uploadedData, setUploadedData] = useState<any>(null)
 	const router = useRouter()
+	const { showAlert } = useGlobalAlert()
 	// Local state for this component's uploaded data.
 	// The global store's setUploadedData is renamed to setStoreData to avoid conflicts.
 	// Use local state for component logic and rendering; use the store function for global updates.
@@ -39,6 +41,9 @@ export default function ValidationPage() {
 	useEffect(() => {
 		if (dataId) {
 			loadDataFromStore()
+		} else {
+			showAlert("No data selected", "error")
+			router.push("/upload")
 		}
 	}, [dataId]) // eslint-disable-line react-hooks/exhaustive-deps
 

@@ -41,6 +41,9 @@ export default function ModelPage() {
 		isMountedRef.current = true
 		if (dataId) {
 			loadDataFromStore()
+		} else {
+			showAlert("No data selected", "error")
+			router.push("/upload")
 		}
 		return () => {
 			isMountedRef.current = false
