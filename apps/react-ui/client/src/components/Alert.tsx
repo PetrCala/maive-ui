@@ -72,7 +72,7 @@ const Alert = ({ message, type = "info", className = "", onClick, standalone = f
 
 	return (
 		<div
-			className={`flex items-start p-4 rounded-lg border ${getAlertStyles()} ${standalone ? "fixed left-6 bottom-6 z-50 min-w-[250px] max-w-xs opacity-95" : ""} ${className} ${onClick ? "cursor-pointer" : "cursor-default"}`}
+			className={`flex items-start p-4 rounded-lg border ${getAlertStyles()} ${!!standalone ? "fixed left-6 bottom-6 z-50 min-w-[250px] max-w-xs opacity-95" : ""} ${className} ${onClick ? "cursor-pointer" : "cursor-default"}`}
 			onClick={onClick}
 			role="alert"
 		>
