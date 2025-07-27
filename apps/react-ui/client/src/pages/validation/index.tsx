@@ -308,12 +308,12 @@ export default function ValidationPage() {
 		}
 	}
 
-	if (!dataId) {
-		return (
-			<>
-				<Head>
-					<title>{CONST.APP_DISPLAY_NAME} - Data Validation</title>
-				</Head>
+	return (
+		<>
+			<Head>
+				<title>{CONST.APP_DISPLAY_NAME} - Data Validation</title>
+			</Head>
+			{!dataId ? (
 				<main className="flex min-h-screen flex-col items-center justify-center p-24">
 					<div className="text-center">
 						<h1 className="text-2xl font-bold mb-4">No data selected</h1>
@@ -322,16 +322,7 @@ export default function ValidationPage() {
 						</Link>
 					</div>
 				</main>
-			</>
-		)
-	}
-
-	if (loading) {
-		return (
-			<>
-				<Head>
-					<title>{CONST.APP_DISPLAY_NAME} - Data Validation</title>
-				</Head>
+			) : !!loading ? (
 				<main className="flex min-h-screen flex-col items-center justify-center p-24">
 					<div className="text-center">
 						<div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -340,15 +331,7 @@ export default function ValidationPage() {
 						</p>
 					</div>
 				</main>
-			</>
-		)
-	}
-
-	return (
-		<>
-			<Head>
-				<title>{CONST.APP_DISPLAY_NAME} - Data Validation</title>
-			</Head>
+			) : (
 			<main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
 			<div className="max-w-4xl w-full">
 				<Link
@@ -447,6 +430,7 @@ export default function ValidationPage() {
 				</div>
 			</div>
 		</main>
+			)}
 		</>
 	)
 }
