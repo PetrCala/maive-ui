@@ -33,7 +33,7 @@ function(file_data, parameters) {
 
   new_colnames <- c("bs", "sebs", "Ns")
   if (length(colnames(df)) == 4) {
-    new_colnames <- c(new_colnames, "study_id") # Optional column
+    new_colnames <- c(new_colnames, "study_id")
   }
   if (length(colnames(df)) != length(new_colnames)) {
     return(list(
@@ -125,7 +125,9 @@ function(file_data, parameters) {
     effect = df$bs,
     se = df$sebs,
     se_adjusted = maive_res$SE_instrumented,
-    intercept = maive_res$beta # ASK: double check which coef to use
+    intercept = maive_res$beta,
+    intercept_se = maive_res$SE,
+    is_quaratic_fit = maive_method == 3 # Double check, possibly extract from the maivefunction.r
   )
 
   results <- list(

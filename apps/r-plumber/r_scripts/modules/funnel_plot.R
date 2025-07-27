@@ -55,16 +55,17 @@ get_funnel_padding <- function(effect) {
   )
 }
 
-
 #' Get a funnel plot using metafor
 #'
 #' @param effect [numeric] The effect size
 #' @param se [numeric] The standard error
 #' @param se_adjusted [numeric] The adjusted standard error
 #' @param intercept [numeric] The intercept of the funnel plot. If NULL, no intercept is plotted.
+#' @param intercept_se [numeric] The standard error of the intercept. Must be provided only if intercept is provided.
+#' @param is_quaratic_fit [logical] Whether the fit is quadratic. If TRUE, the fit is quadratic. If FALSE, the fit is linear.
 #' @return A plot object
 #' @export
-get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL) {
+get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept_se = NULL, is_quaratic_fit = FALSE) {
   funnel_opts <- get_funnel_plot_opts()
 
   x <- c(effect, effect)
@@ -98,6 +99,32 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL) {
     refline = mean(effect),
     legend = FALSE
   )
+
+  ## Choose the exponent
+  p <- if (is_quaratic_fit) 2 else 1 # 2 for PEESE‑style (SE²), 1 for PET/Egger
+
+  ## Add fitted curve
+  a <- intercept
+  b <- intercept_se
+  se.grid <- seq(min(se), max(se), length = 200)
+  x.pred <- a + b * se.grid^p
+
+  lines(x.pred, se.grid, lwd = 2, col = "black") # fitted
+
+  ## 95% confidence band (delta method)
+  ## needs vcov = var‑cov matrix of (a,b)
+  vcov <- matrix(c(intercept_se^2, 0, 0, intercept_se^2), nrow = 2)
+  se.fit <- sqrt(
+    vcov[1, 1] + # var(a)
+      2 * se.grid^p * vcov[1, 2] + # 2*SE^p*cov(a,b)
+      (se.grid^p)^2 * vcov[2, 2] # SE^(2p)*var(b)
+  )
+
+  ci.lo <- x.pred - 1.96 * se.fit
+  ci.hi <- x.pred + 1.96 * se.fit
+
+  lines(ci.lo, se.grid, lty = 2, col = "black")
+  lines(ci.hi, se.grid, lty = 2, col = "black")
 
   legend(
     funnel_opts$legend_position, # position
