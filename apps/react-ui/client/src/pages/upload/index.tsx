@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import Head from "next/head"
 import { useRouter } from "next/navigation"
 import { useDataStore, dataCache } from "@store/dataStore"
 import { generateDataId, processUploadedFile } from "@utils/dataUtils"
@@ -9,6 +10,7 @@ import { generateMockCSVFile } from "@utils/mockData"
 import SuccessIndicator from "@components/SuccessIndicator"
 import { useDropzone } from "react-dropzone"
 import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa"
+import CONST from "@src/CONST"
 
 // Standalone function to get the file icon component based on filename
 export default function UploadPage() {
@@ -88,14 +90,18 @@ export default function UploadPage() {
 
 
 	return (
-		<main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-			<div className="max-w-2xl w-full">
-				<Link
-					href="/"
-					className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-				>
-					← Back to Home
-				</Link>
+		<>
+			<Head>
+				<title>{CONST.APP_DISPLAY_NAME} - Upload Data</title>
+			</Head>
+			<main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+				<div className="max-w-2xl w-full">
+					<Link
+						href="/"
+						className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+					>
+						← Back to Home
+					</Link>
 
 				<div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
 					<h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
@@ -214,5 +220,6 @@ export default function UploadPage() {
 				</div>
 			</div>
 		</main>
+		</>
 	)
 }

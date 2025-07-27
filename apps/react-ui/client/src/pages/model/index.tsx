@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
+import Head from "next/head"
 import { useRouter } from "next/navigation"
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData"
 import { useDataStore, dataCache } from "@store/dataStore"
@@ -194,19 +195,28 @@ export default function ModelPage() {
 
 	if (!dataId) {
 		return (
-			<main className="flex min-h-screen flex-col items-center justify-center p-24">
-				<div className="text-center">
-					<h1 className="text-2xl font-bold mb-4">No data selected</h1>
-					<Link href="/upload" className="text-blue-600 hover:text-blue-700">
-						Go back to upload
-					</Link>
-				</div>
-			</main>
+			<>
+				<Head>
+					<title>{CONST.APP_DISPLAY_NAME} - Model Parameters</title>
+				</Head>
+				<main className="flex min-h-screen flex-col items-center justify-center p-24">
+					<div className="text-center">
+						<h1 className="text-2xl font-bold mb-4">No data selected</h1>
+						<Link href="/upload" className="text-blue-600 hover:text-blue-700">
+							Go back to upload
+						</Link>
+					</div>
+				</main>
+			</>
 		)
 	}
 
 	return (
-		<main className="flex flex-1 flex-col items-center w-full min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+		<>
+			<Head>
+				<title>{CONST.APP_DISPLAY_NAME} - Model Parameters</title>
+			</Head>
+			<main className="flex flex-1 flex-col items-center w-full min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
 			<div className="max-w-4xl w-full p-6 md:p-12 lg:p-24">
 				<Link
 					href={`/validation?dataId=${dataId}`}
@@ -321,5 +331,6 @@ export default function ModelPage() {
 				</div>
 			</div>
 		</main>
+		</>
 	)
 }
