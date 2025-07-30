@@ -1,7 +1,10 @@
-import type { EstimateType } from "@src/types"
-import CONST from "@src/CONST"
+import type { EstimateType } from "@src/types";
+import CONST from "@src/CONST";
 
 const TEXT = {
+  common: {
+    close: "Close",
+  },
   results: {
     effectEstimate: {
       title: "Effect Estimate",
@@ -12,12 +15,15 @@ const TEXT = {
             // This is an example of how different models may be handled in the future, once WAIVE is implemented.
             // For now, we only use MAIVE.
             const desc: Record<EstimateType, string> = {
-              [CONST.MODEL_TYPES.MAIVE]: "Point estimate of the average causal effect obtained with the MAIVE instrumental-variable estimator.",
-              [CONST.MODEL_TYPES.WAIVE]: "Point estimate of the average causal effect obtained with the WAIVE estimator.", // subject to change
-              "Unknown": "Point estimate of the average causal effect produced by the selected meta-analysis method.",
-            }
-            return desc[estimateType] ?? desc.Unknown
-          }
+              [CONST.MODEL_TYPES.MAIVE]:
+                "Point estimate of the average causal effect obtained with the MAIVE instrumental-variable estimator.",
+              [CONST.MODEL_TYPES.WAIVE]:
+                "Point estimate of the average causal effect obtained with the WAIVE estimator.", // subject to change
+              Unknown:
+                "Point estimate of the average causal effect produced by the selected meta-analysis method.",
+            };
+            return desc[estimateType] ?? desc.Unknown;
+          },
         },
         standardError: {
           label: "Standard Error",
@@ -80,7 +86,111 @@ const TEXT = {
       tooltip:
         "Scatter of MAIVE-adjusted effect sizes against fitted precision; used to visualise heterogeneity and detect residual publication bias.",
     },
-  }
-} as const
+  },
+  maiveModal: {
+    title: "What is MAIVE?",
+    overview: {
+      title: "Overview",
+      text: `
+  MAIVE (Meta-Analysis Instrumental Variable Estimator) corrects “spurious precision” —
+  over-optimistic standard errors that arise when researchers choose methods or models that
+  under-report uncertainty.  By using an instrumental-variables adjustment based on the
+  inverse sample size, MAIVE typically **reduces meta-analytic bias** while leaving publication-
+  bias corrections (e.g. PET-PEESE) intact. It is most useful for observational research,
+  where standard errors are easiest to game and inverse-variance weights can back-fire.
+    `,
+    },
 
-export default TEXT
+    howItWorks: {
+      title: "How MAIVE Works",
+      text: [
+        `**Step 1   (First stage).**  Regress the *reported* variances on the inverse sample
+      size: SE² = ψ₀ + ψ₁(1/N) + ν.  This isolates the share of variance that honest sampling
+      theory can explain.`, // :contentReference[oaicite:8]{index=8}
+        `**Step 2   (Second stage).**  Replace each variance in your chosen funnel-plot model
+      (PET, PEESE, PET-PEESE, EK, …) with the fitted value from Step 1 and **drop inverse-
+      variance weights**.  The resulting IV estimator is MAIVE.`, // :contentReference[oaicite:9]{index=9}
+        `**Step 3   (Inference).**  Report a heteroskedasticity-robust standard error, the
+      Anderson-Rubin confidence interval (valid even when the first-stage F < 10), and the
+      first-stage F statistic so users can judge instrument strength.`, // :contentReference[oaicite:10]{index=10}
+      ],
+    },
+
+    keyFeatures: {
+      title: "Key Features",
+      text: [
+        {
+          head: "Instrumental-Variable Correction",
+          text: "Uses inverse sample size as a plausibly exogenous instrument for reported precision.",
+        },
+        {
+          head: "Model Agnostic",
+          text: "Works as a drop-in replacement for PET-PEESE, EK, WAIVE, Trim-&-Fill, selection models, or even a simple mean.",
+        },
+        {
+          head: "Weak-Instrument Robust",
+          text: "Built-in Anderson-Rubin intervals remain valid when the first-stage F statistic is small.",
+        },
+        {
+          head: "Minimal Extra Data",
+          text: "Needs only sample sizes, which most meta-analysts already collect.",
+        }, // :contentReference[oaicite:11]{index=11}
+        {
+          head: "Bias Reduction",
+          text: "Simulation and large-scale evidence show MAIVE pulls exaggerated effects toward zero in ≥ 70 % of cases when F > 100.",
+        }, // :contentReference[oaicite:12]{index=12}
+      ],
+    },
+
+    applications: {
+      title: "Applications",
+      text: [
+        {
+          head: "Research Validation",
+          text: "Compare meta-analytic estimates with multi-lab replications and gauge over-statement.",
+        },
+        {
+          head: "Observational Evidence",
+          text: "Economics, psychology, education, sociology - any field where sampling decisions are complex.",
+        }, // :contentReference[oaicite:13]{index=13}
+        {
+          head: "Policy Analysis",
+          text: "Give decision-makers bias-corrected effect sizes when randomized evidence is scarce.",
+        },
+        {
+          head: "Data-Quality Audits",
+          text: "Flag clusters of spuriously precise results before they steer conclusions.",
+        },
+      ],
+    },
+
+    papersAndResources: {
+      title: "Papers and Resources",
+      maiveWebsite: {
+        head: "MAIVE Website",
+        text: "View the MAIVE website for more information about the estimator.",
+        linkText: "View Website →",
+      },
+      maivePaper: {
+        head: "MAIVE Paper",
+        text: "Read the MAIVE paper for more information about the estimator.",
+        linkText: "View Paper →",
+      },
+      maiveCode: {
+        head: "MAIVE Code",
+        text: "View the MAIVE code for more information about the estimator.",
+        linkText: "View Code →",
+      },
+    },
+
+    gettingStarted: {
+      title: "Getting Started",
+      text: `Ready to check your data for spurious precision? Upload your
+    dataset and let MAIVE analyze it for you. The process is simple
+    and provides clear, actionable results.`,
+    },
+    uploadYourData: "Upload Your Data",
+  },
+} as const;
+
+export default TEXT;
