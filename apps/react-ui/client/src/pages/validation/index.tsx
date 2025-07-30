@@ -315,26 +315,22 @@ export default function ValidationPage() {
       <Head>
         <title>{CONST.APP_DISPLAY_NAME} - Data Validation</title>
       </Head>
-      {!dataId ? (
-        <main className="flex min-h-screen flex-col items-center justify-center p-24">
+      <main className="flex min-h-screen flex-col justify-center items-center p-24 pt-4 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {!dataId ? (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No data selected</h1>
             <Link href="/upload" className="text-blue-600 hover:text-blue-700">
               Go back to upload
             </Link>
           </div>
-        </main>
-      ) : !!loading ? (
-        <main className="flex min-h-screen flex-col items-center justify-center p-24">
+        ) : !!loading ? (
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-300">
               Validating your data...
             </p>
           </div>
-        </main>
-      ) : (
-        <main className="flex min-h-screen flex-col items-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        ) : (
           <div className="max-w-4xl w-full">
             <Link
               href="/upload"
@@ -431,8 +427,8 @@ export default function ValidationPage() {
               </button>
             </div>
           </div>
-        </main>
-      )}
+        )}
+      </main>
     </>
   );
 }

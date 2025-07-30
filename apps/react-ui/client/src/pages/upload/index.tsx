@@ -95,7 +95,7 @@ export default function UploadPage() {
       <Head>
         <title>{CONST.APP_DISPLAY_NAME} - Upload Data</title>
       </Head>
-      <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <main className="flex min-h-screen flex-col items-center justify-center p-24 pt-4 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="max-w-2xl w-full">
           <Link
             href="/"

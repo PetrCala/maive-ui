@@ -233,166 +233,177 @@ export default function ModelPage() {
       <Head>
         <title>{CONST.APP_DISPLAY_NAME} - Model Parameters</title>
       </Head>
-      <main className="flex flex-1 flex-col items-center w-full min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24">
-          <Link
-            href={`/validation?dataId=${dataId}`}
-            className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-          >
-            ← Back to Validation
-          </Link>
+      <main className="flex flex-1 flex-col justify-center items-center w-full min-h-screen bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+        {!dataId ? (
+          <div className="text-center min-h-[400px]">
+            <h1 className="text-2xl font-bold mb-4">No data selected</h1>
+            <Link href="/upload" className="text-blue-600 hover:text-blue-700">
+              Go back to upload
+            </Link>
+          </div>
+        ) : (
+          <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24 lg:pt-4">
+            <Link
+              href={`/validation?dataId=${dataId}`}
+              className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+            >
+              ← Back to Validation
+            </Link>
 
-          {/* Card transition: parameters or loading */}
-          <div className="min-h-[400px] w-full items-center justify-center">
-            {loading || hasRunModel ? (
-              <LoadingCard />
-            ) : (
-              <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
-                <div className="flex flex-col gap-6">
-                  <div className="flex items-center mb-3">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
-                      Model Parameters
-                    </h1>
-                    {CONFIG.SHOULD_SHOW_MODEL_PARAMS_HELP_MODAL && (
-                      <HelpButton modalComponent={ParametersHelpModal} />
-                    )}
-                  </div>
-                  <div className="mb-3">
-                    <p className="text-gray-700 dark:text-gray-300 mb-2">
-                      Please select the model type and parameters you would like
-                      to use.
-                    </p>
-                  </div>
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-6">
-                      <div className="flex-shrink-0">
-                        <Tooltip
-                          content={TEXT.model.modelType.tooltip}
-                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                        >
-                          {CONFIG.WAIVE_ENABLED ? (
-                            <DropdownSelect
-                              label={TEXT.model.modelType.label}
-                              value={parameters.modelType}
-                              onChange={(value) =>
-                                handleParameterChange("modelType", value)
-                              }
-                              options={Object.values(CONST.MODEL_TYPES).map(
-                                (type) => ({
-                                  value: type,
-                                  label: type,
-                                }),
-                              )}
-                            />
-                          ) : (
-                            <div>
-                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                {TEXT.model.modelType.label}
-                              </label>
-                              <p>{parameters.modelType}</p>
-                            </div>
-                          )}
-                        </Tooltip>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Tooltip
-                          content={TEXT.model.includeStudyDummies.tooltip}
-                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                        >
-                          <YesNoSelect
-                            label={TEXT.model.includeStudyDummies.label}
-                            value={parameters.includeStudyDummies}
-                            onChange={(value) =>
-                              handleParameterChange(
-                                "includeStudyDummies",
-                                value,
-                              )
-                            }
-                          />
-                        </Tooltip>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Tooltip
-                          content={TEXT.model.includeStudyClustering.tooltip}
-                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                        >
-                          <YesNoSelect
-                            label={TEXT.model.includeStudyClustering.label}
-                            value={parameters.includeStudyClustering}
-                            onChange={(value) =>
-                              handleParameterChange(
-                                "includeStudyClustering",
-                                value,
-                              )
-                            }
-                          />
-                        </Tooltip>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Tooltip
-                          content={TEXT.model.standardErrorTreatment.tooltip}
-                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                        >
-                          <DropdownSelect
-                            label={TEXT.model.standardErrorTreatment.label}
-                            value={parameters.standardErrorTreatment}
-                            onChange={(value) =>
-                              handleParameterChange(
-                                "standardErrorTreatment",
-                                value,
-                              )
-                            }
-                            options={Object.values(
-                              CONST.STANDARD_ERROR_TREATMENTS,
-                            ).map((treatment) => ({
-                              value: treatment.VALUE,
-                              label: treatment.TEXT,
-                            }))}
-                          />
-                        </Tooltip>
-                      </div>
-                      <div className="flex-shrink-0">
-                        <Tooltip
-                          content={TEXT.model.computeAndersonRubin.tooltip}
-                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                        >
-                          <YesNoSelect
-                            label={TEXT.model.computeAndersonRubin.label}
-                            value={parameters.computeAndersonRubin}
-                            onChange={(value) =>
-                              handleParameterChange(
-                                "computeAndersonRubin",
-                                value,
-                              )
-                            }
-                          />
-                        </Tooltip>
-                        {parameters.computeAndersonRubin && (
-                          <Alert
-                            message={TEXT.model.computeAndersonRubin.warning}
-                            type="warning"
-                            className="mt-3"
-                          />
-                        )}
-                      </div>
+            {/* Card transition: parameters or loading */}
+            <div className="min-h-[400px] w-full items-center justify-center">
+              {loading || hasRunModel ? (
+                <LoadingCard />
+              ) : (
+                <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
+                  <div className="flex flex-col gap-6">
+                    <div className="flex items-center mb-3">
+                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
+                        Model Parameters
+                      </h1>
+                      {CONFIG.SHOULD_SHOW_MODEL_PARAMS_HELP_MODAL && (
+                        <HelpButton modalComponent={ParametersHelpModal} />
+                      )}
                     </div>
-                    <AdvancedOptions
-                      maiveMethod={parameters.maiveMethod}
-                      shouldUseInstrumenting={parameters.shouldUseInstrumenting}
-                      handleParameterChange={handleParameterChange}
-                    />
-                    <button
-                      onClick={handleRunModel}
-                      className={`w-full px-6 py-3 text-white font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
-                    >
-                      {TEXT.model.runModel}
-                    </button>
+                    <div className="mb-3">
+                      <p className="text-gray-700 dark:text-gray-300 mb-2">
+                        Please select the model type and parameters you would
+                        like to use.
+                      </p>
+                    </div>
+                    <div className="space-y-6">
+                      <div className="flex flex-col gap-6">
+                        <div className="flex-shrink-0">
+                          <Tooltip
+                            content={TEXT.model.modelType.tooltip}
+                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                          >
+                            {CONFIG.WAIVE_ENABLED ? (
+                              <DropdownSelect
+                                label={TEXT.model.modelType.label}
+                                value={parameters.modelType}
+                                onChange={(value) =>
+                                  handleParameterChange("modelType", value)
+                                }
+                                options={Object.values(CONST.MODEL_TYPES).map(
+                                  (type) => ({
+                                    value: type,
+                                    label: type,
+                                  }),
+                                )}
+                              />
+                            ) : (
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                  {TEXT.model.modelType.label}
+                                </label>
+                                <p>{parameters.modelType}</p>
+                              </div>
+                            )}
+                          </Tooltip>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Tooltip
+                            content={TEXT.model.includeStudyDummies.tooltip}
+                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                          >
+                            <YesNoSelect
+                              label={TEXT.model.includeStudyDummies.label}
+                              value={parameters.includeStudyDummies}
+                              onChange={(value) =>
+                                handleParameterChange(
+                                  "includeStudyDummies",
+                                  value,
+                                )
+                              }
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Tooltip
+                            content={TEXT.model.includeStudyClustering.tooltip}
+                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                          >
+                            <YesNoSelect
+                              label={TEXT.model.includeStudyClustering.label}
+                              value={parameters.includeStudyClustering}
+                              onChange={(value) =>
+                                handleParameterChange(
+                                  "includeStudyClustering",
+                                  value,
+                                )
+                              }
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Tooltip
+                            content={TEXT.model.standardErrorTreatment.tooltip}
+                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                          >
+                            <DropdownSelect
+                              label={TEXT.model.standardErrorTreatment.label}
+                              value={parameters.standardErrorTreatment}
+                              onChange={(value) =>
+                                handleParameterChange(
+                                  "standardErrorTreatment",
+                                  value,
+                                )
+                              }
+                              options={Object.values(
+                                CONST.STANDARD_ERROR_TREATMENTS,
+                              ).map((treatment) => ({
+                                value: treatment.VALUE,
+                                label: treatment.TEXT,
+                              }))}
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Tooltip
+                            content={TEXT.model.computeAndersonRubin.tooltip}
+                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                          >
+                            <YesNoSelect
+                              label={TEXT.model.computeAndersonRubin.label}
+                              value={parameters.computeAndersonRubin}
+                              onChange={(value) =>
+                                handleParameterChange(
+                                  "computeAndersonRubin",
+                                  value,
+                                )
+                              }
+                            />
+                          </Tooltip>
+                          {parameters.computeAndersonRubin && (
+                            <Alert
+                              message={TEXT.model.computeAndersonRubin.warning}
+                              type="warning"
+                              className="mt-3"
+                            />
+                          )}
+                        </div>
+                      </div>
+                      <AdvancedOptions
+                        maiveMethod={parameters.maiveMethod}
+                        shouldUseInstrumenting={
+                          parameters.shouldUseInstrumenting
+                        }
+                        handleParameterChange={handleParameterChange}
+                      />
+                      <button
+                        onClick={handleRunModel}
+                        className={`w-full px-6 py-3 text-white font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
+                      >
+                        {TEXT.model.runModel}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </main>
     </>
   );
