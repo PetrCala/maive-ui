@@ -53,7 +53,7 @@ export default function ResultsPage() {
     return (
       <>
         <Head>
-          <title>MAIVE UI - Results</title>
+          <title>{CONST.APP_DISPLAY_NAME} - Results</title>
         </Head>
         <main className="flex flex-col items-center justify-center p-24 pt-4">
           <div className="text-center">

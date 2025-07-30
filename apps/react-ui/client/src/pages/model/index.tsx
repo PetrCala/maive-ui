@@ -210,24 +210,6 @@ export default function ModelPage() {
     </div>
   );
 
-  if (!dataId) {
-    return (
-      <>
-        <Head>
-          <title>{CONST.APP_DISPLAY_NAME} - Model Parameters</title>
-        </Head>
-        <main className="flex flex-col items-center justify-center p-24">
-          <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">No data selected</h1>
-            <Link href="/upload" className="text-blue-600 hover:text-blue-700">
-              Go back to upload
-            </Link>
-          </div>
-        </main>
-      </>
-    );
-  }
-
   return (
     <>
       <Head>
