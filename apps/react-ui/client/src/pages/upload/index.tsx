@@ -27,9 +27,11 @@ export default function UploadPage() {
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
     accept: {
-      ".csv": [".csv"],
-      ".xls": [".xls"],
-      ".xlsx": [".xlsx"],
+      "text/csv": [".csv"],
+      "application/vnd.ms-excel": [".xls"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
     },
     multiple: false,
     noClick: true,
