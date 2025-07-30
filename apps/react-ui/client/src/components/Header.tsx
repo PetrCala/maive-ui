@@ -17,7 +17,9 @@ export default function Header({
   className = "",
 }: HeaderProps) {
   return (
-    <header className={`flex justify-between items-center w-full ${className}`}>
+    <header
+      className={`flex justify-between items-center w-full py-4 px-4 z-50 ${className}`}
+    >
       {/* Left side - logo, breadcrumbs, navigation,... */}
       <div className="flex-1 flex items-center">
         <Link href="/">

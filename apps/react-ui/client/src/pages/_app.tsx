@@ -14,7 +14,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <Providers>
-      {!isHomePage && <Header className="absolute top-4 right-4 z-50" />}
+      {!isHomePage && <Header />}
       <Component {...pageProps} />
     </Providers>
   );
