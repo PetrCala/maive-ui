@@ -17,7 +17,7 @@ export default function PingButton() {
   return (
     <button
       onClick={pingServer}
-      className="fixed bottom-24 right-8 mr-2 px-6 py-3 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+      className="fixed bottom-12 right-8 mr-2 px-6 py-3 text-sm font-semibold text-white bg-green-600 rounded-lg hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
     >
       Ping Server
     </button>
