@@ -2,6 +2,9 @@ import { useState } from "react";
 import type { DeepValueOf, ModelParameters } from "@src/types";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
 import CONST from "@src/CONST";
+import TEXT from "@src/lib/text";
+import Tooltip from "../Tooltip";
+import CONFIG from "@src/CONFIG";
 
 export default function AdvancedOptions({
   maiveMethod,
@@ -23,7 +26,7 @@ export default function AdvancedOptions({
         className="flex items-center text-blue-600 dark:text-blue-400 font-semibold focus:outline-none"
         aria-expanded={open}
       >
-        <span className="mr-2">Advanced Options</span>
+        <span className="mr-2">{TEXT.model.advancedOptions.title}</span>
         <svg
           className={`w-4 h-4 transform transition-transform duration-200 ${
             open ? "rotate-90" : "rotate-0"
@@ -42,28 +45,38 @@ export default function AdvancedOptions({
         </svg>
       </button>
       {open && (
-        <div className="mt-4 space-y-4">
-          <DropdownSelect
-            label="MAIVE Method"
-            value={maiveMethod}
-            onChange={(value) =>
-              handleParameterChange(
-                "maiveMethod",
-                value as DeepValueOf<typeof CONST.MAIVE_METHODS>,
-              )
-            }
-            options={Object.values(CONST.MAIVE_METHODS).map((method) => ({
-              value: method,
-              label: method,
-            }))}
-          />
-          <YesNoSelect
-            label="Use Instrumenting"
-            value={shouldUseInstrumenting}
-            onChange={(value) =>
-              handleParameterChange("shouldUseInstrumenting", value)
-            }
-          />
+        <div className="mt-4 flex flex-col space-y-4">
+          <Tooltip
+            content={TEXT.model.maiveMethod.tooltip}
+            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+          >
+            <DropdownSelect
+              label={TEXT.model.maiveMethod.label}
+              value={maiveMethod}
+              onChange={(value) =>
+                handleParameterChange(
+                  "maiveMethod",
+                  value as DeepValueOf<typeof CONST.MAIVE_METHODS>,
+                )
+              }
+              options={Object.values(CONST.MAIVE_METHODS).map((method) => ({
+                value: method,
+                label: method,
+              }))}
+            />
+          </Tooltip>
+          <Tooltip
+            content={TEXT.model.shouldUseInstrumenting.tooltip}
+            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+          >
+            <YesNoSelect
+              label={TEXT.model.shouldUseInstrumenting.label}
+              value={shouldUseInstrumenting}
+              onChange={(value) =>
+                handleParameterChange("shouldUseInstrumenting", value)
+              }
+            />
+          </Tooltip>
         </div>
       )}
     </div>
