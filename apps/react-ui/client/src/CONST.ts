@@ -4,6 +4,14 @@ const CONST = {
   MAIVE_GITHUB_URL: "https://github.com/meta-analysis-es/maive",
   APP_DISPLAY_NAME: "MAIVE UI",
 
+  // Footer constants
+  FOOTER: {
+    COPYRIGHT: "© Charles University 2025",
+    GITHUB_URL: "https://github.com/meta-analysis-es/maive",
+    CONTACT_EMAIL: "maive@cuni.cz",
+    ISSUE_REPORT_URL: "https://github.com/meta-analysis-es/maive/issues",
+  },
+
   MODEL_TYPES: {
     MAIVE: "MAIVE",
     WAIVE: "WAIVE",
