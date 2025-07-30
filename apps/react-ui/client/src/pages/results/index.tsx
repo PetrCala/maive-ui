@@ -10,6 +10,7 @@ import { RESULTS_CONFIG } from "@utils/resultsConfig"
 import { useDataStore, dataCache } from "@store/dataStore"
 import { exportDataWithInstrumentedSE, downloadImageAsJpg } from "@utils/dataUtils"
 import CONST from "@src/CONST"
+import CONFIG from "@src/CONFIG"
 
 interface ModelResults {
 	effectEstimate: number
@@ -134,6 +135,7 @@ export default function ResultsPage() {
 										content={
 											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{RESULTS_CONFIG.effectEstimate.metrics.estimate.label}
@@ -149,6 +151,7 @@ export default function ResultsPage() {
 											RESULTS_CONFIG.effectEstimate.metrics.standardError
 												.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{RESULTS_CONFIG.effectEstimate.metrics.standardError.label}
@@ -163,6 +166,7 @@ export default function ResultsPage() {
 										content={
 											RESULTS_CONFIG.effectEstimate.metrics.significance.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{RESULTS_CONFIG.effectEstimate.metrics.significance.label}
@@ -185,6 +189,7 @@ export default function ResultsPage() {
 												RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
 													.tooltip
 											}
+											visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 										>
 											<p className="text-sm text-gray-600 dark:text-gray-300">
 												{
@@ -216,6 +221,7 @@ export default function ResultsPage() {
 										content={
 											RESULTS_CONFIG.publicationBias.metrics.pValue.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{RESULTS_CONFIG.publicationBias.metrics.pValue.label}
@@ -231,6 +237,7 @@ export default function ResultsPage() {
 											RESULTS_CONFIG.publicationBias.metrics.significance
 												.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{RESULTS_CONFIG.publicationBias.metrics.significance.label}
@@ -262,6 +269,7 @@ export default function ResultsPage() {
 										content={
 											RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.label}
@@ -286,6 +294,7 @@ export default function ResultsPage() {
 											RESULTS_CONFIG.diagnosticTests.metrics
 												.hausmanCriticalValue.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{
@@ -304,6 +313,7 @@ export default function ResultsPage() {
 											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
 												.tooltip
 										}
+										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
 										{
@@ -332,7 +342,7 @@ export default function ResultsPage() {
 
 						{/* Funnel Plot */}
 						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
-							<Tooltip content={RESULTS_CONFIG.funnelPlot.tooltip}>
+							<Tooltip content={RESULTS_CONFIG.funnelPlot.tooltip} visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}>
 								<h2 className="text-xl font-semibold mb-4">
 									{RESULTS_CONFIG.funnelPlot.title}
 								</h2>
