@@ -54,7 +54,7 @@ function Tooltip({
       {children}
       {isVisible && (visible !== undefined ? visible : true) && (
         <div
-          className="absolute z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs min-w-[200px] pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600 whitespace-normal"
+          className="absolute z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs min-w-[300px] pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600 whitespace-normal"
           style={{
             left: "100%",
             top: "0",
