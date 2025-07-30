@@ -93,7 +93,7 @@ export default function UploadPage() {
   return (
     <>
       <Head>
-        <title>{CONST.APP_DISPLAY_NAME} - Upload Data</title>
+        <title>{`${CONST.APP_DISPLAY_NAME} - Upload Data`}</title>
       </Head>
       <main className="page-container">
         <div className="max-w-2xl w-full">

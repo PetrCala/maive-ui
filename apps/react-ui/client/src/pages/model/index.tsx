@@ -213,7 +213,7 @@ export default function ModelPage() {
   return (
     <>
       <Head>
-        <title>{CONST.APP_DISPLAY_NAME} - Model Parameters</title>
+        <title>{`${CONST.APP_DISPLAY_NAME} - Model Parameters`}</title>
       </Head>
       <main className="page-container">
         {!dataId ? (

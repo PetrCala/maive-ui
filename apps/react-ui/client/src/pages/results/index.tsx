@@ -53,7 +53,7 @@ export default function ResultsPage() {
     return (
       <>
         <Head>
-          <title>{CONST.APP_DISPLAY_NAME} - Results</title>
+          <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
         </Head>
         <main className="page-container">
           <div className="text-center">
@@ -121,7 +121,7 @@ export default function ResultsPage() {
   return (
     <>
       <Head>
-        <title>{CONST.APP_DISPLAY_NAME} - Results</title>
+        <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
       </Head>
       <main className="page-container">
         <div className="max-w-4xl w-full space-y-8">
