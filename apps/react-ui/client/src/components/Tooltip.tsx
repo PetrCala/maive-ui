@@ -54,12 +54,18 @@ function Tooltip({
       {children}
       {isVisible && (visible !== undefined ? visible : true) && (
         <div
-          className="absolute z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs min-w-[300px] pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600 whitespace-normal"
+          className="absolute z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
           style={{
             left: "100%",
             top: "0",
             marginLeft: "10px",
             transform: "translateY(-50%)",
+            maxWidth: "280px",
+            minWidth: "200px",
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
+            hyphens: "auto",
+            lineHeight: "1.4",
           }}
         >
           {content}
