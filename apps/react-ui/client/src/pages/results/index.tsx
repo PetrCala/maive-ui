@@ -55,7 +55,7 @@ export default function ResultsPage() {
         <Head>
           <title>{CONST.APP_DISPLAY_NAME} - Results</title>
         </Head>
-        <main className="flex flex-col items-center justify-center p-24 pt-4">
+        <main className="flex flex-1 flex-col items-center justify-center p-24 pt-4 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No results available</h1>
             <Link href="/upload" className="text-blue-600 hover:text-blue-700">
