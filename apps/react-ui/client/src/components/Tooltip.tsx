@@ -7,6 +7,7 @@ interface TooltipProps {
 	content: string
 	position?: "top" | "bottom" | "left" | "right"
 	className?: string
+	shouldShowArrow?: boolean
 	visible?: boolean // if set, controls visibility externally
 }
 
@@ -15,6 +16,7 @@ function Tooltip({
 	content,
 	position = "top",
 	className = "",
+	shouldShowArrow = false,
 	visible,
 }: TooltipProps) {
 	const [isVisible, setIsVisible] = useState(false)
@@ -82,8 +84,9 @@ function Tooltip({
 					}}
 				>
 					{content}
-					{/* Arrow */}
-					<div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
+					{shouldShowArrow && (
+						<div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
+					)}
 				</div>
 			)}
 		</div>
