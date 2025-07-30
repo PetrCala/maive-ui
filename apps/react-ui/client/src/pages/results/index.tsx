@@ -133,7 +133,9 @@ export default function ResultsPage() {
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip
+											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip(
+												(parameters && JSON.parse(parameters)?.modelType) ?? "Unknown"
+											)
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
