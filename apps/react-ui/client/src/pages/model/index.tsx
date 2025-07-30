@@ -215,7 +215,7 @@ export default function ModelPage() {
       <Head>
         <title>{CONST.APP_DISPLAY_NAME} - Model Parameters</title>
       </Head>
-      <main className="flex flex-1 flex-col justify-center items-center w-full bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <main className="page-container">
         {!dataId ? (
           <div className="text-center min-h-[400px]">
             <h1 className="text-2xl font-bold mb-4">No data selected</h1>
