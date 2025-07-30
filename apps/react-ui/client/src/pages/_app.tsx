@@ -5,6 +5,7 @@ import "@styles/globals.css";
 import type { AppProps } from "next/app";
 import { usePathname } from "next/navigation";
 import Header from "@components/Header";
+import Footer from "@components/Footer";
 
 export default function App({ Component, pageProps }: AppProps) {
   const pathname = usePathname();
@@ -14,8 +15,13 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <Providers>
-      {!isHomePage && <Header />}
-      <Component {...pageProps} />
+      <div className="flex flex-col min-h-screen">
+        {!isHomePage && <Header />}
+        <main className="flex-1">
+          <Component {...pageProps} />
+        </main>
+        <Footer />
+      </div>
     </Providers>
   );
 }
