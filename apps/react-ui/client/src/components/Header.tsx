@@ -2,6 +2,8 @@
 
 import HelpIcon from "@components/Icons/HelpIcon";
 import HomeIcon from "@components/Icons/HomeIcon";
+import Link from "next/link";
+import CONST from "@src/CONST";
 
 interface HeaderProps {
   showHomeIcon?: boolean;
@@ -16,8 +18,14 @@ export default function Header({
 }: HeaderProps) {
   return (
     <header className={`flex justify-between items-center w-full ${className}`}>
-      {/* Left side - can be used for breadcrumbs or other navigation */}
-      <div className="flex-1"></div>
+      {/* Left side - logo, breadcrumbs, navigation,... */}
+      <div className="flex-1 flex items-center">
+        <Link href="/">
+          <span className="font-bold text-xl tracking-wide text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+            {CONST.APP_DISPLAY_NAME}
+          </span>
+        </Link>
+      </div>
 
       {/* Right side - icons */}
       {!!showHelpIcon && <HelpIcon />}
