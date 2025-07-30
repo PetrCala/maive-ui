@@ -11,6 +11,7 @@ import { useDataStore, dataCache } from "@store/dataStore"
 import { exportDataWithInstrumentedSE, downloadImageAsJpg } from "@utils/dataUtils"
 import CONST from "@src/CONST"
 import CONFIG from "@src/CONFIG"
+import type { EstimateType } from "@src/types"
 
 interface ModelResults {
 	effectEstimate: number
@@ -41,6 +42,7 @@ export default function ResultsPage() {
 	const parameters = searchParams?.get("parameters")
 	const shouldDisplayAndersonRubinCI =
 		parameters && JSON.parse(parameters)?.computeAndersonRubin === true
+	const estimateType = (parameters && JSON.parse(parameters)?.modelType) ?? "Unknown" as EstimateType
 
 	if (!results) {
 		return (
@@ -133,9 +135,7 @@ export default function ResultsPage() {
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip(
-												(parameters && JSON.parse(parameters)?.modelType) ?? "Unknown"
-											)
+											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip(estimateType)
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
@@ -151,7 +151,7 @@ export default function ResultsPage() {
 									<Tooltip
 										content={
 											RESULTS_CONFIG.effectEstimate.metrics.standardError
-												.tooltip
+												.tooltip(estimateType)
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
