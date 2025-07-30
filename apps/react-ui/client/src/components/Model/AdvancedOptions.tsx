@@ -46,37 +46,41 @@ export default function AdvancedOptions({
       </button>
       {open && (
         <div className="mt-4 flex flex-col space-y-4">
-          <Tooltip
-            content={TEXT.model.maiveMethod.tooltip}
-            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-          >
-            <DropdownSelect
-              label={TEXT.model.maiveMethod.label}
-              value={maiveMethod}
-              onChange={(value) =>
-                handleParameterChange(
-                  "maiveMethod",
-                  value as DeepValueOf<typeof CONST.MAIVE_METHODS>,
-                )
-              }
-              options={Object.values(CONST.MAIVE_METHODS).map((method) => ({
-                value: method,
-                label: method,
-              }))}
-            />
-          </Tooltip>
-          <Tooltip
-            content={TEXT.model.shouldUseInstrumenting.tooltip}
-            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-          >
-            <YesNoSelect
-              label={TEXT.model.shouldUseInstrumenting.label}
-              value={shouldUseInstrumenting}
-              onChange={(value) =>
-                handleParameterChange("shouldUseInstrumenting", value)
-              }
-            />
-          </Tooltip>
+          <div className="flex-shrink-0">
+            <Tooltip
+              content={TEXT.model.maiveMethod.tooltip}
+              visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+            >
+              <DropdownSelect
+                label={TEXT.model.maiveMethod.label}
+                value={maiveMethod}
+                onChange={(value) =>
+                  handleParameterChange(
+                    "maiveMethod",
+                    value as DeepValueOf<typeof CONST.MAIVE_METHODS>,
+                  )
+                }
+                options={Object.values(CONST.MAIVE_METHODS).map((method) => ({
+                  value: method,
+                  label: method,
+                }))}
+              />
+            </Tooltip>
+          </div>
+          <div className="flex-shrink-0">
+            <Tooltip
+              content={TEXT.model.shouldUseInstrumenting.tooltip}
+              visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+            >
+              <YesNoSelect
+                label={TEXT.model.shouldUseInstrumenting.label}
+                value={shouldUseInstrumenting}
+                onChange={(value) =>
+                  handleParameterChange("shouldUseInstrumenting", value)
+                }
+              />
+            </Tooltip>
+          </div>
         </div>
       )}
     </div>

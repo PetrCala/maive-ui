@@ -264,83 +264,94 @@ export default function ModelPage() {
                     </p>
                   </div>
                   <div className="space-y-6">
-                    <div className="grid grid-cols-1 gap-6">
-                      <Tooltip
-                        content={TEXT.model.modelType.tooltip}
-                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                      >
-                        {CONFIG.WAIVE_ENABLED ? (
-                          <DropdownSelect
-                            label={TEXT.model.modelType.label}
-                            value={parameters.modelType}
+                    <div className="flex flex-col gap-6">
+                      <div className="flex-shrink-0">
+                        <Tooltip
+                          content={TEXT.model.modelType.tooltip}
+                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                        >
+                          {CONFIG.WAIVE_ENABLED ? (
+                            <DropdownSelect
+                              label={TEXT.model.modelType.label}
+                              value={parameters.modelType}
+                              onChange={(value) =>
+                                handleParameterChange("modelType", value)
+                              }
+                              options={Object.values(CONST.MODEL_TYPES).map(
+                                (type) => ({
+                                  value: type,
+                                  label: type,
+                                }),
+                              )}
+                            />
+                          ) : (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                {TEXT.model.modelType.label}
+                              </label>
+                              <p>{parameters.modelType}</p>
+                            </div>
+                          )}
+                        </Tooltip>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Tooltip
+                          content={TEXT.model.includeStudyDummies.tooltip}
+                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                        >
+                          <YesNoSelect
+                            label={TEXT.model.includeStudyDummies.label}
+                            value={parameters.includeStudyDummies}
                             onChange={(value) =>
-                              handleParameterChange("modelType", value)
+                              handleParameterChange(
+                                "includeStudyDummies",
+                                value,
+                              )
                             }
-                            options={Object.values(CONST.MODEL_TYPES).map(
-                              (type) => ({
-                                value: type,
-                                label: type,
-                              }),
-                            )}
                           />
-                        ) : (
-                          <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                              {TEXT.model.modelType.label}
-                            </label>
-                            <p>{parameters.modelType}</p>
-                          </div>
-                        )}
-                      </Tooltip>
-                      <Tooltip
-                        content={TEXT.model.includeStudyDummies.tooltip}
-                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                      >
-                        <YesNoSelect
-                          label={TEXT.model.includeStudyDummies.label}
-                          value={parameters.includeStudyDummies}
-                          onChange={(value) =>
-                            handleParameterChange("includeStudyDummies", value)
-                          }
-                        />
-                      </Tooltip>
-                      <Tooltip
-                        content={TEXT.model.includeStudyClustering.tooltip}
-                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                      >
-                        <YesNoSelect
-                          label={TEXT.model.includeStudyClustering.label}
-                          value={parameters.includeStudyClustering}
-                          onChange={(value) =>
-                            handleParameterChange(
-                              "includeStudyClustering",
-                              value,
-                            )
-                          }
-                        />
-                      </Tooltip>
-                      <Tooltip
-                        content={TEXT.model.standardErrorTreatment.tooltip}
-                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                      >
-                        <DropdownSelect
-                          label={TEXT.model.standardErrorTreatment.label}
-                          value={parameters.standardErrorTreatment}
-                          onChange={(value) =>
-                            handleParameterChange(
-                              "standardErrorTreatment",
-                              value,
-                            )
-                          }
-                          options={Object.values(
-                            CONST.STANDARD_ERROR_TREATMENTS,
-                          ).map((treatment) => ({
-                            value: treatment.VALUE,
-                            label: treatment.TEXT,
-                          }))}
-                        />
-                      </Tooltip>
-                      <div>
+                        </Tooltip>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Tooltip
+                          content={TEXT.model.includeStudyClustering.tooltip}
+                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                        >
+                          <YesNoSelect
+                            label={TEXT.model.includeStudyClustering.label}
+                            value={parameters.includeStudyClustering}
+                            onChange={(value) =>
+                              handleParameterChange(
+                                "includeStudyClustering",
+                                value,
+                              )
+                            }
+                          />
+                        </Tooltip>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <Tooltip
+                          content={TEXT.model.standardErrorTreatment.tooltip}
+                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                        >
+                          <DropdownSelect
+                            label={TEXT.model.standardErrorTreatment.label}
+                            value={parameters.standardErrorTreatment}
+                            onChange={(value) =>
+                              handleParameterChange(
+                                "standardErrorTreatment",
+                                value,
+                              )
+                            }
+                            options={Object.values(
+                              CONST.STANDARD_ERROR_TREATMENTS,
+                            ).map((treatment) => ({
+                              value: treatment.VALUE,
+                              label: treatment.TEXT,
+                            }))}
+                          />
+                        </Tooltip>
+                      </div>
+                      <div className="flex-shrink-0">
                         <Tooltip
                           content={TEXT.model.computeAndersonRubin.tooltip}
                           visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
