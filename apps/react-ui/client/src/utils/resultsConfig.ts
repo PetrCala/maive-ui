@@ -1,11 +1,16 @@
+import CONST from "@src/CONST"
+import { DeepValueOf } from "@src/types"
+
+type EstimateType = DeepValueOf<typeof CONST.MODEL_TYPES> | "Unknown";
+
 export const RESULTS_CONFIG = {
 	effectEstimate: {
 		title: "Effect Estimate",
 		metrics: {
 			estimate: {
 				label: "Estimate",
-				tooltip:
-					"The estimated causal effect of the treatment variable on the outcome variable. This is the main result of the instrumental variables analysis.",
+				tooltip: (estimateType: EstimateType) =>
+					`The estimated causal effect of the treatment variable on the outcome variable. This is the main result of the ${estimateType} analysis.`,
 			},
 			standardError: {
 				label: "Standard Error",
