@@ -32,12 +32,38 @@ body {
 	min-height: 100vh;
 }
 
-.page-container {
+/* Abstract common page properties */
+.common-page-container {
+	min-height: 100vh;
 	display: flex;
-	flex: 1 1 0%;
 	flex-direction: column;
 	align-items: center;
 	justify-content: center;
+}
+
+.home-page-container {
+	@apply common-page-container;
+	padding-left: 1.5rem;
+	padding-right: 1.5rem;
+	padding-top: 3rem;
+	padding-bottom: 3rem;
+	background-image: linear-gradient(to bottom, #fff, #f9fafb 50%, #f3f4f6 100%);
+}
+
+@media (prefers-color-scheme: dark) {
+	.home-page-container {
+		background-image: linear-gradient(
+			to bottom,
+			#111827,
+			#1f2937 50%,
+			#111827 100%
+		);
+	}
+}
+
+.page-container {
+	@apply common-page-container;
+	flex: 1 1 0%;
 	padding: 6rem;
 	padding-top: 1rem;
 	background-image: linear-gradient(to bottom, #fff, #f9fafb, #f3f4f6);
