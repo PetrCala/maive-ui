@@ -1,3 +1,4 @@
+import MDXContent from "@context/MDXContent";
 import TEXT from "@lib/text";
 import CONST from "@src/CONST";
 
@@ -48,7 +49,7 @@ export default function MAIVEInfoModal({
               {TEXT.maiveModal.overview.title}
             </h3>
             <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-              {TEXT.maiveModal.overview.text}
+              <MDXContent source={TEXT.maiveModal.overview.text} />
             </p>
           </section>
 
@@ -59,7 +60,7 @@ export default function MAIVEInfoModal({
             <div className="space-y-3 text-gray-700 dark:text-gray-300">
               {TEXT.maiveModal.howItWorks.text.map((step, index) => (
                 <p key={index} className="leading-relaxed">
-                  {step}
+                  <MDXContent source={step} />
                 </p>
               ))}
             </div>
