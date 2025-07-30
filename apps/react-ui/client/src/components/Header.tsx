@@ -1,27 +1,27 @@
-"use client"
+"use client";
 
-import HelpIcon from "@components/Icons/HelpIcon"
-import HomeIcon from "@components/Icons/HomeIcon"
+import HelpIcon from "@components/Icons/HelpIcon";
+import HomeIcon from "@components/Icons/HomeIcon";
 
 interface HeaderProps {
-	showHomeIcon?: boolean
-	showHelpIcon?: boolean
-	className?: string
+  showHomeIcon?: boolean;
+  showHelpIcon?: boolean;
+  className?: string;
 }
 
 export default function Header({
-	showHomeIcon = true,
-	showHelpIcon = true,
-	className = "",
+  showHomeIcon = true,
+  showHelpIcon = true,
+  className = "",
 }: HeaderProps) {
-	return (
-		<header className={`flex justify-between items-center w-full ${className}`}>
-			{/* Left side - can be used for breadcrumbs or other navigation */}
-			<div className="flex-1"></div>
+  return (
+    <header className={`flex justify-between items-center w-full ${className}`}>
+      {/* Left side - can be used for breadcrumbs or other navigation */}
+      <div className="flex-1"></div>
 
-			{/* Right side - icons */}
-			{!!showHelpIcon && <HelpIcon />}
-			{!!showHomeIcon && <HomeIcon />}
-		</header>
-	)
+      {/* Right side - icons */}
+      {!!showHelpIcon && <HelpIcon />}
+      {!!showHomeIcon && <HomeIcon />}
+    </header>
+  );
 }
