@@ -26,45 +26,30 @@ function Tooltip({
 	const tooltipRef = useRef<HTMLDivElement>(null)
 
 	useEffect(() => {
-		const handleMouseMove = (e: MouseEvent) => {
-			if (tooltipRef.current && isVisible) {
-				const tooltip = tooltipRef.current
-				const rect = tooltip.getBoundingClientRect()
-				const viewportWidth = window.innerWidth
-				const viewportHeight = window.innerHeight
-
-				let x = e.clientX + 10
-				let y = e.clientY - 10
-
-				// Adjust position to keep tooltip within viewport
-				if (x + rect.width > viewportWidth) {
-					x = e.clientX - rect.width - 10
+		if (isVisible && triggerRef.current && !tooltipPosition) {
+			const triggerRect = triggerRef.current.getBoundingClientRect()
+			const viewportWidth = window.innerWidth
+			const viewportHeight = window.innerHeight
+			
+			// Calculate position in top-right corner of trigger element
+			let x = triggerRect.right + 10
+			let y = triggerRect.top - 10
+			
+			// Adjust position to keep tooltip within viewport
+			if (tooltipRef.current) {
+				const tooltipRect = tooltipRef.current.getBoundingClientRect()
+				if (x + tooltipRect.width > viewportWidth) {
+					x = triggerRect.left - tooltipRect.width - 10
 				}
-				if (y + rect.height > viewportHeight) {
-					y = e.clientY - rect.height - 10
+				if (y + tooltipRect.height > viewportHeight) {
+					y = triggerRect.bottom + 10
 				}
-				if (x < 0) x = 10
-				if (y < 0) y = 10
-
-				setTooltipPosition({ x, y })
+				if (y < 0) {
+					y = 10
+				}
 			}
-		}
-
-		if (isVisible) {
-			// Initialize position based on trigger element
-			if (triggerRef.current && !tooltipPosition) {
-				const triggerRect = triggerRef.current.getBoundingClientRect()
-				setTooltipPosition({
-					x: triggerRect.left + triggerRect.width / 2,
-					y: triggerRect.top - 10,
-				})
-			}
-
-			document.addEventListener("mousemove", handleMouseMove)
-		}
-
-		return () => {
-			document.removeEventListener("mousemove", handleMouseMove)
+			
+			setTooltipPosition({ x, y })
 		}
 	}, [isVisible, tooltipPosition])
 
