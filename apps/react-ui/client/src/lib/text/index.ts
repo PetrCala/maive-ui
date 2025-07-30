@@ -14,6 +14,32 @@ const TEXT = {
       label: "Include Study Level Fixed Effects",
       tooltip: "Whether to include study-level fixed effects in the analysis.",
     },
+    includeStudyClustering: {
+      label: "Include Study Level Clustering",
+      tooltip: "Whether to include study-level clustering in the analysis.",
+    },
+    standardErrorTreatment: {
+      label: "Standard Error Treatment",
+      tooltip: "The method to use for standard error treatment.",
+    },
+    computeAndersonRubin: {
+      label: "Compute Anderson-Rubin Confidence Interval",
+      tooltip: "Whether to compute the Anderson-Rubin confidence interval.",
+      warning:
+        "This option enables heavy computation and may significantly increase processing time.",
+    },
+    advancedOptions: {
+      title: "Advanced Options",
+    },
+    maiveMethod: {
+      label: "MAIVE Method",
+      tooltip: "The method to use for the MAIVE analysis.",
+    },
+    shouldUseInstrumenting: {
+      label: "Use Instrumenting",
+      tooltip: "Whether to use instrumenting in the analysis.",
+    },
+    runModel: "Run Model",
   },
   results: {
     effectEstimate: {

@@ -304,37 +304,61 @@ export default function ModelPage() {
                           }
                         />
                       </Tooltip>
-                      <YesNoSelect
-                        label="Include Study Level Clustering"
-                        value={parameters.includeStudyClustering}
-                        onChange={(value) =>
-                          handleParameterChange("includeStudyClustering", value)
-                        }
-                      />
-                      <DropdownSelect
-                        label="Standard Error Treatment"
-                        value={parameters.standardErrorTreatment}
-                        onChange={(value) =>
-                          handleParameterChange("standardErrorTreatment", value)
-                        }
-                        options={Object.values(
-                          CONST.STANDARD_ERROR_TREATMENTS,
-                        ).map((treatment) => ({
-                          value: treatment.VALUE,
-                          label: treatment.TEXT,
-                        }))}
-                      />
-                      <div>
+                      <Tooltip
+                        content={TEXT.model.includeStudyClustering.tooltip}
+                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                      >
                         <YesNoSelect
-                          label="Compute Anderson-Rubin Confidence Interval"
-                          value={parameters.computeAndersonRubin}
+                          label={TEXT.model.includeStudyClustering.label}
+                          value={parameters.includeStudyClustering}
                           onChange={(value) =>
-                            handleParameterChange("computeAndersonRubin", value)
+                            handleParameterChange(
+                              "includeStudyClustering",
+                              value,
+                            )
                           }
                         />
+                      </Tooltip>
+                      <Tooltip
+                        content={TEXT.model.standardErrorTreatment.tooltip}
+                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                      >
+                        <DropdownSelect
+                          label={TEXT.model.standardErrorTreatment.label}
+                          value={parameters.standardErrorTreatment}
+                          onChange={(value) =>
+                            handleParameterChange(
+                              "standardErrorTreatment",
+                              value,
+                            )
+                          }
+                          options={Object.values(
+                            CONST.STANDARD_ERROR_TREATMENTS,
+                          ).map((treatment) => ({
+                            value: treatment.VALUE,
+                            label: treatment.TEXT,
+                          }))}
+                        />
+                      </Tooltip>
+                      <div>
+                        <Tooltip
+                          content={TEXT.model.computeAndersonRubin.tooltip}
+                          visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                        >
+                          <YesNoSelect
+                            label={TEXT.model.computeAndersonRubin.label}
+                            value={parameters.computeAndersonRubin}
+                            onChange={(value) =>
+                              handleParameterChange(
+                                "computeAndersonRubin",
+                                value,
+                              )
+                            }
+                          />
+                        </Tooltip>
                         {parameters.computeAndersonRubin && (
                           <Alert
-                            message="This option enables heavy computation and may significantly increase processing time."
+                            message={TEXT.model.computeAndersonRubin.warning}
                             type="warning"
                             className="mt-3"
                           />
@@ -350,7 +374,7 @@ export default function ModelPage() {
                       onClick={handleRunModel}
                       className={`w-full px-6 py-3 text-white font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
                     >
-                      Run Model
+                      {TEXT.model.runModel}
                     </button>
                   </div>
                 </div>
