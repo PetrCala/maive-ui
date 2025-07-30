@@ -130,43 +130,43 @@ export default function ResultsPage() {
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.effectEstimate.metrics.estimate.label}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip
 										}
 									>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{RESULTS_CONFIG.effectEstimate.metrics.estimate.label}
+										</p>
 										<p className="text-lg font-medium">
 											{parsedResults.effectEstimate.toFixed(4)}
 										</p>
 									</Tooltip>
 								</div>
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.effectEstimate.metrics.standardError.label}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.effectEstimate.metrics.standardError
 												.tooltip
 										}
 									>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{RESULTS_CONFIG.effectEstimate.metrics.standardError.label}
+										</p>
 										<p className="text-lg font-medium">
 											{parsedResults.standardError.toFixed(4)}
 										</p>
 									</Tooltip>
 								</div>
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.effectEstimate.metrics.significance.label}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.effectEstimate.metrics.significance.tooltip
 										}
 									>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{RESULTS_CONFIG.effectEstimate.metrics.significance.label}
+										</p>
 										<p
 											className={`text-lg font-medium ${
 												parsedResults.isSignificant
@@ -180,18 +180,18 @@ export default function ResultsPage() {
 								</div>
 								{!!shouldDisplayAndersonRubinCI && (
 									<div>
-										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{
-												RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
-													.label
-											}
-										</p>
 										<Tooltip
 											content={
 												RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
 													.tooltip
 											}
 										>
+											<p className="text-sm text-gray-600 dark:text-gray-300">
+												{
+													RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
+														.label
+												}
+											</p>
 											<p className="text-lg font-medium">
 												{typeof parsedResults.andersonRubinCI === "object"
 													? `[${parsedResults.andersonRubinCI[0].toFixed(
@@ -212,29 +212,29 @@ export default function ResultsPage() {
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.publicationBias.metrics.pValue.label}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.publicationBias.metrics.pValue.tooltip
 										}
 									>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{RESULTS_CONFIG.publicationBias.metrics.pValue.label}
+										</p>
 										<p className="text-lg font-medium">
 											{parsedResults.publicationBias.pValue.toFixed(4)}
 										</p>
 									</Tooltip>
 								</div>
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.publicationBias.metrics.significance.label}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.publicationBias.metrics.significance
 												.tooltip
 										}
 									>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{RESULTS_CONFIG.publicationBias.metrics.significance.label}
+										</p>
 										<p
 											className={`text-lg font-medium ${
 												parsedResults.publicationBias.isSignificant
@@ -258,14 +258,14 @@ export default function ResultsPage() {
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.label}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.tooltip
 										}
 									>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.label}
+										</p>
 										<p
 											className={`text-lg font-medium ${
 												parsedResults.hausmanTest.rejectsNull
@@ -281,37 +281,37 @@ export default function ResultsPage() {
 									</Tooltip>
 								</div>
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{
-											RESULTS_CONFIG.diagnosticTests.metrics
-												.hausmanCriticalValue.label
-										}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.diagnosticTests.metrics
 												.hausmanCriticalValue.tooltip
 										}
 									>
+										<p className="text-sm text-gray-600 dark:text-gray-300">
+											{
+												RESULTS_CONFIG.diagnosticTests.metrics
+													.hausmanCriticalValue.label
+											}
+										</p>
 										<p className="text-lg font-medium">
 											{parsedResults.hausmanTest.criticalValue.toFixed(4)}
 										</p>
 									</Tooltip>
 								</div>
 								<div>
-									<p className="text-sm text-gray-600 dark:text-gray-300">
-										{
-											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
-												.label
-										}
-									</p>
 									<Tooltip
 										content={
 											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
 												.tooltip
 										}
 									>
-										{parsedResults.firstStageFTest === "NA" ? (
+									<p className="text-sm text-gray-600 dark:text-gray-300">
+										{
+											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
+												.label
+										}
+									</p>
+									{parsedResults.firstStageFTest === "NA" ? (
 											<p className="text-lg font-medium">NA</p>
 										) : (
 											<p
