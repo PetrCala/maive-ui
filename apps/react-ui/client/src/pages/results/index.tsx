@@ -5,9 +5,10 @@ import Link from "next/link"
 import Head from "next/head"
 import Image from "next/image"
 import Tooltip from "@components/Tooltip"
+import DownloadButton from "@components/Buttons/DownloadButton"
 import { RESULTS_CONFIG } from "@utils/resultsConfig"
 import { useDataStore, dataCache } from "@store/dataStore"
-import { exportDataWithInstrumentedSE } from "@utils/dataUtils"
+import { exportDataWithInstrumentedSE, downloadImageAsJpg } from "@utils/dataUtils"
 import CONST from "@src/CONST"
 
 interface ModelResults {
@@ -96,6 +97,16 @@ export default function ResultsPage() {
 		} catch (error) {
 			console.error("Error exporting data:", error)
 			alert("Failed to export data. Please try again.")
+		}
+	}
+
+	const handleDownloadFunnelPlot = async () => {
+		try {
+			const filename = `funnel_plot_${Date.now()}`
+			downloadImageAsJpg(parsedResults.funnelPlot, filename)
+		} catch (error) {
+			console.error("Error downloading funnel plot:", error)
+			alert("Failed to download funnel plot. Please try again.")
 		}
 	}
 
@@ -320,7 +331,7 @@ export default function ResultsPage() {
 						</div>
 
 						{/* Funnel Plot */}
-						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
 							<Tooltip content={RESULTS_CONFIG.funnelPlot.tooltip}>
 								<h2 className="text-xl font-semibold mb-4">
 									{RESULTS_CONFIG.funnelPlot.title}
@@ -333,6 +344,13 @@ export default function ResultsPage() {
 									width={Math.min(parsedResults.funnelPlotWidth, 800)}
 									height={Math.min(parsedResults.funnelPlotHeight, 800)}
 									className="max-w-full h-auto"
+								/>
+							</div>
+							<div className="absolute flex bottom-8 right-8">
+								<DownloadButton
+									onClick={handleDownloadFunnelPlot}
+									title="Download funnel plot as JPG"
+									className="shadow-lg"
 								/>
 							</div>
 						</div>
