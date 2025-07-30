@@ -160,3 +160,47 @@ const downloadFile = (blob: Blob, filename: string): void => {
 	document.body.removeChild(link)
 	URL.revokeObjectURL(url)
 }
+
+/**
+ * Download an image from a data URI as a JPG file
+ * @param dataUri - The data URI of the image (e.g., "data:image/png;base64,...")
+ * @param filename - The filename for the downloaded file (without extension)
+ */
+export const downloadImageAsJpg = (dataUri: string, filename: string): void => {
+	// Create a canvas to convert the image to JPG
+	const canvas = document.createElement("canvas")
+	const ctx = canvas.getContext("2d")
+	
+	if (!ctx) {
+		throw new Error("Could not get canvas context")
+	}
+
+	// Create an image element
+	const img = new Image()
+	
+	img.onload = () => {
+		// Set canvas dimensions to match the image
+		canvas.width = img.width
+		canvas.height = img.height
+		
+		// Draw the image on the canvas
+		ctx.drawImage(img, 0, 0)
+		
+		// Convert to JPG blob
+		canvas.toBlob((blob) => {
+			if (blob) {
+				const jpgFilename = `${filename}.jpg`
+				downloadFile(blob, jpgFilename)
+			} else {
+				throw new Error("Failed to convert image to JPG")
+			}
+		}, "image/jpeg", 0.9) // 0.9 quality for good balance
+	}
+	
+	img.onerror = () => {
+		throw new Error("Failed to load image from data URI")
+	}
+	
+	// Set the source to trigger loading
+	img.src = dataUri
+}
