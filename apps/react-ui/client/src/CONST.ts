@@ -7,9 +7,9 @@ const CONST = {
   // Footer constants
   FOOTER: {
     COPYRIGHT: `© Charles University 2025-${new Date().getFullYear()}`,
-    GITHUB_URL: "https://github.com/meta-analysis-es/maive",
-    CONTACT_EMAIL: "maive@cuni.cz",
-    ISSUE_REPORT_URL: "https://github.com/meta-analysis-es/maive/issues",
+    GITHUB_URL: "https://github.com/PetrCala/maive-ui",
+    CONTACT_EMAIL: "61505008@fsv.cuni.cz",
+    ISSUE_REPORT_URL: "https://github.com/PetrCala/maive-ui/issues",
   },
 
   MODEL_TYPES: {
