@@ -1,14 +1,14 @@
-"use client"
+"use client";
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useRef, useEffect } from "react";
 
 interface TooltipProps {
-	children: React.ReactNode
-	content: string
-	position?: "top" | "bottom" | "left" | "right"
-	className?: string
-	shouldShowArrow?: boolean
-	visible?: boolean // if set, controls visibility externally
+  children: React.ReactNode;
+  content: string;
+  position?: "top" | "bottom" | "left" | "right";
+  className?: string;
+  shouldShowArrow?: boolean;
+  visible?: boolean; // if set, controls visibility externally
 }
 
 /**
@@ -26,84 +26,86 @@ interface TooltipProps {
  * @returns Tooltip component wrapping the children
  */
 function Tooltip({
-	children,
-	content,
-	position = "top",
-	className = "",
-	shouldShowArrow = false,
-	visible,
+  children,
+  content,
+  position = "top",
+  className = "",
+  shouldShowArrow = false,
+  visible,
 }: TooltipProps) {
-	const [isVisible, setIsVisible] = useState(false)
-	const [tooltipPosition, setTooltipPosition] = useState<{
-		x: number
-		y: number
-	} | null>(null)
-	const triggerRef = useRef<HTMLDivElement>(null)
-	const tooltipRef = useRef<HTMLDivElement>(null)
+  const [isVisible, setIsVisible] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+  const triggerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
 
-	useEffect(() => {
-		if (isVisible && triggerRef.current && !tooltipPosition) {
-			const triggerRect = triggerRef.current.getBoundingClientRect()
-			const viewportWidth = window.innerWidth
-			const viewportHeight = window.innerHeight
-			
-			// Calculate position in top-right corner of trigger element
-			let x = triggerRect.right + 10
-			let y = triggerRect.top - 10
-			
-			// Adjust position to keep tooltip within viewport
-			if (tooltipRef.current) {
-				const tooltipRect = tooltipRef.current.getBoundingClientRect()
-				if (x + tooltipRect.width > viewportWidth) {
-					x = triggerRect.left - tooltipRect.width - 10
-				}
-				if (y + tooltipRect.height > viewportHeight) {
-					y = triggerRect.bottom + 10
-				}
-				if (y < 0) {
-					y = 10
-				}
-			}
-			
-			setTooltipPosition({ x, y })
-		}
-	}, [isVisible, tooltipPosition])
+  useEffect(() => {
+    if (isVisible && triggerRef.current && !tooltipPosition) {
+      const triggerRect = triggerRef.current.getBoundingClientRect();
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
 
-	const handleMouseEnter = () => {
-		setIsVisible(true)
-	}
+      // Calculate position in top-right corner of trigger element
+      let x = triggerRect.right + 10;
+      let y = triggerRect.top - 10;
 
-	const handleMouseLeave = () => {
-		setIsVisible(false)
-		setTooltipPosition(null)
-	}
+      // Adjust position to keep tooltip within viewport
+      if (tooltipRef.current) {
+        const tooltipRect = tooltipRef.current.getBoundingClientRect();
+        if (x + tooltipRect.width > viewportWidth) {
+          x = triggerRect.left - tooltipRect.width - 10;
+        }
+        if (y + tooltipRect.height > viewportHeight) {
+          y = triggerRect.bottom + 10;
+        }
+        if (y < 0) {
+          y = 10;
+        }
+      }
 
-	return (
-		<div
-			ref={triggerRef}
-			className={`relative inline-block ${className}`}
-			onMouseEnter={handleMouseEnter}
-			onMouseLeave={handleMouseLeave}
-		>
-			{children}
-			{isVisible && (visible !== undefined ? visible : true) && tooltipPosition && (
-				<div
-					ref={tooltipRef}
-					className="fixed z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
-					style={{
-						left: tooltipPosition.x,
-						top: tooltipPosition.y,
-					}}
-				>
-					{content}
-					{shouldShowArrow && (
-						<div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
-					)}
-				</div>
-			)}
-		</div>
-	)
+      setTooltipPosition({ x, y });
+    }
+  }, [isVisible, tooltipPosition]);
+
+  const handleMouseEnter = () => {
+    setIsVisible(true);
+  };
+
+  const handleMouseLeave = () => {
+    setIsVisible(false);
+    setTooltipPosition(null);
+  };
+
+  return (
+    <div
+      ref={triggerRef}
+      className={`relative inline-block ${className}`}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
+      {children}
+      {isVisible &&
+        (visible !== undefined ? visible : true) &&
+        tooltipPosition && (
+          <div
+            ref={tooltipRef}
+            className="fixed z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
+            style={{
+              left: tooltipPosition.x,
+              top: tooltipPosition.y,
+            }}
+          >
+            {content}
+            {shouldShowArrow && (
+              <div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
+            )}
+          </div>
+        )}
+    </div>
+  );
 }
 
-export type { TooltipProps }
-export default Tooltip
+export type { TooltipProps };
+export default Tooltip;

@@ -1,3 +1,3 @@
-type DeepValueOf<T> = T extends object ? DeepValueOf<T[keyof T]> : T
+type DeepValueOf<T> = T extends object ? DeepValueOf<T[keyof T]> : T;
 
-export default DeepValueOf
+export default DeepValueOf;
