@@ -44,7 +44,7 @@ export const RESULTS_CONFIG = {
       pValue: {
         label: "p-value",
         tooltip:
-          "p-value from the instrumented FAT (Egger) regression that tests for publication bias / p-hacking after MAIVE adjustment.",
+          "p-value from the instrumented FAT-PET regression that tests for publication bias / p-hacking after MAIVE adjustment.",
       },
       significance: {
         label: "Significant at 5% level",
