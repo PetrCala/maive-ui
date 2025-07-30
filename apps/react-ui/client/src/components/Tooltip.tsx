@@ -34,40 +34,7 @@ function Tooltip({
   visible,
 }: TooltipProps) {
   const [isVisible, setIsVisible] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (isVisible && triggerRef.current && !tooltipPosition) {
-      const triggerRect = triggerRef.current.getBoundingClientRect();
-      const viewportWidth = window.innerWidth;
-      const viewportHeight = window.innerHeight;
-
-      // Calculate position in top-right corner of trigger element
-      let x = triggerRect.right + 10;
-      let y = triggerRect.top - 10;
-
-      // Adjust position to keep tooltip within viewport
-      if (tooltipRef.current) {
-        const tooltipRect = tooltipRef.current.getBoundingClientRect();
-        if (x + tooltipRect.width > viewportWidth) {
-          x = triggerRect.left - tooltipRect.width - 10;
-        }
-        if (y + tooltipRect.height > viewportHeight) {
-          y = triggerRect.bottom + 10;
-        }
-        if (y < 0) {
-          y = 10;
-        }
-      }
-
-      setTooltipPosition({ x, y });
-    }
-  }, [isVisible, tooltipPosition]);
 
   const handleMouseEnter = () => {
     setIsVisible(true);
@@ -75,7 +42,6 @@ function Tooltip({
 
   const handleMouseLeave = () => {
     setIsVisible(false);
-    setTooltipPosition(null);
   };
 
   return (
@@ -86,23 +52,22 @@ function Tooltip({
       onMouseLeave={handleMouseLeave}
     >
       {children}
-      {isVisible &&
-        (visible !== undefined ? visible : true) &&
-        tooltipPosition && (
-          <div
-            ref={tooltipRef}
-            className="fixed z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
-            style={{
-              left: tooltipPosition.x,
-              top: tooltipPosition.y,
-            }}
-          >
-            {content}
-            {shouldShowArrow && (
-              <div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
-            )}
-          </div>
-        )}
+      {isVisible && (visible !== undefined ? visible : true) && (
+        <div
+          className="absolute z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600 whitespace-normal"
+          style={{
+            left: "100%",
+            top: "0",
+            marginLeft: "10px",
+            transform: "translateY(-50%)",
+          }}
+        >
+          {content}
+          {shouldShowArrow && (
+            <div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
