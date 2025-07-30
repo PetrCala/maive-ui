@@ -313,7 +313,7 @@ export default function ValidationPage() {
   return (
     <>
       <Head>
-        <title>{CONST.APP_DISPLAY_NAME} - Data Validation</title>
+        <title>{`${CONST.APP_DISPLAY_NAME} - Data Validation`}</title>
       </Head>
       <main className="page-container">
         {!dataId ? (

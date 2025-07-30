@@ -11,7 +11,7 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>{CONST.APP_DISPLAY_NAME} - Welcome</title>
+        <title>{`${CONST.APP_DISPLAY_NAME} - Welcome`}</title>
       </Head>
       <main className="page-container">
         <div className="max-w-2xl text-center">
