@@ -13,7 +13,7 @@ export default function Home() {
       <Head>
         <title>{CONST.APP_DISPLAY_NAME} - Welcome</title>
       </Head>
-      <main className="flex flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <main className="flex flex-1 flex-col items-center justify-center p-24 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
         <div className="max-w-2xl text-center">
           <h1 className="text-5xl font-bold mb-6 text-gray-900 dark:text-white tracking-tight">
             Welcome to {CONST.APP_DISPLAY_NAME}
