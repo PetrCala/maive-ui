@@ -315,7 +315,7 @@ export default function ValidationPage() {
       <Head>
         <title>{CONST.APP_DISPLAY_NAME} - Data Validation</title>
       </Head>
-      <main className="flex flex-col justify-center items-center p-24 pt-4 bg-gradient-to-b from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <main className="page-container">
         {!dataId ? (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No data selected</h1>
