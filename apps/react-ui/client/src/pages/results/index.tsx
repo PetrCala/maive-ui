@@ -6,7 +6,7 @@ import Head from "next/head"
 import Image from "next/image"
 import Tooltip from "@components/Tooltip"
 import DownloadButton from "@components/Buttons/DownloadButton"
-import { RESULTS_CONFIG } from "@utils/resultsConfig"
+import TEXT from "@src/lib/text"
 import { useDataStore, dataCache } from "@store/dataStore"
 import { exportDataWithInstrumentedSE, downloadImageAsJpg } from "@utils/dataUtils"
 import CONST from "@src/CONST"
@@ -129,18 +129,18 @@ export default function ResultsPage() {
 						{/* Effect Estimate Section */}
 						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
 							<h2 className="text-xl font-semibold mb-4">
-								{RESULTS_CONFIG.effectEstimate.title}
+								{TEXT.results.effectEstimate.title}
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.effectEstimate.metrics.estimate.tooltip(estimateType)
+											TEXT.results.effectEstimate.metrics.estimate.tooltip(estimateType)
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.effectEstimate.metrics.estimate.label}
+											{TEXT.results.effectEstimate.metrics.estimate.label}
 										</p>
 										<p className="text-lg font-medium">
 											{parsedResults.effectEstimate.toFixed(4)}
@@ -150,13 +150,13 @@ export default function ResultsPage() {
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.effectEstimate.metrics.standardError
+											TEXT.results.effectEstimate.metrics.standardError
 												.tooltip(estimateType)
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.effectEstimate.metrics.standardError.label}
+											{TEXT.results.effectEstimate.metrics.standardError.label}
 										</p>
 										<p className="text-lg font-medium">
 											{parsedResults.standardError.toFixed(4)}
@@ -166,12 +166,12 @@ export default function ResultsPage() {
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.effectEstimate.metrics.significance.tooltip
+											TEXT.results.effectEstimate.metrics.significance.tooltip
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.effectEstimate.metrics.significance.label}
+											{TEXT.results.effectEstimate.metrics.significance.label}
 										</p>
 										<p
 											className={`text-lg font-medium ${
@@ -188,14 +188,14 @@ export default function ResultsPage() {
 									<div>
 										<Tooltip
 											content={
-												RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
+												TEXT.results.effectEstimate.metrics.andersonRubinCI
 													.tooltip
 											}
 											visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 										>
 											<p className="text-sm text-gray-600 dark:text-gray-300">
 												{
-													RESULTS_CONFIG.effectEstimate.metrics.andersonRubinCI
+													TEXT.results.effectEstimate.metrics.andersonRubinCI
 														.label
 												}
 											</p>
@@ -215,18 +215,18 @@ export default function ResultsPage() {
 						{/* Publication Bias Section */}
 						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
 							<h2 className="text-xl font-semibold mb-4">
-								{RESULTS_CONFIG.publicationBias.title}
+								{TEXT.results.publicationBias.title}
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.publicationBias.metrics.pValue.tooltip
+											TEXT.results.publicationBias.metrics.pValue.tooltip
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.publicationBias.metrics.pValue.label}
+											{TEXT.results.publicationBias.metrics.pValue.label}
 										</p>
 										<p className="text-lg font-medium">
 											{parsedResults.publicationBias.pValue.toFixed(4)}
@@ -236,13 +236,13 @@ export default function ResultsPage() {
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.publicationBias.metrics.significance
+											TEXT.results.publicationBias.metrics.significance
 												.tooltip
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.publicationBias.metrics.significance.label}
+											{TEXT.results.publicationBias.metrics.significance.label}
 										</p>
 										<p
 											className={`text-lg font-medium ${
@@ -263,18 +263,18 @@ export default function ResultsPage() {
 						{/* Tests Section */}
 						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
 							<h2 className="text-xl font-semibold mb-4">
-								{RESULTS_CONFIG.diagnosticTests.title}
+								{TEXT.results.diagnosticTests.title}
 							</h2>
 							<div className="grid grid-cols-2 gap-4">
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.tooltip
+											TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
-											{RESULTS_CONFIG.diagnosticTests.metrics.hausmanTest.label}
+											{TEXT.results.diagnosticTests.metrics.hausmanTest.label}
 										</p>
 										<p
 											className={`text-lg font-medium ${
@@ -293,14 +293,14 @@ export default function ResultsPage() {
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.diagnosticTests.metrics
+											TEXT.results.diagnosticTests.metrics
 												.hausmanCriticalValue.tooltip
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 										<p className="text-sm text-gray-600 dark:text-gray-300">
 											{
-												RESULTS_CONFIG.diagnosticTests.metrics
+												TEXT.results.diagnosticTests.metrics
 													.hausmanCriticalValue.label
 											}
 										</p>
@@ -312,14 +312,14 @@ export default function ResultsPage() {
 								<div>
 									<Tooltip
 										content={
-											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
+											TEXT.results.diagnosticTests.metrics.firstStageFTest
 												.tooltip
 										}
 										visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}
 									>
 									<p className="text-sm text-gray-600 dark:text-gray-300">
 										{
-											RESULTS_CONFIG.diagnosticTests.metrics.firstStageFTest
+											TEXT.results.diagnosticTests.metrics.firstStageFTest
 												.label
 										}
 									</p>
@@ -344,9 +344,9 @@ export default function ResultsPage() {
 
 						{/* Funnel Plot */}
 						<div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
-							<Tooltip content={RESULTS_CONFIG.funnelPlot.tooltip} visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}>
+							<Tooltip content={TEXT.results.funnelPlot.tooltip} visible={CONFIG.SHOULD_SHOW_RESULT_TOOLTIPS}>
 								<h2 className="text-xl font-semibold mb-4">
-									{RESULTS_CONFIG.funnelPlot.title}
+									{TEXT.results.funnelPlot.title}
 								</h2>
 							</Tooltip>
 							<div className="flex justify-center">
