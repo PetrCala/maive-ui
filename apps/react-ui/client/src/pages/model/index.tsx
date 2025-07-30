@@ -16,6 +16,8 @@ import { YesNoSelect, DropdownSelect } from "@src/components/Options";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
+import TEXT from "@src/lib/text";
+import Tooltip from "@src/components/Tooltip";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -263,35 +265,45 @@ export default function ModelPage() {
                   </div>
                   <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-6">
-                      {CONFIG.WAIVE_ENABLED ? (
-                        <DropdownSelect
-                          label="Model Type"
-                          value={parameters.modelType}
+                      <Tooltip
+                        content={TEXT.model.modelType.tooltip}
+                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                      >
+                        {CONFIG.WAIVE_ENABLED ? (
+                          <DropdownSelect
+                            label={TEXT.model.modelType.label}
+                            value={parameters.modelType}
+                            onChange={(value) =>
+                              handleParameterChange("modelType", value)
+                            }
+                            options={Object.values(CONST.MODEL_TYPES).map(
+                              (type) => ({
+                                value: type,
+                                label: type,
+                              }),
+                            )}
+                          />
+                        ) : (
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                              {TEXT.model.modelType.label}
+                            </label>
+                            <p>{parameters.modelType}</p>
+                          </div>
+                        )}
+                      </Tooltip>
+                      <Tooltip
+                        content={TEXT.model.includeStudyDummies.tooltip}
+                        visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                      >
+                        <YesNoSelect
+                          label={TEXT.model.includeStudyDummies.label}
+                          value={parameters.includeStudyDummies}
                           onChange={(value) =>
-                            handleParameterChange("modelType", value)
+                            handleParameterChange("includeStudyDummies", value)
                           }
-                          options={Object.values(CONST.MODEL_TYPES).map(
-                            (type) => ({
-                              value: type,
-                              label: type,
-                            }),
-                          )}
                         />
-                      ) : (
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                            Model Type
-                          </label>
-                          <p>{parameters.modelType}</p>
-                        </div>
-                      )}
-                      <YesNoSelect
-                        label="Include Study Level Fixed Effects"
-                        value={parameters.includeStudyDummies}
-                        onChange={(value) =>
-                          handleParameterChange("includeStudyDummies", value)
-                        }
-                      />
+                      </Tooltip>
                       <YesNoSelect
                         label="Include Study Level Clustering"
                         value={parameters.includeStudyClustering}

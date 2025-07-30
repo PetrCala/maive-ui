@@ -5,6 +5,16 @@ const TEXT = {
   common: {
     close: "Close",
   },
+  model: {
+    modelType: {
+      label: "Model Type",
+      tooltip: "The type of model to use for the analysis.",
+    },
+    includeStudyDummies: {
+      label: "Include Study Level Fixed Effects",
+      tooltip: "Whether to include study-level fixed effects in the analysis.",
+    },
+  },
   results: {
     effectEstimate: {
       title: "Effect Estimate",
