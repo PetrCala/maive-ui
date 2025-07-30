@@ -11,6 +11,20 @@ interface TooltipProps {
 	visible?: boolean // if set, controls visibility externally
 }
 
+/**
+ * Tooltip component that displays a tooltip with customizable content and position
+ * when hovering over its child element. Supports optional arrow, custom className,
+ * and controlled visibility.
+ *
+ * @param props - Tooltip component props
+ * @param props.children - The element that triggers the tooltip on hover
+ * @param props.content - The text or content to display inside the tooltip
+ * @param props.position - Position of the tooltip relative to the trigger
+ * @param props.className - Additional class names for the tooltip
+ * @param props.shouldShowArrow - Whether to display an arrow on the tooltip
+ * @param props.visible - If set, controls tooltip visibility externally. When undefined, the tooltip visibility is controlled by the component itself. When this is set to true, the bevavior is the same as when it is undefined. When set to false, the tooltip is not displayed.
+ * @returns Tooltip component wrapping the children
+ */
 function Tooltip({
 	children,
 	content,
@@ -56,14 +70,12 @@ function Tooltip({
 	}, [isVisible, tooltipPosition])
 
 	const handleMouseEnter = () => {
-		if (visible === undefined) setIsVisible(true)
+		setIsVisible(true)
 	}
 
 	const handleMouseLeave = () => {
-		if (visible === undefined) {
-			setIsVisible(false)
-			setTooltipPosition(null)
-		}
+		setIsVisible(false)
+		setTooltipPosition(null)
 	}
 
 	return (
@@ -74,7 +86,7 @@ function Tooltip({
 			onMouseLeave={handleMouseLeave}
 		>
 			{children}
-			{(visible !== undefined ? visible : isVisible) && tooltipPosition && (
+			{isVisible && (visible !== undefined ? visible : true) && tooltipPosition && (
 				<div
 					ref={tooltipRef}
 					className="fixed z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl max-w-xs pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
