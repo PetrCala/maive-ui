@@ -19,21 +19,23 @@ export default function Header({
 }: HeaderProps) {
   return (
     <header
-      className={`bg-gray-900 flex justify-between items-center w-full py-4 px-4 z-50 ${className}`}
+      className={`surface-elevated border-b border-primary flex justify-between items-center w-full py-4 px-4 z-50 sticky top-0 ${className}`}
     >
       {/* Left side - logo, breadcrumbs, navigation,... */}
       <div className="flex-1 flex items-center pl-2">
-        <Link href="/">
-          <span className="font-bold text-xl tracking-wide text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+        <Link href="/" className="interactive">
+          <span className="font-bold text-xl tracking-wide text-primary hover:text-primary-600 transition-colors">
             {CONST.APP_DISPLAY_NAME}
           </span>
         </Link>
       </div>
 
       {/* Right side - icons */}
-      <ThemeToggle />
-      {!!showHelpIcon && <HelpIcon />}
-      {!!showHomeIcon && <HomeIcon />}
+      <div className="flex items-center gap-2">
+        <ThemeToggle />
+        {!!showHelpIcon && <HelpIcon />}
+        {!!showHomeIcon && <HomeIcon />}
+      </div>
     </header>
   );
 }
