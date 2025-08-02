@@ -14,11 +14,11 @@ export default function Home() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Welcome`}</title>
       </Head>
       <main className="home-page-container">
-        <div className="max-w-2xl text-center">
-          <h1 className="text-5xl font-bold mb-6 text-gray-900 dark:text-white tracking-tight">
+        <div className="max-w-2xl text-center animate-fade-in">
+          <h1 className="text-5xl font-bold mb-6 text-primary tracking-tight">
             Welcome to {CONST.APP_DISPLAY_NAME}
           </h1>
-          <p className="text-xl mb-12 text-gray-600 dark:text-gray-300 leading-relaxed">
+          <p className="text-xl mb-12 text-secondary leading-relaxed">
             Check your data for spurious precision using the MAIVE estimator.
           </p>
 
@@ -26,14 +26,14 @@ export default function Home() {
           <div className="flex flex-col gap-4 justify-center items-center mb-8">
             <Link
               href="/upload"
-              className="inline-block px-8 py-4 text-lg font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+              className="btn-primary text-lg px-8 py-4"
             >
               Upload Your Data
             </Link>
 
             <button
               onClick={() => setIsModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 text-base font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+              className="btn-secondary text-base px-6 py-3 inline-flex items-center gap-2"
             >
               <svg
                 className="w-5 h-5"

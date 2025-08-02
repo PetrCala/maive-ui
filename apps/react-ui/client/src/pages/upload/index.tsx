@@ -82,11 +82,11 @@ export default function UploadPage() {
 
   const getFileIconComponent = (filename: string, size: number = 24) => {
     if (filename.endsWith(".csv")) {
-      return <FaFileCsv className="text-blue-500" size={size} />;
+      return <FaFileCsv className="text-primary-500" size={size} />;
     } else if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
       return <FaFileExcel className="text-green-600" size={size} />;
     } else {
-      return <FaFileAlt className="text-gray-400" size={size} />;
+      return <FaFileAlt className="text-muted" size={size} />;
     }
   };
 
@@ -95,24 +95,24 @@ export default function UploadPage() {
       <Head>
         <title>{`${CONST.APP_DISPLAY_NAME} - Upload Data`}</title>
       </Head>
-      <main className="page-container">
+      <main className="content-page-container">
         <div className="max-w-2xl w-full">
           <Link
             href="/"
-            className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
+            className="inline-block mb-8 text-primary hover:text-primary-600 transition-colors duration-200 interactive"
           >
             ← Back to Home
           </Link>
 
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
-            <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+          <div className="card p-8">
+            <h1 className="text-3xl font-bold mb-6 text-primary">
               Upload Your Data
             </h1>
             <div className="mb-6">
-              <p className="text-gray-700 dark:text-gray-300 mb-2">
+              <p className="text-secondary mb-2">
                 Please ensure your data file meets the following requirements:
               </p>
-              <ul className="list-disc list-inside text-gray-700 dark:text-gray-300 space-y-1">
+              <ul className="list-disc list-inside text-secondary space-y-1">
                 <li>
                   The file must be in <strong>.xlsx</strong>,{" "}
                   <strong>.xls</strong>, or <strong>.csv</strong> format.
@@ -149,50 +149,50 @@ export default function UploadPage() {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                <label className="block text-sm font-medium text-secondary">
                   Upload your data file
                 </label>
                 <div className="mt-1 flex gap-3">
                   <div className="flex-grow">
                     <div
                       {...getRootProps()}
-                      className="flex flex-1 flex-row items-center border-2 border-dashed border-blue-400 rounded-lg p-6 min-h-[60px] transition-colors duration-200 bg-blue-50 dark:bg-blue-900/30 hover:border-blue-600 focus:border-blue-600 cursor-pointer select-none"
+                      className="flex flex-1 flex-row items-center border-2 border-dashed border-primary-400 rounded-lg p-6 min-h-[60px] transition-colors duration-200 bg-primary-50 hover:border-primary-600 focus:border-primary-600 cursor-pointer select-none"
                     >
                       <input {...getInputProps()} />
                       <div className="flex-1 flex flex-col items-start justify-center">
-                        <p className="text-blue-700 dark:text-blue-200 text-base font-medium">
+                        <p className="text-primary-700 text-base font-medium">
                           {isDragActive
                             ? "Drop the file here..."
                             : "Drag and drop your file here"}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                        <p className="text-xs text-muted mt-2">
                           Max size: 200MB &nbsp;|&nbsp; .csv, .xls, .xlsx
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={open}
-                        className="ml-8 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-base file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 hover:file:text-blue-900 dark:file:bg-blue-800/60 dark:file:text-blue-200 dark:hover:file:bg-blue-900/80 dark:hover:file:text-blue-100 dark:text-gray-500 cursor-pointer transition-colors duration-200 px-4 py-2 text-base font-bold bg-blue-100 text-blue-800 rounded-full border-0 shadow-sm hover:bg-blue-200 hover:text-blue-900 dark:hover:bg-blue-800/80 dark:hover:text-blue-100"
+                        className="ml-8 px-4 py-2 text-base font-bold bg-primary-100 text-primary-800 rounded-full border-0 shadow-sm hover:bg-primary-200 hover:text-primary-900 transition-colors duration-200 interactive"
                         style={{ minWidth: 120 }}
                       >
                         Choose File
                       </button>
                     </div>
                     {selectedFile && (
-                      <div className="mt-2 w-full border-2 border-gray-400 dark:border-gray-600 rounded-xl px-6 py-4 text-base flex items-center shadow-lg font-semibold bg-white dark:bg-gray-900/40">
+                      <div className="mt-2 w-full border-2 border-secondary rounded-xl px-6 py-4 text-base flex items-center shadow-lg font-semibold surface-secondary">
                         {/* Icon */}
                         <span className="mr-4 text-2xl flex-shrink-0">
                           {getFileIconComponent(selectedFile.name)}
                         </span>
                         {/* Filename */}
                         <span
-                          className="text-blue-700 dark:text-blue-300 font-medium truncate max-w-xs"
+                          className="text-primary-700 font-medium truncate max-w-xs"
                           title={selectedFile.name}
                         >
                           {selectedFile.name}
                         </span>
                         {/* File size */}
-                        <span className="ml-auto text-gray-500 dark:text-gray-400 font-normal text-sm">
+                        <span className="ml-auto text-muted font-normal text-sm">
                           {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                         </span>
                       </div>
@@ -203,7 +203,7 @@ export default function UploadPage() {
                       <button
                         type="button"
                         onClick={handleGenerateMockData}
-                        className="ml-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 dark:bg-green-900/50 dark:text-green-300 dark:border-green-700 dark:hover:bg-green-900/70 transition-colors duration-200 flex-shrink-0"
+                        className="ml-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors duration-200 flex-shrink-0 interactive"
                       >
                         Generate Mock Data
                       </button>
@@ -216,12 +216,11 @@ export default function UploadPage() {
               <button
                 type="submit"
                 disabled={!selectedFile || isProcessing}
-                className={`w-full px-6 py-3 text-white font-semibold rounded-lg
-								${
+                className={`w-full px-6 py-3 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none ${
                   selectedFile && !isProcessing
-                    ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                    : "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
-                } transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
+                    ? "btn-primary"
+                    : "bg-muted cursor-not-allowed"
+                }`}
               >
                 {isProcessing ? "Processing..." : "Upload and Process"}
               </button>
