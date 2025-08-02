@@ -4,6 +4,7 @@ import HelpIcon from "@components/Icons/HelpIcon";
 import HomeIcon from "@components/Icons/HomeIcon";
 import Link from "next/link";
 import CONST from "@src/CONST";
+import { ThemeToggle } from "@components/ThemeToggle";
 
 interface HeaderProps {
   showHomeIcon?: boolean;
@@ -30,6 +31,7 @@ export default function Header({
       </div>
 
       {/* Right side - icons */}
+      <ThemeToggle />
       {!!showHelpIcon && <HelpIcon />}
       {!!showHomeIcon && <HomeIcon />}
     </header>
