@@ -4,6 +4,7 @@
  * @param className - The class name of the icon.
  * @param onClick - The function to call when the button is clicked.
  * @param ariaLabel - The aria-label of the button.
+ * @param buttonClassName - The class name of the button.
  * @returns A React component that renders an SVG icon with a hover effect.
  */
 function HoverableIconButton({
@@ -11,16 +12,18 @@ function HoverableIconButton({
   onClick,
   className,
   ariaLabel,
+  buttonClassName,
 }: {
   svgContent: React.ReactNode;
   onClick: () => void;
   className?: string;
   ariaLabel?: string;
+  buttonClassName?: string;
 }) {
   return (
     <button
       onClick={onClick}
-      className="p-2 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group"
+      className={`p-2 text-gray-600 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors duration-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 group ${buttonClassName}`}
       aria-label={ariaLabel}
     >
       <svg
