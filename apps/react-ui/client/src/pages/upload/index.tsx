@@ -216,7 +216,7 @@ export default function UploadPage() {
               <button
                 type="submit"
                 disabled={!selectedFile || isProcessing}
-                className={`w-full px-6 py-3 text-white font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none ${
+                className={`w-full px-6 py-3 text-primary font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none ${
                   selectedFile && !isProcessing
                     ? "btn-primary"
                     : "bg-muted cursor-not-allowed"
