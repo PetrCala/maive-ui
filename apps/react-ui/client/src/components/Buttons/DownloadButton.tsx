@@ -32,7 +32,7 @@ export default function DownloadButton({
     <button
       onClick={handleClick}
       disabled={disabled || isLoading}
-      className={`inline-flex items-center justify-center w-10 h-10 text-sm font-medium bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 text-white shadow-md hover:shadow-lg ${className}`}
+      className={`inline-flex items-center justify-center w-10 h-10 text-sm font-medium bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 text-white shadow-md hover:shadow-lg rounded-lg ${className}`}
       title={title}
     >
       {isLoading ? (
