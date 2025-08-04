@@ -181,10 +181,6 @@ body {
 		color: var(--color-text-secondary);
 	}
 
-	.text-secondary:hover {
-		color: var(--color-primary-600);
-	}
-
 	.text-muted {
 		color: var(--color-text-muted);
 	}
@@ -254,6 +250,16 @@ body {
 	.btn-secondary:hover {
 		background-color: var(--color-surface-tertiary);
 		border-color: var(--color-border-secondary);
+	}
+
+	/* Icon button specific hover effects */
+	.icon-button {
+		transition: var(--transition-theme);
+		cursor: pointer;
+	}
+
+	.icon-button:hover .text-secondary {
+		color: var(--color-primary-600);
 	}
 
 	/* Card component */
