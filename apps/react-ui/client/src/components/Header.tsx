@@ -23,7 +23,7 @@ export default function Header({
     >
       {/* Left side - logo, breadcrumbs, navigation,... */}
       <div className="flex-1 flex items-center pl-2">
-        <Link href="/" className="interactive">
+        <Link href="/">
           <span className="font-bold text-xl tracking-wide text-primary hover:text-primary-600 transition-colors">
             {CONST.APP_DISPLAY_NAME}
           </span>
