@@ -85,13 +85,14 @@ export default function MAIVEInfoModal({
             </h3>
             <div className="grid md:grid-cols-2 gap-4">
               {TEXT.maiveModal.applications.text.map((application) => (
-                <div key={application.head} className="surface-secondary p-4 rounded-lg">
+                <div
+                  key={application.head}
+                  className="bg-surface-secondary p-4 rounded-lg"
+                >
                   <h4 className="font-semibold text-primary mb-2">
                     {application.head}
                   </h4>
-                  <p className="text-sm text-muted">
-                    {application.text}
-                  </p>
+                  <p className="text-sm text-muted">{application.text}</p>
                 </div>
               ))}
             </div>
@@ -170,10 +171,7 @@ export default function MAIVEInfoModal({
                 >
                   {TEXT.maiveModal.uploadYourData}
                 </button>
-                <button
-                  onClick={onClose}
-                  className="btn-secondary px-6 py-2"
-                >
+                <button onClick={onClose} className="btn-secondary px-6 py-2">
                   {TEXT.common.close}
                 </button>
               </div>
@@ -181,10 +179,7 @@ export default function MAIVEInfoModal({
           ) : (
             <section>
               <div className="flex gap-3">
-                <button
-                  onClick={onClose}
-                  className="btn-secondary px-6 py-2"
-                >
+                <button onClick={onClose} className="btn-secondary px-6 py-2">
                   {TEXT.common.close}
                 </button>
               </div>
