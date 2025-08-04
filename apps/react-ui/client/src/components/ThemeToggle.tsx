@@ -12,6 +12,7 @@ export function ThemeToggle() {
 
   return (
     <HoverableIconButton
+      ariaLabel={`Switch to ${theme === "light" ? "dark" : "light"} mode`}
       svgContent={
         <path
           strokeLinecap="round"
