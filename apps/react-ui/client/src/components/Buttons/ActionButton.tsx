@@ -21,10 +21,14 @@ export default function ActionButton({
     "px-4 py-2 rounded-lg transition-colors duration-200 font-medium";
 
   const variantClasses = {
-    primary: "btn-primary disabled:bg-primary-400 disabled:cursor-not-allowed",
-    secondary: "btn-secondary disabled:bg-gray-400 disabled:cursor-not-allowed",
-    success: "interactive bg-green-600 text-white disabled:bg-green-400",
-    danger: "interactive bg-red-600 text-white disabled:bg-red-400",
+    primary:
+      "btn-primary disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+    secondary:
+      "btn-secondary disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+    success:
+      "interactive bg-green-600 text-white disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+    danger:
+      "interactive bg-red-600 text-white disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
   };
 
   const classes = `${baseClasses} ${variantClasses[variant]} ${disabled ? "cursor-not-allowed" : ""} ${className}`;

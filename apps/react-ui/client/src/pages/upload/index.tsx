@@ -215,7 +215,7 @@ export default function UploadPage() {
               </div>
 
               <ActionButton
-                onClick={() => handleSubmit}
+                onClick={handleSubmit}
                 variant="primary"
                 className="w-full"
                 disabled={!selectedFile || isProcessing}
