@@ -1,12 +1,12 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import Head from "next/head";
 import Image from "next/image";
 import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
 import ActionButton from "@components/Buttons/ActionButton";
+import { GoBackButton } from "@components/Buttons";
 import TEXT from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
@@ -59,9 +59,11 @@ export default function ResultsPage() {
         <main className="content-page-container">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No results available</h1>
-            <Link href="/upload" className="text-blue-600 hover:text-blue-700">
-              Go back to upload
-            </Link>
+            <GoBackButton
+              href="/upload"
+              text="Go back to upload"
+              variant="simple"
+            />
           </div>
         </main>
       </>

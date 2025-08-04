@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
@@ -14,6 +13,7 @@ import AdvancedOptions from "@src/components/Model/AdvancedOptions";
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
 import ActionButton from "@src/components/Buttons/ActionButton";
+import { GoBackButton } from "@src/components/Buttons";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
@@ -220,18 +220,18 @@ export default function ModelPage() {
         {!dataId ? (
           <div className="text-center min-h-[400px]">
             <h1 className="text-2xl font-bold mb-4">No data selected</h1>
-            <Link href="/upload" className="text-blue-600 hover:text-blue-700">
-              Go back to upload
-            </Link>
+            <GoBackButton
+              href="/upload"
+              text="Go back to upload"
+              variant="simple"
+            />
           </div>
         ) : (
           <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24 lg:pt-4">
-            <Link
+            <GoBackButton
               href={`/validation?dataId=${dataId}`}
-              className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-            >
-              ← Back to Validation
-            </Link>
+              text="Back to Validation"
+            />
 
             {/* Card transition: parameters or loading */}
             <div className="min-h-[400px] w-full items-center justify-center">

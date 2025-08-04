@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
@@ -11,6 +10,7 @@ import { generateDataId, processUploadedFile } from "@utils/dataUtils";
 import { generateMockCSVFile } from "@utils/mockData";
 import SuccessIndicator from "@components/SuccessIndicator";
 import ActionButton from "@src/components/Buttons/ActionButton";
+import { GoBackButton } from "@src/components/Buttons";
 import CONST from "@src/CONST";
 
 // Standalone function to get the file icon component based on filename
@@ -98,13 +98,7 @@ export default function UploadPage() {
       </Head>
       <main className="content-page-container">
         <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24 lg:pt-4">
-          <Link
-            href="/"
-            className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-          >
-            ← Back to Home
-          </Link>
-
+          <GoBackButton href="/" text="Back to Home" />
           <div className="card p-8">
             <h1 className="text-3xl font-bold mb-6 text-primary">
               Upload Your Data
