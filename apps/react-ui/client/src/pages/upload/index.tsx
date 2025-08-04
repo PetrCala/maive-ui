@@ -172,7 +172,7 @@ export default function UploadPage() {
                       <button
                         type="button"
                         onClick={open}
-                        className="ml-8 px-4 py-2 text-base font-bold surface-tertiary text-primary rounded-full border-0 shadow-sm hover:surface-secondary hover:text-primary transition-colors duration-200 interactive"
+                        className="ml-8 px-4 py-2 text-base font-bold bg-white dark:bg-gray-800 text-primary border border-gray-300 dark:border-gray-600 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-colors duration-200 interactive"
                         style={{ minWidth: 120 }}
                       >
                         Choose File
