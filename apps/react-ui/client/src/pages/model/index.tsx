@@ -215,7 +215,7 @@ export default function ModelPage() {
       <Head>
         <title>{`${CONST.APP_DISPLAY_NAME} - Model Parameters`}</title>
       </Head>
-      <main className="page-container">
+      <main className="content-page-container">
         {!dataId ? (
           <div className="text-center min-h-[400px]">
             <h1 className="text-2xl font-bold mb-4">No data selected</h1>

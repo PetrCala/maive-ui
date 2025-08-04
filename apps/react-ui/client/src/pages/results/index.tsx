@@ -55,7 +55,7 @@ export default function ResultsPage() {
         <Head>
           <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
         </Head>
-        <main className="page-container">
+        <main className="content-page-container">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No results available</h1>
             <Link href="/upload" className="text-blue-600 hover:text-blue-700">
@@ -123,7 +123,7 @@ export default function ResultsPage() {
       <Head>
         <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
       </Head>
-      <main className="page-container">
+      <main className="content-page-container">
         <div className="max-w-4xl w-full space-y-8">
           <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
             <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">

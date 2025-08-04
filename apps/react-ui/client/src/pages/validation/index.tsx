@@ -315,7 +315,7 @@ export default function ValidationPage() {
       <Head>
         <title>{`${CONST.APP_DISPLAY_NAME} - Data Validation`}</title>
       </Head>
-      <main className="page-container">
+      <main className="content-page-container">
         {!dataId ? (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No data selected</h1>
