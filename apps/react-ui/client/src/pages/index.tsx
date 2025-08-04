@@ -24,10 +24,7 @@ export default function Home() {
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-4 justify-center items-center mb-8">
-            <Link
-              href="/upload"
-              className="btn-primary text-lg px-8 py-4"
-            >
+            <Link href="/upload" className="btn-primary text-white px-8 py-4">
               Upload Your Data
             </Link>
 
