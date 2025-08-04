@@ -97,10 +97,10 @@ export default function UploadPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Upload Data`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="max-w-2xl w-full">
+        <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24 lg:pt-4">
           <Link
             href="/"
-            className="inline-block mb-8 text-primary hover:text-primary-600 transition-colors duration-200 interactive"
+            className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
           >
             ← Back to Home
           </Link>
