@@ -23,8 +23,8 @@ export default function ActionButton({
   const variantClasses = {
     primary: "btn-primary disabled:bg-primary-400 disabled:cursor-not-allowed",
     secondary: "btn-secondary disabled:bg-gray-400 disabled:cursor-not-allowed",
-    success: "bg-green-600 hover:bg-green-700 text-white disabled:bg-green-400",
-    danger: "bg-red-600 hover:bg-red-700 text-white disabled:bg-red-400",
+    success: "interactive bg-green-600 text-white disabled:bg-green-400",
+    danger: "interactive bg-red-600 text-white disabled:bg-red-400",
   };
 
   const classes = `${baseClasses} ${variantClasses[variant]} ${disabled ? "cursor-not-allowed" : ""} ${className}`;
