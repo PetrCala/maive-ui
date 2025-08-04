@@ -215,7 +215,7 @@ export default function UploadPage() {
               </div>
 
               <ActionButton
-                onClick={handleSubmit}
+                onClick={(event) => handleSubmit(event as React.FormEvent)}
                 variant="primary"
                 className="w-full"
                 disabled={!selectedFile || isProcessing}
