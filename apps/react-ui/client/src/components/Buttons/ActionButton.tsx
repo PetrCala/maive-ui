@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 
 interface ActionButtonProps {
-  onClick: () => void;
+  onClick: (event?: React.FormEvent) => void;
   variant?: "primary" | "secondary" | "success" | "danger";
   className?: string;
   disabled?: boolean;

@@ -4,12 +4,13 @@ import { useState } from "react";
 import Link from "next/link";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
+import { useDropzone } from "react-dropzone";
+import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
 import { useDataStore, dataCache } from "@store/dataStore";
 import { generateDataId, processUploadedFile } from "@utils/dataUtils";
 import { generateMockCSVFile } from "@utils/mockData";
 import SuccessIndicator from "@components/SuccessIndicator";
-import { useDropzone } from "react-dropzone";
-import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
+import ActionButton from "@src/components/Buttons/ActionButton";
 import CONST from "@src/CONST";
 
 // Standalone function to get the file icon component based on filename
@@ -213,17 +214,14 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              <button
-                type="submit"
+              <ActionButton
+                onClick={() => handleSubmit}
+                variant="primary"
+                className="w-full"
                 disabled={!selectedFile || isProcessing}
-                className={`w-full px-6 py-3 text-primary font-semibold rounded-lg transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none ${
-                  selectedFile && !isProcessing
-                    ? "btn-primary"
-                    : "bg-muted cursor-not-allowed"
-                }`}
               >
                 {isProcessing ? "Processing..." : "Upload and Process"}
-              </button>
+              </ActionButton>
             </form>
           </div>
         </div>

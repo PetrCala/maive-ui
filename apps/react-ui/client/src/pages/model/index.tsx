@@ -13,6 +13,7 @@ import type { ModelParameters } from "@src/types";
 import AdvancedOptions from "@src/components/Model/AdvancedOptions";
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
+import ActionButton from "@src/components/Buttons/ActionButton";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
@@ -373,12 +374,13 @@ export default function ModelPage() {
                         }
                         handleParameterChange={handleParameterChange}
                       />
-                      <button
+                      <ActionButton
                         onClick={handleRunModel}
-                        className={`w-full px-6 py-3 text-white font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5 disabled:transform-none disabled:hover:shadow-none`}
+                        variant="primary"
+                        className="w-full"
                       >
                         {TEXT.model.runModel}
-                      </button>
+                      </ActionButton>
                     </div>
                   </div>
                 </div>
