@@ -23,7 +23,7 @@ function HoverableIconButton({
   return (
     <button
       onClick={onClick}
-      className={`p-2 text-secondary hover:text-primary transition-colors duration-200 rounded-lg hover:bg-surface-secondary group focus-ring ${buttonClassName}`}
+      className={`p-2 text-secondary transition-colors duration-200 rounded-lg surface-secondary group focus-ring ${buttonClassName}`}
       aria-label={ariaLabel}
     >
       <svg
