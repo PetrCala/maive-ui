@@ -6,6 +6,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
+import ActionButton from "@components/Buttons/ActionButton";
 import TEXT from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
@@ -384,24 +385,15 @@ export default function ResultsPage() {
 
           <div className="flex justify-end items-center mt-8">
             <div className="space-x-4">
-              <button
-                onClick={handleExportData}
-                className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-              >
+              <ActionButton onClick={handleExportData} variant="success">
                 Export Data with Instrumented SE
-              </button>
-              <button
-                onClick={handleNewUpload}
-                className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-              >
+              </ActionButton>
+              <ActionButton onClick={handleNewUpload} variant="secondary">
                 Upload New Data
-              </button>
-              <button
-                onClick={handleRerunModel}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
+              </ActionButton>
+              <ActionButton onClick={handleRerunModel} variant="primary">
                 Rerun Model
-              </button>
+              </ActionButton>
             </div>
           </div>
         </div>
