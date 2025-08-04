@@ -9,6 +9,7 @@ import { useDataStore, dataCache } from "@store/dataStore";
 import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
+import ActionButton from "@src/components/Buttons/ActionButton";
 
 interface ValidationMessage {
   type: "success" | "error" | "warning" | "info";
@@ -401,30 +402,22 @@ export default function ValidationPage() {
             {/* Action Buttons */}
             <div className="flex justify-end items-center space-x-4">
               {(!validationResult.isValid || validationResult.containsInfo) && (
-                <button
+                <ActionButton
                   onClick={() => {
                     window.location.href = "/upload";
                   }}
-                  className={`px-6 py-3 text-white font-semibold rounded-lg transition-all duration-200 ${
-                    validationResult.isValid
-                      ? "bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-800"
-                      : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600"
-                  } shadow-md hover:shadow-lg transform hover:-translate-y-0.5`}
+                  variant="secondary"
                 >
                   Reupload Your Data
-                </button>
+                </ActionButton>
               )}
-              <button
+              <ActionButton
                 onClick={handleContinue}
                 disabled={!validationResult.isValid}
-                className={`px-6 py-3 text-white font-semibold rounded-lg transition-all duration-200 ${
-                  validationResult.isValid
-                    ? "bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
-                    : "bg-gray-300 dark:bg-gray-700 cursor-not-allowed"
-                }`}
+                variant="primary"
               >
                 Continue to Model
-              </button>
+              </ActionButton>
             </div>
           </div>
         )}
