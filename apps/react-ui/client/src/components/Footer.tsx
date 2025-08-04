@@ -37,7 +37,7 @@ const FooterHrefLinkItem = ({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="hover:text-blue-400 transition-colors duration-200 flex items-center"
+      className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 flex items-center"
     >
       <FooterLinkItemContents svgPath={svgPath} text={text} />
     </a>
@@ -56,7 +56,7 @@ const FooterButtonLinkItem = ({
   return (
     <button
       onClick={onClick}
-      className="hover:text-blue-400 transition-colors duration-200 flex items-center"
+      className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 flex items-center"
     >
       <FooterLinkItemContents svgPath={svgPath} text={text} />
     </button>
@@ -70,7 +70,7 @@ const Footer = ({ className = "" }: FooterProps) => {
 
   return (
     <footer
-      className={`bg-gray-900 text-gray-300 py-4 px-6 border-t border-gray-700 h-16 flex items-center justify-between ${className}`}
+      className={`bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-4 px-6 border-t border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between transition-colors duration-200 ${className}`}
     >
       {/* Copyright */}
       <div className="text-sm">{CONST.FOOTER.COPYRIGHT}</div>

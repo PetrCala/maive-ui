@@ -320,12 +320,22 @@ body {
 
 	.page-container-light {
 		@apply page-container-base;
-		background: var(--gradient-surface);
+		background-image: linear-gradient(
+			to bottom,
+			#fff,
+			#f9fafb 50%,
+			#f3f4f6 100%
+		);
 	}
 
 	.page-container-dark {
 		@apply page-container-base;
-		background: var(--gradient-surface);
+		background-image: linear-gradient(
+			to bottom,
+			#111827,
+			#1f2937 50%,
+			#111827 100%
+		);
 	}
 
 	/* Common page layouts */
@@ -335,10 +345,15 @@ body {
 	}
 
 	.content-page-container {
-		@apply page-container-light dark:page-container-dark;
+		@apply page-container-base;
 		flex: 1;
 		padding: var(--spacing-2xl);
 		padding-top: var(--spacing-md);
+		background-image: linear-gradient(to bottom, #fff, #f9fafb, #f3f4f6);
+	}
+
+	.dark .content-page-container {
+		background-image: linear-gradient(to bottom, #111827, #1f2937, #111827);
 	}
 
 	/* Animation classes */
