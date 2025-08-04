@@ -23,7 +23,7 @@ export default function AdvancedOptions({
     <div className="border-t border-gray-200 dark:border-gray-700 pt-6 mt-6">
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="flex items-center text-primary font-semibold focus:outline-none"
+        className="flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-semibold focus:outline-none transition-colors duration-200"
         aria-expanded={open}
       >
         <span className="mr-2">{TEXT.model.advancedOptions.title}</span>
