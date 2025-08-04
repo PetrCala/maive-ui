@@ -82,7 +82,7 @@ export default function UploadPage() {
 
   const getFileIconComponent = (filename: string, size: number = 24) => {
     if (filename.endsWith(".csv")) {
-      return <FaFileCsv className="text-primary-500" size={size} />;
+      return <FaFileCsv className="text-primary" size={size} />;
     } else if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
       return <FaFileExcel className="text-green-600" size={size} />;
     } else {
@@ -156,11 +156,11 @@ export default function UploadPage() {
                   <div className="flex-grow">
                     <div
                       {...getRootProps()}
-                      className="flex flex-1 flex-row items-center border-2 border-dashed border-primary-400 rounded-lg p-6 min-h-[60px] transition-colors duration-200 bg-primary-50 hover:border-primary-600 focus:border-primary-600 cursor-pointer select-none"
+                      className="flex flex-1 flex-row items-center border-2 border-dashed border-focus rounded-lg p-6 min-h-[60px] transition-colors duration-200 surface-secondary hover:border-primary-600 focus:border-primary-600 cursor-pointer select-none"
                     >
                       <input {...getInputProps()} />
                       <div className="flex-1 flex flex-col items-start justify-center">
-                        <p className="text-primary-700 text-base font-medium">
+                        <p className="text-primary text-base font-medium">
                           {isDragActive
                             ? "Drop the file here..."
                             : "Drag and drop your file here"}
@@ -172,7 +172,7 @@ export default function UploadPage() {
                       <button
                         type="button"
                         onClick={open}
-                        className="ml-8 px-4 py-2 text-base font-bold bg-primary-100 text-primary-800 rounded-full border-0 shadow-sm hover:bg-primary-200 hover:text-primary-900 transition-colors duration-200 interactive"
+                        className="ml-8 px-4 py-2 text-base font-bold surface-tertiary text-primary rounded-full border-0 shadow-sm hover:surface-secondary hover:text-primary transition-colors duration-200 interactive"
                         style={{ minWidth: 120 }}
                       >
                         Choose File
@@ -186,7 +186,7 @@ export default function UploadPage() {
                         </span>
                         {/* Filename */}
                         <span
-                          className="text-primary-700 font-medium truncate max-w-xs"
+                          className="text-primary font-medium truncate max-w-xs"
                           title={selectedFile.name}
                         >
                           {selectedFile.name}
@@ -203,7 +203,7 @@ export default function UploadPage() {
                       <button
                         type="button"
                         onClick={handleGenerateMockData}
-                        className="ml-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors duration-200 flex-shrink-0 interactive"
+                        className="ml-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors duration-200 flex-shrink-0 interactive dark:text-green-400 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30"
                       >
                         Generate Mock Data
                       </button>
