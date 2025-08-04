@@ -10,6 +10,7 @@ import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import ActionButton from "@src/components/Buttons/ActionButton";
+import { GoBackButton } from "@src/components/Buttons";
 
 interface ValidationMessage {
   type: "success" | "error" | "warning" | "info";
@@ -320,9 +321,11 @@ export default function ValidationPage() {
         {!dataId ? (
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">No data selected</h1>
-            <Link href="/upload" className="text-blue-600 hover:text-blue-700">
-              Go back to upload
-            </Link>
+            <GoBackButton
+              href="/upload"
+              text="Go back to upload"
+              variant="simple"
+            />
           </div>
         ) : !!loading ? (
           <div className="text-center">
@@ -333,13 +336,7 @@ export default function ValidationPage() {
           </div>
         ) : (
           <div className="max-w-4xl w-full">
-            <Link
-              href="/upload"
-              className="inline-block mb-8 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors duration-200"
-            >
-              ← Back to Upload
-            </Link>
-
+            <GoBackButton href="/upload" text="Back to Upload" />
             <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
               <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
                 Data Validation: {uploadedData?.filename}
