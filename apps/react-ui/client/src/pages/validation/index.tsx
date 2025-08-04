@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import { useDataStore, dataCache } from "@store/dataStore";
