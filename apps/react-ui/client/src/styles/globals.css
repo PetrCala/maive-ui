@@ -123,6 +123,8 @@
 
 html {
 	scroll-behavior: smooth;
+	/* Background color for overscroll - matches header */
+	background-color: var(--color-surface-elevated);
 }
 
 body {
@@ -134,6 +136,13 @@ body {
 		"Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
 	-webkit-font-smoothing: antialiased;
 	-moz-osx-font-smoothing: grayscale;
+	/* Background color for overscroll - matches footer */
+	background-color: #f3f4f6;
+}
+
+/* Dark theme overscroll backgrounds */
+.dark body {
+	background-color: #1f2937;
 }
 
 html,
