@@ -54,7 +54,7 @@ function Tooltip({
       {children}
       {isVisible && (visible !== undefined ? visible : true) && (
         <div
-          className="absolute z-50 px-3 py-2 text-sm text-white bg-black dark:bg-gray-800 rounded-lg shadow-xl pointer-events-none transition-opacity duration-200 border border-gray-200 dark:border-gray-600"
+          className="absolute z-50 px-3 py-2 text-sm surface-elevated rounded-lg shadow-xl pointer-events-none transition-opacity duration-200 border border-primary"
           style={{
             left: "100%",
             top: "0",
@@ -70,7 +70,7 @@ function Tooltip({
         >
           {content}
           {shouldShowArrow && (
-            <div className="absolute w-2 h-2 bg-black dark:bg-gray-800 transform rotate-45 -top-1 -left-1 border-l border-t border-gray-200 dark:border-gray-600"></div>
+            <div className="absolute w-2 h-2 surface-elevated transform rotate-45 -top-1 -left-1 border-l border-t border-primary"></div>
           )}
         </div>
       )}
