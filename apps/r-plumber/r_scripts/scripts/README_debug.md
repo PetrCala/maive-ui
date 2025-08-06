@@ -77,7 +77,7 @@ The scripts include the same test data from your CURL example:
 	"includeStudyDummies": true,
 	"includeStudyClustering": true,
 	"standardErrorTreatment": "clustered_cr2",
-	"computeAndersonRubin": true,
+	"computeAndersonRubin": false,
 	"maiveMethod": "PET",
 	"shouldUseInstrumenting": true
 }

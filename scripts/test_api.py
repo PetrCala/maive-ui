@@ -20,7 +20,7 @@ def main():
             "modelType": "MAIVE",
             "includeStudyDummies": True,
             "standardErrorTreatment": "not_clustered",
-            "computeAndersonRubin": True,
+            "computeAndersonRubin": False,
         }
     )
 

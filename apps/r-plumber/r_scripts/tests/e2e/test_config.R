@@ -36,7 +36,7 @@ DEFAULT_PARAMETERS <- list(
   includeStudyDummies = TRUE,
   includeStudyClustering = TRUE,
   standardErrorTreatment = "clustered_cr2",
-  computeAndersonRubin = TRUE,
+  computeAndersonRubin = FALSE,
   maiveMethod = "PET-PEESE",
   shouldUseInstrumenting = TRUE
 )
