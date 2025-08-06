@@ -23,7 +23,7 @@ const TEXT = {
       nObsColumn:
         "The **n_obs** column represents the number of observations. It must contain only numbers.",
       studyIdColumn:
-        "The **study_id** column represents the study ID. It must contain only numbers.",
+        "The **study_id** column represents the study ID. It can contain strings or numbers.",
     },
   },
   model: {

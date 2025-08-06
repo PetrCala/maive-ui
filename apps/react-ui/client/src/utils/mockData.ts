@@ -13,12 +13,15 @@ const generateMockCSVFile = (): File => {
   // Create CSV content
   const headers = ["effect", "se", "n_obs", "study_id"];
   const csvRows = [headers.join(",")];
+  const shouldUseNumericStudyIds = faker.datatype.boolean(0.5);
 
   for (let i = 0; i < numRows; i++) {
     const effect = faker.number.float({ min: -2, max: 2, multipleOf: 0.001 });
     const se = faker.number.float({ min: 0.01, max: 0.5, multipleOf: 0.001 });
     const nObs = faker.number.int({ min: 50, max: 10000 });
-    const studyId = Math.floor(i / 5) + 1;
+    const studyId = shouldUseNumericStudyIds
+      ? Math.floor(i / 5) + 1
+      : `Study_${Math.floor(i / 5) + 1}`;
 
     csvRows.push(`${effect},${se},${nObs},${studyId}`);
   }
