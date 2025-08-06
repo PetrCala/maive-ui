@@ -357,7 +357,6 @@ body {
 		@apply page-container-base;
 		flex: 1;
 		padding: var(--spacing-2xl);
-		padding-top: var(--spacing-md);
 		background-image: linear-gradient(to bottom, #fff, #f9fafb, #f3f4f6);
 	}
 
