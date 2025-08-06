@@ -13,6 +13,8 @@ const TEXT = {
       fileFormat:
         "The file must be in **.xlsx**, **.xls**, or **.csv** format.",
       firstRowHeaders: "The **first row** should contain column headers.",
+      minimumRows:
+        "The file must contain at least 4 rows of data (excluding headers).",
       requiredColumns: "Required columns: **effect**, **se**, **n_obs**.",
       optionalColumns: "Optional columns: **study_id**.",
       noAdditionalColumns: "**No additional columns** are allowed.",
