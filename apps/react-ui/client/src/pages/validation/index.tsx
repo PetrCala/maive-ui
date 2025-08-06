@@ -10,6 +10,7 @@ import CONST from "@src/CONST";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
+import RowInfoComponent from "@src/components/RowInfoComponent";
 
 interface ValidationMessage {
   type: "success" | "error" | "warning" | "info";
@@ -390,6 +391,11 @@ export default function ValidationPage() {
                     </tbody>
                   </table>
                 </div>
+                <RowInfoComponent
+                  rowCount={uploadedData?.data?.length || 0}
+                  showFirstRows={uploadedData?.data?.length > 4}
+                  rowCountToShow={4}
+                />
               </div>
 
               {/* Validation Messages */}
