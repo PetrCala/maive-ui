@@ -19,7 +19,7 @@ lapply(maive_deps, library, character.only = TRUE)
 source("modules/funnel_plot.R", local = TRUE)
 
 # Source the main function from the debug script
-source("scripts/debug_run_model.R")
+source("debug/debug_run_model.R")
 
 cat("=== MAIVE Model Debugging Environment ===\n")
 cat("Available variables:\n")

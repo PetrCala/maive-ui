@@ -136,8 +136,8 @@ function(file_data, parameters) {
 
       if ("study_id" %in% names(df)) {
         # We need at least 3 DoF for distribution functions - otherwise qt() will return NA
-        if (!(length(df$obs) >= length(unique(df$study_id)) + 3)) {
-          cli::cli_abort("The number of observations must be larger than the number of unique study_id plus 3.")
+        if (!(nrow(df) >= length(unique(df$study_id)) + 3)) {
+          cli::cli_abort("The number of rows must be larger than the number of unique study_id plus 3.")
         }
       } else {
         # If no study_id column, force studylevel to 0 (no study-level effects)
