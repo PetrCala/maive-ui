@@ -281,6 +281,16 @@ export default function ValidationPage() {
       });
     }
 
+    if (studyIdCol && studyIdCol.index !== -1) {
+      if (fullData.length < fullData.length + 3) {
+        messages.push({
+          type: "error",
+          message:
+            "The number of rows must be larger than the number of unique study_id plus 3.",
+        });
+      }
+    }
+
     // Check for reasonable data size
     if (fullData.length > 2000) {
       messages.push({
