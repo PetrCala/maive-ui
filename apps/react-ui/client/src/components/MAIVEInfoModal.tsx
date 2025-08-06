@@ -49,7 +49,10 @@ export default function MAIVEInfoModal({
               {TEXT.maiveModal.overview.title}
             </h3>
             <p className="text-secondary leading-relaxed">
-              <MDXContent source={TEXT.maiveModal.overview.text} />
+              <MDXContent
+                source={TEXT.maiveModal.overview.text}
+                lineMargin={4}
+              />
             </p>
           </section>
 
