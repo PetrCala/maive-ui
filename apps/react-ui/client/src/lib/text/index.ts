@@ -26,6 +26,8 @@ const TEXT = {
         "The **n_obs** column represents the number of observations. It must contain only numbers.",
       studyIdColumn:
         "The **study_id** column represents the study ID. It can contain strings or numbers.",
+      minimumObservations:
+        "If the **study_id** column is present, the number of rows must be larger than the number of unique study_id plus 3 to ensure enough degrees of freedom for distribution functions.",
     },
   },
   model: {
