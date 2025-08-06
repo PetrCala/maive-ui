@@ -32,10 +32,10 @@ function(file_data, parameters) {
       params <- jsonlite::fromJSON(parameters)
 
       # Debug: Print input data
-      cat("Input data frame structure:\n")
-      print(str(df))
-      cat("Input parameters:\n")
-      print(params)
+      cli::cli_h2("Input data frame structure:")
+      cli::cli_code(str(df))
+      cli::cli_h2("Input parameters:")
+      cli::cli_code(params)
 
       # Convert to data frame if it's not already
       if (!is.data.frame(df)) {
@@ -46,8 +46,8 @@ function(file_data, parameters) {
       df[] <- lapply(df, as.numeric)
 
       # Debug: Print processed data
-      cat("Processed data frame:\n")
-      print(df)
+      cli::cli_h2("Processed data frame:")
+      cli::cli_code(df)
 
       # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
       # Map column names to expected names
@@ -84,8 +84,8 @@ function(file_data, parameters) {
       df <- df[rowSums(is.na(df)) != ncol(df), ] # Drop rows with all NAs
 
       # Debug: Print final data frame
-      cat("Final data frame for MAIVE:\n")
-      print(df)
+      cli::cli_h2("Final data frame for MAIVE:")
+      cli::cli_code(df)
 
       expected_parameters <- c(
         "modelType",
@@ -129,12 +129,14 @@ function(file_data, parameters) {
       should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
 
       # Debug: Print MAIVE parameters
-      cat("MAIVE parameters:\n")
-      cat("method:", maive_method, "\n")
-      cat("instrument:", instrument, "\n")
-      cat("studylevel:", studylevel, "\n")
-      cat("SE:", standard_error_treatment, "\n")
-      cat("AR:", should_use_ar, "\n")
+      cli::cli_h2("MAIVE parameters:")
+      cli::cli_bullets(c(
+        "method: {maive_method}",
+        "instrument: {instrument}",
+        "studylevel: {studylevel}",
+        "SE: {standard_error_treatment}",
+        "AR: {should_use_ar}"
+      ))
 
       # Run the model
       maive_res <- MAIVE::maive(
@@ -148,8 +150,8 @@ function(file_data, parameters) {
       )
 
       # Debug: Print MAIVE results
-      cat("MAIVE results structure:\n")
-      print(str(maive_res))
+      cli::cli_h2("MAIVE results structure:")
+      cli::cli_code(str(maive_res))
 
       est <- maive_res$beta
       se <- maive_res$SE
@@ -200,9 +202,9 @@ function(file_data, parameters) {
       list(data = results)
     },
     error = function(e) {
-      cat("Error in run-model endpoint:", e$message, "\n")
-      cat("Error traceback:\n")
-      print(traceback())
+      cli::cli_alert_danger("Error in run-model endpoint: {e$message}")
+      cli::cli_h2("Error traceback:")
+      cli::cli_code(traceback())
       return(list(
         error = TRUE,
         message = paste("Internal server error:", e$message)
