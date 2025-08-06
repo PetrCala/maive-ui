@@ -6,6 +6,7 @@ This directory contains R scripts that allow you to run the MAIVE model locally 
 
 - `debug_run_model.R` - Main script containing the extracted logic from the plumber endpoint
 - `debug_interactive.R` - Interactive debugging environment setup
+- `maive_debug.R` - The script to debug; a clone of the MAIVE::maive function.
 - `README_debug.md` - This file
 
 ## Usage
@@ -22,7 +23,7 @@ This directory contains R scripts that allow you to run the MAIVE model locally 
 2. Source the interactive debugging script:
 
    ```r
-   source("scripts/debug_interactive.R")
+   source("debug/debug_interactive.R")
    ```
 
 3. Add a `browser()` call in the `run_model_locally` function where you want to pause:
@@ -53,7 +54,7 @@ Run the script directly:
 
 ```bash
 cd apps/r-plumber/r_scripts
-Rscript scripts/debug_run_model.R
+Rscript debug/debug_run_model.R
 ```
 
 ## Test Data
@@ -141,7 +142,7 @@ The scripts include the same test data from your CURL example:
 
 ```r
 # Start R and load the environment
-source("scripts/debug_interactive.R")
+source("debug/debug_interactive.R")
 
 # Add browser() call in debug_run_model.R (line 200, before MAIVE call)
 # Then run:
