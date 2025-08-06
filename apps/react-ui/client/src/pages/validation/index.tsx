@@ -203,7 +203,7 @@ export default function ValidationPage() {
           header.toLowerCase().includes("study_id"),
         ),
         errorMsg:
-          "The study ID column contains non-numeric values. All study IDs must be numbers.",
+          "The study ID column contains invalid values. Study IDs can be strings or numbers.",
         optional: true,
       },
     ];
@@ -235,11 +235,12 @@ export default function ValidationPage() {
     // Check optional study_id column if present
     const studyIdCol = columnChecks.find((col) => col.name === "study_id");
     if (studyIdCol && studyIdCol.index !== -1) {
-      const hasNonNumeric = fullData.some((row) => {
+      // For study_id, we only check that values are not empty/null, not that they're numeric
+      const hasInvalidValues = fullData.some((row) => {
         const value = row[headers[studyIdCol.index]];
-        return value !== undefined && value !== null && isNaN(Number(value));
+        return value === undefined || value === null || value === "";
       });
-      if (hasNonNumeric) {
+      if (hasInvalidValues) {
         messages.push({
           type: "error",
           message: studyIdCol.errorMsg,
