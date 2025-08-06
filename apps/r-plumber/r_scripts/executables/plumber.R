@@ -49,33 +49,37 @@ function(file_data, parameters) {
       cat("Processed data frame:\n")
       print(df)
 
-      new_colnames <- c("bs", "sebs", "Ns")
-      if (length(colnames(df)) == 4) {
-        new_colnames <- c(new_colnames, "study_id")
-      }
-      if (length(colnames(df)) != length(new_colnames)) {
-        return(list(
-          error = TRUE,
-          message = paste("The file must have between 3 and 4 columns (bs, sebs, Ns, and optionally study_id). Got:", length(colnames(df)), "columns")
-        ))
-      }
-
+      # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
+      # Map column names to expected names
       name_map <- c(
         "effect" = "bs",
         "se" = "sebs",
         "n_obs" = "Ns",
         "study_id" = "study_id"
       )
-      final_order <- c("bs", "sebs", "Ns", "study_id")
 
-      # Rename using the mapping (keep only matching columns)
+      # Rename columns using the mapping
       old_names <- names(df)
       matched_old_names <- intersect(old_names, names(name_map))
       names(df)[match(matched_old_names, names(df))] <- name_map[matched_old_names]
 
-      # Keep only columns in desired order that actually exist
-      existing_order <- intersect(final_order, names(df))
-      df <- df[, existing_order, drop = FALSE]
+      # Ensure we have the required columns in the correct order
+      required_cols <- c("bs", "sebs", "Ns")
+      missing_cols <- setdiff(required_cols, names(df))
+
+      if (length(missing_cols) > 0) {
+        return(list(
+          error = TRUE,
+          message = paste("Missing required columns:", paste(missing_cols, collapse = ", "))
+        ))
+      }
+
+      # Reorder columns to match MAIVE expectations: bs, sebs, Ns, study_id
+      if ("study_id" %in% names(df)) {
+        df <- df[, c("bs", "sebs", "Ns", "study_id"), drop = FALSE]
+      } else {
+        df <- df[, c("bs", "sebs", "Ns"), drop = FALSE]
+      }
 
       df <- df[rowSums(is.na(df)) != ncol(df), ] # Drop rows with all NAs
 
