@@ -96,6 +96,7 @@ function(file_data, parameters) {
       # Debug: Print final data frame
       cli::cli_h2("Final data frame for MAIVE:")
       cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      cli::cli_text("\n")
 
       expected_parameters <- c(
         "modelType",
@@ -129,18 +130,46 @@ function(file_data, parameters) {
         cli::cli_alert_warning("No study_id column found, forcing studylevel to 0")
       }
 
+      # Debug: Print the standardErrorTreatment parameter
+      cli::cli_alert_info(paste("standardErrorTreatment parameter:", params$standardErrorTreatment))
+
       standard_error_treatment <- switch(params$standardErrorTreatment,
         "not_clustered" = 0,
         "clustered" = 1,
         "clustered_cr2" = 2,
         "bootstrap" = 3
       )
+
+      # Check if switch returned NULL (no match found)
+      if (is.null(standard_error_treatment)) {
+        cli::cli_alert_danger(paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment))
+        return(list(
+          error = TRUE,
+          message = paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment)
+        ))
+      }
+
+      cli::cli_alert_info(paste("standard_error_treatment result:", standard_error_treatment))
+      # Debug: Print the maiveMethod parameter
+      cli::cli_alert_info(paste("maiveMethod parameter:", params$maiveMethod))
+
       maive_method <- switch(params$maiveMethod,
         "PET" = 1,
         "PEESE" = 2,
         "PET-PEESE" = 3,
         "EK" = 4
       )
+
+      # Check if switch returned NULL (no match found)
+      if (is.null(maive_method)) {
+        cli::cli_alert_danger(paste("Invalid maiveMethod value:", params$maiveMethod))
+        return(list(
+          error = TRUE,
+          message = paste("Invalid maiveMethod value:", params$maiveMethod)
+        ))
+      }
+
+      cli::cli_alert_info(paste("maive_method result:", maive_method))
       instrument <- if (isTRUE(params$shouldUseInstrumenting)) 1 else 0
       should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
 
@@ -159,7 +188,8 @@ function(file_data, parameters) {
       cli::cli_bullets(c(
         paste("NA values in bs:", sum(is.na(df$bs))),
         paste("NA values in sebs:", sum(is.na(df$sebs))),
-        paste("NA values in Ns:", sum(is.na(df$Ns)))
+        paste("NA values in Ns:", sum(is.na(df$Ns))),
+        paste("\n")
       ))
 
       # Run the model
@@ -179,7 +209,7 @@ function(file_data, parameters) {
           cli::cli_alert_danger(paste("MAIVE function error:", e$message))
           cli::cli_alert_danger(paste("Error traceback:"))
           # nolint start: undesirable_function_linter.
-          print(traceback)
+          print(traceback())
           stop(e)
           # nolint end: undesirable_function_linter.
         }
