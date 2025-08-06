@@ -123,6 +123,12 @@ function(file_data, parameters) {
         if (study_dummies == 1) 1 else 0
       }
 
+      # If no study_id column, force studylevel to 0 (no study-level effects)
+      if (!("study_id" %in% names(df))) {
+        studylevel <- 0
+        cli::cli_alert_warning("No study_id column found, forcing studylevel to 0")
+      }
+
       standard_error_treatment <- switch(params$standardErrorTreatment,
         "not_clustered" = 0,
         "clustered" = 1,
@@ -148,15 +154,35 @@ function(file_data, parameters) {
         "AR: {should_use_ar}"
       ))
 
+      # Debug: Check for NA values before calling MAIVE
+      cli::cli_h2("Checking for NA values:")
+      cli::cli_bullets(c(
+        paste("NA values in bs:", sum(is.na(df$bs))),
+        paste("NA values in sebs:", sum(is.na(df$sebs))),
+        paste("NA values in Ns:", sum(is.na(df$Ns)))
+      ))
+
       # Run the model
-      maive_res <- MAIVE::maive(
-        dat = df,
-        method = maive_method,
-        weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
-        instrument = instrument, # no=0, yes=1 (default)
-        studylevel = studylevel,
-        SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
-        AR = should_use_ar # 0 = no AR, 1 = AR (default)
+      tryCatch(
+        {
+          maive_res <- MAIVE::maive(
+            dat = df,
+            method = maive_method,
+            weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
+            instrument = instrument, # no=0, yes=1 (default)
+            studylevel = studylevel,
+            SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
+            AR = should_use_ar # 0 = no AR, 1 = AR (default)
+          )
+        },
+        error = function(e) {
+          cli::cli_alert_danger(paste("MAIVE function error:", e$message))
+          cli::cli_alert_danger(paste("Error traceback:"))
+          # nolint start: undesirable_function_linter.
+          print(traceback)
+          stop(e)
+          # nolint end: undesirable_function_linter.
+        }
       )
 
       # Debug: Print MAIVE results
