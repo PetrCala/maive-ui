@@ -97,7 +97,7 @@ export default function UploadPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Upload Data`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24 lg:pt-4">
+        <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24">
           <GoBackButton href="/" text="Back to Home" />
           <div className="card p-8">
             <h1 className="text-3xl font-bold mb-6 text-primary">
