@@ -42,19 +42,25 @@ function(file_data, parameters) {
         df <- as.data.frame(df)
       }
 
+      # Debug: Print original data frame
+      cli::cli_h2("Original data frame:")
+      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+
+      # Convert column names to lowercase for consistent processing
       colnames(df) <- tolower(colnames(df))
       df[] <- lapply(df, as.numeric)
 
-      # Debug: Print processed data
-      cli::cli_h2("Processed data frame:")
+      # Debug: Print processed data frame
+      cli::cli_h2("Processed data frame (lowercase columns):")
       cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
       # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
-      # Map column names to expected names
+      # Map column names to expected names (after lowercase conversion)
       name_map <- c(
         "effect" = "bs",
         "se" = "sebs",
         "n_obs" = "Ns",
+        "ns" = "Ns",
         "study_id" = "study_id"
       )
 
@@ -62,6 +68,10 @@ function(file_data, parameters) {
       old_names <- names(df)
       matched_old_names <- intersect(old_names, names(name_map))
       names(df)[match(matched_old_names, names(df))] <- name_map[matched_old_names]
+
+      # Debug: Print after renaming
+      cli::cli_h2("Data frame after renaming:")
+      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
       # Ensure we have the required columns in the correct order
       required_cols <- c("bs", "sebs", "Ns")
