@@ -281,12 +281,12 @@ run_model_locally <- function(file_data, parameters) {
 }
 
 # Test data from the CURL example
-# Generate test data with at least 20 observations
+# Generate test data with at least 20 observations (ensuring at least 3 per study)
 test_data <- data.frame(
   bs = round(runif(20, 0.1, 0.5), 3),
   sebs = round(runif(20, 0.05, 0.15), 3),
   Ns = sample(100:300, 20, replace = TRUE),
-  study_id = paste0("study_", 1:20)
+  study_id = paste0("study_", rep(1:7, each = 3))[1:20] # 7 studies with 3 observations each, truncated to 20 rows
 )
 test_file_data <- jsonlite::toJSON(test_data, auto_unbox = TRUE)
 test_parameters <- '{"modelType":"MAIVE","includeStudyDummies":true,"includeStudyClustering":true,"standardErrorTreatment":"clustered_cr2","computeAndersonRubin":false,"maiveMethod":"PET","shouldUseInstrumenting":true}'

@@ -11,14 +11,17 @@ generate_test_data <- function(n_studies = 20, include_study_id = TRUE) {
   true_effect <- 0.3
   publication_bias <- 0.1
 
-  # Generate effect sizes with some publication bias
-  effects <- rnorm(n_studies, mean = true_effect, sd = 0.2)
+  # Generate effect sizes with some publication bias (3 observations per study)
+  effects_per_study <- 3
+  total_observations <- n_studies * effects_per_study
+
+  effects <- rnorm(total_observations, mean = true_effect, sd = 0.2)
   # Add publication bias - smaller effects are less likely to be published
   effects <- effects + publication_bias * (effects > 0)
 
   # Generate standard errors (smaller for larger sample sizes)
-  sample_sizes <- round(runif(n_studies, 100, 1000))
-  standard_errors <- 1 / sqrt(sample_sizes) + rnorm(n_studies, 0, 0.01)
+  sample_sizes <- round(runif(total_observations, 100, 1000))
+  standard_errors <- 1 / sqrt(sample_sizes) + rnorm(total_observations, 0, 0.01)
 
   # Create data frame
   df <- data.frame(
@@ -28,7 +31,7 @@ generate_test_data <- function(n_studies = 20, include_study_id = TRUE) {
   )
 
   if (include_study_id) {
-    df$study_id <- paste0("study_", 1:n_studies)
+    df$study_id <- paste0("study_", rep(1:n_studies, each = effects_per_study))
   }
 
   return(df)
@@ -41,8 +44,9 @@ generate_test_data <- function(n_studies = 20, include_study_id = TRUE) {
 generate_biased_data <- function(n_studies = 30, bias_strength = 0.5) {
   set.seed(456)
 
-  # Generate many studies
-  n_total <- n_studies * 3
+  # Generate many studies (ensuring at least 3 observations per study)
+  effects_per_study <- 3
+  n_total <- n_studies * effects_per_study * 3 # Generate more to account for publication bias filtering
 
   effects <- rnorm(n_total, mean = 0.2, sd = 0.3)
   sample_sizes <- round(runif(n_total, 50, 500))
@@ -56,14 +60,39 @@ generate_biased_data <- function(n_studies = 30, bias_strength = 0.5) {
   significant <- p_values < 0.05
   published <- significant | (runif(n_total) < 0.3) # 30% chance of publishing non-significant
 
-  # Select published studies
-  published_indices <- which(published)[1:n_studies]
+  # Select published studies, ensuring we get enough for each study
+  published_indices <- which(published)
+
+  # Group by study and ensure each study has at least 3 observations
+  study_groups <- rep(1:n_studies, each = effects_per_study)
+  selected_indices <- c()
+
+  for (study in 1:n_studies) {
+    study_effects <- published_indices[which(study_groups[published_indices] == study)]
+    if (length(study_effects) >= effects_per_study) {
+      selected_indices <- c(selected_indices, study_effects[1:effects_per_study])
+    } else {
+      # If not enough published, generate additional data for this study
+      additional_effects <- rnorm(effects_per_study, mean = 0.2, sd = 0.3)
+      additional_sample_sizes <- round(runif(effects_per_study, 50, 500))
+      additional_standard_errors <- 1 / sqrt(additional_sample_sizes) + rnorm(effects_per_study, 0, 0.02)
+
+      # Add to the main vectors
+      effects <- c(effects, additional_effects)
+      sample_sizes <- c(sample_sizes, additional_sample_sizes)
+      standard_errors <- c(standard_errors, additional_standard_errors)
+
+      # Add indices for the new data
+      new_indices <- (length(effects) - effects_per_study + 1):length(effects)
+      selected_indices <- c(selected_indices, new_indices)
+    }
+  }
 
   df <- data.frame(
-    bs = effects[published_indices],
-    sebs = standard_errors[published_indices],
-    Ns = sample_sizes[published_indices],
-    study_id = paste0("study_", 1:n_studies)
+    bs = effects[selected_indices],
+    sebs = standard_errors[selected_indices],
+    Ns = sample_sizes[selected_indices],
+    study_id = paste0("study_", rep(1:n_studies, each = effects_per_study))
   )
 
   return(df)
