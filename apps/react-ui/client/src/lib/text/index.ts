@@ -5,6 +5,27 @@ const TEXT = {
   common: {
     close: "Close",
   },
+  upload: {
+    title: "Upload Your Data",
+    description:
+      "Please ensure your data file meets the following requirements:",
+    requirements: {
+      fileFormat:
+        "The file must be in **.xlsx**, **.xls**, or **.csv** format.",
+      firstRowHeaders: "The **first row** should contain column headers.",
+      requiredColumns: "Required columns: **effect**, **se**, **n_obs**.",
+      optionalColumns: "Optional columns: **study_id**.",
+      noAdditionalColumns: "**No additional columns** are allowed.",
+      effectColumn:
+        "The **effect** column represents the effect estimate. It must contain only numbers.",
+      seColumn:
+        "The **se** column represents the standard error. It must contain only numbers.",
+      nObsColumn:
+        "The **n_obs** column represents the number of observations. It must contain only numbers.",
+      studyIdColumn:
+        "The **study_id** column represents the study ID. It must contain only numbers.",
+    },
+  },
   model: {
     modelType: {
       label: "Model Type",

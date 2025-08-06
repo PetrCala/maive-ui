@@ -2,11 +2,15 @@ import React from "react";
 
 interface MDXContentProps {
   source: string;
+  lineMargin?: number;
   className?: string;
 }
 
 // Simple markdown parser for basic formatting
-const parseMarkdown = (text: string): React.ReactNode[] => {
+const parseMarkdown = (
+  text: string,
+  lineMargin: number = 0,
+): React.ReactNode[] => {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
 
@@ -21,7 +25,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
         elements.push(
           <pre
             key={`code-${index}`}
-            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto mb-4"
+            className="bg-gray-100 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto mb-2"
           >
             <code className="text-sm font-mono text-gray-800 dark:text-gray-200">
               {codeBlockContent.join("\n")}
@@ -59,7 +63,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
       elements.push(
         <h2
           key={index}
-          className="text-2xl font-semibold mb-3 text-gray-900 dark:text-gray-100"
+          className="text-2xl font-semibold mb-1 text-gray-900 dark:text-gray-100"
         >
           {line.substring(3)}
         </h2>,
@@ -71,7 +75,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
       elements.push(
         <h3
           key={index}
-          className="text-xl font-semibold mb-2 text-gray-900 dark:text-gray-100"
+          className="text-xl font-semibold mb-1 text-gray-900 dark:text-gray-100"
         >
           {line.substring(4)}
         </h3>,
@@ -84,7 +88,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
       elements.push(
         <blockquote
           key={index}
-          className="border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-400 mb-4"
+          className="border-l-4 border-blue-500 pl-4 italic text-gray-600 dark:text-gray-400 mb-2"
         >
           {line.substring(2)}
         </blockquote>,
@@ -110,7 +114,7 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
     elements.push(
       <p
         key={index}
-        className="mb-4 text-gray-700 dark:text-gray-300 leading-relaxed"
+        className={`text-gray-700 dark:text-gray-300 leading-relaxed ${lineMargin > 0 ? `mb-${lineMargin}` : ""}`}
         dangerouslySetInnerHTML={{ __html: formattedText }}
       />,
     );
@@ -119,8 +123,12 @@ const parseMarkdown = (text: string): React.ReactNode[] => {
   return elements;
 };
 
-const MDXContent: React.FC<MDXContentProps> = ({ source, className = "" }) => {
-  const parsedContent = parseMarkdown(source);
+const MDXContent: React.FC<MDXContentProps> = ({
+  source,
+  className = "",
+  lineMargin = 0,
+}) => {
+  const parsedContent = parseMarkdown(source, lineMargin);
 
   return <div className={className}>{parsedContent}</div>;
 };
