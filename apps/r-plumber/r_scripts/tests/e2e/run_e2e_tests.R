@@ -22,8 +22,11 @@ if (!interactive()) {
     }
   }
 }
-script_dir <- file.path(script_dir, "tests/e2e")
-setwd(script_dir)
+# If we're not already in the e2e directory, navigate to it
+if (!grepl("tests/e2e$", script_dir)) {
+  script_dir <- file.path(script_dir, "tests/e2e")
+  setwd(script_dir)
+}
 
 # Source configuration and utilities
 source(file.path(script_dir, "test_config.R"))
