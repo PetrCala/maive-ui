@@ -227,7 +227,7 @@ export default function ModelPage() {
             />
           </div>
         ) : (
-          <div className="max-w-4xl w-full p-6 md:p-12 lg:p-24">
+          <div className="max-w-4xl w-full">
             <GoBackButton
               href={`/validation?dataId=${dataId}`}
               text="Back to Validation"
