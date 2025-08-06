@@ -20,6 +20,10 @@ function() {
 function(file_data, parameters) {
   tryCatch(
     {
+      # Static config
+      SHOULD_PRINT_PROCESSED_DF <- FALSE
+      SHOULD_PRINT_DF_AFTER_RENAME <- FALSE
+
       # nolint start: undesirable_function_linter.
       # MAIVE dependencies
       maive_deps <- c("clubSandwich", "varhandle", "pracma", "sandwich", "metafor")
@@ -53,9 +57,10 @@ function(file_data, parameters) {
       # Convert column names to lowercase for consistent processing
       colnames(df) <- tolower(colnames(df))
 
-      # Debug: Print processed data frame
-      cli::cli_h2("Processed data frame (lowercase columns):")
-      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      if (SHOULD_PRINT_PROCESSED_DF) {
+        cli::cli_h2("Processed data frame (lowercase columns):")
+        cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      }
 
       # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
       # Map column names to expected names (after lowercase conversion)
@@ -72,9 +77,10 @@ function(file_data, parameters) {
       matched_old_names <- intersect(old_names, names(name_map))
       names(df)[match(matched_old_names, names(df))] <- name_map[matched_old_names]
 
-      # Debug: Print after renaming
-      cli::cli_h2("Data frame after renaming:")
-      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      if (SHOULD_PRINT_DF_AFTER_RENAME) {
+        cli::cli_h2("Data frame after renaming:")
+        cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      }
 
       # Ensure we have the required columns in the correct order
       required_cols <- c("bs", "sebs", "Ns")
