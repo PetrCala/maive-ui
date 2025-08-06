@@ -38,18 +38,185 @@ source(file.path(script_dir, "scenarios/basic_maive_test.R"))
 source(file.path(script_dir, "scenarios/publication_bias_test.R"))
 source(file.path(script_dir, "scenarios/edge_cases_test.R"))
 
-#' Main test runner function
+# Define available test scenarios
+AVAILABLE_SCENARIOS <- list(
+  # Basic scenarios
+  "basic" = list(
+    name = "Basic MAIVE Test",
+    description = "Test basic MAIVE functionality with PET-PEESE method",
+    function_name = "test_basic_maive"
+  ),
+  "parameters" = list(
+    name = "Parameter Combinations Test",
+    description = "Test MAIVE with different parameter combinations",
+    function_name = "test_parameter_combinations"
+  ),
+
+  # Publication bias scenarios
+  "pub-bias-detection" = list(
+    name = "Publication Bias Detection Test",
+    description = "Test publication bias detection with known biased data",
+    function_name = "test_publication_bias_detection"
+  ),
+  "pub-bias-methods" = list(
+    name = "Publication Bias Methods Test",
+    description = "Test publication bias detection with different methods",
+    function_name = "test_publication_bias_methods"
+  ),
+  "pub-bias-strength" = list(
+    name = "Publication Bias Strength Test",
+    description = "Test publication bias strength assessment",
+    function_name = "test_publication_bias_strength"
+  ),
+
+  # Edge case scenarios
+  "minimal-data" = list(
+    name = "Minimal Data Test",
+    description = "Test with minimal data (3 studies)",
+    function_name = "test_minimal_data"
+  ),
+  "large-dataset" = list(
+    name = "Large Dataset Test",
+    description = "Test with large dataset (100 studies)",
+    function_name = "test_large_dataset"
+  ),
+  "data-with-nas" = list(
+    name = "Data with NAs Test",
+    description = "Test handling of data with missing values",
+    function_name = "test_data_with_nas"
+  ),
+  "extreme-values" = list(
+    name = "Extreme Values Test",
+    description = "Test handling of extreme values",
+    function_name = "test_extreme_values"
+  ),
+  "invalid-parameters" = list(
+    name = "Invalid Parameters Test",
+    description = "Test handling of invalid parameters",
+    function_name = "test_invalid_parameters"
+  ),
+
+  # Special scenarios
+  "all" = list(
+    name = "All Tests",
+    description = "Run all available test scenarios",
+    function_name = "run_all_scenarios"
+  ),
+  "health" = list(
+    name = "Health Check",
+    description = "Basic API health check",
+    function_name = "test_health_check"
+  ),
+  "echo" = list(
+    name = "Echo Test",
+    description = "Test echo endpoint",
+    function_name = "test_echo"
+  )
+)
+
+#' Run a single test scenario
+#' @param scenario_name Name of the scenario to run
+#' @param api_url API base URL (optional)
+#' @param verbose Whether to show verbose output
+#' @return Test results
+run_single_scenario <- function(scenario_name, api_url = NULL, verbose = TRUE) {
+  # Override API URL if provided
+  if (!is.null(api_url)) {
+    API_BASE_URL <<- api_url
+  }
+
+  if (!scenario_name %in% names(AVAILABLE_SCENARIOS)) {
+    stop(paste(
+      "Unknown scenario:", scenario_name,
+      "\nAvailable scenarios:", paste(names(AVAILABLE_SCENARIOS), collapse = ", ")
+    ))
+  }
+
+  scenario <- AVAILABLE_SCENARIOS[[scenario_name]]
+
+  cat(paste(rep("=", 60), collapse = ""), "\n")
+  cat("MAIVE E2E Test - Single Scenario\n")
+  cat(paste(rep("=", 60), collapse = ""), "\n")
+  cat("Scenario:", scenario$name, "\n")
+  cat("Description:", scenario$description, "\n")
+  cat("API URL:", API_BASE_URL, "\n")
+  cat("Timestamp:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
+
+  # Special handling for health and echo tests
+  if (scenario_name == "health") {
+    tryCatch(
+      {
+        result <- test_health_check()
+        cat("✓ API is healthy\n")
+        return(list(
+          status = "PASS",
+          test_name = scenario$name,
+          result = result
+        ))
+      },
+      error = function(e) {
+        cat("✗ Health check failed:", e$message, "\n")
+        return(list(
+          status = "FAIL",
+          test_name = scenario$name,
+          error = e$message
+        ))
+      }
+    )
+  }
+
+  if (scenario_name == "echo") {
+    tryCatch(
+      {
+        result <- test_echo("e2e_test")
+        cat("✓ Echo endpoint working\n")
+        return(list(
+          status = "PASS",
+          test_name = scenario$name,
+          result = result
+        ))
+      },
+      error = function(e) {
+        cat("✗ Echo test failed:", e$message, "\n")
+        return(list(
+          status = "FAIL",
+          test_name = scenario$name,
+          error = e$message
+        ))
+      }
+    )
+  }
+
+  # Run the actual test function
+  test_function <- get(scenario$function_name)
+  if (!is.function(test_function)) {
+    stop(paste("Test function", scenario$function_name, "not found"))
+  }
+
+  cat("Running", scenario$name, "...\n")
+  result <- test_function()
+
+  if (result$status == "PASS") {
+    cat("✓", scenario$name, "passed\n")
+  } else {
+    cat("✗", scenario$name, "failed:", result$error, "\n")
+  }
+
+  return(result)
+}
+
+#' Run all scenarios (original functionality)
 #' @param api_url API base URL (optional)
 #' @param verbose Whether to show verbose output
 #' @return Test results summary
-run_e2e_tests <- function(api_url = NULL, verbose = TRUE) {
+run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   # Override API URL if provided
   if (!is.null(api_url)) {
     API_BASE_URL <<- api_url
   }
 
   cat(paste(rep("=", 60), collapse = ""), "\n")
-  cat("MAIVE E2E Test Suite\n")
+  cat("MAIVE E2E Test Suite - All Scenarios\n")
   cat(paste(rep("=", 60), collapse = ""), "\n")
   cat("API URL:", API_BASE_URL, "\n")
   cat("Timestamp:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
@@ -210,6 +377,30 @@ run_e2e_tests <- function(api_url = NULL, verbose = TRUE) {
   ))
 }
 
+#' Show available scenarios
+show_available_scenarios <- function() {
+  cat("Available test scenarios:\n")
+  cat(paste(rep("-", 50), collapse = ""), "\n")
+
+  for (scenario_id in names(AVAILABLE_SCENARIOS)) {
+    scenario <- AVAILABLE_SCENARIOS[[scenario_id]]
+    cat(sprintf("%-20s %s\n", scenario_id, scenario$description))
+  }
+
+  cat("\nUsage examples:\n")
+  cat("  Rscript run_e2e_tests.R --scenario basic\n")
+  cat("  Rscript run_e2e_tests.R --scenario pub-bias-detection --api-url http://localhost:8000\n")
+  cat("  Rscript run_e2e_tests.R --scenario all\n")
+}
+
+#' Main test runner function (backward compatibility)
+#' @param api_url API base URL (optional)
+#' @param verbose Whether to show verbose output
+#' @return Test results summary
+run_e2e_tests <- function(api_url = NULL, verbose = TRUE) {
+  return(run_all_scenarios(api_url = api_url, verbose = verbose))
+}
+
 #' Run tests if script is executed directly
 if (!interactive()) {
   # Parse command line arguments
@@ -217,30 +408,63 @@ if (!interactive()) {
 
   api_url <- NULL
   verbose <- TRUE
+  scenario <- "all" # Default to running all scenarios
 
   if (length(args) > 0) {
-    for (i in seq_along(args)) {
+    i <- 1
+    while (i <= length(args)) {
       if (args[i] == "--api-url" && i + 1 <= length(args)) {
         api_url <- args[i + 1]
+        i <- i + 2
+      } else if (args[i] == "--scenario" && i + 1 <= length(args)) {
+        scenario <- args[i + 1]
+        i <- i + 2
       } else if (args[i] == "--quiet") {
         verbose <- FALSE
-      } else if (args[i] == "--help") {
-        cat("Usage: Rscript run_e2e_tests.R [--api-url URL] [--quiet]\n")
-        cat("  --api-url URL    Override default API URL\n")
-        cat("  --quiet          Reduce output verbosity\n")
-        cat("  --help           Show this help message\n")
+        i <- i + 1
+      } else if (args[i] == "--list-scenarios") {
+        show_available_scenarios()
         quit(status = 0)
+      } else if (args[i] == "--help") {
+        cat("Usage: Rscript run_e2e_tests.R [OPTIONS]\n")
+        cat("\nOptions:\n")
+        cat("  --scenario SCENARIO    Run specific test scenario (default: all)\n")
+        cat("  --api-url URL         Override default API URL\n")
+        cat("  --quiet               Reduce output verbosity\n")
+        cat("  --list-scenarios      Show available test scenarios\n")
+        cat("  --help                Show this help message\n")
+        cat("\nExamples:\n")
+        cat("  Rscript run_e2e_tests.R --scenario basic\n")
+        cat("  Rscript run_e2e_tests.R --scenario pub-bias-detection\n")
+        cat("  Rscript run_e2e_tests.R --scenario all --api-url http://localhost:8000\n")
+        quit(status = 0)
+      } else {
+        i <- i + 1
       }
     }
   }
 
   # Run tests
-  results <- run_e2e_tests(api_url = api_url, verbose = verbose)
+  if (scenario == "all") {
+    results <- run_all_scenarios(api_url = api_url, verbose = verbose)
+  } else {
+    results <- run_single_scenario(scenario, api_url = api_url, verbose = verbose)
+  }
 
   # Exit with appropriate status code
-  if (results$failed_tests > 0) {
-    quit(status = 1)
+  if (is.list(results) && "failed_tests" %in% names(results)) {
+    # Multi-test results
+    if (results$failed_tests > 0) {
+      quit(status = 1)
+    } else {
+      quit(status = 0)
+    }
   } else {
-    quit(status = 0)
+    # Single test result
+    if (results$status == "FAIL") {
+      quit(status = 1)
+    } else {
+      quit(status = 0)
+    }
   }
 }

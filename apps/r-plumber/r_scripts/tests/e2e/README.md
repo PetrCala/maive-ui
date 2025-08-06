@@ -42,11 +42,35 @@ cd apps/r-plumber/r_scripts/tests/e2e
 Rscript run_e2e_tests.R
 ```
 
+### Running Specific Scenarios
+
+You can run individual test scenarios using the `--scenario` flag:
+
+```bash
+# Run only the basic MAIVE test
+Rscript run_e2e_tests.R --scenario basic
+
+# Run publication bias detection test
+Rscript run_e2e_tests.R --scenario pub-bias-detection
+
+# Run edge case test for minimal data
+Rscript run_e2e_tests.R --scenario minimal-data
+
+# Run health check only
+Rscript run_e2e_tests.R --scenario health
+
+# List all available scenarios
+Rscript run_e2e_tests.R --list-scenarios
+```
+
 ### Advanced Usage
 
 ```bash
 # Test against a different API URL
 Rscript run_e2e_tests.R --api-url http://localhost:9000
+
+# Run specific scenario with custom API URL
+Rscript run_e2e_tests.R --scenario basic --api-url http://localhost:9000
 
 # Run with reduced output
 Rscript run_e2e_tests.R --quiet
@@ -63,20 +87,51 @@ source("tests/e2e/run_e2e_tests.R")
 results <- run_e2e_tests()
 ```
 
-## Test Categories
+## Available Test Scenarios
 
-### 1. Basic MAIVE Tests
+The test suite includes the following scenarios that can be run individually:
+
+### Basic Scenarios
+
+- **`basic`**: Basic MAIVE Test - Tests fundamental MAIVE functionality with PET-PEESE method
+- **`parameters`**: Parameter Combinations Test - Tests different MAIVE methods (PET, PEESE, PET-PEESE, EK) and parameter combinations
+
+### Publication Bias Scenarios
+
+- **`pub-bias-detection`**: Publication Bias Detection Test - Tests detection of publication bias using data with known bias patterns
+- **`pub-bias-methods`**: Publication Bias Methods Test - Tests all MAIVE methods for publication bias detection
+- **`pub-bias-strength`**: Publication Bias Strength Test - Tests detection across different bias strengths
+
+### Edge Case Scenarios
+
+- **`minimal-data`**: Minimal Data Test - Tests with the minimum required data (3 studies)
+- **`large-dataset`**: Large Dataset Test - Tests with a large dataset (100 studies)
+- **`data-with-nas`**: Data with NAs Test - Tests handling of missing values
+- **`extreme-values`**: Extreme Values Test - Tests with extreme effect sizes and standard errors
+- **`invalid-parameters`**: Invalid Parameters Test - Tests error handling for invalid inputs
+
+### Special Scenarios
+
+- **`health`**: Health Check - Basic API health check
+- **`echo`**: Echo Test - Test echo endpoint
+- **`all`**: All Tests - Run all available test scenarios (default)
+
+### Test Categories
+
+The scenarios are organized into the following categories:
+
+#### 1. Basic MAIVE Tests
 
 - **Basic MAIVE Test**: Tests fundamental MAIVE functionality with standard parameters
 - **Parameter Combinations Test**: Tests different MAIVE methods (PET, PEESE, PET-PEESE, EK) and parameter combinations
 
-### 2. Publication Bias Tests
+#### 2. Publication Bias Tests
 
 - **Publication Bias Detection**: Tests detection of publication bias using data with known bias patterns
 - **Publication Bias Methods**: Tests all MAIVE methods for publication bias detection
 - **Publication Bias Strength**: Tests detection across different bias strengths
 
-### 3. Edge Cases Tests
+#### 3. Edge Cases Tests
 
 - **Minimal Data**: Tests with the minimum required data (3 studies)
 - **Large Dataset**: Tests with a large dataset (100 studies)
