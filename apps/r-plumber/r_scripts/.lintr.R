@@ -50,7 +50,8 @@ linters <- c(
 exclusions <- list(
   "local/",
   "scripts",
-  "tests/"
+  "tests/",
+  "debug/"
 )
 
 gc() # Clean up memory
