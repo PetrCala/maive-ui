@@ -1,32 +1,28 @@
-# plumber.R
+#!/usr/bin/env Rscript
 
-#* Echo back the input
-#* @usage curl --data "a=4&b=3" "http://localhost:8787/sum"
-#* @param msg The message to echo
-#* @get /echo
-function(msg = "") {
-  list(msg = paste0("The message is: '", msg, "'"))
+# Debug script for running the MAIVE model locally
+# This script extracts the core logic from the plumber endpoint
+# and allows you to call it directly with browser() for debugging
+
+if (!grepl("r_scripts$", getwd())) {
+  stop("This script must be run from the r_scripts directory")
 }
 
-#* Health check
-#* @get /ping
-function() {
-  list(status = "ok", time = format(Sys.time(), tz = "UTC"))
-}
-#* Run the model
-#* @param file_data The file data to run the model on, passed as a JSON string
-#* @param parameters The parameters to run the model on
-#* @post /run-model
-function(file_data, parameters) {
+# Load required libraries
+library(jsonlite)
+library(cli)
+
+# MAIVE dependencies
+maive_deps <- c("clubSandwich", "varhandle", "pracma", "sandwich", "metafor")
+lapply(maive_deps, library, character.only = TRUE)
+
+# Source the funnel plot module
+source("modules/funnel_plot.R", local = TRUE)
+
+# Extract the core logic from the plumber endpoint
+run_model_locally <- function(file_data, parameters) {
   tryCatch(
     {
-      # nolint start: undesirable_function_linter.
-      # MAIVE dependencies
-      maive_deps <- c("clubSandwich", "varhandle", "pracma", "sandwich", "metafor")
-      lapply(maive_deps, library, character.only = TRUE)
-      source("../modules/funnel_plot.R", local = TRUE)
-      # nolint end: undesirable_function_linter.
-
       # Parse JSON data
       df <- jsonlite::fromJSON(file_data)
       params <- jsonlite::fromJSON(parameters)
@@ -35,7 +31,7 @@ function(file_data, parameters) {
       cli::cli_h2("Input data frame structure:")
       cli::cli_code(capture.output(str(df)))
       cli::cli_h2("Input parameters:")
-      cli::cli_code(capture.output(print(params))) # nolint: undesirable_function_linter.
+      cli::cli_code(capture.output(print(params)))
 
       # Convert to data frame if it's not already
       if (!is.data.frame(df)) {
@@ -44,7 +40,7 @@ function(file_data, parameters) {
 
       # Debug: Print original data frame
       cli::cli_h2("Original data frame:")
-      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      cli::cli_code(capture.output(print(head(df))))
 
       if (nrow(df) < 3) {
         return(list(
@@ -58,7 +54,7 @@ function(file_data, parameters) {
 
       # Debug: Print processed data frame
       cli::cli_h2("Processed data frame (lowercase columns):")
-      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      cli::cli_code(capture.output(print(head(df))))
 
       # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
       # Map column names to expected names (after lowercase conversion)
@@ -77,7 +73,7 @@ function(file_data, parameters) {
 
       # Debug: Print after renaming
       cli::cli_h2("Data frame after renaming:")
-      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      cli::cli_code(capture.output(print(head(df))))
 
       # Ensure we have the required columns in the correct order
       required_cols <- c("bs", "sebs", "Ns")
@@ -118,7 +114,7 @@ function(file_data, parameters) {
 
       # Debug: Print final data frame
       cli::cli_h2("Final data frame for MAIVE:")
-      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+      cli::cli_code(capture.output(print(head(df))))
       cli::cli_text("\n")
 
       expected_parameters <- c(
@@ -218,7 +214,9 @@ function(file_data, parameters) {
       # Run the model
       tryCatch(
         {
-          maive_res <- MAIVE::maive(
+          # Source the local MAIVE module to get the maive function
+          source("modules/maive_debug.R", local = TRUE)
+          maive_res <- maive_local(
             dat = df,
             method = maive_method,
             weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
@@ -231,10 +229,8 @@ function(file_data, parameters) {
         error = function(e) {
           cli::cli_alert_danger(paste("MAIVE function error:", e$message))
           cli::cli_alert_danger(paste("Error traceback:"))
-          # nolint start: undesirable_function_linter.
           print(traceback())
           stop(e)
-          # nolint end: undesirable_function_linter.
         }
       )
 
@@ -291,7 +287,7 @@ function(file_data, parameters) {
       list(data = results)
     },
     error = function(e) {
-      cli::cli_alert_danger("Error in run-model endpoint: {e$message}")
+      cli::cli_alert_danger("Error in run-model function: {e$message}")
       cli::cli_h2("Error traceback:")
       cli::cli_code(capture.output(traceback()))
       list(
@@ -300,4 +296,35 @@ function(file_data, parameters) {
       )
     }
   )
+}
+
+# Test data from the CURL example
+# Generate test data with at least 20 observations
+test_data <- data.frame(
+  bs = round(runif(20, 0.1, 0.5), 3),
+  sebs = round(runif(20, 0.05, 0.15), 3),
+  Ns = sample(100:300, 20, replace = TRUE)
+)
+test_file_data <- jsonlite::toJSON(test_data, auto_unbox = TRUE)
+test_parameters <- '{"modelType":"MAIVE","includeStudyDummies":true,"includeStudyClustering":true,"standardErrorTreatment":"clustered_cr2","computeAndersonRubin":true,"maiveMethod":"PET","shouldUseInstrumenting":true}'
+
+# Main execution
+if (!interactive()) {
+  cat("Running MAIVE model locally...\n")
+
+  # Add browser() call for debugging - uncomment the line below to enable debugging
+  # browser()
+
+  result <- run_model_locally(test_file_data, test_parameters)
+
+  if (result$error) {
+    cat("Error:", result$message, "\n")
+  } else {
+    cat("Success! Results:\n")
+    print(result$data)
+  }
+} else {
+  cat("Script loaded in interactive mode.\n")
+  cat("You can now call: run_model_locally(test_file_data, test_parameters)\n")
+  cat("Or add browser() calls in the function for debugging.\n")
 }
