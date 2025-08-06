@@ -392,7 +392,7 @@ export default function ValidationPage() {
                     </tbody>
                   </table>
                 </div>
-                {CONFIG.SHOULD_SHOW_DF_ROWS_INFO && (
+                {!!CONFIG?.SHOULD_SHOW_DF_ROWS_INFO && (
                   <RowInfoComponent
                     rowCount={uploadedData?.data?.length || 0}
                     showFirstRows={uploadedData?.data?.length > 4}
