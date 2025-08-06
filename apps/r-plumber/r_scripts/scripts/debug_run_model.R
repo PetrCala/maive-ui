@@ -43,10 +43,7 @@ run_model_locally <- function(file_data, parameters) {
       cli::cli_code(capture.output(print(head(df))))
 
       if (nrow(df) < 4) {
-        return(list(
-          error = TRUE,
-          message = "Input data must have at least 4 observations."
-        ))
+        cli::cli_abort("Input data must have at least 4 observations.")
       }
 
       # Convert column names to lowercase for consistent processing
@@ -80,20 +77,7 @@ run_model_locally <- function(file_data, parameters) {
       missing_cols <- setdiff(required_cols, names(df))
 
       if (length(missing_cols) > 0) {
-        return(list(
-          error = TRUE,
-          message = paste("Missing required columns:", paste(missing_cols, collapse = ", "))
-        ))
-      }
-
-      # Handle study_id column conversion before general numeric conversion
-      if ("study_id" %in% names(df)) {
-        if (is.character(df$study_id)) {
-          unique_studies <- unique(df$study_id)
-          study_id_map <- setNames(seq_along(unique_studies), unique_studies)
-          df$study_id <- study_id_map[df$study_id]
-          cli::cli_alert_info("Converted string study IDs to integers")
-        }
+        cli::cli_abort(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
       }
 
       numeric_cols <- c("bs", "sebs", "Ns")
@@ -127,10 +111,7 @@ run_model_locally <- function(file_data, parameters) {
         "shouldUseInstrumenting"
       )
       if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
-        return(list(
-          error = TRUE,
-          message = paste0("The parameters must include the following: ", paste(expected_parameters, collapse = ", "))
-        ))
+        cli::cli_abort(paste0("The parameters must include the following: ", paste(expected_parameters, collapse = ", ")))
       }
 
       model_type <- params$modelType # MAIVE or WAIVE
@@ -149,6 +130,11 @@ run_model_locally <- function(file_data, parameters) {
         cli::cli_alert_warning("No study_id column found, forcing studylevel to 0")
       }
 
+      # We need at least 3 DoF for distribution functions - otherwise qt() will return NA
+      if (!(length(df$obs) >= length(unique(df$study_id)) + 3)) {
+        cli::cli_abort("The number of observations must be larger than the number of unique study_id plus 3.")
+      }
+
       # Debug: Print the standardErrorTreatment parameter
       cli::cli_alert_info(paste("standardErrorTreatment parameter:", params$standardErrorTreatment))
 
@@ -161,11 +147,7 @@ run_model_locally <- function(file_data, parameters) {
 
       # Check if switch returned NULL (no match found)
       if (is.null(standard_error_treatment)) {
-        cli::cli_alert_danger(paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment))
-        return(list(
-          error = TRUE,
-          message = paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment)
-        ))
+        stop(paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment))
       }
 
       cli::cli_alert_info(paste("standard_error_treatment result:", standard_error_treatment))
@@ -230,7 +212,7 @@ run_model_locally <- function(file_data, parameters) {
           cli::cli_alert_danger(paste("MAIVE function error:", e$message))
           cli::cli_alert_danger(paste("Error traceback:"))
           print(traceback())
-          stop(e)
+          cli::cli_abort(e)
         }
       )
 
@@ -303,10 +285,11 @@ run_model_locally <- function(file_data, parameters) {
 test_data <- data.frame(
   bs = round(runif(20, 0.1, 0.5), 3),
   sebs = round(runif(20, 0.05, 0.15), 3),
-  Ns = sample(100:300, 20, replace = TRUE)
+  Ns = sample(100:300, 20, replace = TRUE),
+  study_id = paste0("study_", 1:20)
 )
 test_file_data <- jsonlite::toJSON(test_data, auto_unbox = TRUE)
-test_parameters <- '{"modelType":"MAIVE","includeStudyDummies":true,"includeStudyClustering":true,"standardErrorTreatment":"clustered_cr2","computeAndersonRubin":true,"maiveMethod":"PET","shouldUseInstrumenting":true}'
+test_parameters <- '{"modelType":"MAIVE","includeStudyDummies":true,"includeStudyClustering":true,"standardErrorTreatment":"clustered_cr2","computeAndersonRubin":false,"maiveMethod":"PET","shouldUseInstrumenting":true}'
 
 # Main execution
 if (!interactive()) {

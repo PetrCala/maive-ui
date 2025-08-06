@@ -47,10 +47,7 @@ function(file_data, parameters) {
       cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
       if (nrow(df) < 4) {
-        return(list(
-          error = TRUE,
-          message = "Input data must have at least 4 observations."
-        ))
+        cli::cli_abort("Input data must have at least 4 observations.")
       }
 
       # Convert column names to lowercase for consistent processing
@@ -88,16 +85,6 @@ function(file_data, parameters) {
           error = TRUE,
           message = paste("Missing required columns:", paste(missing_cols, collapse = ", "))
         ))
-      }
-
-      # Handle study_id column conversion before general numeric conversion
-      if ("study_id" %in% names(df)) {
-        if (is.character(df$study_id)) {
-          unique_studies <- unique(df$study_id)
-          study_id_map <- setNames(seq_along(unique_studies), unique_studies)
-          df$study_id <- study_id_map[df$study_id]
-          cli::cli_alert_info("Converted string study IDs to integers")
-        }
       }
 
       numeric_cols <- c("bs", "sebs", "Ns")
@@ -147,13 +134,18 @@ function(file_data, parameters) {
         if (study_dummies == 1) 1 else 0
       }
 
-      # If no study_id column, force studylevel to 0 (no study-level effects)
-      if (!("study_id" %in% names(df))) {
+      if ("study_id" %in% names(df)) {
+        # We need at least 3 DoF for distribution functions - otherwise qt() will return NA
+        if (!(length(df$obs) >= length(unique(df$study_id)) + 3)) {
+          cli::cli_abort("The number of observations must be larger than the number of unique study_id plus 3.")
+        }
+      } else {
+        # If no study_id column, force studylevel to 0 (no study-level effects)
         studylevel <- 0
         cli::cli_alert_warning("No study_id column found, forcing studylevel to 0")
       }
 
-      # Debug: Print the standardErrorTreatment parameter
+
       cli::cli_alert_info(paste("standardErrorTreatment parameter:", params$standardErrorTreatment))
 
       standard_error_treatment <- switch(params$standardErrorTreatment,
@@ -165,11 +157,7 @@ function(file_data, parameters) {
 
       # Check if switch returned NULL (no match found)
       if (is.null(standard_error_treatment)) {
-        cli::cli_alert_danger(paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment))
-        return(list(
-          error = TRUE,
-          message = paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment)
-        ))
+        cli::cli_abort(paste("Invalid standardErrorTreatment value:", params$standardErrorTreatment))
       }
 
       cli::cli_alert_info(paste("standard_error_treatment result:", standard_error_treatment))
@@ -185,11 +173,7 @@ function(file_data, parameters) {
 
       # Check if switch returned NULL (no match found)
       if (is.null(maive_method)) {
-        cli::cli_alert_danger(paste("Invalid maiveMethod value:", params$maiveMethod))
-        return(list(
-          error = TRUE,
-          message = paste("Invalid maiveMethod value:", params$maiveMethod)
-        ))
+        cli::cli_abort(paste("Invalid maiveMethod value:", params$maiveMethod))
       }
 
       cli::cli_alert_info(paste("maive_method result:", maive_method))
@@ -233,7 +217,7 @@ function(file_data, parameters) {
           cli::cli_alert_danger(paste("Error traceback:"))
           # nolint start: undesirable_function_linter.
           print(traceback())
-          stop(e)
+          cli::cli_abort(e)
           # nolint end: undesirable_function_linter.
         }
       )
