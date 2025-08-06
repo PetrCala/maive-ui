@@ -11,21 +11,29 @@ suppressPackageStartupMessages({
 })
 
 # Set working directory to the script location
-script_dir <- dirname(sys.frame(1)$ofile)
-if (is.null(script_dir)) {
-  script_dir <- getwd()
+script_dir <- getwd()
+if (!interactive()) {
+  # Try to get the script directory when running non-interactively
+  args <- commandArgs()
+  if (length(args) > 0) {
+    script_path <- args[length(args)]
+    if (file.exists(script_path)) {
+      script_dir <- dirname(normalizePath(script_path))
+    }
+  }
 }
+script_dir <- file.path(script_dir, "tests/e2e")
 setwd(script_dir)
 
 # Source configuration and utilities
-source("test_config.R")
-source("utils/api_client.R")
-source("utils/test_helpers.R")
+source(file.path(script_dir, "test_config.R"))
+source(file.path(script_dir, "utils/api_client.R"))
+source(file.path(script_dir, "utils/test_helpers.R"))
 
 # Source test scenarios
-source("scenarios/basic_maive_test.R")
-source("scenarios/publication_bias_test.R")
-source("scenarios/edge_cases_test.R")
+source(file.path(script_dir, "scenarios/basic_maive_test.R"))
+source(file.path(script_dir, "scenarios/publication_bias_test.R"))
+source(file.path(script_dir, "scenarios/edge_cases_test.R"))
 
 #' Main test runner function
 #' @param api_url API base URL (optional)
@@ -37,9 +45,9 @@ run_e2e_tests <- function(api_url = NULL, verbose = TRUE) {
     API_BASE_URL <<- api_url
   }
 
-  cat("=" * 60, "\n")
+  cat(paste(rep("=", 60), collapse = ""), "\n")
   cat("MAIVE E2E Test Suite\n")
-  cat("=" * 60, "\n")
+  cat(paste(rep("=", 60), collapse = ""), "\n")
   cat("API URL:", API_BASE_URL, "\n")
   cat("Timestamp:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n\n")
 
@@ -159,9 +167,9 @@ run_e2e_tests <- function(api_url = NULL, verbose = TRUE) {
   }
 
   # Summary
-  cat("\n" + "=" * 60, "\n")
+  cat("\n", paste(rep("=", 60), collapse = ""), "\n")
   cat("TEST SUMMARY\n")
-  cat("=" * 60, "\n")
+  cat(paste(rep("=", 60), collapse = ""), "\n")
   cat(sprintf("Total tests: %d\n", test_count))
   cat(sprintf("Passed: %d\n", passed_count))
   cat(sprintf("Failed: %d\n", test_count - passed_count))
@@ -170,7 +178,7 @@ run_e2e_tests <- function(api_url = NULL, verbose = TRUE) {
   # Detailed results if verbose
   if (verbose) {
     cat("\nDETAILED RESULTS:\n")
-    cat("-" * 40, "\n")
+    cat(paste(rep("-", 40), collapse = ""), "\n")
 
     for (test_category in names(all_results)) {
       cat(sprintf("\n%s:\n", toupper(test_category)))
