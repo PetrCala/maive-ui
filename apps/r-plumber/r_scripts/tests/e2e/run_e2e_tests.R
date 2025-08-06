@@ -470,13 +470,8 @@ if (!interactive()) {
 
   if (!check_api_up(api_url)) {
     cat(cli::col_red("✗ API endpoint is not reachable at "), api_url %||% API_BASE_URL, "\n")
-    cat("Do you wish to start the API now by running `npm run r:dev`? (y/n) ")
-    answer <- readline()
-    if (answer == "y") {
-      system("npm run r:dev")
-    } else {
-      quit(status = 2)
-    }
+    cat("Please run `npm run r:dev` in another terminal, then re-run this script.\n")
+    quit(status = 2)
   }
 
   # Run tests
