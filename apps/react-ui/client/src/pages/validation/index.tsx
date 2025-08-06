@@ -282,7 +282,10 @@ export default function ValidationPage() {
     }
 
     if (studyIdCol && studyIdCol.index !== -1) {
-      if (fullData.length < fullData.length + 3) {
+      const uniqueStudyIds = new Set(
+        fullData.map((row) => row[headers[studyIdCol.index]]),
+      ).size;
+      if (!(fullData.length >= uniqueStudyIds + 3)) {
         messages.push({
           type: "error",
           message:
