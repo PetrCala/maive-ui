@@ -111,11 +111,11 @@ export default function ValidationPage() {
     const optionalColumns = ["study_id"];
 
     // Check if file has data
-    if (fullData.length === 0) {
+    if (fullData.length < 3) {
       messages.push({
         type: "error",
         message:
-          "The file must contain at least one row of data (excluding headers).",
+          "The file must contain at least 3 rows of data (excluding headers).",
       });
     }
 
