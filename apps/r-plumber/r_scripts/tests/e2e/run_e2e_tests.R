@@ -444,6 +444,41 @@ if (!interactive()) {
     }
   }
 
+  # Check if API endpoint is up and running before running tests
+  check_api_up <- function(api_url) {
+    if (is.null(api_url) || api_url == "") {
+      api_url_to_check <- API_BASE_URL
+    } else {
+      api_url_to_check <- api_url
+    }
+    # Remove trailing slash if present
+    api_url_to_check <- sub("/+$", "", api_url_to_check)
+    # Try a simple GET request to the root or /health endpoint
+    health_endpoints <- c("", "/", "/health", "/status")
+    for (endpoint in health_endpoints) {
+      url <- paste0(api_url_to_check, endpoint)
+      res <- tryCatch(
+        httr::GET(url, timeout(5)),
+        error = function(e) NULL
+      )
+      if (!is.null(res) && httr::status_code(res) < 500) {
+        return(TRUE)
+      }
+    }
+    return(FALSE)
+  }
+
+  if (!check_api_up(api_url)) {
+    cat(cli::col_red("✗ API endpoint is not reachable at "), api_url %||% API_BASE_URL, "\n")
+    cat("Do you wish to start the API now by running `npm run r:dev`? (y/n) ")
+    answer <- readline()
+    if (answer == "y") {
+      system("npm run r:dev")
+    } else {
+      quit(status = 2)
+    }
+  }
+
   # Run tests
   if (scenario == "all") {
     results <- run_all_scenarios(api_url = api_url, verbose = verbose)
