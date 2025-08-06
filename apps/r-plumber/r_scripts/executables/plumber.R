@@ -33,9 +33,9 @@ function(file_data, parameters) {
 
       # Debug: Print input data
       cli::cli_h2("Input data frame structure:")
-      cli::cli_code(str(df))
+      cli::cli_code(capture.output(str(df)))
       cli::cli_h2("Input parameters:")
-      cli::cli_code(params)
+      cli::cli_code(capture.output(print(params))) # nolint: undesirable_function_linter.
 
       # Convert to data frame if it's not already
       if (!is.data.frame(df)) {
@@ -47,7 +47,7 @@ function(file_data, parameters) {
 
       # Debug: Print processed data
       cli::cli_h2("Processed data frame:")
-      cli::cli_code(df)
+      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
       # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
       # Map column names to expected names
@@ -85,7 +85,7 @@ function(file_data, parameters) {
 
       # Debug: Print final data frame
       cli::cli_h2("Final data frame for MAIVE:")
-      cli::cli_code(df)
+      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
       expected_parameters <- c(
         "modelType",
@@ -151,7 +151,7 @@ function(file_data, parameters) {
 
       # Debug: Print MAIVE results
       cli::cli_h2("MAIVE results structure:")
-      cli::cli_code(str(maive_res))
+      cli::cli_code(capture.output(str(maive_res)))
 
       est <- maive_res$beta
       se <- maive_res$SE
@@ -204,11 +204,11 @@ function(file_data, parameters) {
     error = function(e) {
       cli::cli_alert_danger("Error in run-model endpoint: {e$message}")
       cli::cli_h2("Error traceback:")
-      cli::cli_code(traceback())
-      return(list(
+      cli::cli_code(capture.output(traceback()))
+      list(
         error = TRUE,
         message = paste("Internal server error:", e$message)
-      ))
+      )
     }
   )
 }
