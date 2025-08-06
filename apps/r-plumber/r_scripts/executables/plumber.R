@@ -48,7 +48,6 @@ function(file_data, parameters) {
 
       # Convert column names to lowercase for consistent processing
       colnames(df) <- tolower(colnames(df))
-      df[] <- lapply(df, as.numeric)
 
       # Debug: Print processed data frame
       cli::cli_h2("Processed data frame (lowercase columns):")
@@ -82,6 +81,23 @@ function(file_data, parameters) {
           error = TRUE,
           message = paste("Missing required columns:", paste(missing_cols, collapse = ", "))
         ))
+      }
+
+      # Handle study_id column conversion before general numeric conversion
+      if ("study_id" %in% names(df)) {
+        if (is.character(df$study_id)) {
+          unique_studies <- unique(df$study_id)
+          study_id_map <- setNames(seq_along(unique_studies), unique_studies)
+          df$study_id <- study_id_map[df$study_id]
+          cli::cli_alert_info("Converted string study IDs to integers")
+        }
+      }
+
+      numeric_cols <- c("bs", "sebs", "Ns")
+      for (col in numeric_cols) {
+        if (col %in% names(df)) {
+          df[[col]] <- as.numeric(df[[col]])
+        }
       }
 
       # Reorder columns to match MAIVE expectations: bs, sebs, Ns, study_id
