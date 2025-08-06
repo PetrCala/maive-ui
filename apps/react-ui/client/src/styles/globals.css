@@ -323,7 +323,7 @@ body {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		justify-content: center;
+		justify-content: flex-start; /* y-axis */
 		transition: var(--transition-theme);
 	}
 
@@ -351,6 +351,7 @@ body {
 	.home-page-container {
 		@apply page-container-light dark:page-container-dark;
 		padding: var(--spacing-2xl) var(--spacing-lg);
+		justify-content: center; /* Override the default flex-start */
 	}
 
 	.content-page-container {
