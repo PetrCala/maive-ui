@@ -46,10 +46,10 @@ function(file_data, parameters) {
       cli::cli_h2("Original data frame:")
       cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
-      if (nrow(df) < 3) {
+      if (nrow(df) < 4) {
         return(list(
           error = TRUE,
-          message = "Input data must have at least 3 observations."
+          message = "Input data must have at least 4 observations."
         ))
       }
 
