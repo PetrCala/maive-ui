@@ -1,0 +1,74 @@
+# R specific files
+.Rhistory
+.RData
+.Ruserdata
+.Rapp.history
+
+# R package files
+*.Rcheck/
+*.tar.gz
+*.tgz
+*.zip
+
+# RStudio files
+.Rproj.user/
+*.Rproj
+
+# Documentation
+README.md
+*.md
+docs/
+
+# Git
+.git
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose*
+.dockerignore
+
+# IDE and editor files
+.vscode
+.idea
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs
+*.log
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Test files
+tests/
+test_*.R
+*_test.R
+
+# Development files
+dev/
+development/
+
+# Backup files
+*.bak
+*.backup
+
+# Vendor directory (if not needed in container)
+vendor/
+
+# R package development files
+*.Rbuildignore
+*.Rinstignore 
