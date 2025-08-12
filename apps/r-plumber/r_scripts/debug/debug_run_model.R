@@ -53,32 +53,29 @@ run_model_locally <- function(file_data, parameters) {
       cli::cli_h2("Processed data frame (lowercase columns):")
       cli::cli_code(capture.output(print(head(df))))
 
+      # Automatically rename columns based on position rather than names
       # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
-      # Map column names to expected names (after lowercase conversion)
-      name_map <- c(
-        "effect" = "bs",
-        "se" = "sebs",
-        "n_obs" = "Ns",
-        "ns" = "Ns",
-        "study_id" = "study_id"
-      )
+      # We rename them based on their position in the data frame, regardless of original names
+      n_cols <- ncol(df)
 
-      # Rename columns using the mapping
-      old_names <- names(df)
-      matched_old_names <- intersect(old_names, names(name_map))
-      names(df)[match(matched_old_names, names(df))] <- name_map[matched_old_names]
+      if (n_cols < 3 || n_cols > 4) {
+        cli::cli_abort(paste("Data must have exactly 3 or 4 columns. Found", n_cols, "columns."))
+      }
 
-      # Debug: Print after renaming
-      cli::cli_h2("Data frame after renaming:")
+      # Create new column names based on position
+      new_colnames <- c("bs", "sebs", "Ns")
+      if (n_cols == 4) {
+        new_colnames <- c(new_colnames, "study_id")
+      }
+
+      # Rename columns by position
+      colnames(df) <- new_colnames
+
+      # Debug: Print after renaming by position
+      cli::cli_h2("Data frame after renaming by position:")
       cli::cli_code(capture.output(print(head(df))))
 
-      # Ensure we have the required columns in the correct order
-      required_cols <- c("bs", "sebs", "Ns")
-      missing_cols <- setdiff(required_cols, names(df))
-
-      if (length(missing_cols) > 0) {
-        cli::cli_abort(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
-      }
+      # Columns are now guaranteed to be in the correct order after renaming by position
 
       numeric_cols <- c("bs", "sebs", "Ns")
       for (col in numeric_cols) {
@@ -87,12 +84,8 @@ run_model_locally <- function(file_data, parameters) {
         }
       }
 
-      # Reorder columns to match MAIVE expectations: bs, sebs, Ns, study_id
-      if ("study_id" %in% names(df)) {
-        df <- df[, c("bs", "sebs", "Ns", "study_id"), drop = FALSE]
-      } else {
-        df <- df[, c("bs", "sebs", "Ns"), drop = FALSE]
-      }
+      # Columns are already in the correct order after renaming by position
+      # No need to reorder - they're already: bs, sebs, Ns, study_id (if present)
 
       df <- df[rowSums(is.na(df)) != ncol(df), ] # Drop rows with all NAs
 

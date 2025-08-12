@@ -62,35 +62,26 @@ function(file_data, parameters) {
         cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
       }
 
-      # MAIVE expects columns in this exact order: bs, sebs, Ns, study_id (optional)
-      # Map column names to expected names (after lowercase conversion)
-      name_map <- c(
-        "effect" = "bs",
-        "se" = "sebs",
-        "n_obs" = "Ns",
-        "ns" = "Ns",
-        "study_id" = "study_id"
-      )
-
-      # Rename columns using the mapping
-      old_names <- names(df)
-      matched_old_names <- intersect(old_names, names(name_map))
-      names(df)[match(matched_old_names, names(df))] <- name_map[matched_old_names]
-
-      if (SHOULD_PRINT_DF_AFTER_RENAME) {
-        cli::cli_h2("Data frame after renaming:")
-        cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
-      }
-
-      # Ensure we have the required columns in the correct order
-      required_cols <- c("bs", "sebs", "Ns")
-      missing_cols <- setdiff(required_cols, names(df))
-
-      if (length(missing_cols) > 0) {
+      n_cols <- ncol(df)
+      if (n_cols < 3 || n_cols > 4) {
         return(list(
           error = TRUE,
-          message = paste("Missing required columns:", paste(missing_cols, collapse = ", "))
+          message = paste("Data must have exactly 3 or 4 columns. Found", n_cols, "columns.")
         ))
+      }
+
+      # Create new column names based on position
+      new_colnames <- c("bs", "sebs", "Ns")
+      if (n_cols == 4) {
+        new_colnames <- c(new_colnames, "study_id")
+      }
+
+      # Rename columns by position
+      colnames(df) <- new_colnames
+
+      if (SHOULD_PRINT_DF_AFTER_RENAME) {
+        cli::cli_h2("Data frame after renaming by position:")
+        cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
       }
 
       numeric_cols <- c("bs", "sebs", "Ns")
@@ -100,16 +91,8 @@ function(file_data, parameters) {
         }
       }
 
-      # Reorder columns to match MAIVE expectations: bs, sebs, Ns, study_id
-      if ("study_id" %in% names(df)) {
-        df <- df[, c("bs", "sebs", "Ns", "study_id"), drop = FALSE]
-      } else {
-        df <- df[, c("bs", "sebs", "Ns"), drop = FALSE]
-      }
+      df <- df[rowSums(is.na(df)) != ncol(df), ]
 
-      df <- df[rowSums(is.na(df)) != ncol(df), ] # Drop rows with all NAs
-
-      # Debug: Print final data frame
       cli::cli_h2("Final data frame for MAIVE:")
       cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
       cli::cli_text("\n")
