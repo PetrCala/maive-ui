@@ -21,7 +21,6 @@ function(file_data, parameters) {
   tryCatch(
     {
       # Static config
-      SHOULD_PRINT_PROCESSED_DF <- FALSE
       SHOULD_PRINT_DF_AFTER_RENAME <- FALSE
 
       # nolint start: undesirable_function_linter.
@@ -52,14 +51,6 @@ function(file_data, parameters) {
 
       if (nrow(df) < 4) {
         cli::cli_abort("Input data must have at least 4 observations.")
-      }
-
-      # Convert column names to lowercase for consistent processing
-      colnames(df) <- tolower(colnames(df))
-
-      if (SHOULD_PRINT_PROCESSED_DF) {
-        cli::cli_h2("Processed data frame (lowercase columns):")
-        cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
       }
 
       n_cols <- ncol(df)
