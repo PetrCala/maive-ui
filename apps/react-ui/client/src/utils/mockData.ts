@@ -10,9 +10,8 @@ const generateMockCSVFile = (): File => {
     max: CONST.MOCK_DATA_ROWS_MAX,
   });
 
-  // Create CSV content
-  const headers = ["effect", "se", "n_obs", "study_id"];
-  const csvRows = [headers.join(",")];
+  // Create CSV content - no headers, just data rows
+  const csvRows: string[] = [];
   const shouldUseNumericStudyIds = faker.datatype.boolean(0.5);
 
   // Ensure each study has at least 3 observations

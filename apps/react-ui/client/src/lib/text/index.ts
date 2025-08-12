@@ -12,22 +12,24 @@ const TEXT = {
     requirements: {
       fileFormat:
         "The file must be in **.xlsx**, **.xls**, or **.csv** format.",
-      firstRowHeaders: "The **first row** should contain column headers.",
-      minimumRows:
-        "The file must contain at least 4 rows of data (excluding headers).",
-      requiredColumns: "Required columns: **effect**, **se**, **n_obs**.",
-      optionalColumns: "Optional columns: **study_id**.",
+      columnOrder:
+        "**Column order determines what each column represents** - headers are optional.",
+      requiredColumns:
+        "**First 3 columns** (in order): effect estimates, standard errors, number of observations.",
+      optionalColumns: "**4th column (optional)**: study ID.",
       noAdditionalColumns: "**No additional columns** are allowed.",
       effectColumn:
-        "The **effect** column represents the effect estimate. It must contain only numbers.",
+        "The **1st column** represents effect estimates. It must contain only numbers.",
       seColumn:
-        "The **se** column represents the standard error. It must contain only numbers.",
+        "The **2nd column** represents standard errors. It must contain only numbers.",
       nObsColumn:
-        "The **n_obs** column represents the number of observations. It must contain only numbers.",
+        "The **3rd column** represents the number of observations. It must contain only numbers.",
       studyIdColumn:
-        "The **study_id** column represents the study ID. It can contain strings or numbers.",
+        "The **4th column** (if present) represents study IDs. It can contain strings or numbers.",
+      minimumRows:
+        "The file must contain at least 4 rows of data (excluding headers if present).",
       minimumObservations:
-        "If the **study_id** column is present, the number of rows must be larger than the number of unique study_id plus 3 to ensure enough degrees of freedom for distribution functions.",
+        "If a study ID column is present, the number of rows must be larger than the number of unique study IDs plus 3 to ensure enough degrees of freedom for distribution functions.",
     },
   },
   model: {
