@@ -147,7 +147,7 @@ const TEXT = {
     funnelPlot: {
       title: "Funnel Plot",
       tooltip:
-        "Scatter of MAIVE-adjusted effect sizes against fitted precision; used to visualise heterogeneity and detect residual publication bias.",
+        "Scatter of MAIVE-adjusted effect sizes against fitted precision; used to visualise heterogeneity and detect residual publication bias. The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing MAIVE estimate coefficients and dotted lines showing 95% confidence intervals for the estimate.",
     },
   },
   maiveModal: {

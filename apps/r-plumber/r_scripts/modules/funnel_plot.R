@@ -15,15 +15,15 @@ get_funnel_plot_opts <- function() {
     # Legend options
     effect_shades = c("white", "black"),
     effect_pch = c(21, 19), # 21 is hollow circle, 19 is filled circle
-    ci_shades = c("white", "gray55", "gray75"),
-    ci_pch = c(22, 22, 22),
+    maive_shades = c("black", "black"),
+    maive_pch = c(NA, NA), # NA for lines, will be overridden in legend
     ci_levels = c(90, 95, 99),
+    ci_shades = c("white", "gray55", "gray75"),
     legend_texts = c(
       "Base effect",
       "Adjusted effect",
-      "90% CI Region",
-      "95% CI Region",
-      "99% CI Region"
+      "MAIVE estimate",
+      "95% CI bounds"
     ),
     pt_cex = 2,
     legend_inset = 0.01,
@@ -129,10 +129,12 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   legend(
     funnel_opts$legend_position, # position
     legend = funnel_opts$legend_texts,
-    pch = c(funnel_opts$effect_pch, funnel_opts$ci_pch),
-    col = funnel_opts$text_color,
-    pt.bg = c(funnel_opts$effect_shades, funnel_opts$ci_shades),
+    pch = c(funnel_opts$effect_pch, funnel_opts$maive_pch),
+    col = c(rep(funnel_opts$text_color, 2), "black", "black"),
+    pt.bg = c(funnel_opts$effect_shades, funnel_opts$maive_shades),
     pt.cex = funnel_opts$pt_cex, # make the legend symbols bigger
+    lty = c(rep(NA, 2), 1, 2), # solid line for MAIVE estimate, dashed for CI bounds
+    lwd = c(rep(NA, 2), 2, 1), # line width for MAIVE estimate and CI bounds
     bg = funnel_opts$legend_bg,
     bty = funnel_opts$legend_bty, # box type
     inset = funnel_opts$legend_inset
