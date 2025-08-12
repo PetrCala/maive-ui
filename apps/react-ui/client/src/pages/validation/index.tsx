@@ -73,14 +73,42 @@ export default function ValidationPage() {
 
       // Convert data to preview format
       const headers = Object.keys(data.data[0] || {});
-      const previewData = [
-        headers,
-        ...data.data
-          .slice(0, 4)
-          .map((row: any) =>
-            headers.map((header: string) => String(row[header] || "")),
-          ),
-      ];
+      const hasHeaders =
+        headers.length > 0 &&
+        headers.some(
+          (header) =>
+            header !== undefined && header !== null && isNaN(Number(header)),
+        );
+
+      let previewData: string[][];
+
+      if (hasHeaders) {
+        // File has headers, use them
+        previewData = [
+          headers,
+          ...data.data
+            .slice(0, 4)
+            .map((row: any) =>
+              headers.map((header: string) => String(row[header] || "")),
+            ),
+        ];
+      } else {
+        // File has no headers, use positional column names
+        const columnNames = ["effect", "se", "n_obs"];
+        if (data.data[0] && Object.keys(data.data[0]).length === 4) {
+          columnNames.push("study_id");
+        }
+
+        previewData = [
+          columnNames,
+          ...data.data
+            .slice(0, 4)
+            .map((row: any) =>
+              columnNames.map((_, index) => String(row[index] || "")),
+            ),
+        ];
+      }
+
       setPreview(previewData);
 
       // Validate the data
@@ -109,137 +137,92 @@ export default function ValidationPage() {
   ): ValidationResult => {
     const messages: ValidationMessage[] = [];
     const headers = previewData[0] || [];
-    const requiredColumns = ["effect", "se", "n_obs"];
-    const optionalColumns = ["study_id"];
+    const hasHeaders =
+      headers.length > 0 &&
+      headers.some(
+        (header) =>
+          header !== undefined && header !== null && isNaN(Number(header)),
+      );
 
     // Check if file has data
     if (fullData.length < 4) {
       messages.push({
         type: "error",
         message:
-          "The file must contain at least 4 rows of data (excluding headers).",
+          "The file must contain at least 4 rows of data (excluding headers if present).",
       });
     }
 
-    // Check if file has headers
-    if (headers.length === 0) {
+    // Check column count
+    const columnCount = hasHeaders ? headers.length : fullData[0]?.length || 0;
+    if (columnCount < 3 || columnCount > 4) {
       messages.push({
         type: "error",
-        message: "The file must have column headers in the first row.",
+        message: `The file must have exactly 3 or 4 columns. Found ${columnCount} columns.`,
       });
     }
 
-    const minimumColumns = requiredColumns.length;
-    const maximumColumns = minimumColumns + optionalColumns.length;
-    if (headers.length < minimumColumns || headers.length > maximumColumns) {
-      messages.push({
-        type: "error",
-        message: `The file must have between ${minimumColumns} and ${maximumColumns} columns (${requiredColumns.join(
-          ", ",
-        )}${
-          optionalColumns.length > 0
-            ? ", and optionally " + optionalColumns.join(", ")
-            : ""
-        }).`,
-      });
-    }
+    // Determine column mapping based on order
+    const columnMapping = {
+      effect: 0,
+      se: 1,
+      n_obs: 2,
+      study_id: columnCount === 4 ? 3 : undefined,
+    };
 
-    // Check for required columns (basic validation)
-    const findMissingColumns = (columns: string[], headers: string[]) =>
-      columns.filter(
-        (col) =>
-          !headers.some((header) =>
-            header.toLowerCase().includes(col.toLowerCase()),
-          ),
-      );
-
-    const missingColumns = findMissingColumns(requiredColumns, headers);
-    const missingOptionalColumns = findMissingColumns(optionalColumns, headers);
-
-    if (missingColumns.length > 0) {
-      messages.push({
-        type: "error",
-        message: `Missing required columns: ${missingColumns.join(
-          ", ",
-        )}. The file must contain columns for effect estimates, standard errors, and number of observations.`,
-      });
-    }
-
-    if (missingOptionalColumns.length > 0) {
-      messages.push({
-        type: "info",
-        message: `Missing optional columns: ${missingOptionalColumns.join(
-          ", ",
-        )}. This column is optional and will be ignored. You can still continue without it.`,
-      });
-    }
-
+    // Validate data types for each column
     const columnChecks = [
       {
         name: "effect",
-        index: headers.findIndex((header) =>
-          header.toLowerCase().includes("effect"),
-        ),
+        index: columnMapping.effect,
         errorMsg:
-          "The effect column contains non-numeric values. All effect estimates must be numbers.",
+          "The 1st column (effect estimates) contains non-numeric values. All effect estimates must be numbers.",
       },
       {
         name: "se",
-        index: headers.findIndex((header) =>
-          header.toLowerCase().includes("se"),
-        ),
+        index: columnMapping.se,
         errorMsg:
-          "The standard error column contains non-numeric values. All standard errors must be numbers.",
+          "The 2nd column (standard errors) contains non-numeric values. All standard errors must be numbers.",
       },
       {
         name: "n_obs",
-        index: headers.findIndex((header) =>
-          header.toLowerCase().includes("n_obs"),
-        ),
+        index: columnMapping.n_obs,
         errorMsg:
-          "The number of observations column contains non-numeric values. All number of observations must be numbers.",
+          "The 3rd column (number of observations) contains non-numeric values. All number of observations must be numbers.",
       },
       {
         name: "study_id",
-        index: headers.findIndex((header) =>
-          header.toLowerCase().includes("study_id"),
-        ),
+        index: columnMapping.study_id,
         errorMsg:
-          "The study ID column contains invalid values. Study IDs can be strings or numbers.",
+          "The 4th column (study ID) contains invalid values. Study IDs can be strings or numbers.",
         optional: true,
       },
     ];
 
-    // Only check required columns if all are present
-    const requiredColsPresent = columnChecks
-      .filter((col) => !col.optional)
-      .every((col) => col.index !== -1);
-
-    if (requiredColsPresent) {
-      columnChecks
-        .filter((col) => !col.optional)
-        .forEach((col) => {
-          const hasNonNumeric = fullData.some((row) => {
-            const value = row[headers[col.index]];
-            return (
-              value !== undefined && value !== null && isNaN(Number(value))
-            );
-          });
-          if (hasNonNumeric) {
-            messages.push({
-              type: "error",
-              message: col.errorMsg,
-            });
-          }
+    // Check data types for required columns
+    columnChecks
+      .filter((col) => !col.optional && col.index !== undefined)
+      .forEach((col) => {
+        const hasNonNumeric = fullData.some((row) => {
+          const value = hasHeaders ? row[headers[col.index!]] : row[col.index!];
+          return value !== undefined && value !== null && isNaN(Number(value));
         });
-    }
+        if (hasNonNumeric) {
+          messages.push({
+            type: "error",
+            message: col.errorMsg,
+          });
+        }
+      });
 
     // Check optional study_id column if present
     const studyIdCol = columnChecks.find((col) => col.name === "study_id");
-    if (studyIdCol && studyIdCol.index !== -1) {
+    if (studyIdCol && studyIdCol.index !== undefined) {
       // For study_id, we only check that values are not empty/null, not that they're numeric
       const hasInvalidValues = fullData.some((row) => {
-        const value = row[headers[studyIdCol.index]];
+        const value = hasHeaders
+          ? row[headers[studyIdCol.index!]]
+          : row[studyIdCol.index!];
         return value === undefined || value === null || value === "";
       });
       if (hasInvalidValues) {
@@ -251,11 +234,12 @@ export default function ValidationPage() {
     }
 
     // Check for negative standard errors
-    const seColIndex = columnChecks.find((col) => col.name === "se")?.index;
-    if (seColIndex !== -1) {
+    const seColIndex = columnMapping.se;
+    if (seColIndex !== undefined) {
       const hasNegativeSE = fullData.some((row) => {
-        const value =
-          seColIndex !== undefined ? Number(row[headers[seColIndex]]) : NaN;
+        const value = hasHeaders
+          ? Number(row[headers[seColIndex]])
+          : Number(row[seColIndex]);
         return !isNaN(value) && value < 0;
       });
 
@@ -269,11 +253,28 @@ export default function ValidationPage() {
     }
 
     // Check for missing values
-    const hasMissingValues = fullData.some((row) =>
-      Object.values(row).some(
-        (cell: unknown) => cell === undefined || cell === null || cell === "",
-      ),
-    );
+    const hasMissingValues = fullData.some((row) => {
+      if (hasHeaders) {
+        return Object.values(row).some(
+          (cell: unknown) => cell === undefined || cell === null || cell === "",
+        );
+      } else {
+        // For files without headers, check the first 3 columns (required)
+        for (let i = 0; i < 3; i++) {
+          if (row[i] === undefined || row[i] === null || row[i] === "") {
+            return true;
+          }
+        }
+        // Check 4th column if present
+        if (
+          columnCount === 4 &&
+          (row[3] === undefined || row[3] === null || row[3] === "")
+        ) {
+          return true;
+        }
+        return false;
+      }
+    });
 
     if (hasMissingValues) {
       messages.push({
@@ -283,15 +284,20 @@ export default function ValidationPage() {
       });
     }
 
-    if (studyIdCol && studyIdCol.index !== -1) {
+    // Check study_id constraint if present
+    if (columnMapping.study_id !== undefined) {
       const uniqueStudyIds = new Set(
-        fullData.map((row) => row[headers[studyIdCol.index]]),
+        fullData.map((row) =>
+          hasHeaders
+            ? row[headers[columnMapping.study_id!]]
+            : row[columnMapping.study_id!],
+        ),
       ).size;
       if (!(fullData.length >= uniqueStudyIds + 3)) {
         messages.push({
           type: "error",
           message:
-            "The number of rows must be larger than the number of unique study_id plus 3.",
+            "The number of rows must be larger than the number of unique study IDs plus 3.",
         });
       }
     }

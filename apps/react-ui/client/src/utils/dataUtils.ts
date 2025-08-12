@@ -33,19 +33,37 @@ export const processUploadedFile = async (
         const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
-        // Convert to structured data
-        const headers = (jsonData as any[])[0] ?? [];
-        const records = (jsonData as any[])
-          .slice(1) // skip header row
-          .map((row) =>
-            headers.reduce(
-              (obj: Record<string, any>, h: string, idx: number) => {
-                obj[h] = row[idx]; // map cell → corresponding header
-                return obj;
-              },
-              {} as Record<string, any>,
-            ),
-          );
+        // Check if first row looks like headers (contains non-numeric values)
+        const firstRow = (jsonData as any[])[0] ?? [];
+        const hasHeaders = firstRow.some(
+          (cell: any) =>
+            cell !== undefined && cell !== null && isNaN(Number(cell)),
+        );
+
+        let dataRows: any[];
+        let columnNames: string[];
+
+        if (hasHeaders) {
+          // Use the first row as headers
+          columnNames = firstRow.map((header: any) => String(header || ""));
+          dataRows = (jsonData as any[]).slice(1); // skip header row
+        } else {
+          // No headers, use positional column names
+          columnNames = ["effect", "se", "n_obs"];
+          if (firstRow.length === 4) {
+            columnNames.push("study_id");
+          }
+          dataRows = jsonData as any[];
+        }
+
+        // Convert to structured data using column order
+        const records = dataRows.map((row) => {
+          const obj: Record<string, any> = {};
+          columnNames.forEach((columnName, index) => {
+            obj[columnName] = row[index];
+          });
+          return obj;
+        });
 
         resolve({
           data: records,
