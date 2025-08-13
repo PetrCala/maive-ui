@@ -112,6 +112,9 @@ jobs:
           context: ./apps/${{ matrix.service }}
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ steps.imageTag.outputs.IMAGE_TAG }}
+          build-args: |
+            GITHUB_PAT=${{ secrets.ADMIN_TOKEN }}
+            GITHUB_USERNAME=${{ secrets.ADMIN_NAME }}
 
   plan:
     runs-on: ubuntu-latest

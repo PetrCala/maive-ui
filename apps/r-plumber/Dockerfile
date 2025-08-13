@@ -2,8 +2,18 @@
 # Source: https://github.com/rocker-org/ubuntu-lts
 FROM rocker/r-ver:4
 
+# Accept GitHub Personal Access Token as build argument
+ARG GITHUB_PAT
+ARG GITHUB_USERNAME
+
 # Set up source package repositories
 RUN echo 'options(repos = c(P3M = "https://packagemanager.posit.co/cran/__linux__/jammy/latest", CRAN = "https://cloud.r-project.org"))' >>"${R_HOME}/etc/Rprofile.site"
+
+# Configure GitHub authentication if token is provided
+RUN if [ -n "$GITHUB_PAT" ]; then \
+      echo "GITHUB_PAT=$GITHUB_PAT" >> /usr/local/lib/R/etc/Renviron.site && \
+      echo "GITHUB_USERNAME=$GITHUB_USERNAME" >> /usr/local/lib/R/etc/Renviron.site; \
+    fi
 
 # Rewrite non-arm URL platforms into arm platforms
 RUN /rocker_scripts/setup_R.sh
