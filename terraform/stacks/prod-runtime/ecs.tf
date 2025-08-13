@@ -41,7 +41,7 @@ resource "aws_ecs_task_definition" "ui" {
     ]
     logConfiguration = {
       logDriver = "awslogs",
-      options   = { awslogs-group = "/ecs/${var.project}/react-ui", awslogs-region = var.region, awslogs-stream-prefix = "ecs" }
+      options   = { awslogs-group = local.ui_log_group_name, awslogs-region = var.region, awslogs-stream-prefix = "ecs" }
     }
   }])
 }
@@ -105,7 +105,7 @@ resource "aws_ecs_task_definition" "r" {
     portMappings = [{ containerPort = local.r_port, protocol = "tcp" }]
     logConfiguration = {
       logDriver = "awslogs",
-      options   = { awslogs-group = "/ecs/${var.project}/r-plumber", awslogs-region = var.region, awslogs-stream-prefix = "ecs" }
+      options   = { awslogs-group = local.r_log_group_name, awslogs-region = var.region, awslogs-stream-prefix = "ecs" }
     }
   }])
 }

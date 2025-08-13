@@ -35,7 +35,7 @@ resource "aws_iam_role" "gha_terraform" {
           },
           StringEquals = {
             "token.actions.githubusercontent.com:iss" = "https://token.actions.githubusercontent.com"
-          }
+          },
           StringEquals = {
             "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
           }
@@ -70,7 +70,15 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "ec2:AllocateAddress",
           "ec2:CreateSecurityGroup",
           "ec2:*VpcEndpoint*",
-          "ec2:Describe*"
+          "ec2:Describe*",
+          "ec2:CreateTags",
+          "ec2:DeleteTags",
+          "ec2:AuthorizeSecurityGroupIngress",
+          "ec2:AuthorizeSecurityGroupEgress",
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:RevokeSecurityGroupEgress",
+          "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
+          "ec2:UpdateSecurityGroupRuleDescriptionsEgress"
         ],
         Resource : "*"
       },
@@ -140,6 +148,34 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
         Action : [
           "sts:AssumeRole",
           "sts:GetCallerIdentity"
+        ],
+        Resource : "*"
+      },
+      {
+        Sid : "ELBv2",
+        Effect : "Allow",
+        Action : [
+          "elasticloadbalancing:*"
+        ],
+        Resource : "*"
+      },
+      {
+        Sid : "WAFv2",
+        Effect : "Allow",
+        Action : [
+          "wafv2:*"
+        ],
+        Resource : "*"
+      },
+      {
+        Sid : "CloudWatchLogs",
+        Effect : "Allow",
+        Action : [
+          "logs:CreateLogGroup",
+          "logs:DeleteLogGroup",
+          "logs:DescribeLogGroups",
+          "logs:PutRetentionPolicy",
+          "logs:DeleteRetentionPolicy"
         ],
         Resource : "*"
       }
