@@ -23,13 +23,13 @@ variable "image_tag" {
 variable "ui_task_cpu" {
   type        = number
   description = "The CPU of the UI task"
-  default     = 512
+  default     = 256
 }
 
 variable "ui_task_mem" {
   type        = number
   description = "The memory of the UI task"
-  default     = 1024
+  default     = 512
 }
 
 variable "r_task_cpu" {
@@ -42,6 +42,12 @@ variable "r_task_mem" {
   type        = number
   description = "The memory of the R task"
   default     = 1024
+}
+
+variable "ui_desired_count" {
+  type        = number
+  description = "Number of UI tasks to run"
+  default     = 1
 }
 
 variable "certificate_arn" {

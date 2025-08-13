@@ -76,11 +76,11 @@ resource "aws_lb_listener" "r_http" {
   }
 }
 
-# WAF – simple rate-limit
+# WAF – Enhanced security rules
 resource "aws_wafv2_web_acl" "ui_acl" {
   name        = "${var.project}-ui-waf"
   scope       = "REGIONAL"
-  description = "Rate-limit public UI"
+  description = "Enhanced security for public UI"
   default_action {
     allow {}
   }
@@ -98,6 +98,63 @@ resource "aws_wafv2_web_acl" "ui_acl" {
       cloudwatch_metrics_enabled = true
       sampled_requests_enabled   = true
       metric_name                = "rateLimit"
+    }
+    action {
+      block {}
+    }
+  }
+
+  rule {
+    name     = "BlockSQLInjection"
+    priority = 2
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesSQLiRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      sampled_requests_enabled   = true
+      metric_name                = "sqlInjection"
+    }
+    action {
+      block {}
+    }
+  }
+
+  rule {
+    name     = "BlockXSS"
+    priority = 3
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAnonymousIpList"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      sampled_requests_enabled   = true
+      metric_name                = "xss"
+    }
+    action {
+      block {}
+    }
+  }
+
+  rule {
+    name     = "BlockAnonymousIP"
+    priority = 4
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesAnonymousIpList"
+        vendor_name = "AWS"
+      }
+    }
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      sampled_requests_enabled   = true
+      metric_name                = "anonymousIP"
     }
     action {
       block {}
