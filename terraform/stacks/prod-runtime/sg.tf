@@ -4,12 +4,20 @@ module "sg_ui_alb" {
   name        = "${var.project}-alb-ui"
   description = "Public ALB for UI"
   vpc_id      = local.vpc_id
-  ingress_with_cidr_blocks = [{
-    from_port   = local.ui_port,
-    to_port     = local.ui_port,
-    protocol    = "tcp",
-    cidr_blocks = "0.0.0.0/0"
-  }]
+  ingress_with_cidr_blocks = [
+    {
+      from_port   = 80,
+      to_port     = 80,
+      protocol    = "tcp",
+      cidr_blocks = "0.0.0.0/0"
+    },
+    {
+      from_port   = 443,
+      to_port     = 443,
+      protocol    = "tcp",
+      cidr_blocks = "0.0.0.0/0"
+    }
+  ]
   egress_with_cidr_blocks = [{
     from_port   = 0,
     to_port     = 0,
@@ -31,12 +39,12 @@ module "sg_ui_tasks" {
     source_security_group_id = module.sg_ui_alb.security_group_id
   }]
 
-  egress_with_cidr_blocks = [{
+  egress_with_source_security_group_id = [{
     # UI -> API internal ALB
-    from_port         = local.r_port
-    to_port           = local.r_port
-    protocol          = "tcp"
-    security_group_id = module.sg_r_alb.security_group_id
+    from_port                = local.r_port
+    to_port                  = local.r_port
+    protocol                 = "tcp"
+    source_security_group_id = module.sg_r_alb.security_group_id
   }]
 }
 

@@ -1,5 +1,3 @@
-# Disable public ALB for now
-
 # Public ALB for UI
 resource "aws_lb" "ui" {
   name               = "${var.project}-ui-alb"
@@ -25,6 +23,22 @@ resource "aws_lb_listener" "ui_http" {
   load_balancer_arn = aws_lb.ui.arn
   port              = 80
   protocol          = "HTTP"
+  default_action {
+    type = "redirect"
+    redirect {
+      port        = "443"
+      protocol    = "HTTPS"
+      status_code = "HTTP_301"
+    }
+  }
+}
+
+resource "aws_lb_listener" "ui_https" {
+  load_balancer_arn = aws_lb.ui.arn
+  port              = 443
+  protocol          = "HTTPS"
+  ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
+  certificate_arn   = var.certificate_arn
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.ui.arn
@@ -72,11 +86,11 @@ resource "aws_wafv2_web_acl" "ui_acl" {
   }
 
   rule {
-    name     = "RateLimit2K"
+    name     = "RateLimit1K"
     priority = 1
     statement {
       rate_based_statement {
-        limit              = 50 # 2000 # requests per 5 min
+        limit              = 1000 # requests per 5 min
         aggregate_key_type = "IP"
       }
     }
