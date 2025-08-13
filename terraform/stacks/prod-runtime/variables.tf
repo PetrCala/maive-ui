@@ -43,3 +43,9 @@ variable "r_task_mem" {
   description = "The memory of the R task"
   default     = 1024
 }
+
+variable "certificate_arn" {
+  type        = string
+  description = "ARN of the SSL certificate for HTTPS"
+  default     = ""
+}
