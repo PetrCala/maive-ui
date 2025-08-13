@@ -17,3 +17,5 @@ terraform import 'aws_cloudwatch_log_group.service["r-plumber"]' /ecs/$PROJECT_N
 
 # S3 Bucket
 terraform import aws_s3_bucket.data $PROJECT_NAME-user-data
+
+aws iam list-open-id-connect-providers --query 'OpenIDConnectProviderList[?contains(Arn, `token.actions.githubusercontent.com`)].Arn' --output text
