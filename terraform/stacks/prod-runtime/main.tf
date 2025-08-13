@@ -20,9 +20,17 @@ resource "aws_ecs_cluster" "this" {
 resource "aws_cloudwatch_log_group" "ui_logs" {
   name              = "/ecs/${var.project}/react-ui"
   retention_in_days = 7 # Reduced retention for cost savings
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
 
 resource "aws_cloudwatch_log_group" "r_logs" {
   name              = "/ecs/${var.project}/r-plumber"
   retention_in_days = 7 # Reduced retention for cost savings
+
+  lifecycle {
+    ignore_changes = [name]
+  }
 }
