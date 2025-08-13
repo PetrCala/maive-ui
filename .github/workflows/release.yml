@@ -134,6 +134,15 @@ jobs:
         run: |
           echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Set certificate ARN
+        id: certificateArn
+        run: |
+          if [ -n "${{ secrets.CERTIFICATE_ARN }}" ]; then
+            echo "CERTIFICATE_ARN=${{ secrets.CERTIFICATE_ARN }}" >> $GITHUB_OUTPUT
+          else
+            echo "CERTIFICATE_ARN=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Plan
         uses: gruntwork-io/terragrunt-action@v2
         env:
@@ -142,6 +151,7 @@ jobs:
           TF_VAR_project: ${{ env.PROJECT_NAME }}
           TF_VAR_email: ${{ secrets.ADMIN_EMAIL }}
           TF_VAR_image_tag: ${{ steps.imageTag.outputs.IMAGE_TAG }}
+          TF_VAR_certificate_arn: ${{ steps.certificateArn.outputs.CERTIFICATE_ARN }}
         with:
           tf_version: ${{ env.TF_VERSION }}
           tg_version: ${{ env.TG_VERSION }}
@@ -166,6 +176,16 @@ jobs:
         run: |
           echo "IMAGE_TAG=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+      - name: Set certificate ARN
+        id: certificateArn
+        run: |
+          # Set certificate ARN if provided, otherwise use empty string
+          if [ -n "${{ secrets.CERTIFICATE_ARN }}" ]; then
+            echo "CERTIFICATE_ARN=${{ secrets.CERTIFICATE_ARN }}" >> $GITHUB_OUTPUT
+          else
+            echo "CERTIFICATE_ARN=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Deploy
         uses: gruntwork-io/terragrunt-action@v2
         env:
@@ -174,6 +194,7 @@ jobs:
           TF_VAR_project: ${{ env.PROJECT_NAME }}
           TF_VAR_email: ${{ secrets.ADMIN_EMAIL }}
           TF_VAR_image_tag: ${{ steps.imageTag.outputs.IMAGE_TAG }}
+          TF_VAR_certificate_arn: ${{ steps.certificateArn.outputs.CERTIFICATE_ARN }}
         with:
           tf_version: ${{ env.TF_VERSION }}
           tg_version: ${{ env.TG_VERSION }}
