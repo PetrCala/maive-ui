@@ -52,6 +52,6 @@ variable "ui_desired_count" {
 
 variable "certificate_arn" {
   type        = string
-  description = "ARN of the SSL certificate for HTTPS"
+  description = "ARN of the SSL certificate for HTTPS. If empty, the ALB will use HTTP only (not recommended for production)"
   default     = ""
 }

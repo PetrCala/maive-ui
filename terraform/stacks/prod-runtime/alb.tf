@@ -33,12 +33,26 @@ resource "aws_lb_listener" "ui_http" {
   }
 }
 
+# HTTPS listener - only create if certificate is provided
 resource "aws_lb_listener" "ui_https" {
+  count             = var.certificate_arn != "" ? 1 : 0
   load_balancer_arn = aws_lb.ui.arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
   certificate_arn   = var.certificate_arn
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.ui.arn
+  }
+}
+
+# HTTP listener fallback when no certificate - forward directly to target group
+resource "aws_lb_listener" "ui_http_forward" {
+  count             = var.certificate_arn == "" ? 1 : 0
+  load_balancer_arn = aws_lb.ui.arn
+  port              = 80
+  protocol          = "HTTP"
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.ui.arn
@@ -128,7 +142,7 @@ resource "aws_wafv2_web_acl" "ui_acl" {
     priority = 3
     statement {
       managed_rule_group_statement {
-        name        = "AWSManagedRulesAnonymousIpList"
+        name        = "AWSManagedRulesXSSRuleSet"
         vendor_name = "AWS"
       }
     }

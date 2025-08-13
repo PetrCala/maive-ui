@@ -22,7 +22,8 @@ resource "aws_cloudwatch_log_group" "ui_logs" {
   retention_in_days = 7 # Reduced retention for cost savings
 
   lifecycle {
-    ignore_changes = [name]
+    ignore_changes  = [name]
+    prevent_destroy = false
   }
 }
 
@@ -31,6 +32,7 @@ resource "aws_cloudwatch_log_group" "r_logs" {
   retention_in_days = 7 # Reduced retention for cost savings
 
   lifecycle {
-    ignore_changes = [name]
+    ignore_changes  = [name]
+    prevent_destroy = false
   }
 }
