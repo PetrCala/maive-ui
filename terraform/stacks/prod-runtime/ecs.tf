@@ -22,31 +22,6 @@ resource "aws_iam_role_policy_attachment" "task_exec" {
   policy_arn = data.aws_iam_policy.ecs_task_execution.arn
 }
 
-# Allow tasks to read/write the user-data bucket
-resource "aws_iam_policy" "data_bucket_rw" {
-  name = "${var.project}-data-bucket-rw"
-  policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect   = "Allow",
-        Action   = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
-        Resource = "arn:aws:s3:::${data.terraform_remote_state.foundation.outputs.data_bucket_name}/*"
-      },
-      {
-        Effect   = "Allow",
-        Action   = ["s3:ListBucket"],
-        Resource = "arn:aws:s3:::${data.terraform_remote_state.foundation.outputs.data_bucket_name}"
-      }
-    ]
-  })
-}
-
-resource "aws_iam_role_policy_attachment" "data_bucket_rw_attach" {
-  role       = aws_iam_role.task_exec.name
-  policy_arn = aws_iam_policy.data_bucket_rw.arn
-}
-
 # ---------------- React UI ----------------
 resource "aws_ecs_task_definition" "ui" {
   family                   = "${var.project}-ui"
