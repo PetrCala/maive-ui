@@ -19,13 +19,13 @@ parse_environment_variables <- function() {
   if (is.na(r_host) || r_host == "") {
     cli::cli_alert_danger("R_HOST is missing or empty! This will cause connection issues.")
   } else {
-    cli::cli_alert_success("R_HOST is properly set to: {r_host}")
+    cli::cli_alert_success("R_HOST is set to: {r_host}")
   }
 
   if (is.na(r_port) || r_port <= 0) {
     cli::cli_alert_danger("R_PORT is missing, invalid, or <= 0! This will cause connection issues.")
   } else {
-    cli::cli_alert_success("R_PORT is properly set to: {r_port}")
+    cli::cli_alert_success("R_PORT is set to: {r_port}")
   }
 
   # Return the parsed values
