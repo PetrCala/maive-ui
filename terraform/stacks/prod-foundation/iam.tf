@@ -92,6 +92,14 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
         Resource : "*"
       },
       {
+        Sid : "ApplicationAutoScaling",
+        Effect : "Allow",
+        Action : [
+          "application-autoscaling:*"
+        ],
+        Resource : "*"
+      },
+      {
         Sid : "ECR",
         Effect : "Allow",
         Action : [
