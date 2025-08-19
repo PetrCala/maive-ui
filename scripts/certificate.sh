@@ -1,11 +1,17 @@
 DOMAIN="spuriousprecision.com"
-REGION="eu-central-1"
+
+AWS_REGION=$(aws configure get region)
+if [ -z "$AWS_REGION" ]; then
+  echo "AWS region is not configured. Please set the region and try again."
+  exit 1
+fi
+
 
 # Request certificate
 CERT_ARN=$(aws acm request-certificate \
   --domain-name $DOMAIN \
   --validation-method DNS \
-  --region $REGION \
+  --region $AWS_REGION \
   --query 'CertificateArn' \
   --output text)
 
