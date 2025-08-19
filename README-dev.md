@@ -11,6 +11,11 @@
 - [Deploying the application](#deploying-the-application)
   - [Initial deploy to cloud](#initial-deploy-to-cloud)
   - [Deploying the app stack](#deploying-the-app-stack)
+  - [Getting Service Access Links](#getting-service-access-links)
+    - [Quick Access Commands](#quick-access-commands)
+    - [Service URLs](#service-urls)
+    - [Example Output](#example-output)
+    - [Access Your Application](#access-your-application)
   - [Certificate Management](#certificate-management)
     - [Requesting a Certificate](#requesting-a-certificate)
     - [Certificate Validation](#certificate-validation)
@@ -56,6 +61,48 @@ Before the application stack can be deployed, you must first deploy the infra fo
 ## Deploying the app stack
 
 The applications are built and deployed automatically upno each pull request to the `release` branch. To release a new (or initial) version of the app, simply open a pull request against the `release` branch and follow the instructions.
+
+## Getting Service Access Links
+
+Once your infrastructure is deployed, you can easily get the URLs to access your services using the built-in commands.
+
+### Quick Access Commands
+
+```bash
+# Get all service URLs and status
+bun run cloud:status
+
+# Get just the UI frontend URL
+bun run cloud:ui-url
+
+# Get just the R backend URL (internal only)
+bun run cloud:r-url
+```
+
+### Service URLs
+
+After running `bun run cloud:status`, you'll see:
+
+- **Frontend (React UI)**: `http://<ui-alb-dns-name>` - Public access
+- **Backend (R Plumber)**: `http://<r-alb-dns-name>` - Internal access only
+- **Monitoring Dashboard**: CloudWatch dashboard URL
+
+### Example Output
+
+```bash
+$ bun run cloud:status
+monitoring_dashboard_url = "https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1#dashboards:name=maive-dashboard"
+r_alb_dns_name = "internal-maive-r-alb-9379613.eu-central-1.elb.amazonaws.com"
+ui_alb_dns_name = "maive-ui-alb-1455931013.eu-central-1.elb.amazonaws.com"
+```
+
+### Access Your Application
+
+1. **Open your browser** and navigate to the UI URL
+2. **Use the R backend URL** for internal API calls
+3. **Monitor performance** via the CloudWatch dashboard
+
+**Note**: The R backend is internal-only and cannot be accessed directly from the internet. It's designed to be called by the frontend application.
 
 ## Certificate Management
 
