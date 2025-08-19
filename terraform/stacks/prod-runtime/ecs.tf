@@ -118,7 +118,7 @@ resource "aws_ecs_service" "r" {
   name            = "${var.project}-r-plumber"
   cluster         = aws_ecs_cluster.this.id
   task_definition = aws_ecs_task_definition.r.arn
-  desired_count   = 1
+  desired_count   = var.r_desired_count
   launch_type     = "FARGATE"
   network_configuration {
     subnets          = local.private_subnets
