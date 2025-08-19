@@ -14,11 +14,18 @@ NC='\033[0m' # No Color
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=$(aws configure get region)
 
-# Function to check if AWS credentials are configured
-check_aws_credentials() {
+# Function to check if required tools are available
+check_prerequisites() {
+  # Check AWS credentials
   if ! aws sts get-caller-identity &>/dev/null; then
     echo -e "${RED}Error: AWS credentials not configured${NC}"
     exit 1
+  fi
+  
+  # Check if jq is available for JSON parsing
+  if ! command -v jq &>/dev/null; then
+    echo -e "${YELLOW}Warning: jq is not installed. Using fallback method for security group processing.${NC}"
+    echo -e "${YELLOW}Consider installing jq for better security group handling: brew install jq (macOS) or apt-get install jq (Ubuntu)${NC}"
   fi
 }
 
@@ -218,49 +225,62 @@ cleanup_security_groups() {
   
   echo -e "${BLUE}Cleaning up Security Groups for VPC ${vpc_id}...${NC}"
   
-  local sgs
-  sgs=$(aws ec2 describe-security-groups \
+  # Get all security groups in the VPC
+  local all_sgs
+  all_sgs=$(aws ec2 describe-security-groups \
     --filters "Name=vpc-id,Values=${vpc_id}" \
-    --query 'SecurityGroups[?GroupName!=default].GroupId' \
-    --output text \
-    --region "$AWS_REGION" 2>/dev/null || echo "")
+    --query 'SecurityGroups[].{GroupId:GroupId,GroupName:GroupName,IsDefault:GroupName==`default`}' \
+    --output json \
+    --region "$AWS_REGION" 2>/dev/null || echo "[]")
   
-  if [[ -n "$sgs" ]]; then
-    for sg_id in $sgs; do
-      echo "  Processing Security Group: ${sg_id}"
-      
-      # Check if security group is attached to any resources
-      local attached_resources
-      attached_resources=$(aws ec2 describe-network-interfaces \
-        --filters "Name=group-id,Values=${sg_id}" \
-        --query 'NetworkInterfaces[0].NetworkInterfaceId' \
-        --output text \
-        --region "$AWS_REGION" 2>/dev/null || echo "")
-      
-      if [[ "$attached_resources" != "None" && -n "$attached_resources" ]]; then
-        echo "    Security Group ${sg_id} is attached to resources, skipping for now"
+  # Process each security group
+  if command -v jq &>/dev/null; then
+    # Use jq for proper JSON parsing
+    echo "$all_sgs" | jq -r '.[] | "\(.GroupId) \(.GroupName) \(.IsDefault)"' 2>/dev/null | while read -r sg_id sg_name is_default; do
+      if [[ -z "$sg_id" ]]; then
         continue
       fi
       
-      # Check for inbound/outbound rules that reference this security group
-      local inbound_rules
-      inbound_rules=$(aws ec2 describe-security-groups \
-        --group-ids "$sg_id" \
-        --query 'SecurityGroups[0].IpPermissions[?UserIdGroupPairs[0].GroupId!=null].UserIdGroupPairs[0].GroupId' \
-        --output text \
-        --region "$AWS_REGION" 2>/dev/null || echo "")
-      
-      if [[ "$inbound_rules" != "None" && -n "$inbound_rules" ]]; then
-        echo "    Security Group ${sg_id} has inbound rules, removing them first"
-        aws ec2 revoke-security-group-ingress \
-          --group-id "$sg_id" \
-          --protocol all \
-          --port -1 \
-          --source-group "$sg_id" \
-          --region "$AWS_REGION" >/dev/null 2>&1 || echo "    Warning: Could not remove inbound rules"
+      if [[ "$is_default" == "true" ]]; then
+        echo "  Skipping default Security Group: ${sg_id} (${sg_name})"
+        echo "    Default security groups cannot be deleted and will be removed with the VPC"
+        continue
       fi
-      
-      # Now try to delete the security group
+    
+    echo "  Processing Security Group: ${sg_id} (${sg_name})"
+    
+    # Check if security group is attached to any resources
+    local attached_resources
+    attached_resources=$(aws ec2 describe-network-interfaces \
+      --filters "Name=group-id,Values=${sg_id}" \
+      --query 'NetworkInterfaces[0].NetworkInterfaceId' \
+      --output text \
+      --region "$AWS_REGION" 2>/dev/null || echo "")
+    
+    if [[ "$attached_resources" != "None" && -n "$attached_resources" ]]; then
+      echo "    Security Group ${sg_id} is attached to resources, skipping for now"
+      continue
+    fi
+    
+    # Check for inbound/outbound rules that reference this security group
+    local inbound_rules
+    inbound_rules=$(aws ec2 describe-security-groups \
+      --group-ids "$sg_id" \
+      --query 'SecurityGroups[0].IpPermissions[?UserIdGroupPairs[0].GroupId!=null].UserIdGroupPairs[0].GroupId' \
+      --output text \
+      --region "$AWS_REGION" 2>/dev/null || echo "")
+    
+    if [[ "$inbound_rules" != "None" && -n "$inbound_rules" ]]; then
+      echo "    Security Group ${sg_id} has inbound rules, removing them first"
+      aws ec2 revoke-security-group-ingress \
+        --group-id "$sg_id" \
+        --protocol all \
+        --port -1 \
+        --source-group "$sg_id" \
+        --region "$AWS_REGION" >/dev/null 2>&1 || echo "    Warning: Could not remove inbound rules"
+    fi
+    
+          # Now try to delete the security group
       echo "    Deleting Security Group: ${sg_id}"
       aws ec2 delete-security-group --group-id "$sg_id" --region "$AWS_REGION" >/dev/null 2>&1 || {
         echo -e "${RED}    Failed to delete Security Group ${sg_id}${NC}"
@@ -268,9 +288,30 @@ cleanup_security_groups() {
       }
     done
   else
-    echo "  No custom Security Groups found"
+    # Fallback method without jq - just try to delete non-default security groups
+    echo "  Using fallback method (jq not available)"
+    local sgs
+    sgs=$(aws ec2 describe-security-groups \
+      --filters "Name=vpc-id,Values=${vpc_id}" \
+      --query 'SecurityGroups[?GroupName!=`default`].GroupId' \
+      --output text \
+      --region "$AWS_REGION" 2>/dev/null || echo "")
+    
+    if [[ -n "$sgs" ]]; then
+      for sg_id in $sgs; do
+        echo "  Processing Security Group: ${sg_id}"
+        echo "    Deleting Security Group: ${sg_id}"
+        aws ec2 delete-security-group --group-id "$sg_id" --region "$AWS_REGION" >/dev/null 2>&1 || {
+          echo -e "${RED}    Failed to delete Security Group ${sg_id}${NC}"
+        }
+      done
+    else
+      echo "  No custom Security Groups found"
+    fi
   fi
-}
+  
+  echo "  Security group cleanup completed"
+  }
 
 # Function to cleanup Route Tables
 cleanup_route_tables() {
@@ -480,7 +521,7 @@ main() {
   echo -e "${YELLOW}Starting VPC cleanup for project: ${PROJECT_NAME}${NC}"
   
   # Check prerequisites
-  check_aws_credentials
+  check_prerequisites
   
   # Confirm with user
   read -p "This will clean up ALL VPC resources for project ${PROJECT_NAME}. Are you sure? (y/N) " -n 1 -r
