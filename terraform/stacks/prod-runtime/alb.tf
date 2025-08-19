@@ -19,7 +19,9 @@ resource "aws_lb_target_group" "ui" {
   }
 }
 
+# HTTP listener - redirect to HTTPS when certificate exists, forward when it doesn't
 resource "aws_lb_listener" "ui_http" {
+  count             = var.certificate_arn != "" ? 1 : 0
   load_balancer_arn = aws_lb.ui.arn
   port              = 80
   protocol          = "HTTP"
@@ -53,7 +55,6 @@ resource "aws_lb_listener" "ui_http_forward" {
   load_balancer_arn = aws_lb.ui.arn
   port              = 80
   protocol          = "HTTP"
-  depends_on        = [aws_lb.ui]
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.ui.arn
