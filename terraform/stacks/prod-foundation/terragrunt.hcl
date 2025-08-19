@@ -24,11 +24,11 @@ remote_state {
   }
 
   config = {
-    bucket = local.tfstate_name
-    key = local.key
-    region = local.region
-    use_lockfile = true
-    encrypt = true
+    bucket         = local.tfstate_name
+    key            = local.key
+    region         = local.region
+    encrypt        = true
+    dynamodb_table = "${local.project}-tf-locks"
   }
 }
 
