@@ -11,5 +11,6 @@ RUN npm run build
 FROM node:21-alpine
 WORKDIR /app
 COPY --from=builder /app ./
+COPY entrypoint.sh ./
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+ENTRYPOINT ["./entrypoint.sh"]
