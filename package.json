@@ -39,7 +39,8 @@
 		"release": "./scripts/openPR.sh --release",
 		"openPR": "./scripts/openPR.sh",
 		"test-quarterly": "./scripts/test-quarterly-release.sh",
-		"mergePR": "gh pr merge --rebase --delete-branch",
+		"mergePR": "./scripts/mergePR.sh",
+		"mergePR:admin": "./scripts/mergePR.sh --admin",
 		"submodule:sync": "./scripts/sync-maive-submodule.sh"
 	},
 	"dependencies": {

@@ -354,6 +354,59 @@ To open the release PR automatically, call `npm run release`, and optionally pas
 
 As admin, can also close the PRs automatically using `npm run mergePR`.
 
+## Enhanced PR Merging with `mergePR`
+
+The `mergePR` command has been enhanced to intelligently handle release workflows and provide better visibility into the merging process.
+
+### Basic Usage
+
+```bash
+# Merge a specific PR by number
+bun run mergePR 123
+
+# Merge the current branch's PR (auto-detected)
+bun run mergePR
+
+# Use admin privileges (original behavior)
+bun run mergePR:admin
+```
+
+### Advanced Options
+
+```bash
+# Skip waiting for release workflow completion
+bun run mergePR --no-wait-release 123
+
+# Show help
+bun run mergePR --help
+```
+
+### How It Works
+
+1. **PR Detection**: Automatically detects if you're on a feature branch and finds the associated PR
+2. **Smart Merging**: Checks for merge conflicts and requirements before merging
+3. **Release Monitoring**: For PRs with the `release` label, automatically monitors the release workflow
+4. **Version Tracking**: Waits for version updates to complete before finishing
+5. **Workflow Status**: Monitors GitHub Actions workflow status for success/failure
+
+### Release Workflow Integration
+
+When merging a release PR:
+
+- The script waits for the `bumpVersion` job to complete
+- Monitors for version changes in `package.json`
+- Tracks workflow completion status
+- Provides real-time progress updates
+- Times out after 5 minutes with helpful error messages
+
+### Benefits
+
+- **Automated**: No need to manually check workflow status
+- **Intelligent**: Only waits for release workflows when necessary
+- **Robust**: Handles edge cases and provides clear error messages
+- **Backward Compatible**: Original `--admin` behavior preserved
+- **Future-Proof**: Monitors version updates rather than specific workflow steps
+
 # Commit message formatting
 
 This project uses conventional commit messages to maintain a clean and consistent git history. All commit messages must follow the conventional commit format:
