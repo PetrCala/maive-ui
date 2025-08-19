@@ -1,24 +1,10 @@
-import { httpPost } from "../utils/http";
-import { getDefaultApiConfig } from "../utils/config";
 import type { ModelRequest, ModelResponse, ModelParameters } from "../types";
 
 /**
  * Service for model-related API operations
+ * This service calls our Next.js API routes, which then make server-side calls to the R-plumber service
  */
 export class ModelService {
-  private config: ReturnType<typeof getDefaultApiConfig> | null = null;
-
-  /**
-   * Get the API configuration, initializing it if needed
-   * @returns API configuration
-   */
-  private getConfig() {
-    if (!this.config) {
-      this.config = getDefaultApiConfig();
-    }
-    return this.config;
-  }
-
   /**
    * Run a model with the given data and parameters
    * @param data - The data to process
@@ -31,32 +17,43 @@ export class ModelService {
     parameters: ModelParameters,
     abortController?: AbortController,
   ): Promise<ModelResponse> {
-    const requestData: ModelRequest = {
-      file_data: JSON.stringify(data),
-      parameters: JSON.stringify(parameters),
+    const requestData = {
+      data,
+      parameters,
     };
 
-    const config = this.getConfig();
+    const controller = abortController || new AbortController();
 
-    return httpPost<ModelResponse>(
-      `${config.baseUrl}/run-model/`,
-      requestData,
-      config,
-    );
-  }
+    try {
+      const response = await fetch("/api/run-model", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+        signal: controller.signal,
+      });
 
-  /**
-   * Update the API configuration
-   * @param config - New API configuration
-   */
-  updateConfig(config: Partial<ReturnType<typeof getDefaultApiConfig>>) {
-    if (this.config) {
-      this.config = { ...this.config, ...config };
-    } else {
-      this.config = { ...getDefaultApiConfig(), ...config };
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `HTTP error! status: ${response.status}`,
+        );
+      }
+
+      const result: ModelResponse = await response.json();
+      return result;
+    } catch (error: any) {
+      if (error.name === "AbortError") {
+        throw error;
+      }
+
+      // Re-throw with more context
+      throw new Error(
+        `Failed to run model: ${error.message || "Unknown error"}`,
+      );
     }
   }
 }
 
-// Export a singleton instance
 export const modelService = new ModelService();
