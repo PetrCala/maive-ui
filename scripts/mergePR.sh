@@ -177,6 +177,7 @@ if [[ "$HAS_RELEASE_LABEL" == "release" ]]; then
   
 else
   info "This is not a release PR. No further action needed."
+  exit 0
 fi
 
 # Function to wait for version update
