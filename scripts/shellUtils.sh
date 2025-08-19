@@ -40,6 +40,10 @@ function info {
   echo "$BLUE$1$RESET"
 }
 
+function warning {
+  echo "⚠️ $YELLOW$1$RESET"
+}
+
 function title {
   printf "\n%s%s%s\n" "$TITLE" "$1" "$RESET"
 }
