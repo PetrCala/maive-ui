@@ -4,7 +4,7 @@ locals {
   project=get_env("TF_VAR_project")
   email=get_env("TF_VAR_email")
   tfstate_name="${local.project}-tf-state"
-  key = "${local.project}/prod-foundation.tfstate"
+  key = "prod-foundation.tfstate"
 }
 
 inputs = {
