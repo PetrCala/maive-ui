@@ -127,3 +127,168 @@ resource "aws_ecs_service" "r" {
   }
   enable_execute_command = true
 }
+
+# R Service Monitoring and Alarms
+resource "aws_cloudwatch_metric_alarm" "r_cpu_high" {
+  alarm_name          = "${var.project}-r-cpu-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "80"
+  alarm_description   = "R service CPU usage is consistently high (>80% for 10 minutes)"
+  alarm_actions       = []
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.this.name
+    ServiceName = aws_ecs_service.r.name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "r_cpu_critical" {
+  alarm_name          = "${var.project}-r-cpu-critical"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "CPUUtilization"
+  namespace           = "AWS/ECS"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "95"
+  alarm_description   = "R service CPU usage is critically high (>95% for 5 minutes)"
+  alarm_actions       = []
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.this.name
+    ServiceName = aws_ecs_service.r.name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "r_memory_high" {
+  alarm_name          = "${var.project}-r-memory-high"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "2"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "85"
+  alarm_description   = "R service memory usage is high (>85% for 10 minutes)"
+  alarm_actions       = []
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.this.name
+    ServiceName = aws_ecs_service.r.name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "r_memory_critical" {
+  alarm_name          = "${var.project}-r-memory-critical"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "MemoryUtilization"
+  namespace           = "AWS/ECS"
+  period              = "300"
+  statistic           = "Average"
+  threshold           = "95"
+  alarm_description   = "R service memory usage is critically high (>95% for 5 minutes)"
+  alarm_actions       = []
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.this.name
+    ServiceName = aws_ecs_service.r.name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "r_running_tasks" {
+  alarm_name          = "${var.project}-r-running-tasks"
+  comparison_operator = "LessThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "RunningTaskCount"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "1"
+  alarm_description   = "R service has no running tasks"
+  alarm_actions       = []
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.this.name
+    ServiceName = aws_ecs_service.r.name
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "r_pending_tasks" {
+  alarm_name          = "${var.project}-r-pending-tasks"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "PendingTaskCount"
+  namespace           = "AWS/ECS"
+  period              = "60"
+  statistic           = "Average"
+  threshold           = "0"
+  alarm_description   = "R service has pending tasks (indicates resource constraints)"
+  alarm_actions       = []
+
+  dimensions = {
+    ClusterName = aws_ecs_cluster.this.name
+    ServiceName = aws_ecs_service.r.name
+  }
+}
+
+# R Service Dashboard
+resource "aws_cloudwatch_dashboard" "r_service" {
+  dashboard_name = "${var.project}-r-service-dashboard"
+
+  dashboard_body = jsonencode({
+    widgets = [
+      {
+        type   = "metric"
+        x      = 0
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            ["AWS/ECS", "CPUUtilization", "ClusterName", aws_ecs_cluster.this.name, "ServiceName", aws_ecs_service.r.name],
+            [".", "MemoryUtilization", ".", ".", ".", "."]
+          ]
+          period = 300
+          stat   = "Average"
+          region = var.region
+          title  = "R Service Resource Utilization"
+        }
+      },
+      {
+        type   = "metric"
+        x      = 12
+        y      = 0
+        width  = 12
+        height = 6
+        properties = {
+          metrics = [
+            ["AWS/ECS", "RunningTaskCount", "ClusterName", aws_ecs_cluster.this.name, "ServiceName", aws_ecs_service.r.name],
+            [".", "PendingTaskCount", ".", ".", ".", "."]
+          ]
+          period = 60
+          stat   = "Average"
+          region = var.region
+          title  = "R Service Task Status"
+        }
+      },
+      {
+        type   = "log"
+        x      = 0
+        y      = 6
+        width  = 24
+        height = 6
+        properties = {
+          query  = "SOURCE '${local.r_log_group_name}'\n| fields @timestamp, @message\n| filter @message like /ERROR|WARN|CRITICAL/\n| sort @timestamp desc\n| limit 100"
+          region = var.region
+          title  = "R Service Error Logs"
+        }
+      }
+    ]
+  })
+}
