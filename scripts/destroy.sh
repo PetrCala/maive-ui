@@ -89,6 +89,9 @@ clear_bootstrap_resources() {
 
 # Parse command line arguments
 RUN_VPC_CLEANUP=false
+DESTROY_FOUNDATION=true
+DESTROY_RUNTIME=true
+CLEAR_BOOTSTRAP=true
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -96,16 +99,40 @@ while [[ $# -gt 0 ]]; do
       RUN_VPC_CLEANUP=true
       shift
       ;;
+    --foundation-only)
+      DESTROY_FOUNDATION=true
+      DESTROY_RUNTIME=false
+      CLEAR_BOOTSTRAP=false
+      shift
+      ;;
+    --runtime-only)
+      DESTROY_FOUNDATION=false
+      DESTROY_RUNTIME=true
+      CLEAR_BOOTSTRAP=false
+      shift
+      ;;
+    --keep-bootstrap)
+      CLEAR_BOOTSTRAP=false
+      shift
+      ;;
     --help|-h)
       echo "Usage: $0 [OPTIONS]"
       echo ""
       echo "Options:"
-      echo "  --vpc-cleanup    Run comprehensive VPC cleanup after Terraform destroy"
-      echo "  --help, -h       Show this help message"
+      echo "  --foundation-only    Destroy only foundation stack (VPC, ECR, IAM)"
+      echo "  --runtime-only       Destroy only runtime stack (ECS, ALB, WAF)"
+      echo "  --vpc-cleanup        Run comprehensive VPC cleanup after Terraform destroy"
+      echo "  --keep-bootstrap     Keep S3 bucket and DynamoDB table (don't clear contents)"
+      echo "  --help, -h           Show this help message"
       echo ""
       echo "Examples:"
-      echo "  $0                    # Standard destroy without VPC cleanup"
-      echo "  $0 --vpc-cleanup      # Destroy with comprehensive VPC cleanup"
+      echo "  $0                           # Destroy everything (default)"
+      echo "  $0 --foundation-only         # Destroy only foundation stack"
+      echo "  $0 --runtime-only            # Destroy only runtime stack"
+      echo "  $0 --vpc-cleanup            # Destroy everything with VPC cleanup"
+      echo "  $0 --foundation-only --keep-bootstrap  # Destroy foundation, keep backend"
+      echo ""
+      echo "Note: --foundation-only and --runtime-only are mutually exclusive"
       exit 0
       ;;
     *)
@@ -116,15 +143,33 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+# Validate mutually exclusive options
+if [[ "$DESTROY_FOUNDATION" == "true" && "$DESTROY_RUNTIME" == "false" ]] && [[ "$DESTROY_FOUNDATION" == "false" && "$DESTROY_RUNTIME" == "true" ]]; then
+  # This is fine - one of the "only" flags was used
+  :
+elif [[ "$DESTROY_FOUNDATION" == "false" && "$DESTROY_RUNTIME" == "false" ]]; then
+  echo -e "${RED}Error: Cannot destroy nothing. Use --help for valid options.${NC}"
+  exit 1
+fi
+
 # Main execution
-echo -e "${YELLOW}Starting infrastructure destruction...${NC}"
+if [[ "$DESTROY_FOUNDATION" == "true" && "$DESTROY_RUNTIME" == "true" ]]; then
+  echo -e "${YELLOW}Starting complete infrastructure destruction...${NC}"
+  DESTRUCTION_SCOPE="ALL infrastructure"
+elif [[ "$DESTROY_FOUNDATION" == "true" ]]; then
+  echo -e "${YELLOW}Starting foundation-only infrastructure destruction...${NC}"
+  DESTRUCTION_SCOPE="foundation stack only"
+else
+  echo -e "${YELLOW}Starting runtime-only infrastructure destruction...${NC}"
+  DESTRUCTION_SCOPE="runtime stack only"
+fi
 
 # Check prerequisites
 check_aws_credentials
 check_env_vars
 
 # Confirm with user
-read -p "This will destroy ALL infrastructure. Are you sure? (y/N) " -n 1 -r
+read -p "This will destroy ${DESTRUCTION_SCOPE}. Are you sure? (y/N) " -n 1 -r
 echo
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
   echo -e "${RED}Operation cancelled${NC}"
@@ -132,19 +177,26 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 # === Prepare env variables ===
-
 export TF_VAR_project="$PROJECT_NAME"
 export TF_VAR_region="$AWS_REGION"
 export TF_VAR_account_id="$AWS_ACCOUNT_ID"
 export TF_VAR_email="$EMAIL"
 export TF_VAR_image_tag="$(git rev-parse --short HEAD)"
 
-# Execute destruction
-echo -e "${YELLOW}Destroying runtime stack...${NC}"
-destroy_infrastructure_stack "runtime" || echo -e "${YELLOW}Runtime stack destruction had issues, continuing...${NC}"
+# Execute destruction based on flags
+if [[ "$DESTROY_RUNTIME" == "true" ]]; then
+  echo -e "${YELLOW}Destroying runtime stack...${NC}"
+  destroy_infrastructure_stack "runtime" || echo -e "${YELLOW}Runtime stack destruction had issues, continuing...${NC}"
+else
+  echo -e "${BLUE}Skipping runtime stack destruction${NC}"
+fi
 
-echo -e "${YELLOW}Destroying foundation stack...${NC}"
-destroy_infrastructure_stack "foundation" || echo -e "${YELLOW}Foundation stack destruction had issues, continuing...${NC}"
+if [[ "$DESTROY_FOUNDATION" == "true" ]]; then
+  echo -e "${YELLOW}Destroying foundation stack...${NC}"
+  destroy_infrastructure_stack "foundation" || echo -e "${YELLOW}Foundation stack destruction had issues, continuing...${NC}"
+else
+  echo -e "${BLUE}Skipping foundation stack destruction${NC}"
+fi
 
 # Conditionally run comprehensive VPC cleanup
 if [[ "$RUN_VPC_CLEANUP" == "true" ]]; then
@@ -154,6 +206,18 @@ else
   echo -e "${BLUE}Skipping VPC cleanup (use --vpc-cleanup flag to enable)${NC}"
 fi
 
-clear_bootstrap_resources
+# Conditionally clear bootstrap resources
+if [[ "$CLEAR_BOOTSTRAP" == "true" ]]; then
+  clear_bootstrap_resources
+else
+  echo -e "${BLUE}Keeping bootstrap resources (S3 bucket and DynamoDB table)${NC}"
+fi
 
-echo -e "${GREEN}All infrastructure has been destroyed and backend resources cleared successfully${NC}"
+# Final success message
+if [[ "$DESTROY_FOUNDATION" == "true" && "$DESTROY_RUNTIME" == "true" ]]; then
+  echo -e "${GREEN}All infrastructure has been destroyed and backend resources cleared successfully${NC}"
+elif [[ "$DESTROY_FOUNDATION" == "true" ]]; then
+  echo -e "${GREEN}Foundation infrastructure has been destroyed successfully${NC}"
+else
+  echo -e "${GREEN}Runtime infrastructure has been destroyed successfully${NC}"
+fi
