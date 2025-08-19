@@ -140,7 +140,8 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "iam:CreatePolicy",
           "iam:GetPolicy",
           "iam:GetPolicyVersion",
-          "iam:List*"
+          "iam:List*",
+          "iam:CreateServiceLinkedRole"
         ],
         Resource : "*"
       },
