@@ -11,6 +11,13 @@
 - [Deploying the application](#deploying-the-application)
   - [Initial deploy to cloud](#initial-deploy-to-cloud)
   - [Deploying the app stack](#deploying-the-app-stack)
+  - [Certificate Management](#certificate-management)
+    - [Requesting a Certificate](#requesting-a-certificate)
+    - [Certificate Validation](#certificate-validation)
+    - [Using Certificates in Deployment](#using-certificates-in-deployment)
+    - [Certificate ARN Format](#certificate-arn-format)
+    - [Managing Existing Certificates](#managing-existing-certificates)
+    - [Troubleshooting](#troubleshooting)
   - [Destroying the architecture](#destroying-the-architecture)
 - [How to run locally](#how-to-run-locally)
   - [Prerequisites](#prerequisites)
@@ -49,6 +56,107 @@ Before the application stack can be deployed, you must first deploy the infra fo
 ## Deploying the app stack
 
 The applications are built and deployed automatically upno each pull request to the `release` branch. To release a new (or initial) version of the app, simply open a pull request against the `release` branch and follow the instructions.
+
+## Certificate Management
+
+SSL certificates are essential for securing your application with HTTPS. This section covers how to request, manage, and deploy certificates for your MAIVE application.
+
+### Requesting a Certificate
+
+To request a new SSL certificate for your domain:
+
+```bash
+# Request a new certificate
+bun run certificate:request
+
+# Or use npm
+npm run certificate:request
+```
+
+This command will:
+
+- Prompt you for your domain name
+- Request a certificate from AWS Certificate Manager (ACM)
+- Provide validation instructions (DNS or email)
+- Output the certificate ARN when ready
+
+### Certificate Validation
+
+After requesting a certificate, you must validate it:
+
+1. **DNS Validation** (Recommended):
+   - Add the provided CNAME records to your domain's DNS
+   - Wait for validation to complete (usually 5-30 minutes)
+
+2. **Email Validation**:
+   - Check the email address associated with your domain
+   - Click the validation link in the email
+
+### Using Certificates in Deployment
+
+Once you have a validated certificate:
+
+1. **Copy the certificate ARN** from AWS Console or CLI
+2. **Add it to GitHub Secrets**:
+   - Go to your repository → Settings → Secrets and variables → Actions
+   - Add/update `CERTIFICATE_ARN` with your certificate ARN
+3. **Redeploy**: The next deployment will automatically:
+   - Create HTTPS listener on port 443
+   - Add HTTP redirect listener on port 80
+   - Remove HTTP-only forward listener
+
+### Certificate ARN Format
+
+The certificate ARN follows this pattern:
+
+```plain
+arn:aws:acm:{region}:{account-id}:certificate/{certificate-id}
+```
+
+Example:
+
+```plain
+arn:aws:acm:eu-central-1:123456789012:certificate/abcd1234-5678-90ef-ghij-klmnopqrstuv
+```
+
+### Managing Existing Certificates
+
+```bash
+# List all certificates in your region
+aws acm list-certificates --region eu-central-1
+
+# Get certificate details
+aws acm describe-certificate --certificate-arn <your-cert-arn> --region eu-central-1
+
+# Check certificate status
+aws acm list-certificates --region eu-central-1 --query 'CertificateSummaryList[?Status==`ISSUED`]'
+```
+
+### Troubleshooting
+
+**Common Issues:**
+
+1. **Certificate not found**: Ensure you're in the correct AWS region
+2. **Validation pending**: Complete DNS or email validation
+3. **Certificate expired**: Request a new certificate (ACM auto-renews valid certificates)
+4. **Wrong region**: Certificates must be in the same region as your ALB
+
+**Deployment without Certificate:**
+
+If you don't have a certificate yet, your application will deploy with HTTP-only:
+
+- ✅ No duplicate listener errors
+- ✅ Simple HTTP setup
+- ✅ Easy to add HTTPS later
+- ❌ Not secure for production
+
+**Best Practices:**
+
+- Request certificates well before deployment
+- Use DNS validation for faster processing
+- Keep certificate ARNs in GitHub secrets
+- Monitor certificate expiration dates
+- Test HTTPS setup in staging first
 
 ## Destroying the architecture
 
