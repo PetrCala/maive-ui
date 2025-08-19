@@ -15,6 +15,7 @@ permissions:
 env:
   RELEASE_BRANCH: master
   QUARTERLY_BRANCH_PREFIX: quarterly-release
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   create-quarterly-release:
@@ -25,6 +26,13 @@ jobs:
         with:
           ref: ${{ env.RELEASE_BRANCH }}
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Verify GitHub CLI availability
+        run: |
+          echo "GitHub CLI version:"
+          gh --version
+          echo "Testing GitHub CLI authentication..."
+          gh auth status
 
       - name: Determine quarter and year
         id: quarter-info
@@ -59,7 +67,7 @@ jobs:
           # Check if a PR with this quarter's title already exists
           PR_TITLE="${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} Release"
 
-          EXISTING_PR=$(gh pr list --search "title:\"$PR_TITLE\"" --json number,title,state --jq '.[0].number // empty')
+          EXISTING_PR=$(gh pr list --repo "${{ github.repository }}" --search "title:\"$PR_TITLE\"" --json number,title,state --jq '.[0].number // empty')
 
           if [ -n "$EXISTING_PR" ]; then
             echo "PR already exists for ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}"
@@ -188,6 +196,7 @@ jobs:
 
           # Create the PR
           PR_URL=$(gh pr create \
+            --repo "${{ github.repository }}" \
             --title "${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} Release" \
             --body "$PR_BODY" \
             --base "${{ env.RELEASE_BRANCH }}" \
@@ -223,7 +232,7 @@ jobs:
           EOF
           )
 
-          gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
+          gh pr comment "$PR_NUMBER" --repo "${{ github.repository }}" --body "$COMMENT_BODY"
           echo "Reminder comment added to existing PR #$PR_NUMBER"
 
       - name: Create issue for manual review if needed
@@ -256,10 +265,10 @@ jobs:
           )
 
           gh issue create \
+            --repo "${{ github.repository }}" \
             --title "Quarterly Release Review Required - ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}" \
             --body "$ISSUE_BODY" \
             --label "quarterly-release" \
-            --label "needs-attention" \
             --assignee "PetrCala"
 
       - name: Summary
