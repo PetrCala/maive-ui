@@ -8,6 +8,8 @@ resource "aws_ecr_repository" "repos" {
   image_scanning_configuration { scan_on_push = true }
 
   tags = { Project = var.project }
+
+  force_delete = true
 }
 
 # Keep only the 5 most recent images
