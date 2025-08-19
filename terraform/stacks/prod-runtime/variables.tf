@@ -19,17 +19,16 @@ variable "image_tag" {
   description = "The tag of the ECR images"
 }
 
-# pick the memory/CPU that fits your containers
 variable "ui_task_cpu" {
   type        = number
   description = "The CPU of the UI task"
-  default     = 256
+  default     = 128 # Reduced from 256
 }
 
 variable "ui_task_mem" {
   type        = number
   description = "The memory of the UI task"
-  default     = 512
+  default     = 512 # Allow overhead for data processing
 }
 
 variable "r_task_cpu" {
