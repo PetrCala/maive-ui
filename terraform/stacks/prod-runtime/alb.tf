@@ -144,7 +144,7 @@ resource "aws_wafv2_web_acl" "ui_acl" {
     priority = 3
     statement {
       managed_rule_group_statement {
-        name        = "AWSManagedRulesXSSRuleSet"
+        name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
       }
     }
