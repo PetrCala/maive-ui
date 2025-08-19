@@ -8,7 +8,7 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 FOUNDATION_DIR="terraform/stacks/prod-foundation"
 RUNTIME_DIR="terraform/stacks/prod-runtime"
 PROJECT_NAME="maive"
-DEFAULT_EMAIL="test@examle.com"
+DEFAULT_EMAIL="test@example.com"
 
 usage() {
   echo "Usage: $0 [OPTIONS]"
