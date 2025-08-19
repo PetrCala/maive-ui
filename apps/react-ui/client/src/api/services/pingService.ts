@@ -25,7 +25,7 @@ export class PingService {
    */
   async ping(): Promise<PingResponse> {
     const config = this.getConfig();
-    return httpGet<PingResponse>(`${config.baseUrl}/ping`, config);
+    return httpGet<PingResponse>(`${config.baseUrl}/ping/`, config);
   }
 
   /**
