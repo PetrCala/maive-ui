@@ -26,6 +26,8 @@
 		"remove-all-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep 'amazonaws.com/' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
 		"cloud:init": "./scripts/bootstrap.sh",
 		"cloud:destroy": "./scripts/destroy.sh",
+		"cloud:destroy:clean": "./scripts/destroy.sh --vpc-cleanup",
+		"cloud:cleanup-vpc": "./scripts/cleanup-vpc.sh",
 		"release": "./scripts/openPR.sh --release",
 		"openPR": "./scripts/openPR.sh",
 		"mergePR": "gh pr merge --rebase --delete-branch",
