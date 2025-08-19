@@ -12,6 +12,7 @@ TF_STATE_TABLE="${PROJECT_NAME}-tf-locks"
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
@@ -71,6 +72,35 @@ destroy_bootstrap() {
   echo -e "${GREEN}Bootstrap resources destroyed successfully${NC}"
 }
 
+# Parse command line arguments
+RUN_VPC_CLEANUP=false
+
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --vpc-cleanup)
+      RUN_VPC_CLEANUP=true
+      shift
+      ;;
+    --help|-h)
+      echo "Usage: $0 [OPTIONS]"
+      echo ""
+      echo "Options:"
+      echo "  --vpc-cleanup    Run comprehensive VPC cleanup after Terraform destroy"
+      echo "  --help, -h       Show this help message"
+      echo ""
+      echo "Examples:"
+      echo "  $0                    # Standard destroy without VPC cleanup"
+      echo "  $0 --vpc-cleanup      # Destroy with comprehensive VPC cleanup"
+      exit 0
+      ;;
+    *)
+      echo -e "${RED}Unknown option: $1${NC}"
+      echo "Use --help for usage information"
+      exit 1
+      ;;
+  esac
+done
+
 # Main execution
 echo -e "${YELLOW}Starting infrastructure destruction...${NC}"
 
@@ -95,8 +125,20 @@ export TF_VAR_email="$EMAIL"
 export TF_VAR_image_tag="$(git rev-parse --short HEAD)"
 
 # Execute destruction
-destroy_infrastructure_stack "runtime"
-destroy_infrastructure_stack "foundation"
+echo -e "${YELLOW}Destroying runtime stack...${NC}"
+destroy_infrastructure_stack "runtime" || echo -e "${YELLOW}Runtime stack destruction had issues, continuing...${NC}"
+
+echo -e "${YELLOW}Destroying foundation stack...${NC}"
+destroy_infrastructure_stack "foundation" || echo -e "${YELLOW}Foundation stack destruction had issues, continuing...${NC}"
+
+# Conditionally run comprehensive VPC cleanup
+if [[ "$RUN_VPC_CLEANUP" == "true" ]]; then
+  echo -e "${YELLOW}Running comprehensive VPC cleanup to ensure all resources are removed...${NC}"
+  ./scripts/cleanup-vpc.sh
+else
+  echo -e "${BLUE}Skipping VPC cleanup (use --vpc-cleanup flag to enable)${NC}"
+fi
+
 destroy_bootstrap
 
 echo -e "${GREEN}All infrastructure has been destroyed successfully${NC}"
