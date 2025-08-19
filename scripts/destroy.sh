@@ -154,6 +154,6 @@ else
   echo -e "${BLUE}Skipping VPC cleanup (use --vpc-cleanup flag to enable)${NC}"
 fi
 
-destroy_bootstrap
+clear_bootstrap_resources
 
-echo -e "${GREEN}All infrastructure has been destroyed successfully${NC}"
+echo -e "${GREEN}All infrastructure has been destroyed and backend resources cleared successfully${NC}"
