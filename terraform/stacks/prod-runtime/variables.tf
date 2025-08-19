@@ -22,7 +22,7 @@ variable "image_tag" {
 variable "ui_task_cpu" {
   type        = number
   description = "The CPU of the UI task"
-  default     = 128 # Reduced from 256
+  default     = 256
 }
 
 variable "ui_task_mem" {
