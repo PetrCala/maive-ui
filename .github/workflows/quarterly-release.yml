@@ -34,16 +34,16 @@ jobs:
 
           # Determine quarter based on month
           MONTH=$(date -u +%m)
-          if [ "$MONTH" -eq 01 ]; then
+          if [ "$MONTH" -ge 01 ] && [ "$MONTH" -le 03 ]; then
             QUARTER="Q1"
             QUARTER_NAME="First Quarter"
-          elif [ "$MONTH" -eq 04 ]; then
+          elif [ "$MONTH" -ge 04 ] && [ "$MONTH" -le 06 ]; then
             QUARTER="Q2"
             QUARTER_NAME="Second Quarter"
-          elif [ "$MONTH" -eq 07 ]; then
+          elif [ "$MONTH" -ge 07 ] && [ "$MONTH" -le 09 ]; then
             QUARTER="Q3"
             QUARTER_NAME="Third Quarter"
-          elif [ "$MONTH" -eq 10 ]; then
+          elif [ "$MONTH" -ge 10 ] && [ "$MONTH" -le 12 ]; then
             QUARTER="Q4"
             QUARTER_NAME="Fourth Quarter"
           fi

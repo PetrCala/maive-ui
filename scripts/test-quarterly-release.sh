@@ -58,16 +58,17 @@ determine_quarter_info() {
   local quarter=""
   local quarter_name=""
   
-  if [ "$month" -eq 01 ]; then
+  # Determine which quarter the current month belongs to
+  if [ "$month" -ge 01 ] && [ "$month" -le 03 ]; then
     quarter="Q1"
     quarter_name="First Quarter"
-  elif [ "$month" -eq 04 ]; then
+  elif [ "$month" -ge 04 ] && [ "$month" -le 06 ]; then
     quarter="Q2"
     quarter_name="Second Quarter"
-  elif [ "$month" -eq 07 ]; then
+  elif [ "$month" -ge 07 ] && [ "$month" -le 09 ]; then
     quarter="Q3"
     quarter_name="Third Quarter"
-  elif [ "$month" -eq 10 ]; then
+  elif [ "$month" -ge 10 ] && [ "$month" -le 12 ]; then
     quarter="Q4"
     quarter_name="Fourth Quarter"
   fi
