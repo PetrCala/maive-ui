@@ -15,7 +15,7 @@
 
 Through our interactive interface, you can quickly and easily check whether your data contains spurious precision using the MAIVE estimator.
 
-### ✨ What you'll get:
+### ✨ What you'll get
 
 - **Interactive analysis** - Upload and analyze your data in a matter of seconds
 - **Accurate detection** - Leverage the peer reviewed MAIVE package

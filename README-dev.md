@@ -16,6 +16,9 @@
   - [Prerequisites](#prerequisites)
   - [Steps](#steps)
   - [Notes](#notes)
+  - [🔄 Development \& Releases](#-development--releases)
+    - [Quarterly Release Automation](#quarterly-release-automation)
+    - [Testing the Release System](#testing-the-release-system)
 - [Handling images containers](#handling-images-containers)
   - [Scripts](#scripts)
 - [Useful notes](#useful-notes)
@@ -73,6 +76,32 @@ To destroy the existing architecture, simply run `npm run cloud:destroy`. This w
 - Upon pressing Ctrl+C in the terminal instance where the `start:dev` command was executed, all of the running containers will be gracefully shut down and deleted.
 - Any images built during the process will remain present. You can check the list of these images by running `podman images`. Remove these using `podman rmi [image-name]`, or `podman rmi -a`, which will remove all images.
 - You can also access any of the containers by using `localhost` as the host name, such as `localhost:3000` for the React application.
+
+## 🔄 Development & Releases
+
+### Quarterly Release Automation
+
+This project uses automated quarterly releases to ensure consistent and predictable deployment cycles. The system:
+
+- **Automatically creates release PRs** every quarter (Jan 1, Apr 1, Jul 1, Oct 1)
+- **Integrates with existing CI/CD pipeline** for seamless deployment
+- **Requires manual approval** before merging (maintainer control)
+- **Provides comprehensive instructions** for each release
+
+**Learn more**: [Quarterly Release Documentation](docs/QUARTERLY_RELEASES.md)
+
+### Testing the Release System
+
+```bash
+# Test quarterly release logic locally
+bun run test-quarterly
+
+# Test with specific quarter/year
+bun run test-quarterly --quarter Q2 --year 2024
+
+# Test version bumping logic
+bun run test-quarterly --test-version
+```
 
 # Handling images containers
 
