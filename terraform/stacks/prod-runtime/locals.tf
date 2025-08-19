@@ -7,8 +7,7 @@ locals {
   ui_port = 3000
   r_port  = 8787
 
-  # Log group names
-  ui_log_group_name = aws_cloudwatch_log_group.ui_logs.name
-  r_log_group_name  = aws_cloudwatch_log_group.r_logs.name
+  ui_log_group_name = data.aws_cloudwatch_log_group.ui_logs.name
+  r_log_group_name  = data.aws_cloudwatch_log_group.r_logs.name
 }
 
