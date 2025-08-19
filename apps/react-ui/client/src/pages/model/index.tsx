@@ -8,7 +8,7 @@ import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
 import { useDataStore, dataCache } from "@store/dataStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
 import Alert from "@src/components/Alert";
-import type { ModelParameters } from "@src/types";
+import type { ModelParameters } from "@src/api";
 import AdvancedOptions from "@src/components/Model/AdvancedOptions";
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
@@ -19,7 +19,7 @@ import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
-import { getRuntimeConfig } from "@src/utils/getRuntimeConfig";
+import { modelService } from "@src/api";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -125,25 +125,11 @@ export default function ModelPage() {
         const nrow = uploadedData.data.length;
         result = { data: generateMockResults(nrow) };
       } else {
-        const { R_API_URL } = getRuntimeConfig();
-        if (!R_API_URL) {
-          throw new Error("R API URL not configured");
-        }
-
-        const response = await fetch(`${R_API_URL}/run-model`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            file_data: JSON.stringify(uploadedData.data),
-            parameters: JSON.stringify(parameters),
-          }),
-          signal: abortControllerRef.current.signal,
-        });
-
-        if (!response.ok) throw new Error("Failed to run model");
-        result = await response.json();
+        result = await modelService.runModel(
+          uploadedData.data,
+          parameters,
+          abortControllerRef.current,
+        );
       }
 
       if (result.error) {
