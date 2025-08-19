@@ -127,7 +127,6 @@ resource "aws_wafv2_web_acl" "ui_acl" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesSQLiRuleSet"
         vendor_name = "AWS"
-        version     = "LATEST"
       }
     }
     visibility_config {
@@ -135,8 +134,8 @@ resource "aws_wafv2_web_acl" "ui_acl" {
       sampled_requests_enabled   = true
       metric_name                = "sqlInjection"
     }
-    action {
-      block {}
+    override_action {
+      count {}
     }
   }
 
@@ -147,7 +146,6 @@ resource "aws_wafv2_web_acl" "ui_acl" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesAnonymousIpList"
         vendor_name = "AWS"
-        version     = "LATEST"
       }
     }
     visibility_config {
@@ -155,8 +153,8 @@ resource "aws_wafv2_web_acl" "ui_acl" {
       sampled_requests_enabled   = true
       metric_name                = "anonymousIP"
     }
-    action {
-      block {}
+    override_action {
+      count {}
     }
   }
 
