@@ -109,6 +109,17 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
         Resource : "*"
       },
       {
+        Sid : "S3Encryption",
+        Effect : "Allow",
+        Action : [
+          "s3:PutEncryptionConfiguration",
+          "s3:GetEncryptionConfiguration",
+          "s3:PutBucketVersioning",
+          "s3:GetBucketVersioning"
+        ],
+        Resource : "*"
+      },
+      {
         Sid : "IAMLimited",
         Effect : "Allow",
         Action : [
@@ -176,6 +187,24 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "logs:DescribeLogGroups",
           "logs:PutRetentionPolicy",
           "logs:DeleteRetentionPolicy"
+        ],
+        Resource : "*"
+      },
+      {
+        Sid : "DynamoDB",
+        Effect : "Allow",
+        Action : [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:DescribeTable",
+          "dynamodb:ListTables",
+          "dynamodb:CreateTable",
+          "dynamodb:DeleteTable",
+          "dynamodb:UpdateTable",
+          "dynamodb:TagResource",
+          "dynamodb:UntagResource",
+          "dynamodb:ListTagsOfResource"
         ],
         Resource : "*"
       }
