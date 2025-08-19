@@ -37,7 +37,7 @@ resource "aws_ecs_task_definition" "ui" {
     image        = "${local.ecr_urls["react-ui"]}:${var.image_tag}"
     portMappings = [{ containerPort = local.ui_port, protocol = "tcp" }]
     environment = [
-      { name = "NEXT_PUBLIC_R_API_URL", value = "http://r:${local.r_port}" },
+      { name = "NEXT_PUBLIC_R_API_URL", value = "http://${aws_lb.r.dns_name}" },
     ]
     logConfiguration = {
       logDriver = "awslogs",
@@ -124,6 +124,11 @@ resource "aws_ecs_service" "r" {
     subnets          = local.private_subnets
     security_groups  = [module.sg_r_tasks.security_group_id]
     assign_public_ip = false
+  }
+  load_balancer {
+    target_group_arn = aws_lb_target_group.r.arn
+    container_name   = "r"
+    container_port   = local.r_port
   }
   enable_execute_command = true
 }
