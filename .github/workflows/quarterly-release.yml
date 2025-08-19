@@ -85,14 +85,15 @@ jobs:
           git checkout -b "$BRANCH_NAME"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
 
-      - name: Bump version (patch)
+      - name: Bump version (build)
+        id: bumpVersion
         if: steps.check-existing-pr.outputs.EXISTS != 'true'
         run: |
           # Use the existing bumpVersion action logic
           CURRENT_VERSION=$(jq -r .version 'package.json')
           echo "Current version: $CURRENT_VERSION"
 
-          # Increment patch version
+          # Increment build version
           NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$NF = $NF + 1;} 1')
           echo "New version: $NEW_VERSION"
 
@@ -119,10 +120,10 @@ jobs:
             git add apps/react-ui/client/package.json
           fi
 
-          git commit -m "build: bump version for ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} release"
+          git commit -m "build: bump version for ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} release
 
           - Automated quarterly release
-          - Version bumped from ${{ steps.check-existing-pr.outputs.EXISTS == 'false' && steps.bumpVersion.outputs.NEW_VERSION || 'N/A' }}
+          - Version bumped from ${{ steps.bumpVersion.outputs.NEW_VERSION }}
           - Release scheduled for ${{ steps.quarter-info.outputs.CURRENT_DATE }}"
 
       - name: Push release branch
@@ -149,7 +150,7 @@ jobs:
 
           ## 🔄 What This PR Does
           This is an **automated quarterly release PR** created by the GitHub Actions workflow. It includes:
-          - ✅ Version bump (patch increment)
+          - ✅ Version bump (build increment)
           - ✅ Updated package.json files
           - ✅ Release branch ready for review
 
@@ -202,7 +203,7 @@ jobs:
             --base "${{ env.RELEASE_BRANCH }}" \
             --head "$BRANCH_NAME" \
             --label "quarterly-release" \
-            --label "v-patch" \
+            --label "v-build" \
             --label "automated" \
             --assignee "PetrCala")
 

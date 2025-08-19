@@ -36,7 +36,7 @@ The quarterly release automation:
 
 - GitHub Actions cron scheduler runs quarterly
 - Creates a new release branch from `master`
-- Bumps version (patch increment)
+- Bumps version (build increment)
 - Opens a pull request with comprehensive instructions
 
 ### 2. Manual Review Process
@@ -182,9 +182,9 @@ schedule:
 
 ### Change Version Bump Strategy
 
-Currently uses patch increments. To change:
+Currently uses build increments. To change:
 
-1. Modify the `Bump version (patch)` step
+1. Modify the `Bump version (build)` step
 2. Update the version increment logic
 3. Consider using semantic versioning rules
 

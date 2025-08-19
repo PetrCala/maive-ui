@@ -103,9 +103,9 @@ test_version_bump() {
   local current_version=$(jq -r .version 'package.json')
   info "Current version: $current_version"
   
-  # Test patch increment
+  # Test build increment
   local new_version=$(echo "$current_version" | awk -F. -v OFS=. '{$NF = $NF + 1;} 1')
-  info "New version (patch): $new_version"
+  info "New version (build): $new_version"
   
   # Test minor increment (for demonstration)
   local minor_version=$(echo "$current_version" | awk -F. -v OFS=. '{$(NF-1) = $(NF-1) + 1; $NF = 0;} 1')
@@ -179,7 +179,7 @@ show_workflow_summary() {
   echo ""
   echo "🔄 Workflow will:"
   echo "   1. Create branch: quarterly-release/$year-$quarter"
-  echo "   2. Bump version (patch increment)"
+  echo "   2. Bump version (build increment)"
   echo "   3. Create PR with comprehensive instructions"
   echo "   4. Assign to maintainer for review"
   echo ""
