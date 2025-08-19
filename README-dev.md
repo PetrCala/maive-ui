@@ -132,8 +132,50 @@ This command will:
 After requesting a certificate, you must validate it:
 
 1. **DNS Validation** (Recommended):
-   - Add the provided CNAME records to your domain's DNS
-   - Wait for validation to complete (usually 5-30 minutes)
+   - **Find the CNAME records**: After requesting a certificate, AWS will provide CNAME records that need to be added to your domain's DNS
+   - **Add CNAME records to your DNS provider**: Go to your domain registrar (e.g., Namecheap, GoDaddy, Route 53) or DNS provider
+   - **Wait for validation**: DNS changes can take 5-30 minutes to propagate globally
+
+   **Step-by-step DNS validation:**
+
+   ```bash
+   # 1. Get the validation CNAME records
+   aws acm describe-certificate \
+     --certificate-arn <your-certificate-arn> \
+     --region eu-central-1 \
+     --query 'Certificate.DomainValidationOptions[0].ResourceRecord'
+   ```
+
+   **Example output:**
+
+   ```json
+   {
+     "Name": "_acme-challenge.spuriousprecision.com",
+     "Type": "CNAME",
+     "Value": "abc123.aws-acm-validation.com"
+   }
+   ```
+
+   **Add to your DNS provider:**
+   - **Name**: `_acme-challenge.spuriousprecision.com`
+   - **Type**: `CNAME`
+   - **Value**: `abc123.aws-acm-validation.com`
+   - **TTL**: `300` (or default)
+
+   **Where to add:**
+   - **Namecheap**: Domain List → Manage → Advanced DNS → Add Record
+   - **GoDaddy**: My Domains → DNS → Add Record
+   - **Route 53**: Hosted Zones → Your Domain → Create Record
+   - **Cloudflare**: DNS → Add Record
+
+   **Verify validation:**
+
+   ```bash
+   # Check certificate status
+   aws acm list-certificates \
+     --region eu-central-1 \
+     --query 'CertificateSummaryList[?DomainName==`spuriousprecision.com`].Status'
+   ```
 
 2. **Email Validation**:
    - Check the email address associated with your domain
