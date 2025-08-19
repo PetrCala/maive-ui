@@ -243,6 +243,14 @@ The workflow requires minimal permissions:
 - `pull-requests: write` - To create PRs and comments
 - `issues: write` - To create reminder issues
 
+### GitHub CLI Requirements
+
+The workflow uses GitHub CLI (`gh`) for creating PRs, comments, and issues. The workflow automatically:
+
+- Sets the `GH_TOKEN` environment variable using `${{ github.token }}`
+- Adds `--repo` flags to all `gh` commands for proper repository context
+- Verifies GitHub CLI availability and authentication status
+
 ### Token Security
 
 - Uses `GITHUB_TOKEN` (automatically provided)
