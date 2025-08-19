@@ -81,19 +81,36 @@ else
     }' \
     >/dev/null
 
-  echo "📆 Adding lifecycle rule to expire objects after 30 days..."
+  echo "📆 Adding lifecycle rule with smart storage transitions..."
   aws s3api put-bucket-lifecycle-configuration \
     --bucket "$TF_STATE_BUCKET" \
     --lifecycle-configuration '{
     "Rules": [
       {
-        "ID": "expire-objects-after-30-days",
+        "ID": "transition-to-ia-after-30-days",
+        "Status": "Enabled",
+        "Filter": {
+          "Prefix": ""
+        },
+        "Transitions": [
+          {
+            "Days": 30,
+            "StorageClass": "STANDARD_IA"
+          },
+          {
+            "Days": 90,
+            "StorageClass": "GLACIER"
+          }
+        ]
+      },
+      {
+        "ID": "delete-after-1-year",
         "Status": "Enabled",
         "Filter": {
           "Prefix": ""
         },
         "Expiration": {
-          "Days": 30
+          "Days": 365
         }
       }
     ]
