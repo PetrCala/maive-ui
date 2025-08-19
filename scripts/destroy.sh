@@ -46,30 +46,45 @@ destroy_infrastructure_stack() {
   echo -e "${GREEN}${stack} infrastructure destroyed successfully${NC}"
 }
 
-# Function to destroy bootstrap resources
-destroy_bootstrap() {
-  echo -e "${YELLOW}Destroying bootstrap resources...${NC}"
+# Function to clear bootstrap resources
+clear_bootstrap_resources() {
+  echo -e "${YELLOW}Clearing bootstrap resources...${NC}"
 
   # Check if the S3 bucket exists
   if aws s3api head-bucket --bucket "$TF_STATE_BUCKET" >/dev/null 2>&1; then
     echo "Emptying S3 bucket: $TF_STATE_BUCKET"
     aws s3 rm "s3://$TF_STATE_BUCKET" --recursive >/dev/null 2>&1
-
-    echo "Deleting S3 bucket: $TF_STATE_BUCKET"
-    aws s3api delete-bucket --bucket "$TF_STATE_BUCKET" --region "$AWS_REGION" >/dev/null 2>&1
+    echo "✅ S3 bucket contents cleared (bucket preserved)"
   else
     echo "S3 bucket $TF_STATE_BUCKET does not exist"
   fi
 
   # Check if the DynamoDB table exists
   if aws dynamodb describe-table --table-name "$TF_STATE_TABLE" --region "$AWS_REGION" &>/dev/null; then
-    echo "Deleting DynamoDB table: $TF_STATE_TABLE"
-    aws dynamodb delete-table --table-name "$TF_STATE_TABLE" --region "$AWS_REGION" >/dev/null 2>&1
+    echo "Clearing DynamoDB table: $TF_STATE_TABLE"
+    
+    # Get all items in the table
+    local items
+    items=$(aws dynamodb scan --table-name "$TF_STATE_TABLE" --region "$AWS_REGION" --query 'Items[].LockID.S' --output text 2>/dev/null || echo "")
+    
+    if [[ -n "$items" ]]; then
+      echo "  Removing existing lock items..."
+      for item in $items; do
+        if [[ "$item" != "None" && -n "$item" ]]; then
+          aws dynamodb delete-item \
+            --table-name "$TF_STATE_TABLE" \
+            --key "{\"LockID\":{\"S\":\"$item\"}}" \
+            --region "$AWS_REGION" >/dev/null 2>&1 || echo "    Warning: Could not remove item $item"
+        fi
+      done
+    fi
+    
+    echo "✅ DynamoDB table contents cleared (table preserved)"
   else
     echo "DynamoDB table $TF_STATE_TABLE does not exist"
   fi
 
-  echo -e "${GREEN}Bootstrap resources destroyed successfully${NC}"
+  echo -e "${GREEN}Bootstrap resources cleared successfully${NC}"
 }
 
 # Parse command line arguments
