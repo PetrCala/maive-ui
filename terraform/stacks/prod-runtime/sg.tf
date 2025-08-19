@@ -46,6 +46,14 @@ module "sg_ui_tasks" {
     protocol                 = "tcp"
     source_security_group_id = module.sg_r_alb.security_group_id
   }]
+
+  egress_with_cidr_blocks = [{
+    # Allow outbound internet access for ECR, CloudWatch, etc.
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = "0.0.0.0/0"
+  }]
 }
 
 module "sg_r_alb" {
@@ -81,5 +89,13 @@ module "sg_r_tasks" {
     to_port                  = local.r_port
     protocol                 = "tcp"
     source_security_group_id = module.sg_r_alb.security_group_id
+  }]
+
+  egress_with_cidr_blocks = [{
+    # Allow outbound internet access for ECR, CloudWatch, etc.
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = "0.0.0.0/0"
   }]
 }
