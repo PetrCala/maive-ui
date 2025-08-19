@@ -205,7 +205,8 @@ jobs:
             --label "quarterly-release" \
             --label "v-build" \
             --label "automated" \
-            --assignee "PetrCala")
+            --reviewer "${{ secrets.ADMIN_NAME }}" \
+            --assignee "${{ secrets.ADMIN_NAME }}")
 
           echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
           echo "PR created successfully: $PR_URL"
@@ -270,7 +271,7 @@ jobs:
             --title "Quarterly Release Review Required - ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}" \
             --body "$ISSUE_BODY" \
             --label "quarterly-release" \
-            --assignee "PetrCala"
+            --assignee "${{ secrets.ADMIN_NAME }}"
 
       - name: Summary
         run: |

@@ -250,11 +250,19 @@ The workflow uses GitHub CLI (`gh`) for creating PRs, comments, and issues. The 
 - Sets the `GH_TOKEN` environment variable using `${{ github.token }}`
 - Adds `--repo` flags to all `gh` commands for proper repository context
 - Verifies GitHub CLI availability and authentication status
+- Uses `${{ secrets.ADMIN_NAME }}` for PR reviewer and issue assignee assignment
+
+### Required Secrets
+
+The workflow requires the following secrets to be configured in your repository:
+
+- **`ADMIN_NAME`**: Your GitHub username for PR reviewer and issue assignee assignment
+- **`GITHUB_TOKEN`**: Automatically provided by GitHub Actions
 
 ### Token Security
 
 - Uses `GITHUB_TOKEN` (automatically provided)
-- No additional secrets required
+- Uses `ADMIN_NAME` secret for user assignment
 - Follows GitHub's security best practices
 
 ## 📈 Best Practices

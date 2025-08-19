@@ -181,7 +181,7 @@ show_workflow_summary() {
   echo "   1. Create branch: quarterly-release/$year-$quarter"
   echo "   2. Bump version (build increment)"
   echo "   3. Create PR with comprehensive instructions"
-  echo "   4. Assign to maintainer for review"
+  echo "   4. Assign to maintainer for review (using ADMIN_NAME secret)"
   echo ""
   echo "✅ After merge:"
   echo "   - Existing release pipeline triggers automatically"
