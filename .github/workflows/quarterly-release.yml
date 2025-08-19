@@ -1,0 +1,275 @@
+name: Quarterly Release Automation
+
+on:
+  schedule:
+    # Run on the first day of each quarter at 9 AM UTC
+    # Q1: Jan 1, Q2: Apr 1, Q3: Jul 1, Q4: Oct 1
+    - cron: "0 9 1 1,4,7,10 *"
+  workflow_dispatch: # Allow manual triggering
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+env:
+  RELEASE_BRANCH: master
+  QUARTERLY_BRANCH_PREFIX: quarterly-release
+
+jobs:
+  create-quarterly-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine quarter and year
+        id: quarter-info
+        run: |
+          CURRENT_DATE=$(date -u +%Y-%m-%d)
+          YEAR=$(date -u +%Y)
+
+          # Determine quarter based on month
+          MONTH=$(date -u +%m)
+          if [ "$MONTH" -eq 01 ]; then
+            QUARTER="Q1"
+            QUARTER_NAME="First Quarter"
+          elif [ "$MONTH" -eq 04 ]; then
+            QUARTER="Q2"
+            QUARTER_NAME="Second Quarter"
+          elif [ "$MONTH" -eq 07 ]; then
+            QUARTER="Q3"
+            QUARTER_NAME="Third Quarter"
+          elif [ "$MONTH" -eq 10 ]; then
+            QUARTER="Q4"
+            QUARTER_NAME="Fourth Quarter"
+          fi
+
+          echo "QUARTER=$QUARTER" >> $GITHUB_OUTPUT
+          echo "QUARTER_NAME=$QUARTER_NAME" >> $GITHUB_OUTPUT
+          echo "YEAR=$YEAR" >> $GITHUB_OUTPUT
+          echo "CURRENT_DATE=$CURRENT_DATE" >> $GITHUB_OUTPUT
+
+      - name: Check if PR already exists for this quarter
+        id: check-existing-pr
+        run: |
+          # Check if a PR with this quarter's title already exists
+          PR_TITLE="${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} Release"
+
+          EXISTING_PR=$(gh pr list --search "title:\"$PR_TITLE\"" --json number,title,state --jq '.[0].number // empty')
+
+          if [ -n "$EXISTING_PR" ]; then
+            echo "PR already exists for ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}"
+            echo "EXISTS=true" >> $GITHUB_OUTPUT
+            echo "EXISTING_PR_NUMBER=$EXISTING_PR" >> $GITHUB_OUTPUT
+          else
+            echo "No existing PR found for this quarter"
+            echo "EXISTS=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create release branch
+        if: steps.check-existing-pr.outputs.EXISTS != 'true'
+        run: |
+          BRANCH_NAME="${{ env.QUARTERLY_BRANCH_PREFIX }}/${{ steps.quarter-info.outputs.YEAR }}-${{ steps.quarter-info.outputs.QUARTER }}"
+          git checkout -b "$BRANCH_NAME"
+          echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+      - name: Bump version (patch)
+        if: steps.check-existing-pr.outputs.EXISTS != 'true'
+        run: |
+          # Use the existing bumpVersion action logic
+          CURRENT_VERSION=$(jq -r .version 'package.json')
+          echo "Current version: $CURRENT_VERSION"
+
+          # Increment patch version
+          NEW_VERSION=$(echo "$CURRENT_VERSION" | awk -F. -v OFS=. '{$NF = $NF + 1;} 1')
+          echo "New version: $NEW_VERSION"
+
+          # Update package.json
+          jq --arg version "$NEW_VERSION" '.version = $version' package.json > package.json.tmp
+          mv package.json.tmp package.json
+
+          # Update apps/react-ui/client/package.json if it exists
+          if [ -f "apps/react-ui/client/package.json" ]; then
+            jq --arg version "$NEW_VERSION" '.version = $version' apps/react-ui/client/package.json > apps/react-ui/client/package.json.tmp
+            mv apps/react-ui/client/package.json.tmp apps/react-ui/client/package.json
+          fi
+
+          echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create release commit
+        if: steps.check-existing-pr.outputs.EXISTS != 'true'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git add package.json
+          if [ -f "apps/react-ui/client/package.json" ]; then
+            git add apps/react-ui/client/package.json
+          fi
+
+          git commit -m "build: bump version for ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} release"
+
+          - Automated quarterly release
+          - Version bumped from ${{ steps.check-existing-pr.outputs.EXISTS == 'false' && steps.bumpVersion.outputs.NEW_VERSION || 'N/A' }}
+          - Release scheduled for ${{ steps.quarter-info.outputs.CURRENT_DATE }}"
+
+      - name: Push release branch
+        if: steps.check-existing-pr.outputs.EXISTS != 'true'
+        run: |
+          BRANCH_NAME="${{ env.QUARTERLY_BRANCH_PREFIX }}/${{ steps.quarter-info.outputs.YEAR }}-${{ steps.quarter-info.outputs.QUARTER }}"
+          git push origin "$BRANCH_NAME"
+
+      - name: Create Pull Request
+        if: steps.check-existing-pr.outputs.EXISTS != 'true'
+        id: create-pr
+        run: |
+          BRANCH_NAME="${{ env.QUARTERLY_BRANCH_PREFIX }}/${{ steps.quarter-info.outputs.YEAR }}-${{ steps.quarter-info.outputs.QUARTER }}"
+
+          PR_BODY=$(cat << 'EOF'
+          # 🚀 ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} Release
+
+          ## 📋 Release Information
+          - **Quarter**: ${{ steps.quarter-info.outputs.QUARTER_NAME }} (${{ steps.quarter-info.outputs.QUARTER }})
+          - **Year**: ${{ steps.quarter-info.outputs.YEAR }}
+          - **Scheduled Date**: ${{ steps.quarter-info.outputs.CURRENT_DATE }}
+          - **Release Type**: Quarterly Scheduled Release
+          - **Version**: ${{ steps.bumpVersion.outputs.NEW_VERSION }}
+
+          ## 🔄 What This PR Does
+          This is an **automated quarterly release PR** created by the GitHub Actions workflow. It includes:
+          - ✅ Version bump (patch increment)
+          - ✅ Updated package.json files
+          - ✅ Release branch ready for review
+
+          ## 📝 Release Instructions
+
+          ### 1. Review the Changes
+          - [ ] Review the version bump changes
+          - [ ] Ensure all changes are appropriate for release
+          - [ ] Check that no breaking changes are included
+
+          ### 2. Approve and Merge
+          - [ ] Add your approval
+          - [ ] Merge this PR to master branch
+          - [ ] The automated deployment pipeline will trigger
+
+          ### 3. Post-Deployment Tasks
+          **IMPORTANT**: After the deployment pipeline completes successfully:
+          - [ ] Run `git pull origin master` to get the latest changes
+          - [ ] Verify the new version is deployed in production
+          - [ ] Update any release notes or documentation if needed
+
+          ## 🚨 Important Notes
+          - **Do not modify this PR** - it's designed to be merged as-is
+          - **Do not add additional commits** - this will interfere with the automated process
+          - **Merge strategy**: Use "Rebase and merge" to maintain clean history
+          - **Branch cleanup**: The branch will be automatically deleted after merge
+
+          ## 🔧 Technical Details
+          - **Source Branch**: `${{ env.QUARTERLY_BRANCH_PREFIX }}/${{ steps.quarter-info.outputs.YEAR }}-${{ steps.quarter-info.outputs.QUARTER }}`
+          - **Target Branch**: `${{ env.RELEASE_BRANCH }}`
+          - **Workflow**: `quarterly-release.yml`
+          - **Trigger**: Automated quarterly schedule
+
+          ## 📞 Support
+          If you have questions about this automated release:
+          - Check the workflow run logs
+          - Review the release workflow documentation
+          - Contact the maintainer if issues arise
+
+          ---
+          *This PR was automatically generated by the quarterly release workflow.*
+          EOF
+          )
+
+          # Create the PR
+          PR_URL=$(gh pr create \
+            --title "${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }} Release" \
+            --body "$PR_BODY" \
+            --base "${{ env.RELEASE_BRANCH }}" \
+            --head "$BRANCH_NAME" \
+            --label "quarterly-release" \
+            --label "v-patch" \
+            --label "automated" \
+            --assignee "PetrCala")
+
+          echo "PR_URL=$PR_URL" >> $GITHUB_OUTPUT
+          echo "PR created successfully: $PR_URL"
+
+      - name: Comment on existing PR if it exists
+        if: steps.check-existing-pr.outputs.EXISTS == 'true'
+        run: |
+          PR_NUMBER="${{ steps.check-existing-pr.outputs.EXISTING_PR_NUMBER }}"
+
+          COMMENT_BODY=$(cat << 'EOF'
+          ## 🔄 Quarterly Release Reminder
+
+          This PR was created for the **${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}** release.
+
+          **Status**: Still pending review and merge
+
+          ### 📋 Next Steps
+          - [ ] Review the changes
+          - [ ] Approve the PR
+          - [ ] Merge to master to trigger deployment
+          - [ ] Remember to `git pull origin master` after deployment
+
+          ---
+          *This reminder was automatically generated by the quarterly release workflow.*
+          EOF
+          )
+
+          gh pr comment "$PR_NUMBER" --body "$COMMENT_BODY"
+          echo "Reminder comment added to existing PR #$PR_NUMBER"
+
+      - name: Create issue for manual review if needed
+        if: steps.check-existing-pr.outputs.EXISTS == 'true'
+        run: |
+          ISSUE_BODY=$(cat << 'EOF'
+          ## 🔍 Quarterly Release Review Required
+
+          The quarterly release workflow detected an existing PR for **${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}** that still needs attention.
+
+          **Existing PR**: #${{ steps.check-existing-pr.outputs.EXISTING_PR_NUMBER }}
+
+          ### 📋 Action Required
+          Please review and merge the existing PR before the next quarterly cycle begins.
+
+          ### 🚨 Why This Happened
+          - A PR was created for this quarter but hasn't been merged yet
+          - The workflow detected this to avoid creating duplicate PRs
+          - Manual intervention is needed to complete the release
+
+          ### ✅ Resolution Steps
+          1. Review PR #${{ steps.check-existing-pr.outputs.EXISTING_PR_NUMBER }}
+          2. Approve and merge the PR
+          3. Verify deployment completion
+          4. Close this issue
+
+          ---
+          *This issue was automatically created by the quarterly release workflow.*
+          EOF
+          )
+
+          gh issue create \
+            --title "Quarterly Release Review Required - ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}" \
+            --body "$ISSUE_BODY" \
+            --label "quarterly-release" \
+            --label "needs-attention" \
+            --assignee "PetrCala"
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check-existing-pr.outputs.EXISTS }}" == "true" ]; then
+            echo "✅ Quarterly release workflow completed"
+            echo "📋 Existing PR #${{ steps.check-existing-pr.outputs.EXISTING_PR_NUMBER }} needs attention"
+            echo "🔔 Reminder comment and issue created"
+          else
+            echo "✅ Quarterly release workflow completed successfully"
+            echo "🚀 New PR created: ${{ steps.create-pr.outputs.PR_URL }}"
+            echo "📅 Release scheduled for ${{ steps.quarter-info.outputs.YEAR }} ${{ steps.quarter-info.outputs.QUARTER_NAME }}"
+          fi
