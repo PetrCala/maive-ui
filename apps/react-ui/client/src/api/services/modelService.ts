@@ -39,7 +39,7 @@ export class ModelService {
     const config = this.getConfig();
 
     return httpPost<ModelResponse>(
-      `${config.baseUrl}/run-model`,
+      `${config.baseUrl}/run-model/`,
       requestData,
       config,
     );
