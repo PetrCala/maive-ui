@@ -1,3 +1,0 @@
-[submodule "apps/r-plumber/vendor/maive"]
-path = apps/r-plumber/vendor/maive
-url = https://github.com/PetrCala/maive.git
