@@ -50,6 +50,13 @@ variable "ui_desired_count" {
   default     = 1
 }
 
+variable "r_desired_count" {
+  type        = number
+  description = "Number of R API to run"
+  default     = 1
+
+}
+
 variable "certificate_arn" {
   type        = string
   description = "ARN of the SSL certificate for HTTPS. If empty, the ALB will use HTTP only (not recommended for production)"
