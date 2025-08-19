@@ -103,6 +103,10 @@ resource "aws_ecs_task_definition" "r" {
     name         = "r"
     image        = "${local.ecr_urls["r-plumber"]}:${var.image_tag}"
     portMappings = [{ containerPort = local.r_port, protocol = "tcp" }]
+    environment = [
+      { name = "R_HOST", value = "0.0.0.0" },
+      { name = "R_PORT", value = tostring(local.r_port) }
+    ]
     logConfiguration = {
       logDriver = "awslogs",
       options   = { awslogs-group = local.r_log_group_name, awslogs-region = var.region, awslogs-stream-prefix = "ecs" }
