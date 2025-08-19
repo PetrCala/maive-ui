@@ -1,15 +1,18 @@
+import { getRuntimeConfig } from "@src/utils/getRuntimeConfig";
+
 /**
  * A button that pings the server and alerts the user with the status and time.
  * @returns A button that pings the server and alerts the user with the status and time.
  */
 export default function PingButton() {
   const pingServer = async () => {
-    if (!process.env.NEXT_PUBLIC_R_API_URL) {
-      alert("NEXT_PUBLIC_R_API_URL is not set");
+    const { R_API_URL } = getRuntimeConfig();
+    if (!R_API_URL) {
+      alert("R API URL not configured");
       return;
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_R_API_URL}/ping`);
+    const response = await fetch(`${R_API_URL}/ping`);
     const data = await response.json();
     alert(`Status: ${data.status}, Time: ${data.time}`);
   };

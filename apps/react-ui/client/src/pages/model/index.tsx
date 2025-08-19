@@ -19,6 +19,7 @@ import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
+import { getRuntimeConfig } from "@src/utils/getRuntimeConfig";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -124,20 +125,22 @@ export default function ModelPage() {
         const nrow = uploadedData.data.length;
         result = { data: generateMockResults(nrow) };
       } else {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_R_API_URL}/run-model`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              file_data: JSON.stringify(uploadedData.data),
-              parameters: JSON.stringify(parameters),
-            }),
-            signal: abortControllerRef.current.signal,
+        const { R_API_URL } = getRuntimeConfig();
+        if (!R_API_URL) {
+          throw new Error("R API URL not configured");
+        }
+
+        const response = await fetch(`${R_API_URL}/run-model`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        );
+          body: JSON.stringify({
+            file_data: JSON.stringify(uploadedData.data),
+            parameters: JSON.stringify(parameters),
+          }),
+          signal: abortControllerRef.current.signal,
+        });
 
         if (!response.ok) throw new Error("Failed to run model");
         result = await response.json();
