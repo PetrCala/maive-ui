@@ -127,6 +127,7 @@ resource "aws_wafv2_web_acl" "ui_acl" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesSQLiRuleSet"
         vendor_name = "AWS"
+        version     = "LATEST"
       }
     }
     visibility_config {
@@ -146,6 +147,7 @@ resource "aws_wafv2_web_acl" "ui_acl" {
       managed_rule_group_statement {
         name        = "AWSManagedRulesAnonymousIpList"
         vendor_name = "AWS"
+        version     = "LATEST"
       }
     }
     visibility_config {
