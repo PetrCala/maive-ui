@@ -3,7 +3,7 @@ data "terraform_remote_state" "foundation" {
   backend = "s3"
   config = {
     bucket = "${var.project}-tf-state"
-    key    = "${var.project}/prod-foundation.tfstate"
+    key    = "prod-foundation.tfstate"
     region = var.region
   }
 }
