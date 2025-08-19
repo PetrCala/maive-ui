@@ -160,6 +160,6 @@ export TF_VAR_email="$EMAIL"
 echo "Running Terraform in $TF_DIR..."
 cd "$TF_DIR"
 terragrunt init
-terragrunt run-all apply -auto-approve
+terragrunt run-all apply --terragrunt-non-interactive
 
 echo "✅ Bootstrap complete. gha-terraform role created and foundation deployed."
