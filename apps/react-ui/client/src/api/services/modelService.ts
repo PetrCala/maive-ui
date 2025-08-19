@@ -6,7 +6,18 @@ import type { ModelRequest, ModelResponse, ModelParameters } from "../types";
  * Service for model-related API operations
  */
 export class ModelService {
-  private config = getDefaultApiConfig();
+  private config: ReturnType<typeof getDefaultApiConfig> | null = null;
+
+  /**
+   * Get the API configuration, initializing it if needed
+   * @returns API configuration
+   */
+  private getConfig() {
+    if (!this.config) {
+      this.config = getDefaultApiConfig();
+    }
+    return this.config;
+  }
 
   /**
    * Run a model with the given data and parameters
@@ -25,16 +36,12 @@ export class ModelService {
       parameters: JSON.stringify(parameters),
     };
 
-    // Override the signal if an AbortController is provided
-    const requestOptions: RequestInit = {};
-    if (abortController) {
-      requestOptions.signal = abortController.signal;
-    }
+    const config = this.getConfig();
 
     return httpPost<ModelResponse>(
-      `${this.config.baseUrl}/run-model`,
+      `${config.baseUrl}/run-model`,
       requestData,
-      this.config,
+      config,
     );
   }
 
@@ -42,8 +49,12 @@ export class ModelService {
    * Update the API configuration
    * @param config - New API configuration
    */
-  updateConfig(config: Partial<typeof this.config>) {
-    this.config = { ...this.config, ...config };
+  updateConfig(config: Partial<ReturnType<typeof getDefaultApiConfig>>) {
+    if (this.config) {
+      this.config = { ...this.config, ...config };
+    } else {
+      this.config = { ...getDefaultApiConfig(), ...config };
+    }
   }
 }
 

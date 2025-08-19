@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { modelService, pingService } from "../index";
+import { modelService, pingService } from "../api/index";
 
 // Mock the runtime config
 vi.mock("@src/utils/getRuntimeConfig", () => ({
