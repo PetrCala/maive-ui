@@ -96,7 +96,7 @@ resource "aws_lb_listener" "r_http" {
 resource "aws_wafv2_web_acl" "ui_acl" {
   name        = "${var.project}-ui-waf"
   scope       = "REGIONAL"
-  description = "Enhanced security for public UI"
+  description = "Enhanced security for public UI - optimized for data processing apps"
   default_action {
     allow {}
   }
@@ -140,18 +140,18 @@ resource "aws_wafv2_web_acl" "ui_acl" {
   }
 
   rule {
-    name     = "BlockXSS"
+    name     = "BlockKnownBadInputs"
     priority = 3
     statement {
       managed_rule_group_statement {
-        name        = "AWSManagedRulesCommonRuleSet"
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
         vendor_name = "AWS"
       }
     }
     visibility_config {
       cloudwatch_metrics_enabled = true
       sampled_requests_enabled   = true
-      metric_name                = "xss"
+      metric_name                = "knownBadInputs"
     }
     action {
       block {}
