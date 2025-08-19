@@ -41,6 +41,9 @@
 		"test-quarterly": "./scripts/test-quarterly-release.sh",
 		"mergePR": "./scripts/mergePR.sh",
 		"mergePR:admin": "./scripts/mergePR.sh --admin",
+		"terraform:validate": "./scripts/validateTerraform.sh",
+		"terraform:validate:foundation": "./scripts/validateTerraform.sh --foundation-only",
+		"terraform:validate:runtime": "./scripts/validateTerraform.sh --runtime-only",
 		"submodule:sync": "./scripts/sync-maive-submodule.sh"
 	},
 	"dependencies": {
