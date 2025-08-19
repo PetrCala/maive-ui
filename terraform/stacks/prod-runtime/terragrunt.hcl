@@ -5,7 +5,7 @@ locals {
   email=get_env("TF_VAR_email")
   tfstate_name="${local.project}-tf-state"
   image_tag=get_env("TF_VAR_image_tag")
-  key = "${local.project}/prod-runtime.tfstate"
+  key = "prod-runtime.tfstate"
   certificate_arn=get_env("TF_VAR_certificate_arn", "")
 }
 
