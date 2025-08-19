@@ -24,6 +24,7 @@ The quarterly release automation:
 **Time**: All releases are scheduled for 9:00 AM UTC on the first day of each quarter.
 
 **Note**: The workflow determines which quarter the current month belongs to:
+
 - **Q1**: January, February, March
 - **Q2**: April, May, June  
 - **Q3**: July, August, September
