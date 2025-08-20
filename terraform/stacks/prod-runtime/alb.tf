@@ -5,17 +5,24 @@ resource "aws_lb" "ui" {
   security_groups    = [module.sg_ui_alb.security_group_id]
   subnets            = local.public_subnets
   enable_http2       = true
+  idle_timeout       = 300
 }
 
 resource "aws_lb_target_group" "ui" {
-  name        = "${var.project}-ui-tg"
-  port        = local.ui_port
-  protocol    = "HTTP"
-  target_type = "ip"
-  vpc_id      = local.vpc_id
+  name                 = "${var.project}-ui-tg"
+  port                 = local.ui_port
+  protocol             = "HTTP"
+  target_type          = "ip"
+  vpc_id               = local.vpc_id
+  deregistration_delay = 300
   health_check {
-    path = "/"
-    port = "traffic-port"
+    path                = "/"
+    port                = "traffic-port"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 30
+    matcher             = "200"
   }
 }
 
@@ -68,17 +75,24 @@ resource "aws_lb" "r" {
   load_balancer_type = "application"
   security_groups    = [module.sg_r_alb.security_group_id]
   subnets            = local.private_subnets
+  idle_timeout       = 300
 }
 
 resource "aws_lb_target_group" "r" {
-  name        = "${var.project}-r-tg"
-  port        = local.r_port
-  protocol    = "HTTP"
-  target_type = "ip"
-  vpc_id      = local.vpc_id
+  name                 = "${var.project}-r-tg"
+  port                 = local.r_port
+  protocol             = "HTTP"
+  target_type          = "ip"
+  vpc_id               = local.vpc_id
+  deregistration_delay = 300
   health_check {
-    path = "/ping"
-    port = "traffic-port"
+    path                = "/ping"
+    port                = "traffic-port"
+    healthy_threshold   = 2
+    unhealthy_threshold = 3
+    timeout             = 10
+    interval            = 30
+    matcher             = "200"
   }
 }
 
