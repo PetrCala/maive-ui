@@ -23,48 +23,6 @@ module "vpc" {
     CostCenter  = "engineering"
     ManagedBy   = "terraform"
   }
-
-  # Allow only HTTPS from the trusted network
-  private_inbound_acl_rules = [
-    {
-      rule_number = 100
-      action      = "allow"
-      protocol    = "tcp"
-      from_port   = 443
-      to_port     = 443
-      cidr_block  = var.trusted_office_cidr
-    },
-    # Optional: allow SSH for bastion / admin
-    {
-      rule_number = 110
-      action      = "allow"
-      protocol    = "tcp"
-      from_port   = 22
-      to_port     = 22
-      cidr_block  = var.trusted_office_cidr
-    },
-    # 🔒 Everything else (IPv4) is denied
-    {
-      rule_number = 32760 # < 32767 catch-all
-      action      = "deny"
-      protocol    = "-1"
-      from_port   = 0
-      to_port     = 0
-      cidr_block  = "0.0.0.0/0"
-    }
-  ]
-
-  # Outbound: allow anything the workload initiates
-  private_outbound_acl_rules = [
-    {
-      rule_number = 100
-      action      = "allow"
-      protocol    = "-1"
-      from_port   = 0
-      to_port     = 0
-      cidr_block  = "0.0.0.0/0"
-    }
-  ]
 }
 
 # VPC Flow Logs for security monitoring
