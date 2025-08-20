@@ -43,7 +43,6 @@ export function getRApiUrl(): string {
  */
 export function getDefaultApiConfig() {
   return {
-    baseUrl: getRApiUrl(), // Now uses the single source of truth
     timeout: 30000, // 30 seconds
     headers: {
       "Content-Type": "application/json",

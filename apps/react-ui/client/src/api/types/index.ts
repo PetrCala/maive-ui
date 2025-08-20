@@ -39,7 +39,7 @@ export interface PingResponse {
 
 // API configuration
 export interface ApiConfig {
-  baseUrl: string;
+  baseUrl?: string;
   timeout?: number;
   headers?: Record<string, string>;
 }

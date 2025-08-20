@@ -10,4 +10,5 @@ export * from "./services/pingService";
 export { modelService } from "./services/modelService";
 export { pingService } from "./services/pingService";
 export { getDefaultApiConfig, getRApiUrl } from "./utils/config";
+export { httpGet, httpPost, httpRequest } from "./utils/http";
 export { clientOnly, isClient } from "./utils/clientOnly";
