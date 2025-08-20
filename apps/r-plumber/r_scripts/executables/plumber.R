@@ -13,6 +13,7 @@ function(msg = "") {
 function() {
   list(status = "ok", time = format(Sys.time(), tz = "UTC"))
 }
+
 #* Run the model
 #* @param file_data The file data to run the model on, passed as a JSON string
 #* @param parameters The parameters to run the model on
