@@ -21,6 +21,10 @@ resource "aws_iam_role_policy_attachment" "task_exec" {
   role       = aws_iam_role.task_exec.name
   policy_arn = data.aws_iam_policy.ecs_task_execution.arn
 }
+resource "aws_iam_role_policy_attachment" "task_exec_ssm" {
+  role       = aws_iam_role.task_exec.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
 
 # ---------------- React UI ----------------
 resource "aws_ecs_task_definition" "ui" {
