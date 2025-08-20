@@ -27,7 +27,7 @@ def main():
     response = requests.post(
         url=url,
         headers={"Content-Type": "application/json"},
-        data=json.dumps({"file_data": file_data, "parameters": parameters}),
+        data=json.dumps({"data": file_data, "parameters": parameters}),
     )
     print(response.json())
 

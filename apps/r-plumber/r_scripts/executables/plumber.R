@@ -15,10 +15,10 @@ function() {
 }
 
 #* Run the model
-#* @param file_data The file data to run the model on, passed as a JSON string
+#* @param data The file data to run the model on, passed as a JSON string
 #* @param parameters The parameters to run the model on
 #* @post /run-model
-function(file_data, parameters) {
+function(data, parameters) {
   tryCatch(
     {
       # Static config
@@ -32,7 +32,7 @@ function(file_data, parameters) {
       # nolint end: undesirable_function_linter.
 
       # Parse JSON data
-      df <- jsonlite::fromJSON(file_data)
+      df <- jsonlite::fromJSON(data)
       params <- jsonlite::fromJSON(parameters)
 
       # Debug: Print input data

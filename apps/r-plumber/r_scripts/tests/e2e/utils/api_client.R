@@ -55,7 +55,7 @@ test_run_model <- function(file_data, parameters,
       response <- httr::POST(
         paste0(base_url, "/run-model"),
         body = list(
-          file_data = file_data,
+          data = file_data,
           parameters = parameters
         ),
         encode = "form",

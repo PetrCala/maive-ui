@@ -20,11 +20,11 @@ lapply(maive_deps, library, character.only = TRUE)
 source("modules/funnel_plot.R", local = TRUE)
 
 # Extract the core logic from the plumber endpoint
-run_model_locally <- function(file_data, parameters) {
+run_model_locally <- function(data, parameters) {
   tryCatch(
     {
       # Parse JSON data
-      df <- jsonlite::fromJSON(file_data)
+      df <- jsonlite::fromJSON(data)
       params <- jsonlite::fromJSON(parameters)
 
       # Debug: Print input data

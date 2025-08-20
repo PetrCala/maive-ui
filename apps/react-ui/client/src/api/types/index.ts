@@ -23,7 +23,7 @@ export interface ModelParameters {
 }
 
 export interface ModelRequest {
-  file_data: string; // JSON stringified data
+  data: string; // JSON stringified data
   parameters: string; // JSON stringified parameters
 }
 

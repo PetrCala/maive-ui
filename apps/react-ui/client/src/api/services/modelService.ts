@@ -19,9 +19,9 @@ export class ModelService {
     parameters: ModelParameters,
     abortController?: AbortController,
   ): Promise<ModelResponse> {
-    const requestData = {
-      data,
-      parameters,
+    const requestData: ModelRequest = {
+      data: JSON.stringify(data),
+      parameters: JSON.stringify(parameters),
     };
 
     try {
