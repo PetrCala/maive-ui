@@ -7,7 +7,7 @@ type NewButtonProps = {
 };
 
 export const NewButton: React.FC<NewButtonProps> = ({
-  label = 'Click Me',
+  label = 'Click Me Now',
   onClick,
   disabled = false,
 }) => {
