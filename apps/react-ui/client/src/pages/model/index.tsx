@@ -19,7 +19,7 @@ import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
-import { modelService } from "@src/api";
+import { runModelClient } from "@src/api";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -125,10 +125,10 @@ export default function ModelPage() {
         const nrow = uploadedData.data.length;
         result = { data: generateMockResults(nrow) };
       } else {
-        result = await modelService.runModel(
+        result = await runModelClient(
           uploadedData.data,
           parameters,
-          abortControllerRef.current,
+          abortControllerRef.current?.signal,
         );
       }
 

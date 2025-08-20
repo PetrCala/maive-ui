@@ -1,4 +1,4 @@
-import { pingService } from "@src/api";
+import { pingClient } from "@src/api";
 
 /**
  * A button that pings the server and alerts the user with the status and time.
@@ -7,7 +7,7 @@ import { pingService } from "@src/api";
 export default function PingButton() {
   const pingServer = async () => {
     try {
-      const data = await pingService.ping();
+      const data = await pingClient();
       alert(`Status: ${data.status}, Time: ${data.time}`);
     } catch (error) {
       alert(
