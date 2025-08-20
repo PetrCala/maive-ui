@@ -11,11 +11,13 @@ export class ModelService {
    * Run a model with the given data and parameters
    * @param data - The data to process
    * @param parameters - Model parameters
+   * @param abortController - Optional AbortController for cancelling the request
    * @returns Promise with model results
    */
   async runModel(
     data: any[],
     parameters: ModelParameters,
+    abortController?: AbortController,
   ): Promise<ModelResponse> {
     const requestData = {
       data,
@@ -31,6 +33,7 @@ export class ModelService {
           headers: {
             "Content-Type": "application/json",
           },
+          signal: abortController?.signal,
         },
       );
     } catch (error: any) {

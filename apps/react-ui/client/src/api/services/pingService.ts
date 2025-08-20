@@ -9,9 +9,10 @@ import { httpGet } from "../utils/http";
 export class PingService {
   /**
    * Ping the R backend service
+   * @param abortController - Optional AbortController for cancelling the request
    * @returns Promise with ping response
    */
-  async ping(): Promise<PingResponse> {
+  async ping(abortController?: AbortController): Promise<PingResponse> {
     try {
       // Call R backend directly using the existing httpGet utility
       return await httpGet<PingResponse>(`${getRApiUrl()}/ping`, {
@@ -19,6 +20,7 @@ export class PingService {
         headers: {
           "Content-Type": "application/json",
         },
+        signal: abortController?.signal,
       });
     } catch (error: any) {
       throw new Error(
