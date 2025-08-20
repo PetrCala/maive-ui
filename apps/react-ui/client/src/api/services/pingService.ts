@@ -1,5 +1,6 @@
 import type { PingResponse } from "../types";
 import { getRApiUrl } from "../utils/config";
+import { httpGet } from "../utils/http";
 
 /**
  * Service for ping operations
@@ -12,22 +13,13 @@ export class PingService {
    */
   async ping(): Promise<PingResponse> {
     try {
-      const response = await fetch(`${getRApiUrl()}/ping`, {
-        method: "GET",
+      // Call R backend directly using the existing httpGet utility
+      return await httpGet<PingResponse>(`${getRApiUrl()}/ping`, {
+        timeout: 30000, // 30 seconds for ping
         headers: {
           "Content-Type": "application/json",
         },
       });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`,
-        );
-      }
-
-      const result: PingResponse = await response.json();
-      return result;
     } catch (error: any) {
       throw new Error(
         `Failed to ping R service: ${error.message || "Unknown error"}`,

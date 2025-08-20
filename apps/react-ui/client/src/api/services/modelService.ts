@@ -1,5 +1,6 @@
 import type { ModelRequest, ModelResponse, ModelParameters } from "../types";
 import { getRApiUrl } from "../utils/config";
+import { httpPost } from "../utils/http";
 
 /**
  * Service for model-related API operations
@@ -22,23 +23,16 @@ export class ModelService {
     };
 
     try {
-      const response = await fetch(`${getRApiUrl()}/run-model`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+      return await httpPost<ModelResponse>(
+        `${getRApiUrl()}/run-model`,
+        requestData,
+        {
+          timeout: 300000, // 5 minutes for long-running models
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-        body: JSON.stringify(requestData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(
-          errorData.message || `HTTP error! status: ${response.status}`,
-        );
-      }
-
-      const result: ModelResponse = await response.json();
-      return result;
+      );
     } catch (error: any) {
       throw new Error(
         `Failed to run model: ${error.message || "Unknown error"}`,
