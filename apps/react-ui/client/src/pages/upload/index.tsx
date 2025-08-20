@@ -107,11 +107,17 @@ export default function UploadPage() {
             </h1>
             <div className="mb-6">
               <p className="text-secondary mb-2">{TEXT.upload.description}</p>
-              <ul className="list-disc list-inside text-secondary space-y-1">
+              <ul className="custom-bullet-list text-secondary">
                 {Object.values(TEXT.upload.requirements).map(
                   (requirement, index) => (
                     <li key={index}>
-                      <MDXContent source={requirement} />
+                      <span className="bullet">•</span>
+                      <div className="content">
+                        <MDXContent
+                          source={requirement}
+                          className="list-item"
+                        />
+                      </div>
                     </li>
                   ),
                 )}

@@ -10,6 +10,7 @@ interface MDXContentProps {
 const parseMarkdown = (
   text: string,
   lineMargin: number = 0,
+  className: string = "",
 ): React.ReactNode[] => {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
@@ -111,13 +112,29 @@ const parseMarkdown = (
         '<code class="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-sm font-mono text-gray-800 dark:text-gray-200">$1</code>',
       );
 
-    elements.push(
-      <p
-        key={index}
-        className={`text-gray-700 dark:text-gray-300 leading-relaxed ${lineMargin > 0 ? `mb-${lineMargin}` : ""}`}
-        dangerouslySetInnerHTML={{ __html: formattedText }}
-      />,
-    );
+    // Check if this is being rendered inside a list item (parent context)
+    const isInList =
+      className.includes("list-item") || className.includes("inline");
+
+    if (isInList) {
+      // For list items, use span instead of p to avoid block-level behavior
+      elements.push(
+        <span
+          key={index}
+          className="text-gray-700 dark:text-gray-300 leading-relaxed"
+          dangerouslySetInnerHTML={{ __html: formattedText }}
+        />,
+      );
+    } else {
+      // For regular content, use p tag
+      elements.push(
+        <p
+          key={index}
+          className={`text-gray-700 dark:text-gray-300 leading-relaxed ${lineMargin > 0 ? `mb-${lineMargin}` : ""}`}
+          dangerouslySetInnerHTML={{ __html: formattedText }}
+        />,
+      );
+    }
   });
 
   return elements;
@@ -128,7 +145,7 @@ const MDXContent: React.FC<MDXContentProps> = ({
   className = "",
   lineMargin = 0,
 }) => {
-  const parsedContent = parseMarkdown(source, lineMargin);
+  const parsedContent = parseMarkdown(source, lineMargin, className);
 
   return <div className={className}>{parsedContent}</div>;
 };
