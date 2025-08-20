@@ -9,5 +9,5 @@ export * from "./services/pingService";
 // Re-export commonly used items
 export { modelService } from "./services/modelService";
 export { pingService } from "./services/pingService";
-export { getApiBaseUrl, getDefaultApiConfig } from "./utils/config";
+export { getDefaultApiConfig, getRApiUrl } from "./utils/config";
 export { clientOnly, isClient } from "./utils/clientOnly";

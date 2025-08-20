@@ -1,40 +1,21 @@
 import { getRuntimeConfig } from "@src/utils/getRuntimeConfig";
 
 /**
- * Get the fallback URL for development/SSR scenarios
- * @returns Fallback URL
+ * Get the R API URL for the current environment
+ * This function works both client-side and server-side
+ * @returns The R API URL
  */
-function getFallbackUrl(): string {
-  return "http://localhost:8787";
-}
-
-/**
- * Check if we're in a server-side rendering environment
- * @returns True if running on server
- */
-function isServerSide(): boolean {
-  return typeof window === "undefined";
-}
-
-/**
- * Check if we're in development mode
- * @returns True if in development
- */
-function isDevelopment(): boolean {
-  return process.env.NODE_ENV === "development";
-}
-
-/**
- * Get the API base URL for the current environment
- * @returns The API base URL
- */
-export function getApiBaseUrl(): string {
-  // Handle server-side rendering
-  if (isServerSide()) {
-    return getFallbackUrl();
+export function getRApiUrl(): string {
+  // Server-side: check environment variables first
+  if (typeof window === "undefined") {
+    return (
+      process.env.NEXT_PUBLIC_R_API_URL ||
+      process.env.R_API_URL ||
+      "http://localhost:8787"
+    );
   }
 
-  // Try to get URL from runtime config
+  // Client-side: try to get URL from runtime config
   const { R_API_URL } = getRuntimeConfig();
 
   if (R_API_URL) {
@@ -42,12 +23,12 @@ export function getApiBaseUrl(): string {
   }
 
   // Handle development fallback
-  if (isDevelopment()) {
+  if (process.env.NODE_ENV === "development") {
     console.warn(
       "R API URL not configured. Using fallback for development. " +
         "Set NEXT_PUBLIC_DEV_R_API_URL in .env.local for custom development URL.",
     );
-    return getFallbackUrl();
+    return "http://localhost:8787";
   }
 
   // Production error
@@ -62,7 +43,7 @@ export function getApiBaseUrl(): string {
  */
 export function getDefaultApiConfig() {
   return {
-    baseUrl: getApiBaseUrl(),
+    baseUrl: getRApiUrl(), // Now uses the single source of truth
     timeout: 30000, // 30 seconds
     headers: {
       "Content-Type": "application/json",
