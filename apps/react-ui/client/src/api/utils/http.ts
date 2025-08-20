@@ -51,10 +51,10 @@ export async function httpRequest<T>(
   options: RequestInit = {},
   config: ApiConfig,
 ): Promise<T> {
-  const { timeout = 30000, headers = {} } = config;
+  const { timeout = 30000, headers = {}, signal } = config;
 
-  // Create timeout controller
-  const timeoutController = createTimeoutController(timeout);
+  // Create timeout controller only if no signal is provided
+  const timeoutController = signal ? null : createTimeoutController(timeout);
 
   // Merge headers
   const requestHeaders = {
@@ -62,18 +62,26 @@ export async function httpRequest<T>(
     ...options.headers,
   };
 
+  // Use the provided signal or the timeout signal
+  const requestSignal = signal || timeoutController?.signal;
+
   try {
     const response = await fetch(url, {
       ...options,
       headers: requestHeaders,
-      signal: timeoutController.signal,
+      signal: requestSignal,
     });
 
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof Error) {
       if (error.name === "AbortError") {
-        throw new Error("Request timed out") as ApiError;
+        // Check if it was aborted by the user or by timeout
+        if (signal?.aborted) {
+          throw error; // Re-throw the original abort error
+        } else {
+          throw new Error("Request timed out") as ApiError;
+        }
       }
       throw error;
     }
