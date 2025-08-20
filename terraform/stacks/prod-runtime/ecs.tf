@@ -63,6 +63,11 @@ resource "aws_ecs_service" "ui" {
     container_port   = local.ui_port
   }
   enable_execute_command = true
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 }
 
 # Auto Scaling for UI tasks
@@ -131,6 +136,11 @@ resource "aws_ecs_service" "r" {
     container_port   = local.r_port
   }
   enable_execute_command = true
+
+  deployment_circuit_breaker {
+    enable   = true
+    rollback = true
+  }
 }
 
 # R Service Monitoring and Alarms
