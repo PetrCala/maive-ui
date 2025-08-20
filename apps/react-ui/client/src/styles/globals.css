@@ -75,6 +75,51 @@
 	--z-tooltip: 1070;
 }
 
+/* Custom bullet point styles for cross-browser compatibility */
+.custom-bullet-list {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.custom-bullet-list li {
+	display: flex;
+	align-items: flex-start;
+	line-height: 1.5;
+}
+
+.custom-bullet-list .bullet {
+	color: inherit;
+	margin-right: 0.5rem;
+	margin-top: 0.125rem;
+	flex-shrink: 0;
+	font-size: 1.25rem;
+	line-height: 1;
+}
+
+/* Dark mode: use primary color for bullets */
+.dark .custom-bullet-list .bullet {
+	color: var(--color-primary-500);
+}
+
+.custom-bullet-list .content {
+	flex: 1;
+	display: inline;
+}
+
+/* Ensure MDX content in list items renders inline */
+.custom-bullet-list .content .list-item {
+	display: inline;
+}
+
+.custom-bullet-list .content .list-item span {
+	display: inline;
+}
+
+.custom-bullet-list .content .list-item code {
+	display: inline;
+}
+
 /* Dark theme overrides */
 .dark {
 	/* Primary colors (same as light theme for consistency) */
