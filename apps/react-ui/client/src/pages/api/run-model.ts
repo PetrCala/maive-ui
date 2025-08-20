@@ -20,18 +20,13 @@ export default async function handler(
       });
     }
 
-    // Call the model service (this will now run server-side)
+    // Call the R backend directly via server-side service
     const result: ModelResponse = await modelService.runModel(data, parameters);
 
     // Return the result
     res.status(200).json(result);
   } catch (error: any) {
     console.error("Error in run-model API route:", error);
-
-    // Handle different types of errors
-    if (error.name === "AbortError") {
-      return res.status(408).json({ error: "Request timeout" });
-    }
 
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";

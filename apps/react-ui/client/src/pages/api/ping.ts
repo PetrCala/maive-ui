@@ -11,7 +11,7 @@ export default async function handler(
   }
 
   try {
-    // Call the ping service (this will now run server-side)
+    // Call the R backend directly via server-side service
     const result: PingResponse = await pingService.ping();
 
     // Return the result
@@ -22,7 +22,7 @@ export default async function handler(
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error occurred";
     res.status(500).json({
-      error: "Failed to ping service",
+      error: "Failed to ping R service",
       message: errorMessage,
     });
   }
