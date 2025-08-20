@@ -40,9 +40,9 @@ module "sg_ui_tasks" {
   }]
 
   egress_with_source_security_group_id = [{
-    # UI -> API internal ALB
-    from_port                = 80
-    to_port                  = 80
+    # UI -> R ALB (on port 8080)
+    from_port                = 8080
+    to_port                  = 8080
     protocol                 = "tcp"
     source_security_group_id = module.sg_r_alb.security_group_id
   }]
@@ -65,8 +65,8 @@ module "sg_r_alb" {
 
   ingress_with_source_security_group_id = [{
     description              = "Allow traffic from UI ECS task"
-    from_port                = 80
-    to_port                  = 80
+    from_port                = 8080
+    to_port                  = 8080
     protocol                 = "tcp"
     source_security_group_id = module.sg_ui_tasks.security_group_id
   }]
