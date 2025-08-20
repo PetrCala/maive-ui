@@ -37,7 +37,7 @@ tryCatch(
     response <- POST(
       "http://localhost:8787/run-model",
       body = list(
-        file_data = file_data_json,
+        data = file_data_json,
         parameters = params_json
       ),
       encode = "form",
