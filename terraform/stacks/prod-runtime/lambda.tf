@@ -35,7 +35,7 @@ resource "aws_lambda_function" "r_backend" {
   memory_size   = var.lambda_r_backend_memory_size
 
   package_type = "Image"
-  image_uri    = "${aws_ecr_repository.lambda_r_backend.repository_url}:${var.image_tag}"
+  image_uri    = "${data.aws_ecr_repository.lambda_r_backend.repository_url}:${var.image_tag}"
 
   environment {
     variables = {
@@ -143,4 +143,8 @@ resource "aws_cloudwatch_dashboard" "lambda_r_backend" {
       }
     ]
   })
+}
+
+data "aws_ecr_repository" "lambda_r_backend" {
+  name = "${var.project}-${var.lambda_r_backend_function_base_name}"
 }
