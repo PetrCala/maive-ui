@@ -36,6 +36,8 @@ RUN dnf -y update && dnf -y install \
     unzip \
     zip \
     glibc-langpack-en \
+    # For plotting
+    freetype harfbuzz fribidi fontconfig libpng libjpeg-turbo \
  && if [ "$(uname -m)" = "x86_64" ]; then dnf -y install libquadmath; fi \
  && dnf clean all
 

@@ -8,3 +8,6 @@ clubSandwich
 varhandle
 pracma
 sandwich
+ragg
+systemfonts
+textshaping

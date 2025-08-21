@@ -25,6 +25,8 @@ RUN dnf -y update && dnf -y install \
     zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
     readline-devel libcurl-devel libxml2-devel openssl-devel \
     libsodium-devel \
+    # For plotting
+    freetype-devel harfbuzz-devel fribidi-devel libpng-devel libjpeg-turbo-devel pkgconf-pkg-config \
  && dnf clean all
 
 # Build & install R from source
