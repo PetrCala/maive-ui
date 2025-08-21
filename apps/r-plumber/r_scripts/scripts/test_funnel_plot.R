@@ -1,4 +1,4 @@
-source("apps/r-plumber/r_scripts/modules/funnel_plot.R")
+source("lambda-r-backend/r_scripts/modules/funnel_plot.R")
 
 df <- readxl::read_excel("lib/funnel_data.xlsx")
 

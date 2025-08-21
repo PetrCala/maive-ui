@@ -27,12 +27,12 @@ jobs:
         run: |
           npm run lint
 
-  lint-r-plumber:
-    name: Lint R Plumber
+  lint-r-backend:
+    name: Lint R Backend
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: apps/r-plumber
+        working-directory: lambda-r-backend/r_scripts
     steps:
       - uses: actions/checkout@v4
       - name: Set up R

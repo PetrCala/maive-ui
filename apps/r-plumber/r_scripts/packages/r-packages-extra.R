@@ -20,7 +20,7 @@ check_github_auth <- function() {
   }
 }
 
-# Install the MAIVE package - runs from the 'apps/r-plumber' directory
+# Install the MAIVE package - runs from the 'lambda-r-backend' directory
 install_forked <- TRUE # Whether to install from the forked repository
 maive_repo_name <- "maive"
 
