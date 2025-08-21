@@ -62,9 +62,15 @@ variable "lambda_r_backend_timeout" {
 }
 
 variable "lambda_r_backend_reserved_concurrency" {
+  description = "Reserved concurrency for Lambda R backend (0 = unreserved)"
   type        = number
-  description = "Reserved concurrency for the Lambda R backend function (0 = no limit)"
   default     = 0
+}
+
+variable "use_secure_setup" {
+  description = "Whether to use secure setup with ALB, WAF, and enhanced security (true) or minimal setup with direct ECS access (false)"
+  type        = bool
+  default     = false
 }
 
 variable "lambda_r_backend_log_retention_days" {
