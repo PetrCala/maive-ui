@@ -34,17 +34,6 @@ function(data, parameters) {
       source("maive_model.R")
       # nolint end: undesirable_function_linter.
 
-      # Parse JSON body
-      if (is.character(body)) {
-        body_data <- fromJSON(body)
-      } else {
-        body_data <- body
-      }
-
-      # Extract data and parameters
-      data <- body_data$data
-      parameters <- body_data$parameters
-
       if (is.null(data) || is.null(parameters)) {
         cli::cli_abort("Missing data or parameters")
       }
