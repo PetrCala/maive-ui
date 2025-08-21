@@ -133,8 +133,6 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - run: echo "Using RLIB_IMAGE=${{ needs.buildRlib.outputs.RLIB_IMAGE }}"
-
       - name: Build & push ${{ matrix.service }}
         uses: docker/build-push-action@v5
         with:
@@ -142,7 +140,8 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
           build-args: |
-            RLIB_IMAGE=${{ needs.buildRlib.outputs.RLIB_IMAGE }}
+            AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
 
   plan:
     runs-on: ubuntu-latest

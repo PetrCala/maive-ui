@@ -2,10 +2,11 @@
 # APP IMAGE — tiny, reusing pre-baked R library base
 # ─────────────────────────────────────────────────────────
 
-ARG RLIB_IMAGE
+ARG AWS_ACCOUNT_ID
+ARG AWS_REGION
 
 # 1) Start the private base
-FROM ${RLIB_IMAGE} AS base
+FROM ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/maive-rlib:latest AS base
 
 # 2) Switch into a Lambda base (to get the Lambda runtime contract)
 FROM public.ecr.aws/lambda/provided:al2023
