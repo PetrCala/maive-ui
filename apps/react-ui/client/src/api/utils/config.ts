@@ -1,5 +1,9 @@
 import { getRuntimeConfig } from "@src/utils/getRuntimeConfig";
 
+function sanitizeUrl(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
 /**
  * Get the R API URL for the current environment
  * This function works both client-side and server-side
