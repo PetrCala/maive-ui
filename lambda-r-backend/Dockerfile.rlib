@@ -7,7 +7,6 @@
 FROM public.ecr.aws/docker/library/amazonlinux:2023 AS build
 
 ARG R_VERSION
-ENV R_VERSION=${R_VERSION}
 ENV PATH="/usr/local/bin:${PATH}"
 # Speed-ups for compilation
 ENV MAKEFLAGS="-j$(nproc)"
@@ -82,6 +81,8 @@ RUN R -q -e "writeLines(apply(installed.packages()[,c('Package','Version')],1,pa
 
 ########## Stage 2: minimal runtime base ##########
 FROM public.ecr.aws/docker/library/amazonlinux:2023 AS rlib
+
+ARG R_VERSION
 
 # Runtime libs only
 RUN dnf -y update && dnf -y install \
