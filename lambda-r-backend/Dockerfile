@@ -17,7 +17,7 @@ FROM public.ecr.aws/lambda/provided:al2023
 RUN dnf -y update \
  && dnf -y install \
       zlib bzip2-libs xz-libs pcre2 readline \
-      libxml2 openssl-libs \
+      libxml2 \
       libsodium \
       libgcc libgfortran \
  && dnf clean all
