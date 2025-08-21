@@ -45,6 +45,6 @@ docker build \
 docker tag "rlib-build:${RLIB_TAG}" "${REPOSITORY_URI}:${RLIB_TAG}"
 docker push "${REPOSITORY_URI}:${RLIB_TAG}"
 
-echo "${REPOSITORY_URI}:${RLIB_TAG}"
+echo "RLIB_IMAGE=${REPOSITORY_URI}:${RLIB_TAG}" >> "$GITHUB_OUTPUT"
 
 
