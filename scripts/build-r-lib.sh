@@ -29,6 +29,7 @@ if aws ecr describe-images \
     --region "${AWS_REGION}" \
     --image-ids imageTag="${RLIB_TAG}" >/dev/null 2>&1; then
   echo "Image already exists. Skipping build."
+  echo "RLIB_IMAGE=${REPOSITORY_URI}:${RLIB_TAG}" >> "$GITHUB_OUTPUT"
   exit 0
 fi
 

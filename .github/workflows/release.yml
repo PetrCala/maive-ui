@@ -105,6 +105,7 @@ jobs:
             "${{ secrets.ADMIN_TOKEN }}" \
             "${{ secrets.ADMIN_NAME }}" \
             "${{ env.MAIVE_TAG }}"
+        shell: bash
 
       - name: Print the output image URL
         run: |
@@ -139,7 +140,7 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
           build-args: |
-            RLIB_IMAGE=${{ needs.buildRlib.outputs.RLIB_IMAGE }}
+            RLIB_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-rlib:latest
 
   plan:
     runs-on: ubuntu-latest
