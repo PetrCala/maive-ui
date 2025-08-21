@@ -16,7 +16,7 @@ variable "email" {
 
 variable "services" {
   type    = list(string)
-  default = ["react-ui", "r-plumber"]
+  default = ["react-ui", "lambda-r-backend"]
 }
 
 variable "log_retention_days" {

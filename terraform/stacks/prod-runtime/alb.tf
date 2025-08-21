@@ -68,44 +68,6 @@ resource "aws_lb_listener" "ui_http_forward" {
   }
 }
 
-# Internal ALB for R
-resource "aws_lb" "r" {
-  name               = "${var.project}-r-alb"
-  internal           = false
-  load_balancer_type = "application"
-  security_groups    = [module.sg_r_alb.security_group_id]
-  subnets            = local.public_subnets
-  idle_timeout       = 300
-}
-
-resource "aws_lb_target_group" "r" {
-  name                 = "${var.project}-r-tg"
-  port                 = local.r_port
-  protocol             = "HTTP"
-  target_type          = "ip"
-  vpc_id               = local.vpc_id
-  deregistration_delay = 300
-  health_check {
-    path                = "/ping"
-    port                = "traffic-port"
-    healthy_threshold   = 2
-    unhealthy_threshold = 3
-    timeout             = 10
-    interval            = 30
-    matcher             = "200"
-  }
-}
-
-resource "aws_lb_listener" "r_http" {
-  load_balancer_arn = aws_lb.r.arn
-  port              = 8080
-  protocol          = "HTTP"
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.r.arn
-  }
-}
-
 # WAF – Enhanced security rules
 resource "aws_wafv2_web_acl" "ui_acl" {
   name        = "${var.project}-ui-waf"
