@@ -2,16 +2,14 @@
 # APP IMAGE — tiny, reusing pre-baked R library base
 # ─────────────────────────────────────────────────────────
 
-# We want to fail early if RLIB_IMAGE_URL is missing
-ARG RLIB_IMAGE_URL
-
-# Assert stage to validate the ARG
-FROM public.ecr.aws/docker/library/amazonlinux:2023 AS assert
-ARG RLIB_IMAGE_URL
-RUN test -n "$RLIB_IMAGE_URL" || (echo >&2 "RLIB_IMAGE_URL is required. Pass --build-arg RLIB_IMAGE_URL=..."; exit 1)
+ARG PROJECT_NAME
+ARG AWS_ACCOUNT_ID
+ARG AWS_REGION
+ARG R_VERSION
+ARG RLIB_IMAGE_HASH
 
 # 1) Pull your pre-baked R base
-FROM ${RLIB_IMAGE_URL} AS base
+FROM ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${PROJECT_NAME}-rlib:al2023-r${R_VERSION}-${RLIB_IMAGE_HASH} AS base
 
 # 2) Switch into a Lambda base (contracts + entrypoints)
 FROM public.ecr.aws/lambda/provided:al2023
