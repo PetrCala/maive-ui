@@ -3,6 +3,7 @@
 # ─────────────────────────────────────────────────────────
 
 ARG RLIB_IMAGE_URL
+RUN test -n "$RLIB_IMAGE_URL"
 
 # 1) Start the private base
 FROM ${RLIB_IMAGE_URL} AS base
@@ -10,14 +11,35 @@ FROM ${RLIB_IMAGE_URL} AS base
 # 2) Switch into a Lambda base (to get the Lambda runtime contract)
 FROM public.ecr.aws/lambda/provided:al2023
 
+# 2a) Install the runtime libs R (and compiled pkgs) need
+# - libgomp/libgfortran: OpenMP/Fortran runtime
+# - libquadmath: needed on x86_64 if gfortran linked it
+# - the usual C/C++ and compression/crypto deps
+RUN dnf -y update && dnf -y install \
+    libgomp \
+    libgfortran \
+    libstdc++ \
+    libsodium \
+    libxml2 \
+    openssl-libs \
+    zlib \
+    bzip2-libs \
+    xz-libs \
+    pcre2 \
+    readline \
+ && if [ "$(uname -m)" = "x86_64" ]; then dnf -y install libquadmath; fi \
+ && dnf clean all
+
+# 2b) Make the dynamic linker see R’s own libs
+# R’s shared libs live in /usr/local/lib64/R/lib but that path is not
+# searched by default in the Lambda base.
+ENV LD_LIBRARY_PATH="/usr/local/lib64/R/lib:/usr/local/lib64:${LD_LIBRARY_PATH}"
+# Optional but nice: persist in ldconfig too
+RUN printf '/usr/local/lib64\n/usr/local/lib64/R/lib\n' > /etc/ld.so.conf.d/usr-local.conf && ldconfig
+
 # Bring in the pre-baked R from the base image
 COPY --from=base /usr/local /usr/local
 COPY --from=base /opt/rlib-manifest.txt /opt/rlib-manifest.txt
-# Copy several libraries from the base image to the Lambda base image
-COPY --from=base /usr/lib64/libgomp.so.1*      /usr/lib64/
-COPY --from=base /usr/lib64/libgfortran.so.*   /usr/lib64/
-COPY --from=base /usr/lib64/libquadmath.so.*   /usr/lib64/
-COPY --from=base /usr/lib64/libsodium.so.*     /usr/lib64/
 ENV PATH="/usr/local/bin:${PATH}"
 
 # Lambda Web Adapter (extension)
@@ -42,7 +64,7 @@ ENV AWS_LWA_ENABLE_COMPRESSION=true
 # Check if the R library is complete
 RUN sh -lc \
   "ldd /usr/local/lib64/R/bin/exec/R | grep 'not found' || true; \
-   ldd /usr/local/lib64/R/lib/libR.so | grep 'not found' || true; \
+   ldd /usr/local/lib64/R/lib/libR.so   | grep 'not found' || true; \
    R -q -e 'sessionInfo()'"
 
 # Start Plumber (adapter proxies requests)
