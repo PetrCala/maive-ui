@@ -16,6 +16,8 @@ FROM public.ecr.aws/lambda/provided:al2023
 # - the usual C/C++ and compression/crypto deps
 RUN dnf -y update \
  && dnf -y install \
+      libgomp libstdc++ \
+      libxml2 \
       zlib bzip2-libs xz-libs pcre2 readline \
       libxml2 \
       libsodium \
