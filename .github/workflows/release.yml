@@ -2,50 +2,49 @@ name: Release
 
 on:
   pull_request:
-    types:
-      - closed
+    types: [closed]
     branches: [master]
+  workflow_dispatch:
+    inputs:
+      r_version:
+        description: "R version for rlib tag"
+        required: true
+        default: "4.4.1"
 
 permissions:
   id-token: write
   contents: read
-  pull-requests: write # to post plan as comment
+  pull-requests: write
 
 env:
   TF_VERSION: 1.12.0
   TG_VERSION: 0.62.1
   PROJECT_NAME: maive
+  # Prefer workflow input when manually triggered; fallback default
+  R_VERSION: ${{ github.event.inputs.r_version != '' && github.event.inputs.r_version || '4.4.1' }}
+  RLIB_TAG: al2023-r${{ github.event.inputs.r_version != '' && github.event.inputs.r_version || '4.4.1' }}-maive
 
 jobs:
   labelChecks:
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.merged == true }}
-
     outputs:
       READY_TO_BUILD: ${{ steps.labelCheck.outputs.READY_TO_BUILD }}
       SEMVER_LEVEL: ${{ steps.labelCheck.outputs.SEMVER_LEVEL }}
-
     steps:
       - name: Determine labels from PR
         id: labelCheck
         run: |
           label_names='${{ toJson(github.event.pull_request.labels) }}'
-
           ready_to_build="false"
-
-          declare -A label_map=(
-            ["release"]="ready_to_build"
-          )
-
+          declare -A label_map=( ["release"]="ready_to_build" )
           for label in "${!label_map[@]}"; do
             if echo "$label_names" | jq -e ".[] | select(.name == \"$label\")" >/dev/null; then
               eval "${label_map[$label]}=true"
             fi
           done
-
           semver_labels=$(echo "$label_names" | jq -r '[.[] | select(.name | startswith("v-")) | .name]')
           label_count=$(echo "$semver_labels" | jq 'length')
-
           semver_level="patch"
           if ((label_count > 1)); then
             echo "Error: more than one label starting with 'v-' found." >&2
@@ -54,10 +53,7 @@ jobs:
             semver_level=$(echo "$semver_labels" | jq -r '.[0]' | sed 's/^v-//')
             echo "Assigned semver level: $semver_level"
           fi
-
-          # convert to uppercase
           semver_level=$(echo "$semver_level" | tr '[:lower:]' '[:upper:]')
-
           echo "READY_TO_BUILD=$ready_to_build" >> "$GITHUB_OUTPUT"
           echo "SEMVER_LEVEL=$semver_level" >> "$GITHUB_OUTPUT"
         shell: bash
@@ -88,8 +84,32 @@ jobs:
           echo "COMMIT_HASH=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
           echo "COMMIT_HASH_SHORT=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
+  buildRlib:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || (needs.labelChecks.outputs.READY_TO_BUILD == 'true' && github.event.pull_request.merged == true) }}
+    needs: [labelChecks]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || 'master' }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Build or skip rlib
+        run: |
+          ./scripts/build-r-lib.sh \
+            "${{ secrets.AWS_ACCOUNT_ID }}" \
+            "${{ secrets.AWS_REGION }}" \
+            "${{ env.R_VERSION }}" \
+            "${{ secrets.ADMIN_TOKEN }}" \
+            "${{ secrets.ADMIN_NAME }}"
+
   build:
-    needs: [labelChecks, bumpVersion]
+    needs: [labelChecks, bumpVersion, buildRlib]
     if: ${{ needs.labelChecks.outputs.READY_TO_BUILD == 'true' && needs.bumpVersion.outputs.NEW_VERSION != '' }}
     strategy:
       matrix:
@@ -117,8 +137,9 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
           build-args: |
-            GITHUB_PAT=${{ secrets.ADMIN_TOKEN }}
-            GITHUB_USERNAME=${{ secrets.ADMIN_NAME }}
+            AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            RLIB_TAG=${{ env.RLIB_TAG }}
 
   plan:
     runs-on: ubuntu-latest
@@ -128,13 +149,11 @@ jobs:
         with:
           ref: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
           fetch-depth: 0
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
           aws-region: ${{ secrets.AWS_REGION }}
-
       - name: Set certificate ARN
         id: certificateArn
         run: |
@@ -143,7 +162,6 @@ jobs:
           else
             echo "CERTIFICATE_ARN=" >> $GITHUB_OUTPUT
           fi
-
       - name: Plan
         uses: gruntwork-io/terragrunt-action@v2
         env:
@@ -163,18 +181,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: [plan, bumpVersion]
     steps:
-      - name: "Checkout"
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
         with:
           ref: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
           fetch-depth: 0
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
           aws-region: ${{ secrets.AWS_REGION }}
-
       - name: Set certificate ARN
         id: certificateArn
         run: |
@@ -183,7 +197,6 @@ jobs:
           else
             echo "CERTIFICATE_ARN=" >> $GITHUB_OUTPUT
           fi
-
       - name: Deploy
         uses: gruntwork-io/terragrunt-action@v2
         env:
