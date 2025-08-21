@@ -27,8 +27,6 @@ RUN dnf -y update \
 # R’s shared libs live in /usr/local/lib64/R/lib but that path is not
 # searched by default in the Lambda base.
 ENV LD_LIBRARY_PATH="/usr/local/lib64/R/lib:/usr/local/lib64:${LD_LIBRARY_PATH}"
-# Optional but nice: persist in ldconfig too
-RUN printf '/usr/local/lib64\n/usr/local/lib64/R/lib\n' > /etc/ld.so.conf.d/usr-local.conf && ldconfig
 
 # Bring in the pre-baked R from the base image
 COPY --from=base /usr/local /usr/local
