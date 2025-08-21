@@ -43,7 +43,7 @@ ENV PATH="/usr/local/bin:${PATH}"
 
 # Self-heal if R resolves RHOME to the other lib layout (lib vs lib64)
 RUN bash -lc '\
-  set -e; RH="$(R RHOME)"; echo "RHOME=$RH"; \
+  RH="$(R RHOME)"; \
   if [ ! -d "$RH/library" ]; then \
     if [ -d /usr/local/lib64/R ] && [ ! -e /usr/local/lib/R ]; then \
       mkdir -p /usr/local/lib && ln -s /usr/local/lib64/R /usr/local/lib/R; \
@@ -53,7 +53,15 @@ RUN bash -lc '\
   fi'
 
 # Lightweight sanity prints (do not rely on utils/stats)
-RUN R -q -e "cat('RHOME=', R.home(), '\n'); cat('RLIB=', R.home('library'), '\n'); cat('R=', getRversion(), '\n'); cat('.libPaths=', paste(.libPaths(), collapse='|'), '\n')"
+RUN R -q --vanilla -e " \
+  cat('RHOME=', R.home(), '\n'); \
+  cat('RLIB=', R.home('library'), '\n'); \
+  cat('R=', R.version.string, '\n'); \
+  cat('.libPaths=', paste(.libPaths(), collapse='|'), '\n'); \
+  cat('have utils? ', dir.exists(file.path(R.home('library'),'utils')), '\n'); \
+  cat('have stats? ', dir.exists(file.path(R.home('library'),'stats')), '\n') \
+"
+
 
 # Lambda Web Adapter (extension)
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
