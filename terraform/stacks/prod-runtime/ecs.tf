@@ -41,7 +41,7 @@ resource "aws_ecs_task_definition" "ui" {
     image        = "${local.ecr_urls["react-ui"]}:${var.image_tag}"
     portMappings = [{ containerPort = local.ui_port, protocol = "tcp" }]
     environment = [
-      { name = "NEXT_PUBLIC_R_API_URL", value = aws_lambda_function_url.r_backend.url },
+      { name = "NEXT_PUBLIC_R_API_URL", value = aws_lambda_function_url.r_backend.function_url },
     ]
     logConfiguration = {
       logDriver = "awslogs",
