@@ -1,8 +1,7 @@
 locals {
-  vpc_id          = data.terraform_remote_state.foundation.outputs.vpc_id
-  private_subnets = data.terraform_remote_state.foundation.outputs.private_subnets
-  public_subnets  = data.terraform_remote_state.foundation.outputs.public_subnets
-  ecr_urls        = data.terraform_remote_state.foundation.outputs.ecr_repository_urls
+  vpc_id         = data.terraform_remote_state.foundation.outputs.vpc_id
+  public_subnets = data.terraform_remote_state.foundation.outputs.public_subnets
+  ecr_urls       = data.terraform_remote_state.foundation.outputs.ecr_repository_urls
 
   ui_port = 3000
   r_port  = 8787
