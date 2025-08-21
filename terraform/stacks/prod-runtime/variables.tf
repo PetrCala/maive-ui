@@ -31,29 +31,10 @@ variable "ui_task_mem" {
   default     = 512 # Allow overhead for data processing
 }
 
-variable "r_task_cpu" {
-  type        = number
-  description = "The CPU of the R task"
-  default     = 512
-}
-
-variable "r_task_mem" {
-  type        = number
-  description = "The memory of the R task"
-  default     = 1024
-}
-
 variable "ui_desired_count" {
   type        = number
   description = "Number of UI tasks to run"
   default     = 1
-}
-
-variable "r_desired_count" {
-  type        = number
-  description = "Number of R API to run"
-  default     = 1
-
 }
 
 variable "certificate_arn" {
