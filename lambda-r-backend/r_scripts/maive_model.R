@@ -17,8 +17,8 @@ run_maive_model <- function(data, parameters) {
   SHOULD_PRINT_DF_AFTER_RENAME <- FALSE
 
   # Parse JSON data
-  df <- data
-  params <- parameters
+  df <- jsonlite::fromJSON(data)
+  params <- jsonlite::fromJSON(parameters)
 
   # Debug: Print input data
   cli::cli_h2("Input data frame structure:")
