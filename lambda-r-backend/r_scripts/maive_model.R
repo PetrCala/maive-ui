@@ -26,7 +26,7 @@ run_maive_model <- function(data, parameters) {
       cli::cli_h2("Input data frame structure:")
       cli::cli_code(capture.output(str(df)))
       cli::cli_h2("Input parameters:")
-      cli::cli_code(capture.output(print(params)))
+      cli::cli_code(capture.output(print(params))) # nolint: undesirable_function_linter.
 
       # Convert to data frame if it's not already
       if (!is.data.frame(df)) {
@@ -35,7 +35,7 @@ run_maive_model <- function(data, parameters) {
 
       # Debug: Print original data frame
       cli::cli_h2("Original data frame:")
-      cli::cli_code(capture.output(print(head(df))))
+      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
       if (nrow(df) < 4) {
         cli::cli_abort("Input data must have at least 4 observations.")
@@ -60,7 +60,7 @@ run_maive_model <- function(data, parameters) {
 
       if (SHOULD_PRINT_DF_AFTER_RENAME) {
         cli::cli_h2("Data frame after renaming by position:")
-        cli::cli_code(capture.output(print(head(df))))
+        cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
       }
 
       numeric_cols <- c("bs", "sebs", "Ns")
@@ -73,7 +73,7 @@ run_maive_model <- function(data, parameters) {
       df <- df[rowSums(is.na(df)) != ncol(df), ]
 
       cli::cli_h2("Final data frame for MAIVE:")
-      cli::cli_code(capture.output(print(head(df))))
+      cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
       cli::cli_text("\n")
 
       expected_parameters <- c(
@@ -93,7 +93,7 @@ run_maive_model <- function(data, parameters) {
         ))
       }
 
-      model_type <- params$modelType # MAIVE or WAIVE
+      model_type <- params$modelType # MAIVE or WAIVE # nolint: object_usage_linter.
 
       study_dummies <- if (isTRUE(params$includeStudyDummies)) 1 else 0
       study_clustering <- if (isTRUE(params$includeStudyClustering)) 1 else 0
@@ -198,17 +198,18 @@ run_maive_model <- function(data, parameters) {
       pub_bias_p_value <- maive_res[["pub bias p-value"]]
       pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
 
+
+      is_quadratic_fit <- TRUE # initialize with default value
       tryCatch(
         {
           is_quadratic_fit <- maive_res$is_quadratic_fit # A custom field added to the maive function
         },
         error = function(e) {
           cli::cli_alert_warning("The is_quadratic_fit field is not available in the maive function. Setting it to TRUE.")
-          is_quadratic_fit <- TRUE
         }
       )
 
-      funnel_plot_data <- get_funnel_plot_data(
+      funnel_plot_data <- get_funnel_plot_data( # nolint: object_usage_linter.
         effect = df$bs,
         se = df$sebs,
         se_adjusted = maive_res$SE_instrumented,
