@@ -78,7 +78,8 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "ec2:RevokeSecurityGroupIngress",
           "ec2:RevokeSecurityGroupEgress",
           "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-          "ec2:UpdateSecurityGroupRuleDescriptionsEgress"
+          "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
+          "ec2:DeleteSecurityGroup"
         ],
         Resource : "*"
       },
@@ -221,8 +222,15 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
         Sid : "Lambda",
         Effect : "Allow",
         Action : [
-          "lambda:InvokeFunction",
-          "lambda:CreateFunction",
+          "lambda:*"
+        ],
+        Resource : "*"
+      },
+      {
+        Sid : "SNS",
+        Effect : "Allow",
+        Action : [
+          "sns:*"
         ],
         Resource : "*"
       }
