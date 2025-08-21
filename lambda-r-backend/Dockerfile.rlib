@@ -78,7 +78,7 @@ ARG R_VERSION
 # Runtime libs only
 RUN dnf -y update && dnf -y install \
     zlib bzip2-libs xz-libs pcre2 readline \
-    libcurl libxml2 openssl-libs \
+    libxml2 openssl-libs \
     libsodium \
     libgcc libgfortran \
  && dnf clean all
