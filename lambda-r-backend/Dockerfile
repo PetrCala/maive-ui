@@ -53,7 +53,6 @@ ENV R_INSTALL_STAGED=false
 ENV R_BATCHSAVE="no"
 
 RUN R -q -e "install.packages('pak')"
-RUN MAKEFLAGS= PAK_NUM_WORKERS=1 R -q -e "pak::pkg_install('sodium')"
 
 # use pak to install CRAN pkgs
 RUN --mount=type=cache,target=/root/.cache/R \
