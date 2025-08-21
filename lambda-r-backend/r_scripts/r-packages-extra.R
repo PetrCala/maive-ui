@@ -1,3 +1,5 @@
+options(repos = c(CRAN = "https://cran.rstudio.com"))
+
 # Install packages from CRAN
 packages <- c()
 maive_packages <- c(

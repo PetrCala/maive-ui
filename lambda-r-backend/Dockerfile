@@ -14,10 +14,9 @@ ENV PATH="/usr/local/bin:${PATH}"
 RUN dnf -y update && dnf -y install \
     gcc gcc-c++ gcc-gfortran make \
     tar gzip wget which \
-    perl perl-core perl-devel \
+    perl perl-core \
     zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
     readline-devel libcurl-devel libxml2-devel openssl-devel \
-    git \
  && dnf clean all
 
 # Build & install R under /usr/local
@@ -63,7 +62,6 @@ ENV PATH="/usr/local/bin:${PATH}"
 
 # Only runtime libs (no compilers) — keep it small
 RUN dnf -y update && dnf -y install \
-    # runtime-only dependencies commonly needed by R and compiled packages
     zlib bzip2-libs xz-libs pcre2 readline \
     libcurl libxml2 openssl-libs \
     libgcc libgfortran \
