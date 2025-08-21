@@ -93,7 +93,7 @@ jobs:
     if: ${{ needs.labelChecks.outputs.READY_TO_BUILD == 'true' && needs.bumpVersion.outputs.NEW_VERSION != '' }}
     strategy:
       matrix:
-        service: [react-ui, r-plumber, lambda-r-backend]
+        service: [react-ui, lambda-r-backend]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -129,7 +129,7 @@ jobs:
           ref: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
           fetch-depth: 0
 
-      - name: Configure AWS credentials for plan
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
@@ -169,7 +169,7 @@ jobs:
           ref: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
           fetch-depth: 0
 
-      - name: Configure AWS credentials for deploy
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
@@ -178,7 +178,6 @@ jobs:
       - name: Set certificate ARN
         id: certificateArn
         run: |
-          # Set certificate ARN if provided, otherwise use empty string
           if [ -n "${{ secrets.CERTIFICATE_ARN }}" ]; then
             echo "CERTIFICATE_ARN=${{ secrets.CERTIFICATE_ARN }}" >> $GITHUB_OUTPUT
           else
