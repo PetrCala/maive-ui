@@ -140,7 +140,7 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
           build-args: |
-            RLIB_IMAGE=${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-rlib:latest
+            RLIB_IMAGE=${{ needs.buildRlib.outputs.RLIB_IMAGE }}
 
   plan:
     runs-on: ubuntu-latest
