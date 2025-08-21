@@ -16,14 +16,34 @@ ENV R_INSTALL_STAGED=false
 ENV R_BATCHSAVE="no"
 
 # Build deps (minimal set for your packages)
-RUN dnf -y update && dnf -y install \
-    gcc gcc-c++ gcc-gfortran make \
-    tar gzip wget which \
-    perl perl-core \
-    zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
-    readline-devel libcurl-devel libxml2-devel openssl-devel \
-    libsodium-devel \
- && dnf clean all
+# RUN dnf -y update && dnf -y install \
+#     gcc gcc-c++ gcc-gfortran make \
+#     tar gzip wget which \
+#     perl perl-core \
+#     zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
+#     readline-devel libcurl-devel libxml2-devel openssl-devel \
+#     libsodium-devel \
+#  && dnf clean all
+
+RUN dnf -y update --refresh && \
+    dnf -y install dnf-plugins-core && \
+    # Ensure we don't accidentally enable a repo that pulls curl 7.x
+    dnf repolist && \
+    # Replace minimal with full libcurl (same major 8.x), allowing erasing
+    dnf -y swap libcurl-minimal libcurl --allowerasing && \
+    # Now you can install the devel headers safely
+    dnf -y install \
+        libcurl-devel \
+        openssl-devel \
+        zlib-devel \
+        bzip2-devel \
+        xz-devel \
+        pcre2-devel \
+        readline-devel \
+        libxml2-devel \
+        # compilers etc.
+        gcc gcc-c++ make \
+    && dnf clean all && rm -rf /var/cache/dnf/*
 
 # Build & install R
 RUN cd /tmp \
