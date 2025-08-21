@@ -1,15 +1,5 @@
 options(repos = c(CRAN = "https://cran.rstudio.com"))
 
-# Install packages from CRAN
-packages <- c()
-maive_packages <- c(
-  "clubSandwich",
-  "varhandle",
-  "pracma",
-  "sandwich"
-)
-install.packages(c(packages, maive_packages), dependencies = TRUE)
-
 check_github_auth <- function() {
   pat <- Sys.getenv("GITHUB_PAT")
 
