@@ -3,7 +3,6 @@
 # ─────────────────────────────────────────────────────────
 
 ARG RLIB_IMAGE_URL
-RUN test -n "$RLIB_IMAGE_URL"
 
 # 1) Start the private base
 FROM ${RLIB_IMAGE_URL} AS base
