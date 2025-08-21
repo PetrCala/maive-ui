@@ -32,6 +32,7 @@ RUN dnf -y update && dnf -y install \
  && if [ "$(uname -m)" = "x86_64" ]; then dnf -y install libquadmath; fi \
  && dnf clean all
 
+ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
 # Make R's own libs discoverable without ldconfig
 # (cover both lib64 and lib layouts, depending on how R resolved R_HOME)
 ENV LD_LIBRARY_PATH="/usr/local/lib64/R/lib:/usr/local/lib64:/usr/local/lib/R/lib:/usr/local/lib:${LD_LIBRARY_PATH}"
