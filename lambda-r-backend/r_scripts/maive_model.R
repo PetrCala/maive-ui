@@ -1,15 +1,15 @@
 # MAIVE Model Function for Lambda
 # Adapted from the original plumber implementation
 
-# Load required libraries
+# nolint start: undesirable_function_linter.
 library(clubSandwich)
 library(varhandle)
 library(pracma)
 library(sandwich)
 library(metafor)
 
-# Source the funnel plot module
 source("funnel_plot.R")
+# nolint end: undesirable_function_linter.
 
 # Main MAIVE model function
 run_maive_model <- function(data, parameters) {
@@ -182,7 +182,7 @@ run_maive_model <- function(data, parameters) {
         error = function(e) {
           cli::cli_alert_danger(paste("MAIVE function error:", e$message))
           cli::cli_alert_danger(paste("Error traceback:"))
-          print(traceback())
+          print(traceback()) # nolint: undesirable_function_linter.
           cli::cli_abort(e)
         }
       )
@@ -244,10 +244,10 @@ run_maive_model <- function(data, parameters) {
       cli::cli_alert_danger("Error in run_maive_model: {e$message}")
       cli::cli_h2("Error traceback:")
       cli::cli_code(capture.output(traceback()))
-      return(list(
+      list(
         error = TRUE,
         message = paste("Internal server error:", e$message)
-      ))
+      )
     }
   )
 }

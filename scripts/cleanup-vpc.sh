@@ -429,7 +429,7 @@ cleanup_orphaned_resources() {
 cleanup_ecr_repositories() {
   echo -e "${BLUE}Cleaning up ECR repositories...${NC}"
   
-  local services=("react-ui" "r-plumber")
+  local services=("react-ui" "r-plumber" "lambda-r-backend")
   
   for service in "${services[@]}"; do
     local repo_name="${PROJECT_NAME}-${service}"
@@ -464,7 +464,7 @@ cleanup_ecr_repositories() {
 cleanup_cloudwatch_logs() {
   echo -e "${BLUE}Cleaning up CloudWatch log groups...${NC}"
   
-  local log_groups=("/ecs/${PROJECT_NAME}/react-ui" "/ecs/${PROJECT_NAME}/r-plumber" "/aws/vpc/flowlog")
+  local log_groups=("/ecs/${PROJECT_NAME}/react-ui" "/ecs/${PROJECT_NAME}/r-plumber" "/aws/lambda/${PROJECT_NAME}-r-backend" "/aws/vpc/flowlog")
   
   for log_group in "${log_groups[@]}"; do
     echo "  Deleting log group: $log_group"

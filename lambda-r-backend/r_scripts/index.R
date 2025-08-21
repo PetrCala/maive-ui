@@ -26,25 +26,29 @@ handler <- function(event, context) {
     },
     error = function(e) {
       cli::cli_alert_danger("Lambda handler error: {e$message}")
-      return(create_response(500, list(error = TRUE, message = paste("Internal server error:", e$message))))
+      create_response(500, list(error = TRUE, message = paste("Internal server error:", e$message)))
     }
   )
 }
 
 # Health check endpoint
 handle_ping <- function() {
-  return(create_response(200, list(status = "ok", time = format(Sys.time(), tz = "UTC"))))
+  create_response(200, list(status = "ok", time = format(Sys.time(), tz = "UTC")))
 }
 
 # Echo endpoint
 handle_echo <- function(msg = "") {
-  return(create_response(200, list(msg = paste0("The message is: '", msg, "'"))))
+  create_response(200, list(msg = paste0("The message is: '", msg, "'")))
 }
 
 # Main model execution endpoint
 handle_run_model <- function(body) {
   tryCatch(
     {
+      # nolint start: undesirable_function_linter.
+      source("maive_model.R")
+      # nolint end: undesirable_function_linter.
+
       # Parse JSON body
       if (is.character(body)) {
         body_data <- fromJSON(body)
@@ -67,14 +71,14 @@ handle_run_model <- function(body) {
     },
     error = function(e) {
       cli::cli_alert_danger("Error in run-model: {e$message}")
-      return(create_response(500, list(error = TRUE, message = paste("Model execution error:", e$message))))
+      create_response(500, list(error = TRUE, message = paste("Model execution error:", e$message)))
     }
   )
 }
 
 # Create HTTP response
 create_response <- function(status_code, body) {
-  return(list(
+  list(
     statusCode = status_code,
     headers = list(
       "Content-Type" = "application/json",
@@ -83,7 +87,7 @@ create_response <- function(status_code, body) {
       "Access-Control-Allow-Methods" = "GET,POST,OPTIONS"
     ),
     body = toJSON(body, auto_unbox = TRUE)
-  ))
+  )
 }
 
 # Export the handler for Lambda

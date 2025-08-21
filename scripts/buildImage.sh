@@ -61,7 +61,7 @@ fi
 # Static
 BUILD_KEY="$1"
 PROJECT_NAME="maive"
-IMAGE_NAMES=("react-ui" "r-plumber")
+IMAGE_NAMES=("react-ui" "r-plumber" "lambda-r-backend")
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=$(aws configure get region)
 
@@ -97,7 +97,13 @@ fi
 IMAGE_BUILT=false
 
 for ENTRY in "${IMAGE_NAMES[@]}"; do
-    FOLDER_PATH="./apps/$ENTRY/"
+    # Determine folder path based on image type
+    if [[ "$ENTRY" == "lambda-r-backend" ]]; then
+        FOLDER_PATH="./lambda-r-backend/"
+    else
+        FOLDER_PATH="./apps/$ENTRY/"
+    fi
+    
     if [[ "$ENTRY" == "$BUILD_KEY" || "$BUILD_KEY" == "all" ]]; then
         buildImage "$ENTRY" "$FOLDER_PATH"
         IMAGE_BUILT=true

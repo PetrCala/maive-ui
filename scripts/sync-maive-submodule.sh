@@ -6,7 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR/.."
-SUBMODULE_PATH="apps/r-plumber/vendor/maive"
+SUBMODULE_PATH="lambda-r-backend/vendor/maive"
 UTILS_PATH="$SCRIPT_DIR/shellUtils.sh"
 
 # Source shell utils for logging
