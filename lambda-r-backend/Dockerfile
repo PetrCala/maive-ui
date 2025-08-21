@@ -43,8 +43,16 @@ RUN if [ -n "$GITHUB_PAT" ]; then \
       echo "GITHUB_USERNAME=$GITHUB_USERNAME" >> /usr/local/lib/R/etc/Renviron.site; \
     fi
 
+# Global CRAN
+RUN bash -lc "echo 'options(repos=c(CRAN=\"https://cran.rstudio.com\"))' >> /usr/local/lib/R/etc/Rprofile.site"
 
-RUN R -q -e "install.packages('pak', repos='https://cran.rstudio.com')"
+# Speed flags
+ENV MAKEFLAGS="-j$(nproc)"
+ENV R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
+ENV R_INSTALL_STAGED=false
+ENV R_BATCHSAVE="no"
+
+RUN R -q -e "install.packages('pak')"
 
 # use pak to install CRAN pkgs
 RUN --mount=type=cache,target=/root/.cache/R \
