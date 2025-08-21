@@ -48,9 +48,7 @@ RUN R -q -e "install.packages('pak', repos='https://cran.rstudio.com')"
 
 # Install CRAN packages from list
 COPY r_scripts/r-packages.txt /tmp/r-packages.txt
-RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); \
-             pkgs <- pkgs[!grepl('^\\s*#', pkgs) & nzchar(trimws(pkgs))]; \
-             if (length(pkgs)) pak::pkg_install(pkgs)"
+RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 
 # Install the MAIVE package
 RUN R -q -e "pak::pkg_install('PetrCala/maive@ui-v0.1.0-qfi')"
