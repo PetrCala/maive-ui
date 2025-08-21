@@ -58,18 +58,15 @@ resource "aws_ecs_service" "ui" {
   launch_type     = "FARGATE"
   network_configuration {
     subnets          = local.public_subnets
-    security_groups  = var.use_secure_setup ? [module.sg_ui_tasks_secure[0].security_group_id] : [module.sg_ui_tasks_minimal[0].security_group_id]
+    security_groups  = [module.sg_ui_tasks.security_group_id]
     assign_public_ip = true
   }
 
-  # Conditional load balancer configuration
-  dynamic "load_balancer" {
-    for_each = var.use_secure_setup ? [1] : []
-    content {
-      target_group_arn = aws_lb_target_group.ui[0].arn
-      container_name   = "ui"
-      container_port   = local.ui_port
-    }
+  # Always use load balancer for reliable access
+  load_balancer {
+    target_group_arn = aws_lb_target_group.ui.arn
+    container_name   = "ui"
+    container_port   = local.ui_port
   }
 
   enable_execute_command = true

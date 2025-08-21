@@ -46,10 +46,7 @@
     - [Release Workflow Integration](#release-workflow-integration)
     - [Benefits](#benefits)
 - [Security](#security)
-  - [🔒 Configurable Security Setup](#-configurable-security-setup)
-    - [**Minimal Setup (Default)**](#minimal-setup-default)
-    - [**Secure Setup**](#secure-setup)
-    - [**Toggle Between Setups**](#toggle-between-setups)
+  - [**Secure Setup**](#secure-setup)
 - [Commit message formatting](#commit-message-formatting)
   - [Allowed Types](#allowed-types)
   - [Rules](#rules)
@@ -420,41 +417,12 @@ When merging a release PR:
 
 # Security
 
-## 🔒 Configurable Security Setup
-
-The infrastructure supports two security configurations that can be easily toggled:
-
-### **Minimal Setup (Default)**
-
-- **Cost**: ~$0/month additional
-- **Security**: Basic (direct ECS access)
-- **Architecture**: Internet → ECS UI (Public IP) → Lambda R Backend
-- **Best for**: Development, testing, cost optimization
-
-### **Secure Setup**
+## **Secure Setup**
 
 - **Cost**: ~$18/month additional  
 - **Security**: High (ALB + WAF + Enhanced Security)
 - **Architecture**: Internet → ALB → ECS UI → Lambda R Backend
 - **Best for**: Production, high security requirements
-
-### **Toggle Between Setups**
-
-```bash
-# Check current setup
-npm run setup:status
-
-# Switch to secure setup
-npm run setup:toggle secure
-
-# Switch to minimal setup  
-npm run setup:toggle minimal
-
-# Apply changes
-cd terraform/stacks/prod-runtime
-terragrunt plan
-terragrunt apply
-```
 
 # Commit message formatting
 

@@ -41,9 +41,8 @@ resource "aws_cloudwatch_metric_alarm" "ui_high_memory" {
   }
 }
 
-# ALB 5xx Errors Alarm (conditional based on use_secure_setup)
+# ALB 5xx Errors Alarm
 resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
-  count               = var.use_secure_setup ? 1 : 0
   alarm_name          = "${var.project}-ui-alb-5xx-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -56,14 +55,13 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx_errors" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
-    LoadBalancer = aws_lb.ui[0].arn_suffix
-    TargetGroup  = aws_lb_target_group.ui[0].arn_suffix
+    LoadBalancer = aws_lb.ui.arn_suffix
+    TargetGroup  = aws_lb_target_group.ui.arn_suffix
   }
 }
 
-# ALB Target Response Time Alarm (conditional based on use_secure_setup)
+# ALB Target Response Time Alarm
 resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
-  count               = var.use_secure_setup ? 1 : 0
   alarm_name          = "${var.project}-ui-alb-response-time"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 2
@@ -76,14 +74,13 @@ resource "aws_cloudwatch_metric_alarm" "alb_response_time" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
-    LoadBalancer = aws_lb.ui[0].arn_suffix
-    TargetGroup  = aws_lb_target_group.ui[0].arn_suffix
+    LoadBalancer = aws_lb.ui.arn_suffix
+    TargetGroup  = aws_lb_target_group.ui.arn_suffix
   }
 }
 
-# High Request Count Alarm (conditional based on use_secure_setup)
+# High Request Count Alarm
 resource "aws_cloudwatch_metric_alarm" "high_request_count" {
-  count               = var.use_secure_setup ? 1 : 0
   alarm_name          = "${var.project}-ui-high-request-count"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = 1
@@ -96,7 +93,7 @@ resource "aws_cloudwatch_metric_alarm" "high_request_count" {
   alarm_actions       = [aws_sns_topic.alerts.arn]
 
   dimensions = {
-    LoadBalancer = aws_lb.ui[0].arn_suffix
-    TargetGroup  = aws_lb_target_group.ui[0].arn_suffix
+    LoadBalancer = aws_lb.ui.arn_suffix
+    TargetGroup  = aws_lb_target_group.ui.arn_suffix
   }
 }
