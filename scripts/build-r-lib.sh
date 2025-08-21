@@ -8,11 +8,9 @@ GITHUB_PAT="${4:?GITHUB_PAT missing}"
 GITHUB_USERNAME="${5:?GITHUB_USERNAME missing}"
 MAIVE_TAG="${6:?MAIVE_TAG missing}"
 
-HASH_TAG="$(sha256sum lambda-r-backend/r_scripts/r-packages.txt | awk '{print substr($1,1,8)}')_${MAIVE_TAG}"
-
 ECR_REPO="maive-rlib"
 REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
-RLIB_TAG="al2023-r${R_VERSION}-${HASH_TAG}"
+RLIB_TAG="latest"
 
 echo "-> Ensuring ECR login"
 aws ecr get-login-password --region "${AWS_REGION}" \
