@@ -70,21 +70,28 @@ resource "aws_lambda_function" "r_backend" {
   role          = aws_iam_role.lambda_r_backend.arn
   handler       = "index.handler"
   runtime       = "provided.al2"
-  timeout       = 600  # 10 minutes
-  memory_size   = 1024 # 1GB (same as current ECS task)
+  timeout       = var.lambda_r_backend_timeout
+  memory_size   = var.lambda_r_backend_memory_size
 
   package_type = "Image"
   image_uri    = "${aws_ecr_repository.lambda_r_backend.repository_url}:latest"
 
   environment {
     variables = {
-      R_HOME = "/usr/lib64/R"
+      R_HOME = "/usr/local/lib/R"
     }
   }
 
   tags = {
     Project = var.project
   }
+}
+
+resource "aws_lambda_provisioned_concurrency_config" "r_backend" {
+  count                             = var.lambda_r_backend_reserved_concurrency > 0 ? 1 : 0
+  function_name                     = aws_lambda_function.r_backend.function_name
+  provisioned_concurrent_executions = var.lambda_r_backend_reserved_concurrency
+  qualifier                         = "$LATEST"
 }
 
 # Lambda function URL for direct HTTP access
@@ -105,7 +112,7 @@ resource "aws_lambda_function_url" "r_backend" {
 # CloudWatch log group for Lambda
 resource "aws_cloudwatch_log_group" "lambda_r_backend" {
   name              = "/aws/lambda/${aws_lambda_function.r_backend.function_name}"
-  retention_in_days = 7
+  retention_in_days = var.lambda_r_backend_log_retention_days
 
   tags = {
     Project = var.project
@@ -138,7 +145,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_duration" {
   namespace           = "AWS/Lambda"
   period              = "300"
   statistic           = "Average"
-  threshold           = "300000" # 5 minutes in milliseconds
+  threshold           = var.lambda_r_backend_timeout * 1000 # Convert seconds to milliseconds
   alarm_description   = "Lambda R backend execution time is high"
   alarm_actions       = []
 
