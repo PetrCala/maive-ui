@@ -17,6 +17,7 @@ RUN dnf -y update && dnf -y install \
     perl perl-core \
     zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
     readline-devel libcurl-devel libxml2-devel openssl-devel \
+    libsodium-devel \
  && dnf clean all
 
 # Build & install R under /usr/local
@@ -43,11 +44,22 @@ RUN if [ -n "$GITHUB_PAT" ]; then \
       echo "GITHUB_USERNAME=$GITHUB_USERNAME" >> /usr/local/lib/R/etc/Renviron.site; \
     fi
 
+
+RUN R -q -e "install.packages('pak', repos='https://cran.rstudio.com')"
+
+# use pak to install CRAN pkgs
+# RUN R -q -e "pak::pkg_install(scan(''/tmp/r-packages.txt'', what='character'))"
+
+RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
+
 # Install CRAN packages
-RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); install.packages(pkgs, repos='https://cran.rstudio.com/')"
+# RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); install.packages(pkgs, repos='https://cran.rstudio.com/')"
+
+RUN R -q -e "pak::pkg_install(paste0('PetrCala/','maive@ui-v0.1.0-qfi'))"
+
 
 # Install extra (e.g., GitHub) packages
-RUN R -q -e "source('/tmp/r-packages-extra.R')" && rm -rf /tmp/*
+# RUN R -q -e "source('/tmp/r-packages-extra.R')" && rm -rf /tmp/*
 
 # ===== Stage 2: final Lambda image (lean) =====
 FROM public.ecr.aws/lambda/provided:al2023
@@ -65,6 +77,7 @@ RUN dnf -y update && dnf -y install \
     zlib bzip2-libs xz-libs pcre2 readline \
     libcurl libxml2 openssl-libs \
     libgcc libgfortran \
+    libsodium \
  && dnf clean all
 
 # Web Adapter / server settings
