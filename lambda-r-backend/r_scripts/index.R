@@ -1,8 +1,7 @@
 # Lambda R Backend Handler
-# This replaces the plumber API with a Lambda function
 
 # Load required libraries
-library(plumber)
+library(plumber) # nolint: undesirable_function_linter.
 
 #* Echo back the input
 #* @usage curl --data "a=4&b=3" "http://localhost:8787/sum"
