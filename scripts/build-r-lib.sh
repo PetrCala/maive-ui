@@ -31,12 +31,12 @@ fi
 
 echo "-> Building & pushing rlib:${RLIB_TAG}"
 docker build \
-  -f Dockerfile.rlib \
+  -f lambda-r-backend/Dockerfile.rlib \
   -t "rlib-build:${RLIB_TAG}" \
   --build-arg R_VERSION="${R_VERSION}" \
   --build-arg GITHUB_PAT="${GITHUB_PAT}" \
   --build-arg GITHUB_USERNAME="${GITHUB_USERNAME}" \
-  lambda-r-backend
+  lambda-r-backend/
 
 docker tag "rlib-build:${RLIB_TAG}" "${REPOSITORY_URI}:${RLIB_TAG}"
 docker push "${REPOSITORY_URI}:${RLIB_TAG}"
