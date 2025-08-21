@@ -42,3 +42,27 @@ variable "certificate_arn" {
   description = "ARN of the SSL certificate for HTTPS. If empty, the ALB will use HTTP only (not recommended for production)"
   default     = ""
 }
+
+variable "lambda_r_backend_memory_size" {
+  type        = number
+  description = "Memory size in MB for the Lambda R backend function"
+  default     = 1024
+}
+
+variable "lambda_r_backend_timeout" {
+  type        = number
+  description = "Timeout in seconds for the Lambda R backend function"
+  default     = 600
+}
+
+variable "lambda_r_backend_reserved_concurrency" {
+  type        = number
+  description = "Reserved concurrency for the Lambda R backend function (0 = no limit)"
+  default     = 0
+}
+
+variable "lambda_r_backend_log_retention_days" {
+  type        = number
+  description = "Number of days to retain Lambda R backend CloudWatch logs"
+  default     = 7
+}
