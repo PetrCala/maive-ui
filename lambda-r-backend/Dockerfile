@@ -30,10 +30,9 @@ RUN cd /tmp \
  && cd / && rm -rf /tmp/R-${R_VERSION}* \
  && /usr/local/bin/R --version
 
-# Copy your installers (do it early to leverage layer caching)
+# Copy the installers (do it early to leverage layer caching)
 WORKDIR /build
 COPY r_scripts/r-packages.txt /tmp/
-COPY r_scripts/r-packages-extra.R /tmp/
 
 # Optional GitHub PAT for private/ratelimit-safe installs (builder only)
 ARG GITHUB_PAT
@@ -48,18 +47,15 @@ RUN if [ -n "$GITHUB_PAT" ]; then \
 RUN R -q -e "install.packages('pak', repos='https://cran.rstudio.com')"
 
 # use pak to install CRAN pkgs
-# RUN R -q -e "pak::pkg_install(scan(''/tmp/r-packages.txt'', what='character'))"
+RUN --mount=type=cache,target=/root/.cache/R \
+    --mount=type=cache,target=/usr/local/lib/R/site-library \
+    R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 
-RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
+# Install the MAIVE package
+RUN --mount=type=cache,target=/root/.cache/R \
+--mount=type=cache,target=/usr/local/lib/R/site-library \
+R -q -e "pak::pkg_install('PetrCala/maive@ui-v0.1.0-qfi')"
 
-# Install CRAN packages
-# RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); install.packages(pkgs, repos='https://cran.rstudio.com/')"
-
-RUN R -q -e "pak::pkg_install(paste0('PetrCala/','maive@ui-v0.1.0-qfi'))"
-
-
-# Install extra (e.g., GitHub) packages
-# RUN R -q -e "source('/tmp/r-packages-extra.R')" && rm -rf /tmp/*
 
 # ===== Stage 2: final Lambda image (lean) =====
 FROM public.ecr.aws/lambda/provided:al2023
