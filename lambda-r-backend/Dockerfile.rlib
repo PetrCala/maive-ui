@@ -18,34 +18,24 @@ ENV R_INSTALL_STAGED=false
 ENV R_BATCHSAVE="no"
 
 # Build deps (headers + toolchain) and ensure libcurl (not minimal)
-RUN dnf -y update --refresh \
- && dnf -y install dnf-plugins-core \
- && dnf repolist \
- && dnf -y swap libcurl-minimal libcurl --allowerasing \
- && dnf -y install \
-      libcurl-devel \
-      openssl-devel \
-      zlib-devel \
-      bzip2-devel \
-      xz-devel \
-      pcre2-devel \
-      readline-devel \
-      libxml2-devel \
-      libsodium-devel \
-      gcc gcc-c++ gcc-gfortran make which findutils \
-      perl \
-      tar gzip ca-certificates \
- && dnf clean all && rm -rf /var/cache/dnf/*
+RUN dnf -y update && dnf -y install \
+    gcc gcc-c++ gcc-gfortran make \
+    tar gzip wget which \
+    perl perl-core \
+    zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
+    readline-devel libcurl-devel libxml2-devel openssl-devel \
+    libsodium-devel \
+ && dnf clean all
 
 # Build & install R from source
-WORKDIR /tmp
-RUN curl -fsSLO "https://cran.r-project.org/src/base/R-4/R-${R_VERSION}.tar.gz" \
- && tar -xzf "R-${R_VERSION}.tar.gz" \
- && cd "R-${R_VERSION}" \
+RUN cd /tmp \
+ && wget -q https://cran.r-project.org/src/base/R-4/R-${R_VERSION}.tar.gz \
+ && tar -xzf R-${R_VERSION}.tar.gz \
+ && cd R-${R_VERSION} \
  && ./configure --enable-R-shlib --with-readline --with-x=no --prefix=/usr/local \
  && make -j"$(nproc)" && make install \
- && cd / && rm -rf "/tmp/R-${R_VERSION}"* \
- && R --version
+ && cd / && rm -rf /tmp/R-${R_VERSION}* \
+ && /usr/local/bin/R --version
 
 # Global CRAN mirror
 RUN bash -lc "echo 'options(repos = c(CRAN = \"https://cran.rstudio.com\"))' >> /usr/local/lib/R/etc/Rprofile.site"
