@@ -1,5 +1,8 @@
 # Lambda R Backend Configuration
-# This replaces the R backend ECS service
+
+data "aws_iam_role" "ui_task" {
+  name = "${var.project}-ui-task"
+}
 
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_r_backend" {
@@ -58,7 +61,7 @@ resource "aws_lambda_provisioned_concurrency_config" "r_backend" {
 # Lambda function URL for direct HTTP access
 resource "aws_lambda_function_url" "r_backend" {
   function_name      = aws_lambda_function.r_backend.function_name
-  authorization_type = "NONE" # Public access as requested
+  authorization_type = "AWS_IAM"
 
   cors {
     allow_credentials = true
@@ -68,6 +71,15 @@ resource "aws_lambda_function_url" "r_backend" {
     expose_headers    = ["*"]
     max_age           = 86400
   }
+}
+
+# Resource-based policy to restrict Lambda invocation to UI task role only
+resource "aws_lambda_permission" "ui_task_invoke" {
+  statement_id  = "AllowUI TaskInvoke"
+  action        = "lambda:InvokeFunctionUrl"
+  function_name = aws_lambda_function.r_backend.function_name
+  principal     = aws_iam_role.ui_task.arn
+  source_arn    = aws_iam_role.ui_task.arn
 }
 
 # Lambda monitoring and alarms
