@@ -1,48 +1,9 @@
 # Lambda R Backend Configuration
 # This replaces the R backend ECS service
 
-# ECR repository for Lambda container
-resource "aws_ecr_repository" "lambda_r_backend" {
-  name                 = "${var.project}-lambda-r-backend"
-  image_tag_mutability = "MUTABLE"
-
-  encryption_configuration {
-    encryption_type = "AES256"
-  }
-
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-
-  tags = {
-    Project = var.project
-  }
-
-  force_delete = true
-}
-
-# ECR lifecycle policy
-resource "aws_ecr_lifecycle_policy" "lambda_r_backend_cleanup" {
-  repository = aws_ecr_repository.lambda_r_backend.name
-  policy = jsonencode({
-    rules = [
-      {
-        rulePriority = 1
-        description  = "Retain last 5 images"
-        selection = {
-          tagStatus   = "any"
-          countType   = "imageCountMoreThan"
-          countNumber = 5
-        }
-        action = { type = "expire" }
-      }
-    ]
-  })
-}
-
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_r_backend" {
-  name = "${var.project}-lambda-r-backend-role"
+  name = "${local.lambda_r_backend_function_name}-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -66,7 +27,7 @@ resource "aws_iam_role_policy_attachment" "lambda_r_backend_basic" {
 
 # Lambda function
 resource "aws_lambda_function" "r_backend" {
-  function_name = "${var.project}-r-backend"
+  function_name = local.lambda_r_backend_function_name
   role          = aws_iam_role.lambda_r_backend.arn
   handler       = "index.handler"
   runtime       = "provided.al2"
@@ -74,7 +35,7 @@ resource "aws_lambda_function" "r_backend" {
   memory_size   = var.lambda_r_backend_memory_size
 
   package_type = "Image"
-  image_uri    = "${aws_ecr_repository.lambda_r_backend.repository_url}:latest"
+  image_uri    = "${aws_ecr_repository.lambda_r_backend.repository_url}:${var.image_tag}"
 
   environment {
     variables = {
@@ -109,19 +70,9 @@ resource "aws_lambda_function_url" "r_backend" {
   }
 }
 
-# CloudWatch log group for Lambda
-resource "aws_cloudwatch_log_group" "lambda_r_backend" {
-  name              = "/aws/lambda/${aws_lambda_function.r_backend.function_name}"
-  retention_in_days = var.lambda_r_backend_log_retention_days
-
-  tags = {
-    Project = var.project
-  }
-}
-
 # Lambda monitoring and alarms
 resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_errors" {
-  alarm_name          = "${var.project}-lambda-r-backend-errors"
+  alarm_name          = "${local.lambda_r_backend_function_name}-errors"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "1"
   metric_name         = "Errors"
@@ -138,7 +89,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_errors" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_duration" {
-  alarm_name          = "${var.project}-lambda-r-backend-duration"
+  alarm_name          = "${local.lambda_r_backend_function_name}-duration"
   comparison_operator = "GreaterThanThreshold"
   evaluation_periods  = "2"
   metric_name         = "Duration"
@@ -156,7 +107,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_duration" {
 
 # Lambda dashboard
 resource "aws_cloudwatch_dashboard" "lambda_r_backend" {
-  dashboard_name = "${var.project}-lambda-r-backend-dashboard"
+  dashboard_name = "${local.lambda_r_backend_function_name}-dashboard"
 
   dashboard_body = jsonencode({
     widgets = [
@@ -185,7 +136,7 @@ resource "aws_cloudwatch_dashboard" "lambda_r_backend" {
         width  = 12
         height = 6
         properties = {
-          query  = "SOURCE '${aws_cloudwatch_log_group.lambda_r_backend.name}'\n| fields @timestamp, @message\n| filter @message like /ERROR|WARN|CRITICAL/\n| sort @timestamp desc\n| limit 100"
+          query  = "SOURCE '${data.aws_cloudwatch_log_group.lambda_r_backend_logs.name}'\n| fields @timestamp, @message\n| filter @message like /ERROR|WARN|CRITICAL/\n| sort @timestamp desc\n| limit 100"
           region = var.region
           title  = "Lambda R Backend Error Logs"
         }

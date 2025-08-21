@@ -43,6 +43,12 @@ variable "certificate_arn" {
   default     = ""
 }
 
+variable "lambda_r_backend_function_base_name" {
+  type        = string
+  description = "The base name of the Lambda function"
+  default     = "lambda-r-backend"
+}
+
 variable "lambda_r_backend_memory_size" {
   type        = number
   description = "Memory size in MB for the Lambda R backend function"
