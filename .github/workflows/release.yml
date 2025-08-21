@@ -98,14 +98,18 @@ jobs:
       - name: Build or skip rlib
         id: buildRlib
         run: |
-          RLIB_IMAGE=$(./scripts/build-r-lib.sh \
+          ./scripts/build-r-lib.sh \
             "${{ secrets.AWS_ACCOUNT_ID }}" \
             "${{ secrets.AWS_REGION }}" \
             "${{ env.R_VERSION }}" \
             "${{ secrets.ADMIN_TOKEN }}" \
             "${{ secrets.ADMIN_NAME }}" \
-            "${{ env.MAIVE_TAG }}")
-          echo "RLIB_IMAGE=${RLIB_IMAGE}" >> $GITHUB_OUTPUT
+            "${{ env.MAIVE_TAG }}"
+
+      - name: Print the output image URL
+        run: |
+          echo "RLIB_IMAGE=${{ steps.buildRlib.outputs.RLIB_IMAGE }}"
+
   build:
     needs: [labelChecks, bumpVersion, buildRlib]
     if: ${{ needs.labelChecks.outputs.READY_TO_BUILD == 'true' && needs.bumpVersion.outputs.NEW_VERSION != '' }}
