@@ -34,6 +34,7 @@ echo "-> Building & pushing rlib:${RLIB_TAG}"
 docker build \
   -f lambda-r-backend/Dockerfile.rlib \
   -t "rlib-build:${RLIB_TAG}" \
+  --build-arg R_VERSION="${R_VERSION}" \
   --build-arg GITHUB_PAT="${GITHUB_PAT}" \
   --build-arg GITHUB_USERNAME="${GITHUB_USERNAME}" \
   .
