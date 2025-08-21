@@ -167,7 +167,7 @@ get_funnel_plot_data <- function(..., res = PLOT_RES) {
   height_px <- res * 7
 
   tmp <- tempfile(fileext = ".png")
-  png(tmp, width = width_px, height = height_px, res = res)
+  ragg::agg_png(tmp, width = width_px, height = height_px, res = res) # was plot(...)
   get_funnel_plot(...) # This will plot directly to the PNG device
   dev.off()
 
