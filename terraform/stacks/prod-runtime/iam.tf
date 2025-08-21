@@ -1,4 +1,8 @@
 # UI-specific IAM role for UI task to invoke Lambda
+
+# Get current AWS account ID
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role" "ui_task" {
   name               = "${var.project}-ui-task"
   assume_role_policy = data.aws_iam_policy_document.ecs_tasks.json
@@ -31,8 +35,8 @@ resource "aws_iam_policy" "ui_task_lambda_invoke" {
           "lambda:InvokeFunctionUrl"
         ]
         Resource = [
-          aws_lambda_function.r_backend.arn,
-          "${aws_lambda_function.r_backend.arn}:*"
+          "arn:aws:lambda:${var.region}:${data.aws_caller_identity.current.account_id}:function:${var.project}-${var.lambda_r_backend_function_base_name}",
+          "arn:aws:lambda:${var.region}:${data.aws_caller_identity.current.account_id}:function:${var.project}-${var.lambda_r_backend_function_base_name}:*"
         ]
       }
     ]
