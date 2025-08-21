@@ -133,12 +133,11 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Get RLIB image URL
-        id: getRlibImageUrl
+      - name: Get RLIB image hash
+        id: getRlibImageHash
         run: |
           RLIB_HASH=$(./scripts/get-rlib-hash.sh "${{ env.MAIVE_TAG }}")
-          RLIB_IMAGE_URL="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-rlib:al2023-r${{ env.R_VERSION }}-${RLIB_HASH}"
-          echo "RLIB_IMAGE_URL=${RLIB_IMAGE_URL}" >> $GITHUB_OUTPUT
+          echo "RLIB_IMAGE_HASH=${RLIB_HASH}" >> $GITHUB_OUTPUT
         shell: bash
 
       - name: Build & push ${{ matrix.service }}
@@ -148,7 +147,11 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
           build-args: |
-            RLIB_IMAGE_URL=${{ steps.getRlibImageUrl.outputs.RLIB_IMAGE_URL }}
+            PROJECT_NAME=${{ env.PROJECT_NAME }}
+            AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
+            AWS_REGION=${{ secrets.AWS_REGION }}
+            R_VERSION=${{ env.R_VERSION }}
+            RLIB_IMAGE_HASH=${{ steps.getRlibImageHash.outputs.RLIB_IMAGE_HASH }}
 
   plan:
     runs-on: ubuntu-latest
