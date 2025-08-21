@@ -1,0 +1,93 @@
+# ─────────────────────────────────────────────────────────
+# R LIBRARY BASE (Amazon Linux 2023)  — pre-baked libs
+# Produces: rlib:al2023-r4.4.1-maive
+# ─────────────────────────────────────────────────────────
+
+########## Stage 1: build R and compile packages ##########
+FROM public.ecr.aws/docker/library/amazonlinux:2023 AS build
+
+ARG R_VERSION=4.4.1
+ENV R_VERSION=${R_VERSION}
+ENV PATH="/usr/local/bin:${PATH}"
+# Speed-ups for compilation
+ENV MAKEFLAGS="-j$(nproc)"
+ENV R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
+ENV R_INSTALL_STAGED=false
+ENV R_BATCHSAVE="no"
+
+# Build deps (minimal set for your packages)
+RUN dnf -y update && dnf -y install \
+    gcc gcc-c++ gcc-gfortran make \
+    tar gzip wget which \
+    perl perl-core \
+    zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
+    readline-devel libcurl-devel libxml2-devel openssl-devel \
+    libsodium-devel \
+ && dnf clean all
+
+# Build & install R
+RUN cd /tmp \
+ && wget -q https://cran.r-project.org/src/base/R-4/R-${R_VERSION}.tar.gz \
+ && tar -xzf R-${R_VERSION}.tar.gz \
+ && cd R-${R_VERSION} \
+ && ./configure --enable-R-shlib --with-readline --with-x=no --prefix=/usr/local \
+ && make -j"$(nproc)" && make install \
+ && cd / && rm -rf /tmp/R-${R_VERSION}* \
+ && R --version
+
+# Global CRAN mirror
+RUN bash -lc "echo 'options(repos=c(CRAN=\"https://cran.rstudio.com\"))' >> /usr/local/lib/R/etc/Rprofile.site"
+
+# Install pak for fast parallel installs
+RUN R -q -e "install.packages('pak')"
+
+# Your CRAN set — keep this small & explicit
+# (matches your code requirements)
+# cli, remotes, jsonlite, plumber, base64enc, metafor, clubSandwich, varhandle, pracma, sandwich
+RUN R -q -e "pak::pkg_install(c( \
+  'cli', \
+  'remotes', \
+  'jsonlite', \
+  'plumber', \
+  'base64enc', \
+  'metafor', \
+  'clubSandwich', \
+  'varhandle', \
+  'pracma', \
+  'sandwich' \
+))"
+
+ARG GITHUB_PAT
+ARG GITHUB_USERNAME
+RUN if [ -n "$GITHUB_PAT" ]; then \
+      mkdir -p /usr/local/lib/R/etc && \
+      echo "GITHUB_PAT=$GITHUB_PAT" >> /usr/local/lib/R/etc/Renviron.site && \
+      echo "GITHUB_USERNAME=$GITHUB_USERNAME" >> /usr/local/lib/R/etc/Renviron.site; \
+    fi
+
+# Install the MAIVE package
+RUN R -q -e "pak::pkg_install('PetrCala/maive@ui-v0.1.0-qfi')"
+
+# (Optional) prove what's installed
+RUN R -q -e "writeLines(apply(installed.packages()[,c('Package','Version')],1,paste,collapse='@'))" > /root/rlib-manifest.txt
+
+
+########## Stage 2: minimal runtime base ##########
+FROM public.ecr.aws/docker/library/amazonlinux:2023 AS rlib
+
+# Runtime libs only
+RUN dnf -y update && dnf -y install \
+    zlib bzip2-libs xz-libs pcre2 readline \
+    libcurl libxml2 openssl-libs \
+    libsodium \
+    libgcc libgfortran \
+ && dnf clean all
+
+# Bring in R & the preinstalled libraries
+COPY --from=build /usr/local /usr/local
+COPY --from=build /root/rlib-manifest.txt /opt/rlib-manifest.txt
+
+ENV PATH="/usr/local/bin:${PATH}"
+# Keep CRAN mirror baked in from the builder
+# Final image label for traceability
+LABEL r.version="${R_VERSION}" base="al2023" rlib.manifest="/opt/rlib-manifest.txt"

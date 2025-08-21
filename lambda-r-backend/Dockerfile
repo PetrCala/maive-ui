@@ -53,6 +53,7 @@ ENV R_INSTALL_STAGED=false
 ENV R_BATCHSAVE="no"
 
 RUN R -q -e "install.packages('pak')"
+RUN MAKEFLAGS= PAK_NUM_WORKERS=1 R -q -e "pak::pkg_install('sodium')"
 
 # use pak to install CRAN pkgs
 RUN --mount=type=cache,target=/root/.cache/R \
@@ -79,9 +80,9 @@ ENV PATH="/usr/local/bin:${PATH}"
 # Only runtime libs (no compilers) — keep it small
 RUN dnf -y update && dnf -y install \
     zlib bzip2-libs xz-libs pcre2 readline \
-    libcurl libxml2 openssl-libs \
-    libgcc libgfortran \
+    libxml2 openssl-libs \
     libsodium \
+    libgcc libgfortran \
  && dnf clean all
 
 # Web Adapter / server settings
