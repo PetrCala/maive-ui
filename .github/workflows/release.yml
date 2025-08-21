@@ -80,11 +80,12 @@ jobs:
   buildRlib:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'workflow_dispatch' || (needs.labelChecks.outputs.READY_TO_BUILD == 'true' && github.event.pull_request.merged == true) }}
-    needs: [labelChecks]
+    needs: [labelChecks, bumpVersion]
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.sha || 'master' }}
+          ref: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
+          fetch-depth: 0
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
