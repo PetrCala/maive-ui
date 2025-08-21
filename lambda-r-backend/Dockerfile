@@ -20,6 +20,7 @@ RUN dnf -y update \
       libxml2 \
       libsodium \
       libgcc libgfortran \
+ && if [ "$(uname -m)" = "x86_64" ]; then dnf -y install libquadmath; fi \
  && dnf clean all
 
 # 2b) Make the dynamic linker see R’s own libs
