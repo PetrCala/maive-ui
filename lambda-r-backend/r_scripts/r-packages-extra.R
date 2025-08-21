@@ -33,11 +33,12 @@ if (install_forked) {
   if (check_github_auth()) {
     tryCatch(
       {
-        devtools::install_github(
-          repo = paste0(forked_owner, "/", maive_repo_name),
-          ref = forked_tag_name,
-          auth_token = Sys.getenv("GITHUB_PAT")
-        )
+        withr::with_envvar(c("GITHUB_PAT" = Sys.getenv("GITHUB_PAT")), {
+          remotes::install_github(
+            paste0(forked_owner, "/", maive_repo_name),
+            ref = forked_tag_name
+          )
+        })
         cli::cli_alert_success("MAIVE package installed successfully")
       },
       error = function(e) {
@@ -55,10 +56,12 @@ if (install_forked) {
     # Try without authentication (may hit rate limits)
     tryCatch(
       {
-        devtools::install_github(
-          repo = paste0(forked_owner, "/", maive_repo_name),
-          ref = forked_tag_name
-        )
+        withr::with_envvar(c("GITHUB_PAT" = Sys.getenv("GITHUB_PAT")), {
+          remotes::install_github(
+            paste0(forked_owner, "/", maive_repo_name),
+            ref = forked_tag_name
+          )
+        })
         cli::cli_alert_success("MAIVE package installed successfully")
       },
       error = function(e) {
@@ -82,11 +85,12 @@ if (install_forked) {
   if (check_github_auth()) {
     tryCatch(
       {
-        devtools::install_github(
-          repo = paste0(original_owner, "/", maive_repo_name),
-          ref = original_tag_name,
-          auth_token = Sys.getenv("GITHUB_PAT")
-        )
+        withr::with_envvar(c("GITHUB_PAT" = Sys.getenv("GITHUB_PAT")), {
+          remotes::install_github(
+            paste0(original_owner, "/", maive_repo_name),
+            ref = original_tag_name
+          )
+        })
         cli::cli_alert_success("MAIVE package installed successfully")
       },
       error = function(e) {
@@ -97,10 +101,12 @@ if (install_forked) {
   } else {
     tryCatch(
       {
-        devtools::install_github(
-          repo = paste0(original_owner, "/", maive_repo_name),
-          ref = original_tag_name
-        )
+        withr::with_envvar(c("GITHUB_PAT" = Sys.getenv("GITHUB_PAT")), {
+          remotes::install_github(
+            paste0(original_owner, "/", maive_repo_name),
+            ref = original_tag_name
+          )
+        })
         cli::cli_alert_success("MAIVE package installed successfully")
       },
       error = function(e) {
