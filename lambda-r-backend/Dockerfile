@@ -28,16 +28,15 @@ RUN dnf -y update && dnf -y install \
     pcre2 \
     readline \
     which \
-    coreutils \
     findutils \
-    gzip \
-    unzip \ 
-    zip \ 
     tar \
+    gzip \
     bzip2 \
-    xz \ 
+    xz \
+    unzip \
+    zip \
+    glibc-langpack-en \
  && if [ "$(uname -m)" = "x86_64" ]; then dnf -y install libquadmath; fi \
- && dnf -y install glibc-langpack-en \
  && dnf clean all
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
@@ -69,9 +68,10 @@ RUN bash -lc 'RH="$(R RHOME)"; [ -d "$RH/library" ] || { \
 
 # Sanity checks
 RUN R -q --vanilla -e "base::library(utils); base::library(stats); cat('utils+stats loaded OK\n')"
-RUN R -q --vanilla -e "print(Sys.which(c('which','tar','gzip','bzip2','xz','zip','unzip')))"
+RUN /usr/bin/which which || true; command -v which || true
+RUN R -q --vanilla -e "print(Sys.which(c('tar','gzip','bzip2','xz','zip','unzip')))"
 
-# Lightweight sanity prints (do not rely on utils/stats)
+# Lightweight sanity prints
 RUN R -q --vanilla -e " \
   cat('RHOME=', R.home(), '\n'); \
   cat('RLIB=', R.home('library'), '\n'); \
