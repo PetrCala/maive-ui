@@ -1,5 +1,5 @@
 cli
-devtools
+remotes
 dplyr
 ggplot2
 jsonlite
