@@ -58,7 +58,7 @@ resource "aws_lambda_provisioned_concurrency_config" "r_backend" {
 # Lambda function URL for direct HTTP access
 resource "aws_lambda_function_url" "r_backend" {
   function_name      = aws_lambda_function.r_backend.function_name
-  authorization_type = "AWS_IAM"
+  authorization_type = "NONE"
 
   cors {
     allow_credentials = true
