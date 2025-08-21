@@ -7,7 +7,7 @@ ARG AWS_REGION
 ARG RLIB_TAG
 
 # 1) Start the private base
-FROM ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/rlib:${RLIB_TAG} AS base
+FROM ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/maive-rlib:${RLIB_TAG} AS base
 
 # 2) Switch into a Lambda base (to get the Lambda runtime contract)
 FROM public.ecr.aws/lambda/provided:al2023
