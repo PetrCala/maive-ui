@@ -30,14 +30,13 @@ if aws ecr describe-images \
 fi
 
 echo "-> Building & pushing rlib:${RLIB_TAG}"
-# Build from your dedicated rlib Dockerfile
 docker build \
-  -f lambda-r-backend/Dockerfile.rlib \
+  -f Dockerfile.rlib \
   -t "rlib-build:${RLIB_TAG}" \
   --build-arg R_VERSION="${R_VERSION}" \
   --build-arg GITHUB_PAT="${GITHUB_PAT}" \
   --build-arg GITHUB_USERNAME="${GITHUB_USERNAME}" \
-  .
+  lambda-r-backend
 
 docker tag "rlib-build:${RLIB_TAG}" "${REPOSITORY_URI}:${RLIB_TAG}"
 docker push "${REPOSITORY_URI}:${RLIB_TAG}"

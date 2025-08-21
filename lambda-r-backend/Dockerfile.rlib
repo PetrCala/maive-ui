@@ -14,23 +14,14 @@ ENV R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
 ENV R_INSTALL_STAGED=false
 ENV R_BATCHSAVE="no"
 
-# Build deps (minimal set for your packages)
-# RUN dnf -y update && dnf -y install \
-#     gcc gcc-c++ gcc-gfortran make \
-#     tar gzip wget which \
-#     perl perl-core \
-#     zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
-#     readline-devel libcurl-devel libxml2-devel openssl-devel \
-#     libsodium-devel \
-#  && dnf clean all
-
+# Build deps
 RUN dnf -y update --refresh && \
     dnf -y install dnf-plugins-core && \
     # Ensure we don't accidentally enable a repo that pulls curl 7.x
     dnf repolist && \
     # Replace minimal with full libcurl (same major 8.x), allowing erasing
     dnf -y swap libcurl-minimal libcurl --allowerasing && \
-    # Now you can install the devel headers safely
+    # Install the devel headers safely
     dnf -y install \
         libcurl-devel \
         openssl-devel \
@@ -61,7 +52,7 @@ RUN bash -lc "echo 'options(repos=c(CRAN=\"https://cran.rstudio.com\"))' >> /usr
 RUN R -q -e "install.packages('pak')"
 
 # Install CRAN packages
-COPY r_scripts/r-packages.txt /tmp/
+COPY r_scripts/r-packages.txt /tmp/r-packages.txt
 RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 
 ARG GITHUB_PAT
