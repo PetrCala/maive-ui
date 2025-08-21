@@ -10,7 +10,7 @@ output "monitoring_dashboard_url" {
 
 output "lambda_r_backend_url" {
   description = "URL of the Lambda R backend function"
-  value       = aws_lambda_function_url.r_backend.url
+  value       = aws_lambda_function_url.r_backend.function_url
 }
 
 output "ui_ecs_public_ips" {
