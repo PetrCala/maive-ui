@@ -6,7 +6,7 @@
 ########## Stage 1: build R and compile packages ##########
 FROM public.ecr.aws/docker/library/amazonlinux:2023 AS build
 
-ARG R_VERSION=4.4.1
+ARG R_VERSION
 ENV R_VERSION=${R_VERSION}
 ENV PATH="/usr/local/bin:${PATH}"
 # Speed-ups for compilation
