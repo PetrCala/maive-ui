@@ -135,6 +135,9 @@ if [[ "$VALIDATE_FOUNDATION" == "true" ]]; then
   cd "$FOUNDATION_DIR"
   
   # Foundation stack only needs basic variables
+  info "Executing: terragrunt init"
+  terragrunt init
+  
   info "Executing: terragrunt validate"
   
   if terragrunt validate; then
@@ -161,6 +164,9 @@ if [[ "$VALIDATE_RUNTIME" == "true" ]]; then
   info "Runtime-specific variables set:"
   info "  image_tag: $TF_VAR_image_tag"
   info "  certificate_arn: (empty)"
+  
+  info "Executing: terragrunt init"
+  terragrunt init
   
   info "Executing: terragrunt validate"
   

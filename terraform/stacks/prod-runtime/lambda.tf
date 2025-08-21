@@ -73,13 +73,13 @@ resource "aws_lambda_function_url" "r_backend" {
   }
 }
 
-# Resource-based policy to restrict Lambda invocation to UI task role only
+# Allow UI ECS task to invoke the Lambda function
 resource "aws_lambda_permission" "ui_task_invoke" {
-  statement_id  = "AllowUI TaskInvoke"
-  action        = "lambda:InvokeFunctionUrl"
+  statement_id  = "AllowUITaskInvoke"
+  action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.r_backend.function_name
-  principal     = aws_iam_role.ui_task.arn
-  source_arn    = aws_iam_role.ui_task.arn
+  principal     = "ecs-tasks.amazonaws.com"
+  source_arn    = aws_ecs_task_definition.ui.task_role_arn
 }
 
 # Lambda monitoring and alarms
