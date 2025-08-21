@@ -57,9 +57,9 @@ resource "aws_ecs_service" "ui" {
   desired_count   = var.ui_desired_count
   launch_type     = "FARGATE"
   network_configuration {
-    subnets          = local.private_subnets
+    subnets          = local.public_subnets
     security_groups  = [module.sg_ui_tasks.security_group_id]
-    assign_public_ip = false
+    assign_public_ip = true
   }
   load_balancer {
     target_group_arn = aws_lb_target_group.ui.arn
@@ -130,9 +130,9 @@ resource "aws_ecs_service" "r" {
   desired_count   = var.r_desired_count
   launch_type     = "FARGATE"
   network_configuration {
-    subnets          = local.private_subnets
+    subnets          = local.public_subnets
     security_groups  = [module.sg_r_tasks.security_group_id]
-    assign_public_ip = false
+    assign_public_ip = true
   }
   load_balancer {
     target_group_arn = aws_lb_target_group.r.arn

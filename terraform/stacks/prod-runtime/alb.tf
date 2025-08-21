@@ -71,10 +71,10 @@ resource "aws_lb_listener" "ui_http_forward" {
 # Internal ALB for R
 resource "aws_lb" "r" {
   name               = "${var.project}-r-alb"
-  internal           = true
+  internal           = false
   load_balancer_type = "application"
   security_groups    = [module.sg_r_alb.security_group_id]
-  subnets            = local.private_subnets
+  subnets            = local.public_subnets
   idle_timeout       = 300
 }
 

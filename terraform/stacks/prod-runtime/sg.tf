@@ -39,14 +39,6 @@ module "sg_ui_tasks" {
     source_security_group_id = module.sg_ui_alb.security_group_id
   }]
 
-  egress_with_source_security_group_id = [{
-    # UI -> R ALB (on port 8080)
-    from_port                = 8080
-    to_port                  = 8080
-    protocol                 = "tcp"
-    source_security_group_id = module.sg_r_alb.security_group_id
-  }]
-
   egress_with_cidr_blocks = [{
     # Allow outbound internet access for ECR, CloudWatch, etc.
     from_port   = 0
@@ -60,16 +52,18 @@ module "sg_r_alb" {
   source      = "terraform-aws-modules/security-group/aws"
   version     = "5.1.0"
   name        = "${var.project}-alb-r"
-  description = "Internal ALB for R"
+  description = "Public ALB for R backend"
   vpc_id      = local.vpc_id
 
-  ingress_with_source_security_group_id = [{
-    description              = "Allow traffic from UI ECS task"
-    from_port                = 8080
-    to_port                  = 8080
-    protocol                 = "tcp"
-    source_security_group_id = module.sg_ui_tasks.security_group_id
-  }]
+  ingress_with_cidr_blocks = [
+    {
+      description = "Allow HTTP access from anywhere"
+      from_port   = 8080
+      to_port     = 8080
+      protocol    = "tcp"
+      cidr_blocks = "0.0.0.0/0"
+    }
+  ]
 
   egress_with_cidr_blocks = [{
     # R -> R tasks
