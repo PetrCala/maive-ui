@@ -1,12 +1,13 @@
 # ─────────────────────────────────────────────────────────
 # R LIBRARY BASE (Amazon Linux 2023)  — pre-baked libs
-# Produces: rlib:al2023-r4.4.1-maive
+# Produces: rlib:al2023-r4.4.1-maive-<hash>
 # ─────────────────────────────────────────────────────────
 
 ########## Stage 1: build R and compile packages ##########
 FROM public.ecr.aws/docker/library/amazonlinux:2023 AS build
 
 ARG R_VERSION
+ARG MAIVE_TAG
 ARG GITHUB_PAT
 ARG GITHUB_USERNAME
 
@@ -51,7 +52,7 @@ COPY r_scripts/r-packages.txt /tmp/r-packages.txt
 RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 
 # Install the MAIVE package
-RUN R -q -e "pak::pkg_install('PetrCala/maive@ui-v0.1.0-qfi')"
+RUN R -q -e "pak::pkg_install('PetrCala/maive@${MAIVE_TAG}')"
 
 # Prove what's installed
 RUN R -q -e "writeLines(apply(installed.packages()[,c('Package','Version')],1,paste,collapse='@'))" > /root/rlib-manifest.txt

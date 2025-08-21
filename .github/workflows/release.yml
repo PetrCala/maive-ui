@@ -14,8 +14,8 @@ env:
   TF_VERSION: 1.12.0
   TG_VERSION: 0.62.1
   PROJECT_NAME: maive
+  MAIVE_TAG: ui-v0.1.0-qfi
   R_VERSION: 4.4.1
-  RLIB_TAG: al2023-r4.4.1
 
 jobs:
   labelChecks:
@@ -79,6 +79,8 @@ jobs:
 
   buildRlib:
     runs-on: ubuntu-latest
+    outputs:
+      RLIB_IMAGE: ${{ steps.buildRlib.outputs.RLIB_IMAGE }}
     if: ${{ github.event_name == 'workflow_dispatch' || (needs.labelChecks.outputs.READY_TO_BUILD == 'true' && github.event.pull_request.merged == true) }}
     needs: [labelChecks, bumpVersion]
     steps:
@@ -94,14 +96,16 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build or skip rlib
+        id: buildRlib
         run: |
-          ./scripts/build-r-lib.sh \
+          RLIB_IMAGE=$(./scripts/build-r-lib.sh \
             "${{ secrets.AWS_ACCOUNT_ID }}" \
             "${{ secrets.AWS_REGION }}" \
             "${{ env.R_VERSION }}" \
             "${{ secrets.ADMIN_TOKEN }}" \
-            "${{ secrets.ADMIN_NAME }}"
-
+            "${{ secrets.ADMIN_NAME }}" \
+            "${{ env.MAIVE_TAG }}")
+          echo "RLIB_IMAGE=${RLIB_IMAGE}" >> $GITHUB_OUTPUT
   build:
     needs: [labelChecks, bumpVersion, buildRlib]
     if: ${{ needs.labelChecks.outputs.READY_TO_BUILD == 'true' && needs.bumpVersion.outputs.NEW_VERSION != '' }}
@@ -131,9 +135,7 @@ jobs:
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
           build-args: |
-            AWS_ACCOUNT_ID=${{ secrets.AWS_ACCOUNT_ID }}
-            AWS_REGION=${{ secrets.AWS_REGION }}
-            RLIB_TAG=${{ env.RLIB_TAG }}
+            RLIB_IMAGE=${{ needs.buildRlib.outputs.RLIB_IMAGE }}
 
   plan:
     runs-on: ubuntu-latest
