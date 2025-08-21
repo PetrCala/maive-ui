@@ -46,11 +46,11 @@ function(data, parameters) {
       parameters <- body_data$parameters
 
       if (is.null(data) || is.null(parameters)) {
-        return(list(error = TRUE, message = "Missing data or parameters"))
+        cli::cli_abort("Missing data or parameters")
       }
 
       results <- run_maive_model(data, parameters)
-      return(list(data = results))
+      list(data = results)
     },
     error = function(e) {
       cli::cli_alert_danger("Error in run-model endpoint: {e$message}")
