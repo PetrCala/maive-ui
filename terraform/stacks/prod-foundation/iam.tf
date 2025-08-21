@@ -216,6 +216,15 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "dynamodb:ListTagsOfResource"
         ],
         Resource : "*"
+      },
+      {
+        Sid : "Lambda",
+        Effect : "Allow",
+        Action : [
+          "lambda:InvokeFunction",
+          "lambda:CreateFunction",
+        ],
+        Resource : "*"
       }
     ]
   })
