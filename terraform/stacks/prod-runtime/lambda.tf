@@ -32,7 +32,6 @@ resource "aws_iam_role_policy_attachment" "lambda_r_backend_basic" {
 resource "aws_lambda_function" "r_backend" {
   function_name = local.lambda_r_backend_function_name
   role          = aws_iam_role.lambda_r_backend.arn
-  runtime       = "provided.al2"
   timeout       = var.lambda_r_backend_timeout
   memory_size   = var.lambda_r_backend_memory_size
 
