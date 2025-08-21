@@ -13,7 +13,7 @@ ARG GITHUB_USERNAME
 
 ENV PATH="/usr/local/bin:${PATH}"
 # Speed-ups / stable installs
-ENV MAKEFLAGS="-j$(nproc)"
+ENV MAKEFLAGS="-j2"
 ENV R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
 ENV R_INSTALL_STAGED=false
 
