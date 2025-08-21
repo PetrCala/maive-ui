@@ -15,7 +15,6 @@ ENV PATH="/usr/local/bin:${PATH}"
 ENV MAKEFLAGS="-j$(nproc)"
 ENV R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
 ENV R_INSTALL_STAGED=false
-ENV R_BATCHSAVE="no"
 
 # Build deps (headers + toolchain) and ensure libcurl (not minimal)
 RUN dnf -y update && dnf -y install \
