@@ -14,19 +14,12 @@ FROM public.ecr.aws/lambda/provided:al2023
 # - libgomp/libgfortran: OpenMP/Fortran runtime
 # - libquadmath: needed on x86_64 if gfortran linked it
 # - the usual C/C++ and compression/crypto deps
-RUN dnf -y update && dnf -y install \
-    libgomp \
-    libgfortran \
-    libstdc++ \
-    libsodium \
-    libxml2 \
-    openssl-libs \
-    zlib \
-    bzip2-libs \
-    xz-libs \
-    pcre2 \
-    readline \
- && if [ "$(uname -m)" = "x86_64" ]; then dnf -y install libquadmath; fi \
+RUN dnf -y update \
+ && dnf -y install \
+      zlib bzip2-libs xz-libs pcre2 readline \
+      libxml2 openssl-libs \
+      libsodium \
+      libgcc libgfortran \
  && dnf clean all
 
 # 2b) Make the dynamic linker see R’s own libs
