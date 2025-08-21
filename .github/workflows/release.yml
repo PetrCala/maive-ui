@@ -15,7 +15,7 @@ env:
   TG_VERSION: 0.62.1
   PROJECT_NAME: maive
   R_VERSION: 4.4.1
-  RLIB_TAG: al2023-r4.4.1-maive
+  RLIB_TAG: al2023-r4.4.1
 
 jobs:
   labelChecks:
