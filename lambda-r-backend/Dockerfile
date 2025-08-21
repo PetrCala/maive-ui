@@ -27,7 +27,17 @@ RUN dnf -y update && dnf -y install \
     xz-libs \
     pcre2 \
     readline \
+    which \
+    coreutils \
+    findutils \
+    gzip \
+    unzip \ 
+    zip \ 
+    tar \
+    bzip2 \
+    xz \ 
  && if [ "$(uname -m)" = "x86_64" ]; then dnf -y install libquadmath; fi \
+ && dnf -y install glibc-langpack-en \
  && dnf clean all
 
 ENV LC_ALL=C.UTF-8 LANG=C.UTF-8
@@ -51,6 +61,16 @@ RUN bash -lc '\
     fi; \
   fi'
 
+# ensure lib vs lib64 layout is bridged
+RUN bash -lc 'RH="$(R RHOME)"; [ -d "$RH/library" ] || { \
+  [ -d /usr/local/lib64/R ] && [ ! -e /usr/local/lib/R ] && mkdir -p /usr/local/lib && ln -s /usr/local/lib64/R /usr/local/lib/R || true; \
+  [ -d /usr/local/lib/R ]   && [ ! -e /usr/local/lib64/R ] && mkdir -p /usr/local/lib64 && ln -s /usr/local/lib/R /usr/local/lib64/R || true; \
+}'
+
+# Sanity checks
+RUN R -q --vanilla -e "base::library(utils); base::library(stats); cat('utils+stats loaded OK\n')"
+RUN R -q --vanilla -e "print(Sys.which(c('which','tar','gzip','bzip2','xz','zip','unzip')))"
+
 # Lightweight sanity prints (do not rely on utils/stats)
 RUN R -q --vanilla -e " \
   cat('RHOME=', R.home(), '\n'); \
@@ -60,7 +80,6 @@ RUN R -q --vanilla -e " \
   cat('have utils? ', dir.exists(file.path(R.home('library'),'utils')), '\n'); \
   cat('have stats? ', dir.exists(file.path(R.home('library'),'stats')), '\n') \
 "
-
 
 # Lambda Web Adapter (extension)
 COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt/extensions/lambda-adapter
