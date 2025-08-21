@@ -67,12 +67,6 @@ variable "lambda_r_backend_reserved_concurrency" {
   default     = 0
 }
 
-variable "use_secure_setup" {
-  description = "Whether to use secure setup with ALB, WAF, and enhanced security (true) or minimal setup with direct ECS access (false)"
-  type        = bool
-  default     = false
-}
-
 variable "lambda_r_backend_log_retention_days" {
   type        = number
   description = "Number of days to retain Lambda R backend CloudWatch logs"

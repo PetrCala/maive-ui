@@ -1,16 +1,14 @@
-# Public ALB for UI (conditional based on use_secure_setup)
+# Public ALB for UI
 resource "aws_lb" "ui" {
-  count              = var.use_secure_setup ? 1 : 0
   name               = "${var.project}-ui-alb"
   load_balancer_type = "application"
-  security_groups    = [module.sg_ui_alb[0].security_group_id]
+  security_groups    = [module.sg_ui_alb.security_group_id]
   subnets            = local.public_subnets
   enable_http2       = true
   idle_timeout       = 300
 }
 
 resource "aws_lb_target_group" "ui" {
-  count                = var.use_secure_setup ? 1 : 0
   name                 = "${var.project}-ui-tg"
   port                 = local.ui_port
   protocol             = "HTTP"
@@ -30,8 +28,8 @@ resource "aws_lb_target_group" "ui" {
 
 # HTTP listener - redirect to HTTPS when certificate exists, forward when it doesn't
 resource "aws_lb_listener" "ui_http" {
-  count             = var.use_secure_setup && var.certificate_arn != "" ? 1 : 0
-  load_balancer_arn = aws_lb.ui[0].arn
+  count             = var.certificate_arn != "" ? 1 : 0
+  load_balancer_arn = aws_lb.ui.arn
   port              = 80
   protocol          = "HTTP"
   default_action {
@@ -46,32 +44,31 @@ resource "aws_lb_listener" "ui_http" {
 
 # HTTPS listener - only create if certificate is provided
 resource "aws_lb_listener" "ui_https" {
-  count             = var.use_secure_setup && var.certificate_arn != "" ? 1 : 0
-  load_balancer_arn = aws_lb.ui[0].arn
+  count             = var.certificate_arn != "" ? 1 : 0
+  load_balancer_arn = aws_lb.ui.arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
   certificate_arn   = var.certificate_arn
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.ui[0].arn
+    target_group_arn = aws_lb_target_group.ui.arn
   }
 }
 
 # HTTP listener fallback when no certificate - forward directly to target group
 resource "aws_lb_listener" "ui_http_forward" {
-  count             = var.use_secure_setup && var.certificate_arn == "" ? 1 : 0
-  load_balancer_arn = aws_lb.ui[0].arn
+  count             = var.certificate_arn == "" ? 1 : 0
+  load_balancer_arn = aws_lb.ui.arn
   port              = 80
   default_action {
     type             = "forward"
-    target_group_arn = aws_lb_target_group.ui[0].arn
+    target_group_arn = aws_lb_target_group.ui.arn
   }
 }
 
-# WAF – Enhanced security rules (conditional based on use_secure_setup)
+# WAF – Enhanced security rules
 resource "aws_wafv2_web_acl" "ui_acl" {
-  count       = var.use_secure_setup ? 1 : 0
   name        = "${var.project}-ui-waf"
   scope       = "REGIONAL"
   description = "Enhanced security for public UI - optimized for data processing apps"
@@ -144,7 +141,6 @@ resource "aws_wafv2_web_acl" "ui_acl" {
 }
 
 resource "aws_wafv2_web_acl_association" "ui_acl_assoc" {
-  count        = var.use_secure_setup ? 1 : 0
-  resource_arn = aws_lb.ui[0].arn
-  web_acl_arn  = aws_wafv2_web_acl.ui_acl[0].arn
+  resource_arn = aws_lb.ui.arn
+  web_acl_arn  = aws_wafv2_web_acl.ui_acl.arn
 }
