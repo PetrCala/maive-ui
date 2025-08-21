@@ -7,9 +7,9 @@ R_VERSION="${3:?R_VERSION missing}"
 GITHUB_PAT="${4:?GITHUB_PAT missing}"
 GITHUB_USERNAME="${5:?GITHUB_USERNAME missing}"
 
-ECR_REPO="rlib"
+ECR_REPO="maive-rlib"
 REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
-RLIB_TAG="al2023-r${R_VERSION}-maive"
+RLIB_TAG="al2023-r${R_VERSION}"
 
 echo "-> Ensuring ECR login"
 aws ecr get-login-password --region "${AWS_REGION}" \
