@@ -41,21 +41,9 @@ RUN bash -lc "echo 'options(repos=c(CRAN=\"https://cran.rstudio.com\"))' >> /usr
 # Install pak for fast parallel installs
 RUN R -q -e "install.packages('pak')"
 
-# Your CRAN set — keep this small & explicit
-# (matches your code requirements)
-# cli, remotes, jsonlite, plumber, base64enc, metafor, clubSandwich, varhandle, pracma, sandwich
-RUN R -q -e "pak::pkg_install(c( \
-  'cli', \
-  'remotes', \
-  'jsonlite', \
-  'plumber', \
-  'base64enc', \
-  'metafor', \
-  'clubSandwich', \
-  'varhandle', \
-  'pracma', \
-  'sandwich' \
-))"
+# Install CRAN packages
+COPY r_scripts/r-packages.txt /tmp/
+RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 
 ARG GITHUB_PAT
 ARG GITHUB_USERNAME
