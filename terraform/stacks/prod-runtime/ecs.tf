@@ -33,8 +33,8 @@ resource "aws_ecs_task_definition" "ui" {
   cpu                      = var.ui_task_cpu
   memory                   = var.ui_task_mem
   network_mode             = "awsvpc"
-  execution_role_arn       = aws_iam_role.task_exec.arn
-  task_role_arn            = aws_iam_role.task_exec.arn
+  execution_role_arn       = aws_iam_role.ui_task.arn
+  task_role_arn            = aws_iam_role.ui_task.arn
 
   container_definitions = jsonencode([{
     name         = "ui"

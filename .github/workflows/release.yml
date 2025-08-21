@@ -93,7 +93,7 @@ jobs:
     if: ${{ needs.labelChecks.outputs.READY_TO_BUILD == 'true' && needs.bumpVersion.outputs.NEW_VERSION != '' }}
     strategy:
       matrix:
-        service: [react-ui, r-plumber]
+        service: [react-ui, r-plumber, lambda-r-backend]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -113,7 +113,7 @@ jobs:
       - name: Build & push ${{ matrix.service }}
         uses: docker/build-push-action@v5
         with:
-          context: ./apps/${{ matrix.service }}
+          context: ${{ matrix.service == 'lambda-r-backend' && './lambda-r-backend' || format('./apps/{0}', matrix.service) }}
           push: true
           tags: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-${{ matrix.service }}:${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
           build-args: |

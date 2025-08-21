@@ -12,3 +12,8 @@ output "monitoring_dashboard_url" {
   description = "CloudWatch dashboard URL for monitoring"
   value       = "https://${var.region}.console.aws.amazon.com/cloudwatch/home?region=${var.region}#dashboards:name=${var.project}-dashboard"
 }
+
+output "lambda_r_backend_url" {
+  description = "URL of the Lambda R backend function"
+  value       = aws_lambda_function_url.r_backend.url
+}

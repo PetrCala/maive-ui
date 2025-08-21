@@ -6,7 +6,7 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 
 # Static
 PROJECT_NAME="maive"
-IMAGE_NAMES=("react-ui" "r-plumber")
+IMAGE_NAMES=("react-ui" "r-plumber" "lambda-r-backend")
 AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 AWS_REGION=$(aws configure get region)
 
