@@ -13,6 +13,12 @@ function(msg = "") {
 }
 
 #* Health check
+#* @get /health
+function() {
+  list(status = "ok", time = format(Sys.time(), tz = "UTC"))
+}
+
+#* Server ping
 #* @get /ping
 function() {
   list(status = "ok", time = format(Sys.time(), tz = "UTC"))
