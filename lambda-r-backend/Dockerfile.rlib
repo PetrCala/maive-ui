@@ -33,6 +33,7 @@ RUN dnf -y update --refresh \
       libxml2-devel \
       libsodium-devel \
       gcc gcc-c++ gcc-gfortran make which findutils \
+      perl \
       tar gzip ca-certificates \
  && dnf clean all && rm -rf /var/cache/dnf/*
 
