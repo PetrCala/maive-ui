@@ -38,7 +38,7 @@ tests/e2e/
 
 ```bash
 # From the r_scripts directory
-cd apps/r-plumber/r_scripts/tests/e2e
+cd lambda-r-backend/r_scripts/tests/e2e
 Rscript run_e2e_tests.R
 ```
 
@@ -155,26 +155,26 @@ Each successful API call should return:
 
 ```json
 {
-	"data": {
-		"effectEstimate": 0.234,
-		"standardError": 0.045,
-		"isSignificant": true,
-		"andersonRubinCI": [0.145, 0.323],
-		"publicationBias": {
-			"pValue": 0.023,
-			"isSignificant": true
-		},
-		"firstStageFTest": 15.67,
-		"hausmanTest": {
-			"statistic": 8.45,
-			"criticalValue": 3.84,
-			"rejectsNull": true
-		},
-		"seInstrumented": 0.052,
-		"funnelPlot": "data:image/png;base64,...",
-		"funnelPlotWidth": 800,
-		"funnelPlotHeight": 600
-	}
+ "data": {
+  "effectEstimate": 0.234,
+  "standardError": 0.045,
+  "isSignificant": true,
+  "andersonRubinCI": [0.145, 0.323],
+  "publicationBias": {
+   "pValue": 0.023,
+   "isSignificant": true
+  },
+  "firstStageFTest": 15.67,
+  "hausmanTest": {
+   "statistic": 8.45,
+   "criticalValue": 3.84,
+   "rejectsNull": true
+  },
+  "seInstrumented": 0.052,
+  "funnelPlot": "data:image/png;base64,...",
+  "funnelPlotWidth": 800,
+  "funnelPlotHeight": 600
+ }
 }
 ```
 
@@ -261,7 +261,7 @@ The test suite can be integrated into CI/CD pipelines:
 # Example GitHub Actions step
 - name: Run E2E Tests
   run: |
-    cd apps/r-plumber/r_scripts/tests/e2e
+    cd lambda-r-backend/r_scripts/tests/e2e
     Rscript run_e2e_tests.R --quiet
 ```
 

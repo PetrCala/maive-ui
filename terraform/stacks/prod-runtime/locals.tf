@@ -5,6 +5,7 @@ locals {
 
   ui_port = 3000
 
-  ui_log_group_name = data.aws_cloudwatch_log_group.ui_logs.name
+  ui_log_group_name               = data.aws_cloudwatch_log_group.ui_logs.name
+  lambda_r_backend_log_group_name = data.aws_cloudwatch_log_group.lambda_r_backend_logs.name
 }
 

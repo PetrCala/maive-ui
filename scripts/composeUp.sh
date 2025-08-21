@@ -83,7 +83,7 @@ REPOSITORY_NAME="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
 
 # Static
 export REACT_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-react-ui:$TAG"
-export R_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-r-plumber:$TAG"
+export R_IMAGE_NAME="$REPOSITORY_NAME/$IMAGE_NAME-lambda-r-backend:$TAG"
 
 # Set the application environment variables
 if [ "$ENVIRONMENT" = "prod" ]; then

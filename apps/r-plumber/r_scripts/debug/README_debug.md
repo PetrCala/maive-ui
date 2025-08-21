@@ -16,7 +16,7 @@ This directory contains R scripts that allow you to run the MAIVE model locally 
 1. Start R in interactive mode:
 
    ```bash
-   cd apps/r-plumber/r_scripts
+   cd lambda-r-backend/r_scripts
    R
    ```
 
@@ -40,6 +40,7 @@ This directory contains R scripts that allow you to run the MAIVE model locally 
    ```
 
 5. When the browser() is hit, you can inspect variables:
+
    ```r
    # In the browser prompt:
    ls()  # List all variables
@@ -53,7 +54,7 @@ This directory contains R scripts that allow you to run the MAIVE model locally 
 Run the script directly:
 
 ```bash
-cd apps/r-plumber/r_scripts
+cd lambda-r-backend/r_scripts
 Rscript debug/debug_run_model.R
 ```
 
@@ -65,8 +66,8 @@ The scripts include the same test data from your CURL example:
 
 ```json
 [
-	{ "bs": 0.245, "sebs": 0.089, "Ns": 156 },
-	{ "bs": 0.312, "sebs": 0.102, "Ns": 203 }
+ { "bs": 0.245, "sebs": 0.089, "Ns": 156 },
+ { "bs": 0.312, "sebs": 0.102, "Ns": 203 }
 ]
 ```
 
@@ -74,13 +75,13 @@ The scripts include the same test data from your CURL example:
 
 ```json
 {
-	"modelType": "MAIVE",
-	"includeStudyDummies": true,
-	"includeStudyClustering": true,
-	"standardErrorTreatment": "clustered_cr2",
-	"computeAndersonRubin": false,
-	"maiveMethod": "PET",
-	"shouldUseInstrumenting": true
+ "modelType": "MAIVE",
+ "includeStudyDummies": true,
+ "includeStudyClustering": true,
+ "standardErrorTreatment": "clustered_cr2",
+ "computeAndersonRubin": false,
+ "maiveMethod": "PET",
+ "shouldUseInstrumenting": true
 }
 ```
 
@@ -123,6 +124,7 @@ The scripts include the same test data from your CURL example:
    ```
 
 4. **Examine MAIVE results**: Inspect the MAIVE function output:
+
    ```r
    # In browser prompt:
    names(maive_res)
@@ -133,7 +135,7 @@ The scripts include the same test data from your CURL example:
 
 ## Troubleshooting
 
-- **Working Directory**: Make sure you're in the `apps/r-plumber/r_scripts` directory
+- **Working Directory**: Make sure you're in the `lambda-r-backend/r_scripts` directory
 - **Dependencies**: Ensure all required R packages are installed
 - **MAIVE Package**: Make sure the MAIVE package is available in your R environment
 - **File Paths**: The scripts assume they're run from the `r_scripts` directory

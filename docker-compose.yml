@@ -20,7 +20,7 @@ services:
   r:
     image: ${R_IMAGE_NAME}
     build:
-      context: ./apps/r-plumber
+      context: ./lambda-r-backend
       dockerfile: Dockerfile
     working_dir: /r_scripts # matches WORKDIR in Dockerfile
     command: Rscript host.R
@@ -30,4 +30,4 @@ services:
       - R_HOST=${R_HOST}
       - R_PORT=${R_PORT}
     volumes:
-      - ./apps/r-plumber/r_scripts:/r_scripts:Z
+      - ./lambda-r-backend/r_scripts:/r_scripts:Z
