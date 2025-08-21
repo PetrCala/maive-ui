@@ -137,7 +137,7 @@ jobs:
         id: getRlibImageUrl
         run: |
           RLIB_HASH=$(./scripts/get-rlib-hash.sh "${{ env.MAIVE_TAG }}")
-          RLIB_IMAGE_URL="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-rlib:alb2023-r${{ env.R_VERSION }}-${RLIB_HASH}"
+          RLIB_IMAGE_URL="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ env.PROJECT_NAME }}-rlib:al2023-r${{ env.R_VERSION }}-${RLIB_HASH}"
           echo "RLIB_IMAGE_URL=${RLIB_IMAGE_URL}" >> $GITHUB_OUTPUT
         shell: bash
 
