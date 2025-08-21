@@ -38,11 +38,10 @@ resource "aws_lambda_function" "r_backend" {
   package_type = "Image"
   image_uri    = "${data.aws_ecr_repository.lambda_r_backend.repository_url}:${var.image_tag}"
 
-  environment {
-    variables = {
-      R_HOME = "/usr/local/lib/R"
-    }
-  }
+  # To set environment variables, use the following:
+  # environment {
+  #   variables = {}
+  # }
 
   tags = {
     Project = var.project
