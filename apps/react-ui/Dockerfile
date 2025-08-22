@@ -3,7 +3,7 @@ FROM node:21-alpine AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 COPY client/package*.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 COPY client/ ./
 RUN npm run build
 
