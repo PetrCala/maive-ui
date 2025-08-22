@@ -20,10 +20,12 @@ import type { ModelParameters, ModelResults } from "@src/types";
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const results = searchParams?.get("results");
-  const dataId = searchParams?.get("dataId");
-  const parameters = searchParams?.get("parameters") ?? "";
-  const parsedParameters = JSON.parse(parameters) as ModelParameters;
+  const results = searchParams?.get("results") ?? null;
+  const dataId = searchParams?.get("dataId") ?? null;
+  const parameters = searchParams?.get("parameters") ?? null;
+
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const parsedParameters: ModelParameters = JSON.parse(parameters ?? "{}");
   const shouldDisplayAndersonRubinCI =
     parsedParameters?.computeAndersonRubin === true;
   const estimateType = parsedParameters.modelType ?? "Unknown";
@@ -48,7 +50,8 @@ export default function ResultsPage() {
     );
   }
 
-  const parsedResults = JSON.parse(results) as ModelResults;
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const parsedResults: ModelResults = JSON.parse(results ?? "{}");
 
   const handleRerunModel = () => {
     router.push(`/model?dataId=${dataId}&parameters=${parameters}`);
