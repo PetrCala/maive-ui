@@ -12,10 +12,10 @@ function sanitizeUrl(url: string) {
 export function getRApiUrl(): string {
   // Server-side: check environment variables first
   if (typeof window === "undefined") {
-    return (
+    return sanitizeUrl(
       process.env.NEXT_PUBLIC_R_API_URL ||
-      process.env.R_API_URL ||
-      "http://localhost:8787"
+        process.env.R_API_URL ||
+        "http://localhost:8787",
     );
   }
 
@@ -23,7 +23,7 @@ export function getRApiUrl(): string {
   const { R_API_URL } = getRuntimeConfig();
 
   if (R_API_URL) {
-    return R_API_URL;
+    return sanitizeUrl(R_API_URL);
   }
 
   // Handle development fallback
