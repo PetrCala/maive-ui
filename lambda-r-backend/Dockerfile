@@ -92,6 +92,7 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 COPY r_scripts/index.R .
 COPY r_scripts/maive_model.R .
 COPY r_scripts/funnel_plot.R .
+COPY r_scripts/host.R .
 
 # Adapter / server settings
 ENV PORT=8787
@@ -103,7 +104,11 @@ ENV AWS_LWA_LOG_LEVEL=debug
 # Enable streaming only when using Function URLs
 # ENV AWS_LWA_INVOKE_MODE=response_stream
 
+# Set environment variables for host.R script
+ENV R_HOST=0.0.0.0
+ENV R_PORT=8787
+
 RUN R -q --vanilla -e "pr <- plumber::plumb('index.R'); cat('routes:', length(pr$endpoints), '\n')"
 
-# Start Plumber (adapter proxies requests)
-ENTRYPOINT [ "R", "-q", "-e", "pr <- plumber::plumb('index.R'); pr$setSerializer(plumber::serializer_unboxed_json()); pr$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT','8787')))" ]
+# Use host.R script as entrypoint
+ENTRYPOINT [ "R", "-q", "-e", "source('host.R')" ]
