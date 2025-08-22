@@ -77,15 +77,16 @@ resource "aws_ecs_service" "ui" {
   }
 }
 
-# Auto Scaling for UI tasks
+# Enhanced Auto Scaling for UI tasks with multiple scaling policies
 resource "aws_appautoscaling_target" "ui_target" {
   max_capacity       = 3
-  min_capacity       = 1
+  min_capacity       = 0  # Allow scaling to 0 for cost optimization
   resource_id        = "service/${aws_ecs_cluster.this.name}/${aws_ecs_service.ui.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
 
+# CPU-based scaling policy
 resource "aws_appautoscaling_policy" "ui_cpu_policy" {
   name               = "${var.project}-ui-cpu-scaling"
   policy_type        = "TargetTrackingScaling"
@@ -98,5 +99,68 @@ resource "aws_appautoscaling_policy" "ui_cpu_policy" {
       predefined_metric_type = "ECSServiceAverageCPUUtilization"
     }
     target_value = 70.0
+    scale_in_cooldown  = 300  # 5 minutes
+    scale_out_cooldown = 60   # 1 minute
+  }
+}
+
+# Request count-based scaling policy for user activity
+resource "aws_appautoscaling_policy" "ui_request_policy" {
+  name               = "${var.project}-ui-request-scaling"
+  policy_type        = "TargetTrackingScaling"
+  resource_id        = aws_appautoscaling_target.ui_target.resource_id
+  scalable_dimension = aws_appautoscaling_target.ui_target.scalable_dimension
+  service_namespace  = aws_appautoscaling_target.ui_target.service_namespace
+
+  target_tracking_scaling_policy_configuration {
+    predefined_metric_specification {
+      predefined_metric_type = "ALBRequestCountPerTarget"
+      resource_label = "${aws_lb.ui.arn_suffix}/${aws_lb_target_group.ui.arn_suffix}"
+    }
+    target_value = 100.0  # Scale when requests per target exceed 100
+    scale_in_cooldown  = 300
+    scale_out_cooldown = 60
+  }
+}
+
+# Scheduled scaling for cost optimization during low-usage hours
+resource "aws_appautoscaling_schedule" "ui_scale_down_night" {
+  count                  = var.enable_scheduled_scaling ? 1 : 0
+  scheduled_action_name  = "${var.project}-ui-scale-down-night"
+  service_namespace      = "ecs"
+  resource_id            = aws_appautoscaling_target.ui_target.resource_id
+  scalable_dimension     = aws_appautoscaling_target.ui_target.scalable_dimension
+  schedule               = "cron(0 2 * * ? *)"  # 2 AM UTC daily
+  min_capacity           = 0
+  max_capacity           = 1
+}
+
+resource "aws_appautoscaling_schedule" "ui_scale_up_morning" {
+  count                  = var.enable_scheduled_scaling ? 1 : 0
+  scheduled_action_name  = "${var.project}-ui-scale-up-morning"
+  service_namespace      = "ecs"
+  resource_id            = aws_appautoscaling_target.ui_target.resource_id
+  scalable_dimension     = aws_appautoscaling_target.ui_target.scalable_dimension
+  schedule               = "cron(0 8 * * ? *)"  # 8 AM UTC daily
+  min_capacity           = 1
+  max_capacity           = 3
+}
+
+# Custom metric for user count tracking
+resource "aws_cloudwatch_metric_alarm" "ui_user_activity" {
+  alarm_name          = "${var.project}-ui-user-activity"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 2
+  metric_name         = "RequestCount"
+  namespace           = "AWS/ApplicationELB"
+  period              = 300  # 5 minutes
+  statistic           = "Sum"
+  threshold           = 5    # Alert if more than 5 requests in 5 minutes
+  alarm_description   = "Detect user activity to trigger scaling"
+  alarm_actions       = []
+
+  dimensions = {
+    LoadBalancer = aws_lb.ui.arn_suffix
+    TargetGroup  = aws_lb_target_group.ui.arn_suffix
   }
 }

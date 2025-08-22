@@ -72,3 +72,21 @@ variable "lambda_r_backend_log_retention_days" {
   description = "Number of days to retain Lambda R backend CloudWatch logs"
   default     = 7
 }
+
+variable "enable_scheduled_scaling" {
+  type        = bool
+  description = "Enable scheduled scaling for cost optimization during low-usage hours"
+  default     = true
+}
+
+variable "enable_lambda_ui" {
+  type        = bool
+  description = "Enable Lambda-based UI as an alternative to ECS (more cost-effective for low usage)"
+  default     = false
+}
+
+variable "enable_lambda_edge_ui" {
+  type        = bool
+  description = "Enable Lambda@Edge with CloudFront for ultra-low-cost UI serving"
+  default     = false
+}
