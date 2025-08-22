@@ -42,12 +42,12 @@ test_echo <- function(msg = "test", base_url = API_BASE_URL) {
 }
 
 #' Test run-model endpoint
-#' @param file_data JSON string of file data
+#' @param data JSON string of file data
 #' @param parameters JSON string of parameters
 #' @param base_url Base URL of the API
 #' @param timeout Timeout in seconds
 #' @return Response from run-model endpoint
-test_run_model <- function(file_data, parameters,
+test_run_model <- function(data, parameters,
                            base_url = API_BASE_URL,
                            timeout = API_TIMEOUT) {
   tryCatch(
@@ -55,7 +55,7 @@ test_run_model <- function(file_data, parameters,
       response <- httr::POST(
         paste0(base_url, "/run-model"),
         body = list(
-          data = file_data,
+          data = data,
           parameters = parameters
         ),
         encode = "form",
