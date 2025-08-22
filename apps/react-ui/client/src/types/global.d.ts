@@ -7,3 +7,8 @@ declare global {
     RUNTIME_CONFIG?: RuntimeConfig;
   };
 }
+
+declare module "*.csv" {
+  const content: string;
+  export default content;
+}
