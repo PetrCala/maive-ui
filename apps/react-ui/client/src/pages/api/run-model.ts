@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { modelService } from "@api/services/modelService";
-import type { ModelResponse } from "@src/types";
+import type { DataArray, ModelParameters, ModelResponse } from "@src/types";
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,7 +11,10 @@ export default async function handler(
   }
 
   try {
-    const { data, parameters } = req.body;
+    const { data, parameters } = req.body as {
+      data: DataArray;
+      parameters: ModelParameters;
+    };
 
     // Validate required fields
     if (!data || !parameters) {
@@ -21,15 +24,15 @@ export default async function handler(
     }
 
     // Call the R backend directly via server-side service
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result: ModelResponse = await modelService.runModel(data, parameters);
 
     // Return the result
     res.status(200).json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in run-model API route:", error);
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = error instanceof Error ? error.message : String(error);
     res.status(500).json({
       error: "Failed to run model",
       message: errorMessage,
