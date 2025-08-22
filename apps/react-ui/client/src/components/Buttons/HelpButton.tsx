@@ -1,10 +1,10 @@
 import Tooltip from "@components/Tooltip";
 import { useState, useRef } from "react";
 
-interface HelpButtonProps {
+type HelpButtonProps = {
   helpText: string;
   className?: string;
-}
+};
 
 export default function HelpButton({
   helpText,

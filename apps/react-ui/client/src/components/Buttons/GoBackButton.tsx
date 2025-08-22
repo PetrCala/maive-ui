@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 
-interface GoBackButtonProps {
+type GoBackButtonProps = {
   href?: string;
   text?: string;
   variant?: "simple" | "styled";
   className?: string;
-}
+};
 
 export default function GoBackButton({
   href,
@@ -35,7 +35,7 @@ export default function GoBackButton({
     `${baseClasses} ${variantClasses[variant]} ${className}`.trim();
 
   return (
-    <Link href={href || "#"} onClick={handleClick} className={combinedClasses}>
+    <Link href={href ?? "#"} onClick={handleClick} className={combinedClasses}>
       {variant === "styled" && "← "}
       {text}
     </Link>
