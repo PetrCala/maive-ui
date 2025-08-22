@@ -8,7 +8,7 @@ import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
 import { useDataStore, dataCache } from "@store/dataStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
 import Alert from "@src/components/Alert";
-import type { ModelParameters } from "@src/api";
+import type { ModelParameters, ModelResponse } from "@src/api";
 import AdvancedOptions from "@src/components/Model/AdvancedOptions";
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
@@ -19,7 +19,7 @@ import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
-import { getRApiUrl, runModelClient } from "@src/api";
+import { getRApiUrl, httpPost, runModelClient } from "@src/api";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -125,22 +125,16 @@ export default function ModelPage() {
         const nrow = uploadedData.data.length;
         result = { data: generateMockResults(nrow) };
       } else {
-        // Client-side POST request
-        const response = await fetch(`${getRApiUrl()}/run-model`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        result = await httpPost<ModelResponse>(
+          `${getRApiUrl()}/run-model`,
+          {
             data: JSON.stringify(uploadedData.data),
             parameters: JSON.stringify(parameters),
-          }),
-          signal: abortControllerRef.current?.signal,
-        });
-
-        if (!response.ok) {
-          throw new Error(`API run-model failed: ${response.statusText}`);
-        }
-
-        result = await response.json();
+          },
+          {
+            signal: abortControllerRef.current?.signal,
+          },
+        );
       }
 
       if (result.error) {

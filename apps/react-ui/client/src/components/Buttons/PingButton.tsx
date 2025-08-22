@@ -1,4 +1,4 @@
-import { pingClient } from "@src/api";
+import { getRApiUrl, httpGet } from "@src/api";
 
 /**
  * A button that pings the server and alerts the user with the status and time.
@@ -7,8 +7,15 @@ import { pingClient } from "@src/api";
 export default function PingButton() {
   const pingServer = async () => {
     try {
-      const data = await pingClient();
-      alert(`Status: ${data.status}, Time: ${data.time}`);
+      const response = await httpGet<{ status: string; time: string }>(
+        `${getRApiUrl()}/ping`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        },
+      );
+      alert(`Status: ${response.status}, Time: ${response.time}`);
     } catch (error) {
       alert(
         `Error: ${error instanceof Error ? error.message : "Failed to ping server"}`,
