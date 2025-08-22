@@ -13,7 +13,7 @@ export const mockCsvFiles = [
 0.456,0.065,1870,3
 -0.123,0.134,1100,3
 0.267,0.087,1680,3`,
-    filename: "sample_1.csv",
+    filename: "mock_data1.csv",
   },
   {
     name: "Sample 2",
@@ -29,7 +29,7 @@ export const mockCsvFiles = [
 0.234,0.134,1780,4
 -0.345,0.089,890,4
 0.567,0.067,1450,4`,
-    filename: "sample_2.csv",
+    filename: "mock_data2.csv",
   },
   {
     name: "Sample 3",
@@ -48,7 +48,7 @@ export const mockCsvFiles = [
 0.789,0.056,2560,5
 -0.345,0.134,890,5
 0.123,0.067,1450,5`,
-    filename: "sample_3.csv",
+    filename: "mock_data3.csv",
   },
   {
     name: "Sample 4",
@@ -70,7 +70,7 @@ export const mockCsvFiles = [
 0.123,0.067,980,6
 -0.456,0.134,1560,6
 0.678,0.089,1230,6`,
-    filename: "sample_4.csv",
+    filename: "mock_data4.csv",
   },
   {
     name: "Sample 5",
@@ -95,7 +95,7 @@ export const mockCsvFiles = [
 0.234,0.078,1780,7
 -0.123,0.145,1120,7
 0.789,0.067,1890,7`,
-    filename: "sample_5.csv",
+    filename: "mock_data5.csv",
   },
   {
     name: "Sample 6",
@@ -120,7 +120,7 @@ export const mockCsvFiles = [
 0.123,0.134,1230,7
 -0.456,0.067,2340,7
 0.678,0.089,890,7`,
-    filename: "sample_6.csv",
+    filename: "mock_data6.csv",
   },
   {
     name: "Sample 7",
@@ -145,7 +145,7 @@ export const mockCsvFiles = [
 0.567,0.089,1230,7
 -0.234,0.123,1890,7
 0.345,0.078,1670,7`,
-    filename: "sample_7.csv",
+    filename: "mock_data7.csv",
   },
   {
     name: "Sample 8",
@@ -173,7 +173,7 @@ export const mockCsvFiles = [
 0.234,0.123,1560,8
 -0.123,0.078,1340,8
 0.456,0.134,1890,8`,
-    filename: "sample_8.csv",
+    filename: "mock_data8.csv",
   },
   {
     name: "Sample 9",
@@ -201,7 +201,7 @@ export const mockCsvFiles = [
 0.345,0.089,890,8
 -0.234,0.112,2340,8
 0.567,0.067,1450,8`,
-    filename: "sample_9.csv",
+    filename: "mock_data9.csv",
   },
   {
     name: "Sample 10",
@@ -232,7 +232,7 @@ export const mockCsvFiles = [
 0.345,0.089,1120,9
 -0.567,0.123,1780,9
 0.123,0.078,1450,9`,
-    filename: "sample_10.csv",
+    filename: "mock_data10.csv",
   },
 ];
 
