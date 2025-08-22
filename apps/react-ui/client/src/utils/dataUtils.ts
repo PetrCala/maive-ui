@@ -37,10 +37,8 @@ export const processUploadedFile = async (
         // Check if first row looks like headers (contains non-numeric values)
         const firstRow = (jsonData as DataArray)[0] ?? [];
 
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-        const hasHeaders = firstRow.some(
-          (cell: unknown) =>
-            cell !== undefined && cell !== null && isNaN(Number(cell)),
+        const hasHeaders = (firstRow as unknown as unknown[]).some(
+          (cell) => cell !== undefined && cell !== null && isNaN(Number(cell)),
         );
 
         let dataRows: DataArray;
@@ -48,8 +46,9 @@ export const processUploadedFile = async (
 
         if (hasHeaders) {
           // Use the first row as headers
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          columnNames = firstRow.map((header: unknown) => String(header || ""));
+          columnNames = (firstRow as unknown as string[]).map((header) =>
+            String(header || ""),
+          );
           dataRows = (jsonData as DataArray).slice(1); // skip header row
         } else {
           // No headers, use positional column names
@@ -160,7 +159,10 @@ export const exportDataWithInstrumentedSE = (
       ...exportData.map((row) =>
         headers
           .map((header) => {
-            const value = row[header as keyof typeof row];
+            const value = row[header as keyof typeof row] as
+              | number
+              | string
+              | null;
             // Handle values that need quotes (contain commas, quotes, or newlines)
             if (
               typeof value === "string" &&
