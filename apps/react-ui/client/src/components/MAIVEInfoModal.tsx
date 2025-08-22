@@ -50,12 +50,12 @@ export default function MAIVEInfoModal({
             <h3 className="text-xl font-semibold text-primary mb-3">
               {TEXT.maiveModal.overview.title}
             </h3>
-            <p className="text-secondary leading-relaxed">
+            <div className="text-secondary leading-relaxed">
               <MDXContent
                 source={TEXT.maiveModal.overview.text}
                 lineMargin={4}
               />
-            </p>
+            </div>
           </section>
 
           <section>
@@ -64,9 +64,9 @@ export default function MAIVEInfoModal({
             </h3>
             <div className="space-y-3 text-secondary">
               {TEXT.maiveModal.howItWorks.text.map((step, index) => (
-                <p key={index} className="leading-relaxed">
+                <div key={index} className="leading-relaxed">
                   <MDXContent source={step} />
-                </p>
+                </div>
               ))}
             </div>
           </section>
