@@ -70,13 +70,21 @@ resource "aws_lambda_function_url" "r_backend" {
   }
 }
 
-# Allow UI ECS task to invoke the Lambda function
-resource "aws_lambda_permission" "ui_task_invoke" {
-  statement_id  = "AllowUITaskInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.r_backend.function_name
-  principal     = "ecs-tasks.amazonaws.com"
-  source_arn    = aws_ecs_task_definition.ui.task_role_arn
+# Allow UI ECS task to invoke the Lambda function -> replaced by public_invoke
+# resource "aws_lambda_permission" "ui_task_invoke" {
+#   statement_id  = "AllowUITaskInvoke"
+#   action        = "lambda:InvokeFunction"
+#   function_name = aws_lambda_function.r_backend.function_name
+#   principal     = "ecs-tasks.amazonaws.com"
+#   source_arn    = aws_ecs_task_definition.ui.task_role_arn
+# }
+
+resource "aws_lambda_permission" "public_invoke" {
+  statement_id           = "FunctionURLAllowPublicAccess"
+  action                 = "lambda:InvokeFunctionUrl"
+  function_name          = aws_lambda_function.r_backend.function_name
+  principal              = "*"
+  function_url_auth_type = "NONE"
 }
 
 # Lambda monitoring and alarms
