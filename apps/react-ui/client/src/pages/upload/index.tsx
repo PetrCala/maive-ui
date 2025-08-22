@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
+import type { FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
 import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
 import { useDataStore, dataCache } from "@store/dataStore";
@@ -23,20 +24,22 @@ export default function UploadPage() {
   const { setUploadedData } = useDataStore();
 
   const onDrop = (acceptedFiles: File[]) => {
-    if (acceptedFiles && acceptedFiles[0]) {
+    if (acceptedFiles[0]) {
       setSelectedFile(acceptedFiles[0]);
     }
   };
 
-  const onDropRejected = (rejectedFiles: any[]) => {
+  const onDropRejected = (rejectedFiles: FileRejection[]) => {
     const rejectedFile = rejectedFiles[0];
     if (
-      rejectedFile.errors.some((error: any) => error.code === "file-too-large")
+      rejectedFile.errors.some(
+        (error: { code: string }) => error.code === "file-too-large",
+      )
     ) {
       alert("File is too large. Maximum file size is 10MB.");
     } else if (
       rejectedFile.errors.some(
-        (error: any) => error.code === "file-invalid-type",
+        (error: { code: string }) => error.code === "file-invalid-type",
       )
     ) {
       alert("Invalid file type. Please upload a CSV, XLS, or XLSX file.");
@@ -49,8 +52,11 @@ export default function UploadPage() {
     onDrop,
     onDropRejected,
     accept: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       "text/csv": [".csv"],
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       "application/vnd.ms-excel": [".xls"],
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
         ".xlsx",
       ],
@@ -66,44 +72,51 @@ export default function UploadPage() {
     setSelectedFile(mockFile);
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!selectedFile) return;
+  const handleSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      void (async () => {
+        event.preventDefault();
+        if (!selectedFile) {
+          return;
+        }
 
-    setIsProcessing(true);
-    try {
-      // Process the uploaded file
-      const { data, base64Data } = await processUploadedFile(selectedFile);
+        setIsProcessing(true);
+        try {
+          // Process the uploaded file
+          const { data, base64Data } = await processUploadedFile(selectedFile);
 
-      // Generate unique ID for this data
-      const dataId = generateDataId();
+          // Generate unique ID for this data
+          const dataId = generateDataId();
 
-      // Create the uploaded data object
-      const uploadedData = {
-        id: dataId,
-        filename: selectedFile.name,
-        data: data,
-        base64Data: base64Data,
-        uploadedAt: new Date(),
-      };
+          // Create the uploaded data object
+          const uploadedData = {
+            id: dataId,
+            filename: selectedFile.name,
+            data: data,
+            base64Data: base64Data,
+            uploadedAt: new Date(),
+          };
 
-      // Store in Zustand store and cache
-      setUploadedData(uploadedData);
-      dataCache.set(dataId, uploadedData);
+          // Store in Zustand store and cache
+          setUploadedData(uploadedData);
+          dataCache.set(dataId, uploadedData);
 
-      // Navigate to validation page with data ID
-      router.push(`/validation?dataId=${dataId}`);
-    } catch (error) {
-      console.error("Error processing file:", error);
-      alert(
-        "Failed to process the uploaded file. Please ensure it's a valid Excel or CSV file.",
-      );
-    } finally {
-      setIsProcessing(false);
-    }
-  };
+          // Navigate to validation page with data ID
+          router.push(`/validation?dataId=${dataId}`);
+        } catch (error) {
+          console.error("Error processing file:", error);
+          alert(
+            "Failed to process the uploaded file. Please ensure it's a valid Excel or CSV file.",
+          );
+        } finally {
+          setIsProcessing(false);
+        }
+      })();
+    },
+    [selectedFile, setUploadedData, router],
+  );
 
-  const getFileIconComponent = (filename: string, size: number = 24) => {
+  const getFileIconComponent = (filename: string, size = 24) => {
     if (filename.endsWith(".csv")) {
       return <FaFileCsv className="text-primary" size={size} />;
     } else if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
@@ -144,7 +157,12 @@ export default function UploadPage() {
               </ul>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form
+              onSubmit={(e) => {
+                void handleSubmit(e);
+              }}
+              className="space-y-6"
+            >
               <div className="space-y-2">
                 <label className="block text-sm font-medium text-secondary">
                   Upload your data file
@@ -211,7 +229,9 @@ export default function UploadPage() {
               </div>
 
               <ActionButton
-                onClick={(event) => handleSubmit(event as React.FormEvent)}
+                onClick={(event) => {
+                  void handleSubmit(event as React.FormEvent<HTMLFormElement>);
+                }}
                 variant="primary"
                 className="w-full"
                 disabled={!selectedFile || isProcessing}
