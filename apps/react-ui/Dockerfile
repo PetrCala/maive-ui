@@ -4,6 +4,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 COPY client/package*.json ./
 RUN npm ci --omit=dev
+RUN npm install --save-dev eslint
 COPY client/ ./
 RUN npm run build
 
