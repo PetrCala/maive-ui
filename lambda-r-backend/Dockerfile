@@ -103,8 +103,7 @@ ENV AWS_LWA_LOG_LEVEL=debug
 # Enable streaming only when using Function URLs
 # ENV AWS_LWA_INVOKE_MODE=response_stream
 
-# Parses index.R and builds the router; doesn’t start the server
 RUN R -q --vanilla -e "pr <- plumber::plumb('index.R'); cat('routes:', length(pr$endpoints), '\n')"
 
 # Start Plumber (adapter proxies requests)
-ENTRYPOINT [ "R", "-q", "-e", "pr <- plumber::plumb('index.R'); pr$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT','8787')))" ]
+ENTRYPOINT [ "R", "-q", "-e", "pr <- plumber::plumb('index.R'); pr$setSerializer(plumber::serializer_unboxed_json()); pr$run(host='0.0.0.0', port=as.numeric(Sys.getenv('PORT','8787')))" ]
