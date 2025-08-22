@@ -1,4 +1,4 @@
-import type { PingResponse } from "../types";
+import type { PingResponse } from "../../types";
 import { getRApiUrl } from "../utils/config";
 import { httpGet } from "../utils/http";
 

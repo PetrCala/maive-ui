@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { modelService } from "@api/services/modelService";
-import type { ModelResponse } from "@api/types";
+import type { ModelResponse } from "@src/types";
 
 export default async function handler(
   req: NextApiRequest,

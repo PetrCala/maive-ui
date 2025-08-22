@@ -1,6 +1,5 @@
 import { useState } from "react";
-import type { DeepValueOf } from "@src/types";
-import type { ModelParameters } from "@src/api";
+import type { DeepValueOf, ModelParameters } from "@src/types";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";

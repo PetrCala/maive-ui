@@ -1,15 +1,16 @@
+import type { DataArray } from "@src/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-export interface UploadedData {
+export type UploadedData = {
   id: string;
   filename: string;
-  data: any[];
+  data: DataArray;
   base64Data: string;
   uploadedAt: Date;
-}
+};
 
-interface DataStore {
+type DataStore = {
   // State
   uploadedData: UploadedData | null;
   dataId: string | null;
@@ -19,7 +20,7 @@ interface DataStore {
   clearUploadedData: () => void;
   setDataId: (id: string) => void;
   getUploadedData: () => UploadedData | null;
-}
+};
 
 export const useDataStore = create<DataStore>()(
   persist(

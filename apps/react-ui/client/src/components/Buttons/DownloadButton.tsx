@@ -1,28 +1,30 @@
 import { useState } from "react";
 
-interface DownloadButtonProps {
-  onClick: () => Promise<void>;
+type DownloadButtonProps = {
+  onClick: () => void;
   className?: string;
   disabled?: boolean;
   children?: React.ReactNode;
   title?: string;
-}
+};
 
 export default function DownloadButton({
   onClick,
   className = "",
   disabled = false,
-  children,
+  children, // eslint-disable-line @typescript-eslint/no-unused-vars
   title = "Download",
 }: DownloadButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleClick = async () => {
-    if (disabled || isLoading) return;
+  const handleClick = () => {
+    if (disabled || isLoading) {
+      return;
+    }
 
     setIsLoading(true);
     try {
-      await onClick();
+      onClick();
     } finally {
       setIsLoading(false);
     }
