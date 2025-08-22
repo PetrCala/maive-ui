@@ -30,10 +30,11 @@ resource "aws_iam_role_policy_attachment" "lambda_r_backend_basic" {
 
 # Lambda function
 resource "aws_lambda_function" "r_backend" {
-  function_name = local.lambda_r_backend_function_name
-  role          = aws_iam_role.lambda_r_backend.arn
-  timeout       = var.lambda_r_backend_timeout
-  memory_size   = var.lambda_r_backend_memory_size
+  function_name                  = local.lambda_r_backend_function_name
+  role                           = aws_iam_role.lambda_r_backend.arn
+  timeout                        = var.lambda_r_backend_timeout
+  memory_size                    = var.lambda_r_backend_memory_size
+  reserved_concurrent_executions = var.lambda_r_backend_reserved_concurrency
 
   package_type = "Image"
   image_uri    = "${data.aws_ecr_repository.lambda_r_backend.repository_url}:${var.image_tag}"
@@ -46,13 +47,6 @@ resource "aws_lambda_function" "r_backend" {
   tags = {
     Project = var.project
   }
-}
-
-resource "aws_lambda_provisioned_concurrency_config" "r_backend" {
-  count                             = var.lambda_r_backend_reserved_concurrency > 0 ? 1 : 0
-  function_name                     = aws_lambda_function.r_backend.function_name
-  provisioned_concurrent_executions = var.lambda_r_backend_reserved_concurrency
-  qualifier                         = "$LATEST"
 }
 
 # Lambda function URL for direct HTTP access

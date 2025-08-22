@@ -64,7 +64,7 @@ variable "lambda_r_backend_timeout" {
 variable "lambda_r_backend_reserved_concurrency" {
   description = "Reserved concurrency for Lambda R backend (0 = unreserved)"
   type        = number
-  default     = 0
+  default     = 5
 }
 
 variable "lambda_r_backend_log_retention_days" {
