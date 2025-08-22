@@ -15,6 +15,7 @@ import { GoBackButton } from "@src/components/Buttons";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import MDXContent from "@src/context/MDXContent";
+import CONFIG from "@src/CONFIG";
 
 // Standalone function to get the file icon component based on filename
 export default function UploadPage() {
@@ -240,7 +241,7 @@ export default function UploadPage() {
                 </div>
               </div>
 
-              {!selectedFile && (
+              {!selectedFile && CONFIG.SHOULD_SUGGEST_MOCK_DATA_USE && (
                 <div className="flex justify-end">
                   <div className="flex items-center gap-3 text-sm text-muted">
                     <span>Don&apos;t have your data ready yet?</span>
