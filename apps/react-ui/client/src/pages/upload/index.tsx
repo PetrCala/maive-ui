@@ -27,8 +27,27 @@ export default function UploadPage() {
       setSelectedFile(acceptedFiles[0]);
     }
   };
+
+  const onDropRejected = (rejectedFiles: any[]) => {
+    const rejectedFile = rejectedFiles[0];
+    if (
+      rejectedFile.errors.some((error: any) => error.code === "file-too-large")
+    ) {
+      alert("File is too large. Maximum file size is 10MB.");
+    } else if (
+      rejectedFile.errors.some(
+        (error: any) => error.code === "file-invalid-type",
+      )
+    ) {
+      alert("Invalid file type. Please upload a CSV, XLS, or XLSX file.");
+    } else {
+      alert("File upload failed. Please try again.");
+    }
+  };
+
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
+    onDropRejected,
     accept: {
       "text/csv": [".csv"],
       "application/vnd.ms-excel": [".xls"],
@@ -39,6 +58,7 @@ export default function UploadPage() {
     multiple: false,
     noClick: true,
     noKeyboard: true,
+    maxSize: 10 * 1024 * 1024, // 10MB in bytes
   });
 
   const handleGenerateMockData = () => {
@@ -143,7 +163,7 @@ export default function UploadPage() {
                             : "Drag and drop your file here"}
                         </p>
                         <p className="text-xs text-muted mt-2">
-                          Max size: 200MB &nbsp;|&nbsp; .csv, .xls, .xlsx
+                          Max size: 10MB &nbsp;|&nbsp; .csv, .xls, .xlsx
                         </p>
                       </div>
                       <button
