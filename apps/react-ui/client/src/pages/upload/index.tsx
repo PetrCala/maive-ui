@@ -243,14 +243,14 @@ export default function UploadPage() {
 
               {!selectedFile && CONFIG.SHOULD_SUGGEST_MOCK_DATA_USE && (
                 <div className="flex justify-end">
-                  <div className="flex items-center gap-3 text-sm text-muted">
+                  <div className="flex items-center gap-1 text-sm text-muted">
                     <span>Don&apos;t have your data ready yet?</span>
                     <button
                       type="button"
                       onClick={() => {
                         void handleLoadRandomMockCsv();
                       }}
-                      className="px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/20 hover:border-primary/30 transition-colors duration-200 interactive"
+                      className="text-sm font-bold text-primary hover:text-primary/80 transition-colors duration-200 cursor-pointer underline hover:no-underline"
                     >
                       Use mock data!
                     </button>
