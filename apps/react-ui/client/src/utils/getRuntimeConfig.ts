@@ -25,9 +25,5 @@ export function getRuntimeConfig() {
     };
   }
 
-  if (!runtimeConfig.R_API_URL) {
-    throw new Error("R_API_URL is not set");
-  }
-
   return runtimeConfig;
 }
