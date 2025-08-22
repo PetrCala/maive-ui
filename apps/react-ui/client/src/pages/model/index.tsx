@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
-import { useDataStore, dataCache } from "@store/dataStore";
+import { useDataStore, dataCache, type UploadedData } from "@store/dataStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
 import Alert from "@src/components/Alert";
 import AdvancedOptions from "@src/components/Model/AdvancedOptions";
@@ -26,7 +26,7 @@ export default function ModelPage() {
   const dataId = searchParams?.get("dataId");
   const [loading, setLoading] = useState(false);
   const [hasRunModel, setHasRunModel] = useState(false);
-  const [uploadedData, setUploadedData] = useState<any>(null);
+  const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const [parameters, setParameters] = useState<ModelParameters>({
     modelType: CONST.MODEL_TYPES.MAIVE,
     includeStudyDummies: false,
@@ -42,36 +42,10 @@ export default function ModelPage() {
   const isMountedRef = useRef(true);
   const { showAlert } = useGlobalAlert();
 
-  useEffect(() => {
-    isMountedRef.current = true;
-    if (dataId) {
-      loadDataFromStore();
-    } else {
-      showAlert("No data selected", "error");
-      router.push("/upload");
-    }
-    return () => {
-      isMountedRef.current = false;
-      if (abortControllerRef.current) {
-        abortControllerRef.current.abort();
-      }
-    };
-  }, [dataId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  useMemo(() => {
-    if (searchParams?.get("parameters")) {
-      const parsed = JSON.parse(
-        decodeURIComponent(searchParams.get("parameters") || "{}"),
-      ) as Partial<ModelParameters>;
-      const params = { ...parameters, ...parsed };
-      setParameters(params);
-    }
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const loadDataFromStore = () => {
     try {
       // Try to get data from cache first
-      let data = dataCache.get(dataId!);
+      let data = dataCache.get(dataId ?? "");
 
       // If not in cache, try to get from store
       if (!data) {
@@ -105,6 +79,32 @@ export default function ModelPage() {
     }
   };
 
+  useEffect(() => {
+    isMountedRef.current = true;
+    if (dataId) {
+      loadDataFromStore();
+    } else {
+      showAlert("No data selected", "error");
+      router.push("/upload");
+    }
+    return () => {
+      isMountedRef.current = false;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, [dataId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useMemo(() => {
+    if (searchParams?.get("parameters")) {
+      const parsed = JSON.parse(
+        decodeURIComponent(searchParams.get("parameters") ?? "{}"),
+      ) as Partial<ModelParameters>;
+      const params = { ...parameters, ...parsed };
+      setParameters(params);
+    }
+  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleParameterChange = (
     param: keyof ModelParameters,
     value: string | boolean,
@@ -112,74 +112,77 @@ export default function ModelPage() {
     setParameters((prev) => ({ ...prev, [param]: value }));
   };
 
-  const handleRunModel = async () => {
-    window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top of page
-    setLoading(true);
-    setHasRunModel(true);
-    abortControllerRef.current = new AbortController();
-    try {
-      let result: { data?: any; error?: any; message?: string };
+  const handleRunModel = useCallback(() => {
+    void (async () => {
+      window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top of page
+      setLoading(true);
+      setHasRunModel(true);
+      abortControllerRef.current = new AbortController();
+      try {
+        let result: { data?: unknown; error?: string; message?: string };
 
-      if (shouldUseMockResults()) {
-        // Use mock data in development mode
-        console.debug("Generating mock results in development mode");
-        const nrow = uploadedData.data.length;
-        result = { data: generateMockResults(nrow) };
-      } else {
-        result = await httpPost<ModelResponse>(
-          `${getRApiUrl()}/run-model`,
-          {
-            data: JSON.stringify(uploadedData.data),
-            parameters: JSON.stringify(parameters),
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
+        if (shouldUseMockResults()) {
+          // Use mock data in development mode
+          console.debug("Generating mock results in development mode");
+          const nrow = uploadedData?.data.length ?? 0;
+          result = { data: generateMockResults(nrow) };
+        } else {
+          result = await httpPost<ModelResponse>(
+            `${getRApiUrl()}/run-model`,
+            {
+              data: JSON.stringify(uploadedData?.data ?? []),
+              parameters: JSON.stringify(parameters),
             },
-            signal: abortControllerRef.current?.signal,
-          },
-        );
-      }
+            {
+              headers: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
+                "Content-Type": "application/json",
+              },
+              signal: abortControllerRef.current?.signal,
+            },
+          );
+        }
 
-      if (result.error) {
-        throw new Error(result?.message || "Failed to run model");
-      }
+        if (result.error) {
+          throw new Error(result?.message ?? "Failed to run model");
+        }
 
-      // Redirect to results page with the model output
-      const results = result.data;
-      const searchParams = new URLSearchParams({
-        results: JSON.stringify(results),
-        dataId: dataId || "",
-        parameters: JSON.stringify(parameters),
-      });
-      if (isMountedRef.current) {
-        router.push(`/results?${searchParams.toString()}`);
+        // Redirect to results page with the model output
+        const results = result.data;
+        const urlSearchParams = new URLSearchParams({
+          results: JSON.stringify(results),
+          dataId: dataId ?? "",
+          parameters: JSON.stringify(parameters),
+        });
+        if (isMountedRef.current) {
+          router.push(`/results?${urlSearchParams.toString()}`);
+        }
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name === "AbortError") {
+          console.log("Model run aborted due to navigation or unmount.");
+          showAlert("Model run was aborted.", "warning");
+          setLoading(false);
+          setHasRunModel(false);
+          return;
+        }
+        console.error("Error running model:", error);
+        if (isMountedRef.current) {
+          const msg =
+            "An error occurred while running the model: " +
+            (error instanceof Error ? error.message : String(error));
+          showAlert(msg, "error");
+          setLoading(false);
+          setHasRunModel(false);
+        }
+      } finally {
+        if (isMountedRef.current) {
+          // Only set loading to false if there was an error or abort
+          // Otherwise, navigation will occur and component will unmount
+        }
+        abortControllerRef.current = null;
       }
-    } catch (error: any) {
-      if (error.name === "AbortError") {
-        console.log("Model run aborted due to navigation or unmount.");
-        showAlert("Model run was aborted.", "warning");
-        setLoading(false);
-        setHasRunModel(false);
-        return;
-      }
-      console.error("Error running model:", error);
-      if (isMountedRef.current) {
-        const msg =
-          "An error occurred while running the model: " +
-          (error instanceof Error ? error.message : String(error));
-        showAlert(msg, "error");
-        setLoading(false);
-        setHasRunModel(false);
-      }
-    } finally {
-      if (isMountedRef.current) {
-        // Only set loading to false if there was an error or abort
-        // Otherwise, navigation will occur and component will unmount
-      }
-      abortControllerRef.current = null;
-    }
-  };
+    })();
+  }, [dataId, parameters, uploadedData, router, showAlert]);
 
   const LoadingCard = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full max-h-[90vh] overflow-y-auto transition-all duration-500 opacity-100 scale-100">
