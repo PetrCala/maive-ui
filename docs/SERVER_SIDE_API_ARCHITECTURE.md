@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document explains the server-side API architecture implemented in the MAIVE UI application and why it's necessary for the VPC (Virtual Private Cloud) deployment setup.
+This document explains the (currently unused) server-side API architecture implemented in the MAIVE UI application and why it's necessary for the VPC (Virtual Private Cloud) deployment setup.
 
 ## Why Server-Side APIs Are Necessary
 
