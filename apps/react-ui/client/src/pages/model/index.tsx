@@ -130,8 +130,8 @@ export default function ModelPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            data: uploadedData.data,
-            parameters,
+            data: JSON.stringify(uploadedData.data),
+            parameters: JSON.stringify(parameters),
           }),
           signal: abortControllerRef.current?.signal,
         });
