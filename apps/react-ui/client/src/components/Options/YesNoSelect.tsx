@@ -1,12 +1,12 @@
 import React from "react";
 
-interface YesNoSelectProps {
+type YesNoSelectProps = {
   label: string;
   value: boolean;
   onChange: (value: boolean) => void;
   className?: string;
   disabled?: boolean;
-}
+};
 
 export default function YesNoSelect({
   label,

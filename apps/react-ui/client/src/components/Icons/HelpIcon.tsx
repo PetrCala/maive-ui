@@ -1,13 +1,14 @@
-import { useState, ComponentType } from "react";
+import type { ComponentType } from "react";
+import { useState } from "react";
 import HoverableIconButton from "@src/components/Buttons/HoverableIconButton";
 import MAIVEInfoModal from "@src/components/MAIVEInfoModal";
 
-interface HelpButtonProps {
+type HelpButtonProps = {
   onPress?: () => void;
   modalComponent?: ComponentType<{ isOpen: boolean; onClose: () => void }>;
   className?: string;
   buttonClassName?: string;
-}
+};
 
 export default function HelpButton({
   onPress,
@@ -24,7 +25,7 @@ export default function HelpButton({
     <>
       <HoverableIconButton
         ariaLabel="Help"
-        onClick={onPress || defaultOnPress}
+        onClick={onPress ?? defaultOnPress}
         buttonClassName={buttonClassName}
         svgContent={
           <>

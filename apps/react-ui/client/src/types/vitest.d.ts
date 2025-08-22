@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
 
-interface ImportMeta {
+type ImportMeta = {
   readonly vitest: boolean;
-}
+};
