@@ -36,10 +36,20 @@ export const processUploadedFile = async (
 
         // Check if first row looks like headers (contains non-numeric values)
         const firstRow = (jsonData as unknown[][])[0] ?? [];
+        const secondRow = (jsonData as unknown[][])[1] ?? [];
 
-        const hasHeaders = firstRow.some(
+        // More robust header detection: check if first row contains mostly non-numeric values
+        // and second row contains mostly numeric values
+        const firstRowNonNumericCount = firstRow.filter(
           (cell) => cell !== undefined && cell !== null && isNaN(Number(cell)),
-        );
+        ).length;
+        const secondRowNumericCount = secondRow.filter(
+          (cell) => cell !== undefined && cell !== null && !isNaN(Number(cell)),
+        ).length;
+
+        const hasHeaders =
+          firstRowNonNumericCount > firstRow.length / 2 &&
+          secondRowNumericCount > secondRow.length / 2;
 
         let dataRows: unknown[][];
         let columnNames: string[];
@@ -51,11 +61,12 @@ export const processUploadedFile = async (
           );
           dataRows = (jsonData as unknown[][]).slice(1); // skip header row
         } else {
-          // No headers, use positional column names
+          // No headers detected, use positional column names and treat all rows as data
           columnNames = ["effect", "se", "n_obs"];
           if (firstRow.length === 4) {
             columnNames.push("study_id");
           }
+          // Include ALL rows as data when no headers are detected
           dataRows = jsonData as unknown[][];
         }
 
