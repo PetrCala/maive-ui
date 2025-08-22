@@ -46,27 +46,32 @@ pr <- plumber::plumb("index.R")
 pr$setSerializer(plumber::serializer_unboxed_json())
 
 # ---- GLOBAL CORS FILTER -------------------------------------------------
+`%||%` <- function(a, b) if (is.null(a) || length(a) == 0 || identical(a, "")) b else a
+
 pr$filter("cors", function(req, res) {
-  # Use CORS for local development -> in AWS, we use the Lambda Web Adapter to handle CORS
-  if (grepl("localhost", req$HTTP_ORIGIN)) {
-    # 1. CORS headers for every response
-    res$setHeader("Access-Control-Allow-Origin", "*")
+  # default to empty string when Origin is absent
+  origin <- req$HTTP_ORIGIN %||% ""
+
+  # only enable permissive CORS for localhost during local dev
+  if (nzchar(origin) && grepl("localhost", origin, fixed = TRUE)) {
+    res$setHeader("Access-Control-Allow-Origin", origin) # or "*" if you prefer
+    res$setHeader("Vary", "Origin")
     res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
     res$setHeader(
       "Access-Control-Allow-Headers",
       req$HTTP_ACCESS_CONTROL_REQUEST_HEADERS %||% "Content-Type, Authorization"
     )
 
-    # 2. If this is the pre-flight, return a blank 200 *right now*
+    # short-circuit preflight
     if (identical(req$REQUEST_METHOD, "OPTIONS")) {
-      res$status <- 200
+      res$status <- 204
       res$body <- ""
       return(res)
     }
-
-    # 3. Otherwise continue down the chain
-    forward()
   }
+
+  # always continue down the chain
+  forward()
 })
 
 pr$run(host = R_HOST, port = R_PORT)
