@@ -11,10 +11,7 @@ export function getRuntimeConfig() {
     R_API_URL: "",
   };
 
-  if (!runtimeConfig.R_API_URL) {
-    throw new Error("R_API_URL is not set");
-  }
-
+  // In development, use the dev API URL if it is set
   if (process.env.NODE_ENV === "development" && !runtimeConfig.R_API_URL) {
     const devApiUrl = process.env.NEXT_PUBLIC_DEV_R_API_URL;
     if (devApiUrl) {
@@ -26,6 +23,10 @@ export function getRuntimeConfig() {
     return {
       R_API_URL: "http://localhost:8787",
     };
+  }
+
+  if (!runtimeConfig.R_API_URL) {
+    throw new Error("R_API_URL is not set");
   }
 
   return runtimeConfig;
