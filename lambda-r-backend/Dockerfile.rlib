@@ -25,6 +25,7 @@ RUN dnf -y update && dnf -y install \
     zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
     readline-devel libcurl-devel libxml2-devel openssl-devel \
     libsodium-devel \
+    libicu-devel \
     # For plotting
     freetype-devel fontconfig-devel harfbuzz-devel fribidi-devel libpng-devel libjpeg-turbo-devel pkgconf-pkg-config libtiff-devel \
  && dnf clean all
@@ -34,7 +35,7 @@ RUN cd /tmp \
  && wget -q https://cran.r-project.org/src/base/R-4/R-${R_VERSION}.tar.gz \
  && tar -xzf R-${R_VERSION}.tar.gz \
  && cd R-${R_VERSION} \
- && ./configure --enable-R-shlib --with-readline --with-x=no --with-ICU=no --prefix=/usr/local \
+ && ./configure --enable-R-shlib --with-readline --with-x=no --prefix=/usr/local \
  && make -j"$(nproc)" && make install \
  && cd / && rm -rf /tmp/R-${R_VERSION}* \
  && /usr/local/bin/R --version
