@@ -1,14 +1,21 @@
+import type { RuntimeConfig } from "@src/types";
+
 export function getRuntimeConfig() {
   if (typeof window === "undefined") {
     // During SSR, return empty config - the actual config will be loaded on the client
     return {};
   }
 
-  const runtimeConfig = (window as any).RUNTIME_CONFIG || {};
+  const runtimeConfig: RuntimeConfig = (window as ExtendedWindow)
+    .RUNTIME_CONFIG ?? {
+    R_API_URL: "",
+  };
 
-  // In development mode, if RUNTIME_CONFIG is not available, use a fallback
+  if (!runtimeConfig.R_API_URL) {
+    throw new Error("R_API_URL is not set");
+  }
+
   if (process.env.NODE_ENV === "development" && !runtimeConfig.R_API_URL) {
-    // Check if there's a development environment variable set
     const devApiUrl = process.env.NEXT_PUBLIC_DEV_R_API_URL;
     if (devApiUrl) {
       return {
@@ -16,7 +23,6 @@ export function getRuntimeConfig() {
       };
     }
 
-    // Default to localhost for development
     return {
       R_API_URL: "http://localhost:8787",
     };

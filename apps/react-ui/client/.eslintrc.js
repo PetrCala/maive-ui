@@ -137,6 +137,7 @@ module.exports = {
 				fixMixedExportsWithInlineTypeSpecifier: false,
 			},
 		],
+		"@typescript-eslint/consistent-type-definitions": ["error", "type"],
 		"@typescript-eslint/no-use-before-define": ["error", { functions: false }],
 
 		// ESLint core rules
