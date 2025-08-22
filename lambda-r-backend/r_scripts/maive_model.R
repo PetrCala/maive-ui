@@ -78,6 +78,7 @@ run_maive_model <- function(data, parameters) {
     "standardErrorTreatment",
     "computeAndersonRubin",
     "maiveMethod",
+    "weight",
     "shouldUseInstrumenting"
   )
 
@@ -122,12 +123,18 @@ run_maive_model <- function(data, parameters) {
 
   cli::cli_alert_info(paste("standard_error_treatment result:", standard_error_treatment))
   cli::cli_alert_info(paste("maiveMethod parameter:", params$maiveMethod))
+  cli::cli_alert_info(paste("weight parameter:", params$weight))
 
   maive_method <- switch(params$maiveMethod,
     "PET" = 1,
     "PEESE" = 2,
     "PET-PEESE" = 3,
     "EK" = 4
+  )
+  weight <- switch(params$weight,
+    "no_weights" = 0,
+    "standard_weights" = 1,
+    "adjusted_weights" = 2
   )
 
   # Check if switch returned NULL (no match found)
@@ -143,6 +150,7 @@ run_maive_model <- function(data, parameters) {
   cli::cli_h2("MAIVE parameters:")
   cli::cli_bullets(c(
     "method: {maive_method}",
+    "weight: {weight}",
     "instrument: {instrument}",
     "studylevel: {studylevel}",
     "SE: {standard_error_treatment}",
@@ -164,7 +172,7 @@ run_maive_model <- function(data, parameters) {
       maive_res <- MAIVE::maive(
         dat = df,
         method = maive_method,
-        weight = 0, # no weights=0 (default), inverse-variance weights=1, adjusted weights=2
+        weight = weight, # no weights=0 (default), standard weights=1, adjusted weights=2
         instrument = instrument, # no=0, yes=1 (default)
         studylevel = studylevel,
         SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)

@@ -19,8 +19,12 @@ def main():
         {
             "modelType": "MAIVE",
             "includeStudyDummies": True,
+            "includeStudyClustering": False,
             "standardErrorTreatment": "not_clustered",
             "computeAndersonRubin": False,
+            "maiveMethod": "PET-PEESE",
+            "weight": "no_weights",
+            "shouldUseInstrumenting": True,
         }
     )
 

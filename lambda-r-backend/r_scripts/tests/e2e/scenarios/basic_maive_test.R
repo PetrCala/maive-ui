@@ -79,6 +79,7 @@ test_parameter_combinations <- function() {
         standardErrorTreatment = "clustered_cr2",
         computeAndersonRubin = TRUE,
         maiveMethod = "PET",
+        weight = "no_weights",
         shouldUseInstrumenting = TRUE
       )
     ),
@@ -91,6 +92,7 @@ test_parameter_combinations <- function() {
         standardErrorTreatment = "clustered",
         computeAndersonRubin = FALSE,
         maiveMethod = "PEESE",
+        weight = "standard_weights",
         shouldUseInstrumenting = TRUE
       )
     ),
@@ -100,9 +102,10 @@ test_parameter_combinations <- function() {
         modelType = "MAIVE",
         includeStudyDummies = TRUE,
         includeStudyClustering = FALSE,
-        standardErrorTreatment = "not_clustered",
+        standardErrorTreatment = "bootstrap",
         computeAndersonRubin = TRUE,
         maiveMethod = "EK",
+        weight = "adjusted_weights",
         shouldUseInstrumenting = FALSE
       )
     )

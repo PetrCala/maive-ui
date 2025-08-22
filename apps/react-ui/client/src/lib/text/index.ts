@@ -62,6 +62,11 @@ const TEXT = {
       label: "MAIVE Method",
       tooltip: "The method to use for the MAIVE analysis.",
     },
+    weight: {
+      label: "Weighting",
+      tooltip:
+        "The weighting scheme to use in the analysis. No weights uses equal weights, standard weights uses inverse variance weighting, and adjusted weights uses a modified version.",
+    },
     shouldUseInstrumenting: {
       label: "Use Instrumenting",
       tooltip: "Whether to use instrumenting in the analysis.",

@@ -63,6 +63,7 @@ test_large_dataset <- function() {
 
       # Prepare parameters
       params <- DEFAULT_PARAMETERS
+      params$weight <- "standard_weights" # Use standard weights for large dataset
 
       # Convert to JSON
       file_data_json <- df_to_json(large_data)
@@ -119,6 +120,7 @@ test_data_with_nas <- function() {
 
       # Prepare parameters
       params <- DEFAULT_PARAMETERS
+      params$weight <- "no_weights" # Use no weights for data with NAs
 
       # Convert to JSON
       file_data_json <- df_to_json(test_data)
@@ -200,6 +202,7 @@ test_extreme_values <- function() {
 
       # Prepare parameters
       params <- DEFAULT_PARAMETERS
+      params$weight <- "adjusted_weights" # Use adjusted weights for extreme values
 
       # Convert to JSON
       file_data_json <- df_to_json(extreme_data)
@@ -263,6 +266,7 @@ test_invalid_parameters <- function() {
         standardErrorTreatment = "clustered_cr2",
         computeAndersonRubin = TRUE,
         maiveMethod = "INVALID_METHOD",
+        weight = "no_weights",
         shouldUseInstrumenting = TRUE
       ),
       expected_error = TRUE
@@ -276,6 +280,7 @@ test_invalid_parameters <- function() {
         standardErrorTreatment = "invalid_treatment",
         computeAndersonRubin = TRUE,
         maiveMethod = "PET-PEESE",
+        weight = "standard_weights",
         shouldUseInstrumenting = TRUE
       ),
       expected_error = TRUE

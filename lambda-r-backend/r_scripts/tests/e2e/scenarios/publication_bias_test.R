@@ -93,6 +93,7 @@ test_publication_bias_methods <- function() {
         # Prepare parameters
         params <- DEFAULT_PARAMETERS
         params$maiveMethod <- method
+        params$weight <- "standard_weights" # Use standard weights for publication bias detection
 
         # Convert to JSON
         file_data_json <- df_to_json(biased_data)
@@ -165,6 +166,7 @@ test_publication_bias_strength <- function() {
         # Prepare parameters
         params <- DEFAULT_PARAMETERS
         params$maiveMethod <- "PET-PEESE"
+        params$weight <- "adjusted_weights" # Use adjusted weights for strength testing
 
         # Convert to JSON
         file_data_json <- df_to_json(biased_data)

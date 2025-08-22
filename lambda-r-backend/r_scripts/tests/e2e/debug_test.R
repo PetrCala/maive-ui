@@ -20,6 +20,7 @@ params <- list(
   standardErrorTreatment = "clustered_cr2",
   computeAndersonRubin = TRUE,
   maiveMethod = "PET",
+  weight = "standard_weights",
   shouldUseInstrumenting = TRUE
 )
 
