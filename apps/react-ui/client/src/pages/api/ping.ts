@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { pingService } from "@api/services/pingService";
-import type { PingResponse } from "@api/types";
+import type { PingResponse } from "@src/types";
 
 export default async function handler(
   req: NextApiRequest,

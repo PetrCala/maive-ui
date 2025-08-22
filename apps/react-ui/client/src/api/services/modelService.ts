@@ -1,4 +1,4 @@
-import type { ModelRequest, ModelResponse, ModelParameters } from "../types";
+import type { ModelRequest, ModelResponse, ModelParameters } from "../../types";
 import { getRApiUrl } from "../utils/config";
 import { httpPost } from "../utils/http";
 

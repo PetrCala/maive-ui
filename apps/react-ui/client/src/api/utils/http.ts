@@ -1,4 +1,4 @@
-import type { ApiConfig, ApiError } from "../types";
+import type { ApiConfig, ApiError } from "../../types";
 
 /**
  * Create an AbortController for request timeout

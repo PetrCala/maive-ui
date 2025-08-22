@@ -1,14 +1,14 @@
 // API request and response types
 
-export interface ApiResponse<T = any> {
+type ApiResponse<T = unknown> = {
   data?: T;
   error?: string;
   message?: string;
   status?: string;
   time?: string;
-}
+};
 
-export interface ModelParameters {
+type ModelParameters = {
   modelType: "MAIVE" | "WAIVE";
   includeStudyDummies: boolean;
   includeStudyClustering: boolean;
@@ -21,34 +21,66 @@ export interface ModelParameters {
   maiveMethod: "PET" | "PEESE" | "PET-PEESE" | "EK";
   weight: "no_weights" | "standard_weights" | "adjusted_weights";
   shouldUseInstrumenting: boolean;
-}
+};
 
-export interface ModelRequest {
+type ModelRequest = {
   data: string; // JSON stringified data
   parameters: string; // JSON stringified parameters
-}
+};
 
-export interface ModelResponse {
-  data: any[];
+type ModelResponse = {
+  data: unknown[];
   error?: string;
-}
+};
 
-export interface PingResponse {
+type ModelResults = {
+  effectEstimate: number;
+  standardError: number;
+  isSignificant: boolean;
+  andersonRubinCI: [number, number] | "NA";
+  publicationBias: {
+    pValue: number;
+    isSignificant: boolean;
+  };
+  firstStageFTest: number | "NA";
+  hausmanTest: {
+    statistic: number;
+    criticalValue: number;
+    rejectsNull: boolean;
+  };
+  seInstrumented: number[];
+  funnelPlot: string; // Base64 encoded image
+  funnelPlotWidth: number;
+  funnelPlotHeight: number;
+};
+
+type PingResponse = {
   status: string;
   time: string;
-}
+};
 
 // API configuration
-export interface ApiConfig {
+type ApiConfig = {
   baseUrl?: string;
   timeout?: number;
   headers?: Record<string, string>;
   signal?: AbortSignal;
-}
+};
 
 // Error types
-export interface ApiError {
+type ApiError = {
   message: string;
   status?: number;
   code?: string;
-}
+};
+
+export type {
+  ModelParameters,
+  ModelRequest,
+  ModelResponse,
+  ModelResults,
+  PingResponse,
+  ApiConfig,
+  ApiError,
+  ApiResponse,
+};

@@ -1,3 +1,4 @@
+import type { DataArray } from "@src/types";
 import * as XLSX from "xlsx";
 
 // Generate a unique ID for uploaded data
@@ -9,7 +10,7 @@ export const generateDataId = (): string => {
 export const processUploadedFile = async (
   file: File,
 ): Promise<{
-  data: any[];
+  data: DataArray;
   base64Data: string;
 }> => {
   return new Promise((resolve, reject) => {
@@ -34,31 +35,34 @@ export const processUploadedFile = async (
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
         // Check if first row looks like headers (contains non-numeric values)
-        const firstRow = (jsonData as any[])[0] ?? [];
+        const firstRow = (jsonData as DataArray)[0] ?? [];
+
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const hasHeaders = firstRow.some(
-          (cell: any) =>
+          (cell: unknown) =>
             cell !== undefined && cell !== null && isNaN(Number(cell)),
         );
 
-        let dataRows: any[];
+        let dataRows: DataArray;
         let columnNames: string[];
 
         if (hasHeaders) {
           // Use the first row as headers
-          columnNames = firstRow.map((header: any) => String(header || ""));
-          dataRows = (jsonData as any[]).slice(1); // skip header row
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          columnNames = firstRow.map((header: unknown) => String(header || ""));
+          dataRows = (jsonData as DataArray).slice(1); // skip header row
         } else {
           // No headers, use positional column names
           columnNames = ["effect", "se", "n_obs"];
           if (firstRow.length === 4) {
             columnNames.push("study_id");
           }
-          dataRows = jsonData as any[];
+          dataRows = jsonData as DataArray;
         }
 
         // Convert to structured data using column order
         const records = dataRows.map((row) => {
-          const obj: Record<string, any> = {};
+          const obj: Record<string, unknown> = {};
           columnNames.forEach((columnName, index) => {
             obj[columnName] = row[index];
           });
@@ -83,6 +87,22 @@ export const processUploadedFile = async (
 };
 
 /**
+ * A helper function to download a file
+ * @param blob - The blob to download
+ * @param filename - The filename to download
+ */
+const downloadFile = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
+/**
  * Export data with instrumented standard errors
  * @param originalData - The original data
  * @param seInstrumented - The instrumented standard errors
@@ -90,10 +110,10 @@ export const processUploadedFile = async (
  * @param shouldAddSalt - Whether to add a salt to the filename, making it unique
  */
 export const exportDataWithInstrumentedSE = (
-  originalData: any[],
+  originalData: DataArray,
   seInstrumented: number[],
   filename: string,
-  shouldAddSalt: boolean = true,
+  shouldAddSalt = true,
 ): void => {
   if (originalData.length !== seInstrumented.length) {
     throw new Error(
@@ -140,7 +160,7 @@ export const exportDataWithInstrumentedSE = (
       ...exportData.map((row) =>
         headers
           .map((header) => {
-            const value = row[header];
+            const value = row[header as keyof typeof row];
             // Handle values that need quotes (contain commas, quotes, or newlines)
             if (
               typeof value === "string" &&
@@ -165,18 +185,6 @@ export const exportDataWithInstrumentedSE = (
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
     XLSX.writeFile(workbook, newFilename);
   }
-};
-
-// Helper function to trigger file download
-const downloadFile = (blob: Blob, filename: string): void => {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
 };
 
 /**

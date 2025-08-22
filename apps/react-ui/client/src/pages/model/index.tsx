@@ -8,7 +8,6 @@ import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
 import { useDataStore, dataCache } from "@store/dataStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
 import Alert from "@src/components/Alert";
-import type { ModelParameters, ModelResponse } from "@src/api";
 import AdvancedOptions from "@src/components/Model/AdvancedOptions";
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
@@ -20,6 +19,7 @@ import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
 import { getRApiUrl, httpPost } from "@src/api";
+import type { ModelParameters, ModelResponse } from "@src/types";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();

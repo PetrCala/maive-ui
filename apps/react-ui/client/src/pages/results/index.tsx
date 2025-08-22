@@ -15,40 +15,18 @@ import {
 } from "@utils/dataUtils";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
-import type { EstimateType } from "@src/types";
-
-interface ModelResults {
-  effectEstimate: number;
-  standardError: number;
-  isSignificant: boolean;
-  andersonRubinCI: [number, number] | "NA";
-  publicationBias: {
-    pValue: number;
-    isSignificant: boolean;
-  };
-  firstStageFTest: number | "NA";
-  hausmanTest: {
-    statistic: number;
-    criticalValue: number;
-    rejectsNull: boolean;
-  };
-  seInstrumented: number[];
-  funnelPlot: string; // Base64 encoded image
-  funnelPlotWidth: number;
-  funnelPlotHeight: number;
-}
+import type { ModelParameters, ModelResults } from "@src/types";
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const results = searchParams?.get("results");
   const dataId = searchParams?.get("dataId");
-  const parameters = searchParams?.get("parameters");
+  const parameters = searchParams?.get("parameters") ?? "";
+  const parsedParameters = JSON.parse(parameters) as ModelParameters;
   const shouldDisplayAndersonRubinCI =
-    parameters && JSON.parse(parameters)?.computeAndersonRubin === true;
-  const estimateType =
-    (parameters && JSON.parse(parameters)?.modelType) ??
-    ("Unknown" as EstimateType);
+    parsedParameters?.computeAndersonRubin === true;
+  const estimateType = parsedParameters.modelType ?? "Unknown";
 
   if (!results) {
     return (
@@ -70,7 +48,7 @@ export default function ResultsPage() {
     );
   }
 
-  const parsedResults: ModelResults = JSON.parse(results);
+  const parsedResults = JSON.parse(results) as ModelResults;
 
   const handleRerunModel = () => {
     router.push(`/model?dataId=${dataId}&parameters=${parameters}`);
@@ -88,7 +66,7 @@ export default function ResultsPage() {
 
     try {
       // Get the original data from cache or store
-      let uploadedData = dataCache.get(dataId!);
+      let uploadedData = dataCache.get(dataId);
       if (!uploadedData) {
         const storeData = useDataStore.getState().uploadedData;
         if (!storeData || storeData.id !== dataId) {
@@ -111,7 +89,7 @@ export default function ResultsPage() {
     }
   };
 
-  const handleDownloadFunnelPlot = async () => {
+  const handleDownloadFunnelPlot = () => {
     try {
       const filename = `funnel_plot_${Date.now()}`;
       downloadImageAsJpg(parsedResults.funnelPlot, filename);
