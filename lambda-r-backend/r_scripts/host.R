@@ -48,8 +48,9 @@ pr <- plumber::plumb("index.R")
 pr$setSerializer(plumber::serializer_unboxed_json())
 
 # ---- GLOBAL CORS FILTER -------------------------------------------------
-if (USE_CORS) {
-  pr$filter("cors", function(req, res) {
+pr$filter("cors", function(req, res) {
+  # Use CORS for local development -> in AWS, we use the Lambda Web Adapter to handle CORS
+  if (grepl("localhost", req$HTTP_ORIGIN)) {
     # 1. CORS headers for every response
     res$setHeader("Access-Control-Allow-Origin", "*")
     res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
@@ -67,7 +68,7 @@ if (USE_CORS) {
 
     # 3. Otherwise continue down the chain
     forward()
-  })
-}
+  }
+})
 
 pr$run(host = R_HOST, port = R_PORT)
