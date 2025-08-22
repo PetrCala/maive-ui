@@ -1,11 +1,11 @@
 import React from "react";
 
-interface Option {
+type Option = {
   value: string;
   label: string;
-}
+};
 
-interface DropdownSelectProps {
+type DropdownSelectProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
@@ -13,7 +13,7 @@ interface DropdownSelectProps {
   className?: string;
   disabled?: boolean;
   width?: string;
-}
+};
 
 export default function DropdownSelect({
   label,
