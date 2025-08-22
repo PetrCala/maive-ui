@@ -19,7 +19,7 @@ import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
-import { runModelClient } from "@src/api";
+import { getRApiUrl, runModelClient } from "@src/api";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -125,11 +125,22 @@ export default function ModelPage() {
         const nrow = uploadedData.data.length;
         result = { data: generateMockResults(nrow) };
       } else {
-        result = await runModelClient(
-          uploadedData.data,
-          parameters,
-          abortControllerRef.current?.signal,
-        );
+        // Client-side POST request
+        const response = await fetch(`${getRApiUrl()}/run-model`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            data: uploadedData.data,
+            parameters,
+          }),
+          signal: abortControllerRef.current?.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error(`API run-model failed: ${response.statusText}`);
+        }
+
+        result = await response.json();
       }
 
       if (result.error) {
