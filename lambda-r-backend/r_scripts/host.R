@@ -46,14 +46,14 @@ pr <- plumber::plumb("index.R")
 pr$setSerializer(plumber::serializer_unboxed_json())
 
 # ---- GLOBAL CORS FILTER -------------------------------------------------
-`%||%` <- function(a, b) if (is.null(a) || length(a) == 0 || identical(a, "")) b else a
+`%||%` <- function(a, b) if (is.null(a) || length(a) == 0 || identical(a, "")) b else a # nolint: object_name_linter.
 
 pr$filter("cors", function(req, res) {
   # default to empty string when Origin is absent
   origin <- req$HTTP_ORIGIN %||% ""
 
   # only enable permissive CORS for localhost during local dev
-  if (nzchar(origin) && grepl("localhost", origin, fixed = TRUE)) {
+  if (nzchar(origin) & grepl("localhost", origin, fixed = TRUE)) {
     res$setHeader("Access-Control-Allow-Origin", origin) # or "*" if you prefer
     res$setHeader("Vary", "Origin")
     res$setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
