@@ -6,10 +6,8 @@ export function getRuntimeConfig() {
     return {};
   }
 
-  const runtimeConfig: RuntimeConfig = (window as ExtendedWindow)
-    .RUNTIME_CONFIG ?? {
-    R_API_URL: "",
-  };
+  // eslint-disable-next-line
+  const runtimeConfig: RuntimeConfig = (window as any).RUNTIME_CONFIG ?? {};
 
   // In development, use the dev API URL if it is set
   if (process.env.NODE_ENV === "development" && !runtimeConfig.R_API_URL) {
