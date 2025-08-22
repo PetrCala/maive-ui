@@ -1,8 +1,6 @@
 # Lambda R Backend Handler
 # Used for local development
 
-USE_CORS <- FALSE
-
 cli::cli_alert_info("In host.R")
 
 library("plumber") # nolint: undesirable_function_linter.
