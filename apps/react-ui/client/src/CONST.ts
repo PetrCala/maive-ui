@@ -22,6 +22,20 @@ const CONST = {
     PET_PEESE: "PET-PEESE",
     EK: "EK",
   },
+  WEIGHT_OPTIONS: {
+    NO_WEIGHTS: {
+      VALUE: "no_weights",
+      TEXT: "No Weights",
+    },
+    STANDARD_WEIGHTS: {
+      VALUE: "standard_weights",
+      TEXT: "Standard Weights",
+    },
+    ADJUSTED_WEIGHTS: {
+      VALUE: "adjusted_weights",
+      TEXT: "Adjusted Weights",
+    },
+  },
   STANDARD_ERROR_TREATMENTS: {
     NOT_CLUSTERED: {
       VALUE: "not_clustered",

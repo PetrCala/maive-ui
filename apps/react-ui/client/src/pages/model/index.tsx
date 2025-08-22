@@ -19,7 +19,7 @@ import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
-import { getRApiUrl, httpPost, runModelClient } from "@src/api";
+import { getRApiUrl, httpPost } from "@src/api";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -34,6 +34,7 @@ export default function ModelPage() {
     standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
     computeAndersonRubin: false,
     maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
+    weight: CONST.WEIGHT_OPTIONS.NO_WEIGHTS.VALUE,
     shouldUseInstrumenting: true,
   });
   const router = useRouter();
@@ -336,6 +337,26 @@ export default function ModelPage() {
                                 value: treatment.VALUE,
                                 label: treatment.TEXT,
                               }))}
+                            />
+                          </Tooltip>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Tooltip
+                            content={TEXT.model.weight.tooltip}
+                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
+                          >
+                            <DropdownSelect
+                              label={TEXT.model.weight.label}
+                              value={parameters.weight}
+                              onChange={(value) =>
+                                handleParameterChange("weight", value)
+                              }
+                              options={Object.values(CONST.WEIGHT_OPTIONS).map(
+                                (option) => ({
+                                  value: option.VALUE,
+                                  label: option.TEXT,
+                                }),
+                              )}
                             />
                           </Tooltip>
                         </div>
