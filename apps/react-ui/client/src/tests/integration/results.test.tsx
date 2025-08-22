@@ -1,5 +1,5 @@
 /// <reference types="vitest" />
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import "@testing-library/jest-dom";
 import { generateMockResults } from "@utils/mockData";
 
