@@ -13,8 +13,8 @@ export function getRApiUrl(): string {
   // Server-side: check environment variables first
   if (typeof window === "undefined") {
     return sanitizeUrl(
-      process.env.NEXT_PUBLIC_R_API_URL ||
-        process.env.R_API_URL ||
+      process.env.NEXT_PUBLIC_R_API_URL ??
+        process.env.R_API_URL ??
         "http://localhost:8787",
     );
   }
@@ -49,6 +49,7 @@ export function getDefaultApiConfig() {
   return {
     timeout: 30000, // 30 seconds
     headers: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       "Content-Type": "application/json",
     },
   };
