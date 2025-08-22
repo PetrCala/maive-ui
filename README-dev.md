@@ -84,7 +84,7 @@ bun run cloud:status
 bun run cloud:ui-url
 
 # Get just the R backend URL (internal only)
-bun run cloud:r-url
+bun run cloud:lambda-url
 ```
 
 ### Service URLs
