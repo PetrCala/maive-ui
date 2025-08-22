@@ -1,6 +1,7 @@
 import { faker } from "@faker-js/faker";
 import mockFunnelPlot from "./mockFunnelPlot";
 import CONST from "@src/CONST";
+import { getRandomMockCsvFile } from "./mockCsvFiles";
 
 // Generate mock CSV data for development
 const generateMockCSVFile = (): File => {
@@ -33,6 +34,19 @@ const generateMockCSVFile = (): File => {
   const blob = new Blob([csvContent], { type: "text/csv" });
 
   return new File([blob], "mock_data.csv", { type: "text/csv" });
+};
+
+// Load a random mock CSV file from the mock-csv-files directory
+const loadRandomMockCsvFile = (): File => {
+  const randomFile = getRandomMockCsvFile();
+
+  try {
+    const blob = new Blob([randomFile.content], { type: "text/csv" });
+    return new File([blob], randomFile.filename, { type: "text/csv" });
+  } catch (error) {
+    console.error("Error loading mock CSV file:", error);
+    return generateMockCSVFile();
+  }
 };
 
 /**
@@ -91,4 +105,9 @@ const shouldUseMockResults = () => {
   );
 };
 
-export { generateMockCSVFile, generateMockResults, shouldUseMockResults };
+export {
+  generateMockCSVFile,
+  generateMockResults,
+  shouldUseMockResults,
+  loadRandomMockCsvFile,
+};

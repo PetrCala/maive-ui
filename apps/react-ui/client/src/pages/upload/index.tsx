@@ -8,7 +8,7 @@ import { useDropzone } from "react-dropzone";
 import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
 import { useDataStore, dataCache } from "@store/dataStore";
 import { generateDataId, processUploadedFile } from "@utils/dataUtils";
-import { generateMockCSVFile } from "@utils/mockData";
+import { generateMockCSVFile, loadRandomMockCsvFile } from "@utils/mockData";
 import SuccessIndicator from "@components/SuccessIndicator";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
@@ -70,6 +70,18 @@ export default function UploadPage() {
   const handleGenerateMockData = () => {
     const mockFile = generateMockCSVFile();
     setSelectedFile(mockFile);
+  };
+
+  const handleLoadRandomMockCsv = () => {
+    try {
+      const mockFile = loadRandomMockCsvFile();
+      setSelectedFile(mockFile);
+    } catch (error) {
+      console.error("Error loading random mock CSV:", error);
+      // Fallback to generated mock data
+      const mockFile = generateMockCSVFile();
+      setSelectedFile(mockFile);
+    }
   };
 
   const handleSubmit = useCallback(
@@ -227,6 +239,23 @@ export default function UploadPage() {
                     ))}
                 </div>
               </div>
+
+              {!selectedFile && (
+                <div className="flex justify-end">
+                  <div className="flex items-center gap-3 text-sm text-muted">
+                    <span>Don&apos;t have your data ready yet?</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void handleLoadRandomMockCsv();
+                      }}
+                      className="px-3 py-1.5 text-sm font-medium text-primary bg-primary/10 border border-primary/20 rounded-lg hover:bg-primary/20 hover:border-primary/30 transition-colors duration-200 interactive"
+                    >
+                      Use mock data!
+                    </button>
+                  </div>
+                </div>
+              )}
 
               <ActionButton
                 onClick={(event) => {
