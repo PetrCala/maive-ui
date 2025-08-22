@@ -1,8 +1,8 @@
-interface RowInfoComponentProps {
+type RowInfoComponentProps = {
   rowCount: number;
   showFirstRows: boolean;
   rowCountToShow: number;
-}
+};
 
 /**
  * @param rowCount - The number of rows in the data

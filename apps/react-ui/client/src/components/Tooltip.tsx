@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 
-interface TooltipProps {
+type TooltipProps = {
   children: React.ReactNode;
   content: string;
   position?: "top" | "bottom" | "left" | "right";
   className?: string;
   shouldShowArrow?: boolean;
   visible?: boolean; // if set, controls visibility externally
-}
+};
 
 /**
  * Tooltip component that displays a tooltip with customizable content and position
@@ -28,7 +28,7 @@ interface TooltipProps {
 function Tooltip({
   children,
   content,
-  position = "top",
+  position = "top", // eslint-disable-line @typescript-eslint/no-unused-vars
   className = "",
   shouldShowArrow = false,
   visible,
@@ -52,7 +52,7 @@ function Tooltip({
       onMouseLeave={handleMouseLeave}
     >
       {children}
-      {isVisible && (visible !== undefined ? visible : true) && (
+      {isVisible && (visible ?? true) && (
         <div
           className="absolute z-50 px-3 py-2 text-sm surface-elevated rounded-lg shadow-xl pointer-events-none transition-opacity duration-200 border border-primary"
           style={{

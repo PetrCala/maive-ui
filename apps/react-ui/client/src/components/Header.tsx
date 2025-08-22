@@ -4,13 +4,13 @@ import HelpIcon from "@components/Icons/HelpIcon";
 import HomeIcon from "@components/Icons/HomeIcon";
 import Link from "next/link";
 import CONST from "@src/CONST";
-import { ThemeToggle } from "@components/ThemeToggle";
+import ThemeToggle from "@components/ThemeToggle";
 
-interface HeaderProps {
+type HeaderProps = {
   showHomeIcon?: boolean;
   showHelpIcon?: boolean;
   className?: string;
-}
+};
 
 export default function Header({
   showHomeIcon = true,
