@@ -12,15 +12,15 @@ export default async function handler(
 
   try {
     // Call the R backend directly via server-side service
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const result: PingResponse = await pingService.ping();
 
     // Return the result
     res.status(200).json(result);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in ping API route:", error);
 
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+    const errorMessage = error instanceof Error ? error.message : String(error);
     res.status(500).json({
       error: "Failed to ping R service",
       message: errorMessage,
