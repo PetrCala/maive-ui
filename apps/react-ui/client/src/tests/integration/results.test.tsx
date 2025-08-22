@@ -1,4 +1,6 @@
+// eslint-disable-next-line @typescript-eslint/triple-slash-reference
 /// <reference types="vitest" />
+
 import { describe, it, expect } from "vitest";
 import "@testing-library/jest-dom";
 import { generateMockResults } from "@utils/mockData";
