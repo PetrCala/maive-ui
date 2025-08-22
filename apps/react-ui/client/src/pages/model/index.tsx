@@ -132,6 +132,9 @@ export default function ModelPage() {
             parameters: JSON.stringify(parameters),
           },
           {
+            headers: {
+              "Content-Type": "application/json",
+            },
             signal: abortControllerRef.current?.signal,
           },
         );
