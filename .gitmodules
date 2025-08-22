@@ -1,3 +1,0 @@
-[submodule "lambda-r-backend/vendor/maive"]
-	path = lambda-r-backend/vendor/maive
-	url = https://github.com/PetrCala/maive.git
