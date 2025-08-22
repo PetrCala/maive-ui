@@ -22,7 +22,7 @@ const generateMockCSVFile = (): File => {
 
   for (let i = 0; i < numRows; i++) {
     const effect = faker.number.float({ min: -2, max: 2, multipleOf: 0.001 });
-    const se = faker.number.float({ min: 0.01, max: 0.5, multipleOf: 0.001 });
+    const se = faker.number.float({ min: 0, max: 0.5, multipleOf: 0.001 });
     const nObs = faker.number.int({ min: 50, max: 10000 });
     const studyId = studyIds[Math.floor(i / 3)];
 
@@ -45,7 +45,11 @@ const generateMockResults = (nrow: number) => {
 
   return {
     effectEstimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
-    standardError: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
+    standardError: faker.number.float({
+      min: 0,
+      max: 1,
+      multipleOf: 0.0001,
+    }),
     isSignificant: true,
     andersonRubinCI:
       Math.random() > 0.5

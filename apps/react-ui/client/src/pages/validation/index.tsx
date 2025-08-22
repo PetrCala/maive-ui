@@ -282,7 +282,7 @@ export default function ValidationPage() {
             .slice(0, 4)
             .map((row: unknown) =>
               headers.map((header) =>
-                String((row as DataArray)[header as keyof DataArray] || ""),
+                String((row as Record<string, unknown>)[header] || ""),
               ),
             ),
         ];
@@ -298,8 +298,8 @@ export default function ValidationPage() {
           ...data.data
             .slice(0, 4)
             .map((row: unknown) =>
-              columnNames.map((_, index) =>
-                String((row as DataArray)[index as keyof DataArray] || ""),
+              columnNames.map((columnName) =>
+                String((row as Record<string, unknown>)[columnName] || ""),
               ),
             ),
         ];

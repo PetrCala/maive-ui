@@ -35,13 +35,13 @@ export const processUploadedFile = async (
         const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
 
         // Check if first row looks like headers (contains non-numeric values)
-        const firstRow = (jsonData as DataArray)[0] ?? [];
+        const firstRow = (jsonData as unknown[][])[0] ?? [];
 
-        const hasHeaders = (firstRow as unknown as unknown[]).some(
+        const hasHeaders = firstRow.some(
           (cell) => cell !== undefined && cell !== null && isNaN(Number(cell)),
         );
 
-        let dataRows: DataArray;
+        let dataRows: unknown[][];
         let columnNames: string[];
 
         if (hasHeaders) {
@@ -49,20 +49,21 @@ export const processUploadedFile = async (
           columnNames = (firstRow as unknown as string[]).map((header) =>
             String(header || ""),
           );
-          dataRows = (jsonData as DataArray).slice(1); // skip header row
+          dataRows = (jsonData as unknown[][]).slice(1); // skip header row
         } else {
           // No headers, use positional column names
           columnNames = ["effect", "se", "n_obs"];
           if (firstRow.length === 4) {
             columnNames.push("study_id");
           }
-          dataRows = jsonData as DataArray;
+          dataRows = jsonData as unknown[][];
         }
 
         // Convert to structured data using column order
         const records = dataRows.map((row) => {
           const obj: Record<string, unknown> = {};
           columnNames.forEach((columnName, index) => {
+            // When no headers, row is an array, so we access by index
             obj[columnName] = row[index];
           });
           return obj;
