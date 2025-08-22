@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
+import type { UploadedData } from "@store/dataStore";
 import { useDataStore, dataCache } from "@store/dataStore";
 import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
@@ -12,17 +13,18 @@ import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
 import RowInfoComponent from "@src/components/RowInfoComponent";
 import CONFIG from "@src/CONFIG";
+import type { DataArray } from "@src/types";
 
-interface ValidationMessage {
+type ValidationMessage = {
   type: "success" | "error" | "warning" | "info";
   message: string;
-}
+};
 
-interface ValidationResult {
+type ValidationResult = {
   isValid: boolean;
   messages: ValidationMessage[];
   containsInfo?: boolean;
-}
+};
 
 export default function ValidationPage() {
   const searchParams = useSearchParams();
@@ -33,107 +35,13 @@ export default function ValidationPage() {
     messages: [],
   });
   const [loading, setLoading] = useState(true);
-  const [uploadedData, setUploadedData] = useState<any>(null);
+  const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const router = useRouter();
   const { showAlert } = useGlobalAlert();
-  // Local state for this component's uploaded data.
-  // The global store's setUploadedData is renamed to setStoreData to avoid conflicts.
-  // Use local state for component logic and rendering; use the store function for global updates.
-  const { setUploadedData: setStoreData } = useDataStore();
-
-  useEffect(() => {
-    if (dataId) {
-      loadDataFromStore();
-    } else {
-      showAlert("No data selected", "error");
-      router.push("/upload");
-    }
-  }, [dataId]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const loadDataFromStore = () => {
-    try {
-      // Try to get data from cache first
-      let data = dataCache.get(dataId!);
-
-      // If not in cache, try to get from store
-      if (!data) {
-        const storeData = useDataStore.getState().uploadedData;
-        if (storeData && storeData.id === dataId) {
-          data = storeData;
-          // Also put it back in cache
-          dataCache.set(dataId, data);
-        }
-      }
-
-      if (!data) {
-        throw new Error("Data not found");
-      }
-
-      setUploadedData(data);
-
-      // Convert data to preview format
-      const headers = Object.keys(data.data[0] || {});
-      const hasHeaders =
-        headers.length > 0 &&
-        headers.some(
-          (header) =>
-            header !== undefined && header !== null && isNaN(Number(header)),
-        );
-
-      let previewData: string[][];
-
-      if (hasHeaders) {
-        // File has headers, use them
-        previewData = [
-          headers,
-          ...data.data
-            .slice(0, 4)
-            .map((row: any) =>
-              headers.map((header: string) => String(row[header] || "")),
-            ),
-        ];
-      } else {
-        // File has no headers, use positional column names
-        const columnNames = ["effect", "se", "n_obs"];
-        if (data.data[0] && Object.keys(data.data[0]).length === 4) {
-          columnNames.push("study_id");
-        }
-
-        previewData = [
-          columnNames,
-          ...data.data
-            .slice(0, 4)
-            .map((row: any) =>
-              columnNames.map((_, index) => String(row[index] || "")),
-            ),
-        ];
-      }
-
-      setPreview(previewData);
-
-      // Validate the data
-      const validation = validateData(previewData, data.data);
-      setValidationResult(validation);
-    } catch (error) {
-      console.error("Error loading data:", error);
-      setValidationResult({
-        isValid: false,
-        messages: [
-          {
-            type: "error",
-            message:
-              "Failed to load the uploaded data. Please try uploading again.",
-          },
-        ],
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const validateData = (
     previewData: string[][],
-    fullData: any[],
+    fullData: DataArray,
   ): ValidationResult => {
     const messages: ValidationMessage[] = [];
     const headers = previewData[0] || [];
@@ -154,7 +62,9 @@ export default function ValidationPage() {
     }
 
     // Check column count
-    const columnCount = hasHeaders ? headers.length : fullData[0]?.length || 0;
+    const columnCount = hasHeaders
+      ? headers.length
+      : ((fullData[0]?.length || 0) as number);
     if (columnCount < 3 || columnCount > 4) {
       messages.push({
         type: "error",
@@ -204,6 +114,7 @@ export default function ValidationPage() {
       .filter((col) => !col.optional && col.index !== undefined)
       .forEach((col) => {
         const hasNonNumeric = fullData.some((row) => {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
           const value = hasHeaders ? row[headers[col.index!]] : row[col.index!];
           return value !== undefined && value !== null && isNaN(Number(value));
         });
@@ -217,12 +128,14 @@ export default function ValidationPage() {
 
     // Check optional study_id column if present
     const studyIdCol = columnChecks.find((col) => col.name === "study_id");
-    if (studyIdCol && studyIdCol.index !== undefined) {
+    if (studyIdCol?.index !== undefined) {
       // For study_id, we only check that values are not empty/null, not that they're numeric
       const hasInvalidValues = fullData.some((row) => {
         const value = hasHeaders
-          ? row[headers[studyIdCol.index!]]
-          : row[studyIdCol.index!];
+          ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            row[headers[studyIdCol.index!]]
+          : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            row[studyIdCol.index!];
         return value === undefined || value === null || value === "";
       });
       if (hasInvalidValues) {
@@ -289,8 +202,10 @@ export default function ValidationPage() {
       const uniqueStudyIds = new Set(
         fullData.map((row) =>
           hasHeaders
-            ? row[headers[columnMapping.study_id!]]
-            : row[columnMapping.study_id!],
+            ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              row[headers[columnMapping.study_id!]]
+            : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+              row[columnMapping.study_id!],
         ),
       ).size;
       if (!(fullData.length >= uniqueStudyIds + 3)) {
@@ -327,11 +242,105 @@ export default function ValidationPage() {
     };
   };
 
+  const loadDataFromStore = () => {
+    try {
+      // Try to get data from cache first
+      let data: UploadedData | undefined = dataCache.get(dataId ?? "");
+
+      // If not in cache, try to get from store
+      if (!data) {
+        const storeData = useDataStore.getState().uploadedData;
+        if (storeData && storeData.id === dataId) {
+          data = storeData;
+          // Also put it back in cache
+          dataCache.set(dataId, data);
+        }
+      }
+
+      if (!data) {
+        throw new Error("Data not found");
+      }
+
+      setUploadedData(data);
+
+      // Convert data to preview format
+      const headers = Object.keys(data.data[0] || {});
+      const hasHeaders =
+        headers.length > 0 &&
+        headers.some(
+          (header) =>
+            header !== undefined && header !== null && isNaN(Number(header)),
+        );
+
+      let previewData: string[][];
+
+      if (hasHeaders) {
+        // File has headers, use them
+        previewData = [
+          headers,
+          ...data.data
+            .slice(0, 4)
+            .map((row: unknown) =>
+              headers.map((header) =>
+                String((row as DataArray)[header as keyof DataArray] || ""),
+              ),
+            ),
+        ];
+      } else {
+        // File has no headers, use positional column names
+        const columnNames = ["effect", "se", "n_obs"];
+        if (data.data[0] && Object.keys(data.data[0]).length === 4) {
+          columnNames.push("study_id");
+        }
+
+        previewData = [
+          columnNames,
+          ...data.data
+            .slice(0, 4)
+            .map((row: unknown) =>
+              columnNames.map((_, index) =>
+                String((row as DataArray)[index as keyof DataArray] || ""),
+              ),
+            ),
+        ];
+      }
+
+      setPreview(previewData);
+
+      // Validate the data
+      const validation = validateData(previewData, data.data);
+      setValidationResult(validation);
+    } catch (error) {
+      console.error("Error loading data:", error);
+      setValidationResult({
+        isValid: false,
+        messages: [
+          {
+            type: "error",
+            message:
+              "Failed to load the uploaded data. Please try uploading again.",
+          },
+        ],
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleContinue = () => {
     if (validationResult.isValid && uploadedData) {
       router.push(`/model?dataId=${dataId}`);
     }
   };
+
+  useEffect(() => {
+    if (dataId) {
+      loadDataFromStore();
+    } else {
+      showAlert("No data selected", "error");
+      router.push("/upload");
+    }
+  }, [dataId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -400,8 +409,8 @@ export default function ValidationPage() {
                 </div>
                 {!!CONFIG?.SHOULD_SHOW_DF_ROWS_INFO && (
                   <RowInfoComponent
-                    rowCount={uploadedData?.data?.length || 0}
-                    showFirstRows={uploadedData?.data?.length > 4}
+                    rowCount={uploadedData?.data?.length ?? 0}
+                    showFirstRows={(uploadedData?.data?.length ?? 0) > 4}
                     rowCountToShow={4}
                   />
                 )}
