@@ -1,13 +1,13 @@
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
-interface ActionButtonProps {
+type ActionButtonProps = {
   onClick: (event?: React.FormEvent) => void;
   variant?: "primary" | "secondary" | "success" | "danger";
   className?: string;
   disabled?: boolean;
   children: ReactNode;
   title?: string;
-}
+};
 
 export default function ActionButton({
   onClick,
