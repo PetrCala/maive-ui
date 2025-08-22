@@ -62,13 +62,14 @@ const restrictedImportPatterns = [
 
 module.exports = {
 	extends: [
+		"next/core-web-vitals",
 		"airbnb-typescript",
 		"plugin:@typescript-eslint/recommended-type-checked",
 		"plugin:@typescript-eslint/stylistic-type-checked",
 		"plugin:prettier/recommended",
 	],
 	plugins: ["@typescript-eslint", "react", "react-hooks"],
-	ignorePatterns: ["vite.config.ts"],
+	ignorePatterns: ["vite.config.ts", ".eslintrc.js"],
 	parser: "@typescript-eslint/parser",
 	parserOptions: {
 		project: path.resolve(__dirname, "./tsconfig.json"),
@@ -78,6 +79,11 @@ module.exports = {
 	},
 	globals: {
 		__DEV__: "readonly",
+	},
+	settings: {
+		react: {
+			version: "detect",
+		},
 	},
 	rules: {
 		// TypeScript specific rules
@@ -170,28 +176,6 @@ module.exports = {
 				patterns: restrictedImportPatterns,
 			},
 		],
-
-		// Other rules
-		// "@dword-design/import-alias/prefer-alias": [
-		// 	"warn",
-		// 	{
-		// 		alias: {
-		// 			"@src": "./src",
-		// 			"@assets": "./assets",
-		// 			"@components": "./src/components",
-		// 			"@context": "./src/context",
-		// 			"@hooks": "./src/hooks",
-		// 			"@userActions": "./src/libs/actions",
-		// 			"@libs": "./src/libs",
-		// 			"@pages": "./src/pages",
-		// 			"@services": "./src/services",
-		// 			"@storage": "./src/storage",
-		// 			"@styles": "./src/styles",
-		// 			"@types": "./src/types",
-		// 			"@utils": "./src/utils",
-		// 		},
-		// 	},
-		// ],
 
 		curly: "error",
 		"prefer-regex-literals": "off",
