@@ -38,7 +38,7 @@ tests/e2e/
 
 ```bash
 # From the r_scripts directory
-cd lambda-r-backend/r_scripts/tests/e2e
+cd apps/lambda-r-backend/r_scripts/tests/e2e
 Rscript run_e2e_tests.R
 ```
 
@@ -261,7 +261,7 @@ The test suite can be integrated into CI/CD pipelines:
 # Example GitHub Actions step
 - name: Run E2E Tests
   run: |
-    cd lambda-r-backend/r_scripts/tests/e2e
+    cd apps/lambda-r-backend/r_scripts/tests/e2e
     Rscript run_e2e_tests.R --quiet
 ```
 

@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: lambda-r-backend/r_scripts
+        working-directory: apps/lambda-r-backend/r_scripts
     steps:
       - uses: actions/checkout@v4
       - name: Set up R

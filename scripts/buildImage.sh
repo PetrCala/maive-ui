@@ -97,15 +97,8 @@ fi
 IMAGE_BUILT=false
 
 for ENTRY in "${IMAGE_NAMES[@]}"; do
-    # Determine folder path based on image type
-    if [[ "$ENTRY" == "lambda-r-backend" ]]; then
-        FOLDER_PATH="./lambda-r-backend/"
-    else
-        FOLDER_PATH="./apps/$ENTRY/"
-    fi
-    
     if [[ "$ENTRY" == "$BUILD_KEY" || "$BUILD_KEY" == "all" ]]; then
-        buildImage "$ENTRY" "$FOLDER_PATH"
+        buildImage "$ENTRY" "./apps/$ENTRY/"
         IMAGE_BUILT=true
     fi
 done
