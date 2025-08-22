@@ -3,13 +3,13 @@ import Alert from "./Alert";
 
 export type AlertLevel = "info" | "success" | "warning" | "error";
 
-export interface AlertPopupProps {
+export type AlertPopupProps = {
   message: string;
   type?: AlertLevel;
   open: boolean;
   onClose: () => void;
   duration?: number; // ms
-}
+};
 
 const FADE_IN_DURATION = 600; // ms
 const FADE_OUT_DURATION = 300; // ms
@@ -39,17 +39,25 @@ const AlertPopup = ({
 
   // Auto-dismiss after duration
   useEffect(() => {
-    if (!open) return;
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (!open) {
+      return;
+    }
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
     timerRef.current = setTimeout(() => {
       onClose();
     }, duration);
     return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
     };
   }, [open, onClose, duration]);
 
-  if (!visible) return null;
+  if (!visible) {
+    return null;
+  }
 
   return (
     <div

@@ -1,10 +1,10 @@
-interface AlertProps {
+type AlertProps = {
   message: string;
   type?: "info" | "success" | "warning" | "error";
   className?: string;
   onClick?: () => void;
   standalone?: boolean;
-}
+};
 
 const Alert = ({
   message,

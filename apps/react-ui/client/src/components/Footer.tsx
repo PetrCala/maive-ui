@@ -2,9 +2,9 @@
 
 import CONST from "@src/CONST";
 
-interface FooterProps {
+type FooterProps = {
   className?: string;
-}
+};
 
 const FooterLinkItemContents = ({
   svgPath,

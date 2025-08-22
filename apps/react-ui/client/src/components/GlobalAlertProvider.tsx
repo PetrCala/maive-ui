@@ -4,12 +4,14 @@ import React, {
   useState,
   useCallback,
   useRef,
+  useMemo,
 } from "react";
-import AlertPopup, { AlertLevel } from "./AlertPopup";
+import type { AlertLevel } from "./AlertPopup";
+import AlertPopup from "./AlertPopup";
 
-interface GlobalAlertContextType {
+type GlobalAlertContextType = {
   showAlert: (message: string, type?: AlertLevel, duration?: number) => void;
-}
+};
 
 const GlobalAlertContext = createContext<GlobalAlertContextType | undefined>(
   undefined,
@@ -17,8 +19,9 @@ const GlobalAlertContext = createContext<GlobalAlertContextType | undefined>(
 
 export const useGlobalAlert = () => {
   const ctx = useContext(GlobalAlertContext);
-  if (!ctx)
+  if (!ctx) {
     throw new Error("useGlobalAlert must be used within GlobalAlertProvider");
+  }
   return ctx;
 };
 
@@ -37,7 +40,9 @@ export const GlobalAlertProvider: React.FC<{ children: React.ReactNode }> = ({
       setType(lvl);
       setDuration(dur);
       setOpen(true);
-      if (timerRef.current) clearTimeout(timerRef.current);
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+      }
       timerRef.current = setTimeout(() => setOpen(false), dur);
     },
     [],
@@ -45,11 +50,15 @@ export const GlobalAlertProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const handleClose = useCallback(() => {
     setOpen(false);
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+    }
   }, []);
 
   return (
-    <GlobalAlertContext.Provider value={{ showAlert }}>
+    <GlobalAlertContext.Provider
+      value={useMemo(() => ({ showAlert }), [showAlert])}
+    >
       {children}
       <AlertPopup
         message={message}

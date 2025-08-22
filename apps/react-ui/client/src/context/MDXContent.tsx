@@ -1,16 +1,16 @@
 import React from "react";
 
-interface MDXContentProps {
+type MDXContentProps = {
   source: string;
   lineMargin?: number;
   className?: string;
-}
+};
 
 // Simple markdown parser for basic formatting
 const parseMarkdown = (
   text: string,
-  lineMargin: number = 0,
-  className: string = "",
+  lineMargin = 0,
+  className = "",
 ): React.ReactNode[] => {
   const lines = text.split("\n");
   const elements: React.ReactNode[] = [];
@@ -122,7 +122,7 @@ const parseMarkdown = (
         <span
           key={index}
           className="text-gray-700 dark:text-gray-300 leading-relaxed"
-          dangerouslySetInnerHTML={{ __html: formattedText }}
+          dangerouslySetInnerHTML={{ __html: formattedText }} // eslint-disable-line @typescript-eslint/naming-convention
         />,
       );
     } else {
@@ -131,7 +131,7 @@ const parseMarkdown = (
         <p
           key={index}
           className={`text-gray-700 dark:text-gray-300 leading-relaxed ${lineMargin > 0 ? `mb-${lineMargin}` : ""}`}
-          dangerouslySetInnerHTML={{ __html: formattedText }}
+          dangerouslySetInnerHTML={{ __html: formattedText }} // eslint-disable-line @typescript-eslint/naming-convention
         />,
       );
     }

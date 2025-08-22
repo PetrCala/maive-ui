@@ -2,18 +2,20 @@ import MDXContent from "@context/MDXContent";
 import TEXT from "@lib/text";
 import CONST from "@src/CONST";
 
-interface MAIVEInfoModalProps {
+type MAIVEInfoModalProps = {
   isOpen: boolean;
   onClose: () => void;
   shouldShowGettingStarted?: boolean;
-}
+};
 
 export default function MAIVEInfoModal({
   isOpen,
   onClose,
   shouldShowGettingStarted = false,
 }: MAIVEInfoModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 modal-overlay flex items-center justify-center p-4 z-50">
