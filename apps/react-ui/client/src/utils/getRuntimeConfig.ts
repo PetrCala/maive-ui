@@ -1,13 +1,13 @@
 import type { RuntimeConfig } from "@src/types";
 
-export function getRuntimeConfig() {
+export function getRuntimeConfig(): RuntimeConfig {
   if (typeof window === "undefined") {
     // During SSR, return empty config - the actual config will be loaded on the client
-    return {};
+    return {} as RuntimeConfig;
   }
 
-  // eslint-disable-next-line
-  const runtimeConfig: RuntimeConfig = (window as any).RUNTIME_CONFIG ?? {};
+  const runtimeConfig: RuntimeConfig =
+    (window as ExtendedWindow).RUNTIME_CONFIG ?? ({} as RuntimeConfig);
 
   // In development, use the dev API URL if it is set
   if (process.env.NODE_ENV === "development" && !runtimeConfig.R_API_URL) {
