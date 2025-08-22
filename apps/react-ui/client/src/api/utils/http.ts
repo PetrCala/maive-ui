@@ -1,4 +1,4 @@
-import type { ApiConfig, ApiError } from "../../types";
+import type { ApiConfig, ApiError } from "@src/types";
 
 /**
  * Create an AbortController for request timeout
@@ -22,8 +22,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
 
     try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorData.error || errorMessage;
+      const errorData = (await response.json()) as {
+        message?: string;
+        error?: string;
+      };
+      errorMessage = errorData.message ?? errorData.error ?? errorMessage;
     } catch {
       // If we can't parse the error response, use the default message
     }
@@ -33,10 +36,11 @@ async function handleResponse<T>(response: Response): Promise<T> {
       status: response.status,
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-throw-literal
     throw error;
   }
 
-  return response.json();
+  return response.json() as Promise<T>;
 }
 
 /**
@@ -48,8 +52,8 @@ async function handleResponse<T>(response: Response): Promise<T> {
  */
 export async function httpRequest<T>(
   url: string,
-  options: RequestInit = {},
   config: ApiConfig,
+  options: RequestInit = {},
 ): Promise<T> {
   const { timeout = 30000, headers = {}, signal } = config;
 
@@ -63,7 +67,7 @@ export async function httpRequest<T>(
   };
 
   // Use the provided signal or the timeout signal
-  const requestSignal = signal || timeoutController?.signal;
+  const requestSignal = signal ?? timeoutController?.signal;
 
   try {
     const response = await fetch(url, {
@@ -80,12 +84,12 @@ export async function httpRequest<T>(
         if (signal?.aborted) {
           throw error; // Re-throw the original abort error
         } else {
-          throw new Error("Request timed out") as ApiError;
+          throw new Error("Request timed out");
         }
       }
       throw error;
     }
-    throw new Error("An unexpected error occurred") as ApiError;
+    throw new Error("An unexpected error occurred");
   }
 }
 
@@ -96,7 +100,9 @@ export async function httpRequest<T>(
  * @returns Promise with response data
  */
 export async function httpGet<T>(url: string, config: ApiConfig): Promise<T> {
-  return httpRequest<T>(url, { method: "GET" }, config);
+  return httpRequest<T>(url, config, {
+    method: "GET",
+  });
 }
 
 /**
@@ -108,15 +114,11 @@ export async function httpGet<T>(url: string, config: ApiConfig): Promise<T> {
  */
 export async function httpPost<T>(
   url: string,
-  data: any,
+  data: unknown,
   config: ApiConfig,
 ): Promise<T> {
-  return httpRequest<T>(
-    url,
-    {
-      method: "POST",
-      body: JSON.stringify(data),
-    },
-    config,
-  );
+  return httpRequest<T>(url, config, {
+    body: JSON.stringify(data),
+    method: "POST",
+  });
 }

@@ -1,11 +1,16 @@
+import type { DataArray, ModelParameters } from "@src/types";
+
 export async function runModelClient(
-  data: any[],
-  parameters: any,
+  data: DataArray,
+  parameters: ModelParameters,
   signal?: AbortSignal,
 ) {
   const response = await fetch("/api/run-model", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ data, parameters }),
     signal,
   });

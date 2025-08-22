@@ -18,8 +18,8 @@ import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Tooltip from "@src/components/Tooltip";
-import { getRApiUrl, httpPost } from "@src/api";
-import type { ModelParameters, ModelResponse } from "@src/types";
+import { modelService } from "@src/api/services/modelService";
+import type { ModelParameters } from "@src/types";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -127,19 +127,12 @@ export default function ModelPage() {
           const nrow = uploadedData?.data.length ?? 0;
           result = { data: generateMockResults(nrow) };
         } else {
-          result = await httpPost<ModelResponse>(
-            `${getRApiUrl()}/run-model`,
-            {
-              data: JSON.stringify(uploadedData?.data ?? []),
-              parameters: JSON.stringify(parameters),
-            },
-            {
-              headers: {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
-                "Content-Type": "application/json",
-              },
-              signal: abortControllerRef.current?.signal,
-            },
+          // This is a client-side call to the server-side API
+          // For server-side, use the runModelClient function
+          result = await modelService.runModel(
+            uploadedData?.data ?? [],
+            parameters,
+            abortControllerRef.current,
           );
         }
 

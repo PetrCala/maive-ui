@@ -1,6 +1,11 @@
-import type { ModelRequest, ModelResponse, ModelParameters } from "../../types";
-import { getRApiUrl } from "../utils/config";
-import { httpPost } from "../utils/http";
+import type {
+  DataArray,
+  ModelRequest,
+  ModelResponse,
+  ModelParameters,
+} from "@src/types";
+import { getRApiUrl } from "@api/utils/config";
+import { httpPost } from "@api/utils/http";
 
 /**
  * Service for model-related API operations
@@ -15,7 +20,7 @@ export class ModelService {
    * @returns Promise with model results
    */
   async runModel(
-    data: any[],
+    data: DataArray,
     parameters: ModelParameters,
     abortController?: AbortController,
   ): Promise<ModelResponse> {
@@ -31,14 +36,15 @@ export class ModelService {
         {
           timeout: 300000, // 5 minutes for long-running models
           headers: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             "Content-Type": "application/json",
           },
           signal: abortController?.signal,
         },
       );
-    } catch (error: any) {
+    } catch (error: unknown) {
       throw new Error(
-        `Failed to run model: ${error.message || "Unknown error"}`,
+        `Failed to run model: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
   }
