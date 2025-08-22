@@ -23,6 +23,7 @@
 		"lambda:test": "cd lambda-r-backend && Rscript tests/e2e/run_e2e_tests.R",
 		"ui:dev": "cd apps/react-ui/client && npm run dev",
 		"ui:test": "cd apps/react-ui/client && npm test",
+		"ui:lint": "cd apps/react-ui/client && npm run lint",
 		"stop": "podman-compose down",
 		"remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
 		"remove-all-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep 'amazonaws.com/' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
