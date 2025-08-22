@@ -8,7 +8,7 @@ GITHUB_PAT="${4:?GITHUB_PAT missing}"
 GITHUB_USERNAME="${5:?GITHUB_USERNAME missing}"
 MAIVE_TAG="${6:?MAIVE_TAG missing}"
 
-HASH_TAG="$(sha256sum lambda-r-backend/r_scripts/r-packages.txt | awk '{print substr($1,1,8)}')_${MAIVE_TAG}"
+HASH_TAG="$(sha256sum apps/lambda-r-backend/r_scripts/r-packages.txt | awk '{print substr($1,1,8)}')_${MAIVE_TAG}"
 
 ECR_REPO="maive-rlib"
 REPOSITORY_URI="${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
@@ -35,13 +35,13 @@ fi
 
 echo "-> Building & pushing rlib:${RLIB_TAG}"
 docker build \
-  -f lambda-r-backend/Dockerfile.rlib \
+  -f apps/lambda-r-backend/Dockerfile.rlib \
   -t "rlib-build:${RLIB_TAG}" \
   --build-arg R_VERSION="${R_VERSION}" \
   --build-arg MAIVE_TAG="${MAIVE_TAG}" \
   --build-arg GITHUB_PAT="${GITHUB_PAT}" \
   --build-arg GITHUB_USERNAME="${GITHUB_USERNAME}" \
-  lambda-r-backend/
+  apps/lambda-r-backend/
 
 docker tag "rlib-build:${RLIB_TAG}" "${REPOSITORY_URI}:${RLIB_TAG}"
 docker push "${REPOSITORY_URI}:${RLIB_TAG}"
