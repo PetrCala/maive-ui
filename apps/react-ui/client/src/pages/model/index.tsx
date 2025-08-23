@@ -40,6 +40,7 @@ export default function ModelPage() {
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
+  const searchParamsAppliedRef = useRef(false);
   const { showAlert } = useGlobalAlert();
 
   const loadDataFromStore = () => {
@@ -81,6 +82,8 @@ export default function ModelPage() {
   useEffect(() => {
     isMountedRef.current = true;
     if (dataId) {
+      // Reset search params applied flag when navigating to different data
+      searchParamsAppliedRef.current = false;
       loadDataFromStore();
     } else {
       showAlert("No data selected", "error");
@@ -95,13 +98,17 @@ export default function ModelPage() {
   }, [dataId, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useMemo(() => {
-    if (searchParams?.get("parameters") && uploadedData) {
+    if (
+      searchParams?.get("parameters") &&
+      uploadedData &&
+      !searchParamsAppliedRef.current
+    ) {
       const parsed = JSON.parse(
         decodeURIComponent(searchParams.get("parameters") ?? "{}"),
       ) as Partial<ModelParameters>;
       const params = { ...parameters, ...parsed };
-      console.log("setting parameters through usememo", params);
       setParameters(params);
+      searchParamsAppliedRef.current = true;
     }
   }, [searchParams, uploadedData]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -183,14 +190,10 @@ export default function ModelPage() {
     }
 
     // When the user sets the SE treatment value to 'not clustered', we want to match the value of the 'include study clustering' option for backend compatibility
-    const shouldTreatSE =
-      parameters.standardErrorTreatment !==
-      CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE;
     handleParameterChange(
-      "standardErrorTreatment",
-      shouldTreatSE
-        ? CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED.VALUE
-        : CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
+      "includeStudyClustering",
+      parameters.standardErrorTreatment !==
+        CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
     );
   }, [parameters.standardErrorTreatment, uploadedData]);
 
