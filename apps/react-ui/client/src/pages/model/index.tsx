@@ -252,12 +252,14 @@ export default function ModelPage() {
                         config={modelOptionsConfig.basic}
                         parameters={parameters}
                         onChange={handleParameterChange}
+                        context={{ uploadedData }}
                       />
 
                       <OptionSection
                         config={modelOptionsConfig.advanced}
                         parameters={parameters}
                         onChange={handleParameterChange}
+                        context={{ uploadedData }}
                       />
 
                       <ActionButton
