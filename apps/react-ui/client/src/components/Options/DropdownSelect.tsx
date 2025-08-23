@@ -1,4 +1,5 @@
 import React from "react";
+import OptionWrapper from "./OptionWrapper";
 
 type Option = {
   value: string;
@@ -24,23 +25,29 @@ export default function DropdownSelect({
   disabled = false,
   width = "w-48",
 }: DropdownSelectProps) {
+  const shouldRenderAsPlainText = disabled || options.length === 1;
+  const currentOption =
+    options.find((option) => option.value === value) ?? options[0];
+
   return (
-    <div className={className}>
-      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-        {label}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className={`${width} px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50 disabled:cursor-not-allowed`}
-      >
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
-    </div>
+    <OptionWrapper label={label} className={className}>
+      {shouldRenderAsPlainText ? (
+        <p className="text-gray-900 dark:text-white font-medium">
+          {currentOption.label}
+        </p>
+      ) : (
+        <select
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          className={`${width} px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white`}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </OptionWrapper>
   );
 }
