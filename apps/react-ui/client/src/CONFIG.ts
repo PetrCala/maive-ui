@@ -4,7 +4,7 @@ const CONFIG = {
   SHOULD_SHOW_DF_ROWS_INFO: true,
   SHOULD_SUGGEST_MOCK_DATA_USE: true,
   TOOLTIPS_ENABLED: {
-    MODEL_PAGE: false,
+    MODEL_PAGE: true,
     RESULTS_PAGE: true,
   },
 } as const;
