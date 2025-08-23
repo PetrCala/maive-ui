@@ -23,6 +23,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.includeStudyClustering.label,
         tooltip: TEXT.model.includeStudyClustering.tooltip,
         type: "yesno",
+        // hidden: true, // We don't need to show this, as it is automatically set to true if the data has a study ID column
       },
       {
         key: "standardErrorTreatment",
