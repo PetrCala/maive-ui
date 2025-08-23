@@ -44,7 +44,8 @@ const TEXT = {
     },
     includeStudyClustering: {
       label: "Include Study Level Clustering",
-      tooltip: "Whether to include study-level clustering in the analysis.",
+      tooltip:
+        "Whether to include study-level clustering in the analysis. If you data does not have a study ID column, this option will have no effect.",
     },
     standardErrorTreatment: {
       label: "Standard Error Treatment",
