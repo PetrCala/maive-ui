@@ -8,18 +8,17 @@ import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
 import { useDataStore, dataCache, type UploadedData } from "@store/dataStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
 import Alert from "@src/components/Alert";
-import AdvancedOptions from "@src/components/Model/AdvancedOptions";
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
-import { YesNoSelect, DropdownSelect } from "@src/components/Options";
+import { OptionSection } from "@src/components/Options";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
-import Tooltip from "@src/components/Tooltip";
 import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
+import { modelOptionsConfig } from "@src/config/optionsConfig";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -249,145 +248,26 @@ export default function ModelPage() {
                       </p>
                     </div>
                     <div className="space-y-6">
-                      <div className="flex flex-col gap-6">
-                        <div className="flex-shrink-0">
-                          <Tooltip
-                            content={TEXT.model.modelType.tooltip}
-                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                          >
-                            {CONFIG.WAIVE_ENABLED ? (
-                              <DropdownSelect
-                                label={TEXT.model.modelType.label}
-                                value={parameters.modelType}
-                                onChange={(value) =>
-                                  handleParameterChange("modelType", value)
-                                }
-                                options={Object.values(CONST.MODEL_TYPES).map(
-                                  (type) => ({
-                                    value: type,
-                                    label: type,
-                                  }),
-                                )}
-                              />
-                            ) : (
-                              <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                                  {TEXT.model.modelType.label}
-                                </label>
-                                <p>{parameters.modelType}</p>
-                              </div>
-                            )}
-                          </Tooltip>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Tooltip
-                            content={TEXT.model.includeStudyDummies.tooltip}
-                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                          >
-                            <YesNoSelect
-                              label={TEXT.model.includeStudyDummies.label}
-                              value={parameters.includeStudyDummies}
-                              onChange={(value) =>
-                                handleParameterChange(
-                                  "includeStudyDummies",
-                                  value,
-                                )
-                              }
-                            />
-                          </Tooltip>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Tooltip
-                            content={TEXT.model.includeStudyClustering.tooltip}
-                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                          >
-                            <YesNoSelect
-                              label={TEXT.model.includeStudyClustering.label}
-                              value={parameters.includeStudyClustering}
-                              onChange={(value) =>
-                                handleParameterChange(
-                                  "includeStudyClustering",
-                                  value,
-                                )
-                              }
-                            />
-                          </Tooltip>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Tooltip
-                            content={TEXT.model.standardErrorTreatment.tooltip}
-                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                          >
-                            <DropdownSelect
-                              label={TEXT.model.standardErrorTreatment.label}
-                              value={parameters.standardErrorTreatment}
-                              onChange={(value) =>
-                                handleParameterChange(
-                                  "standardErrorTreatment",
-                                  value,
-                                )
-                              }
-                              options={Object.values(
-                                CONST.STANDARD_ERROR_TREATMENTS,
-                              ).map((treatment) => ({
-                                value: treatment.VALUE,
-                                label: treatment.TEXT,
-                              }))}
-                            />
-                          </Tooltip>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Tooltip
-                            content={TEXT.model.weight.tooltip}
-                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                          >
-                            <DropdownSelect
-                              label={TEXT.model.weight.label}
-                              value={parameters.weight}
-                              onChange={(value) =>
-                                handleParameterChange("weight", value)
-                              }
-                              options={Object.values(CONST.WEIGHT_OPTIONS).map(
-                                (option) => ({
-                                  value: option.VALUE,
-                                  label: option.TEXT,
-                                }),
-                              )}
-                            />
-                          </Tooltip>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Tooltip
-                            content={TEXT.model.computeAndersonRubin.tooltip}
-                            visible={CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
-                          >
-                            <YesNoSelect
-                              label={TEXT.model.computeAndersonRubin.label}
-                              value={parameters.computeAndersonRubin}
-                              onChange={(value) =>
-                                handleParameterChange(
-                                  "computeAndersonRubin",
-                                  value,
-                                )
-                              }
-                            />
-                          </Tooltip>
-                          {parameters.computeAndersonRubin && (
-                            <Alert
-                              message={TEXT.model.computeAndersonRubin.warning}
-                              type="warning"
-                              className="mt-3"
-                            />
-                          )}
-                        </div>
-                      </div>
-                      <AdvancedOptions
-                        maiveMethod={parameters.maiveMethod}
-                        shouldUseInstrumenting={
-                          parameters.shouldUseInstrumenting
-                        }
-                        handleParameterChange={handleParameterChange}
+                      <OptionSection
+                        config={modelOptionsConfig.basic}
+                        parameters={parameters}
+                        onChange={handleParameterChange}
                       />
+
+                      {parameters.computeAndersonRubin && (
+                        <Alert
+                          message={TEXT.model.computeAndersonRubin.warning}
+                          type="warning"
+                          className="mt-3"
+                        />
+                      )}
+
+                      <OptionSection
+                        config={modelOptionsConfig.advanced}
+                        parameters={parameters}
+                        onChange={handleParameterChange}
+                      />
+
                       <ActionButton
                         onClick={handleRunModel}
                         variant="primary"
