@@ -18,6 +18,7 @@ import TEXT from "@src/lib/text";
 import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
+import { hasStudyIdColumn } from "@src/utils/dataUtils";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -28,7 +29,8 @@ export default function ModelPage() {
   const [parameters, setParameters] = useState<ModelParameters>({
     modelType: CONST.MODEL_TYPES.MAIVE,
     includeStudyDummies: false,
-    includeStudyClustering: false, // This later automatically is set to true if the data has a study ID column
+    // The study clustering and error treatment are later automatically set to correct values if the data has a study ID column
+    includeStudyClustering: false,
     standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
     computeAndersonRubin: false,
     maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
@@ -61,12 +63,7 @@ export default function ModelPage() {
 
       setUploadedData(data);
 
-      // Check if studyID column exists and update standard error treatment accordingly
-      const headers = Object.keys(data.data[0] || {});
-      const hasStudyID = headers.some((header: string) =>
-        /\bstudy[\s_-]?id\b/i.test(header),
-      );
-      if (hasStudyID) {
+      if (hasStudyIdColumn(data.data)) {
         setParameters((prev) => ({
           ...prev,
           includeStudyClustering: true,
