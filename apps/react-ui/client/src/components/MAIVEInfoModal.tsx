@@ -17,9 +17,25 @@ export default function MAIVEInfoModal({
     return null;
   }
 
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
+  const handleModalContentClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+  };
+
   return (
-    <div className="fixed inset-0 modal-overlay flex items-center justify-center p-4 z-50">
-      <div className="modal-content max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div
+      className="fixed inset-0 modal-overlay flex items-center justify-center p-4 z-50"
+      onClick={handleOverlayClick}
+    >
+      <div
+        className="modal-content max-w-4xl w-full max-h-[90vh] overflow-y-auto"
+        onClick={handleModalContentClick}
+      >
         {/* Header */}
         <div className="flex justify-between items-center p-6 border-b border-primary">
           <h2 className="text-2xl font-bold text-primary">
