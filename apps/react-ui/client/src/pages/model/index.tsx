@@ -28,7 +28,7 @@ export default function ModelPage() {
   const [parameters, setParameters] = useState<ModelParameters>({
     modelType: CONST.MODEL_TYPES.MAIVE,
     includeStudyDummies: false,
-    includeStudyClustering: false,
+    includeStudyClustering: false, // This later automatically is set to true if the data has a study ID column
     standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
     computeAndersonRubin: false,
     maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
@@ -69,6 +69,7 @@ export default function ModelPage() {
       if (hasStudyID) {
         setParameters((prev) => ({
           ...prev,
+          includeStudyClustering: true,
           standardErrorTreatment: "bootstrap",
         }));
       }
