@@ -23,6 +23,14 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.includeStudyDummies.label,
         tooltip: TEXT.model.includeStudyDummies.tooltip,
         type: "yesno",
+        warnings: [
+          {
+            message: "hello!",
+            type: CONST.ALERT_TYPES.INFO,
+            condition: (parameters: ModelParameters) =>
+              parameters.includeStudyDummies === true,
+          },
+        ],
       },
       {
         key: "includeStudyClustering",
@@ -60,7 +68,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         warnings: [
           {
             message: TEXT.model.computeAndersonRubin.warning,
-            type: "warning" as const,
+            type: CONST.ALERT_TYPES.WARNING,
             condition: (parameters: ModelParameters) =>
               parameters.computeAndersonRubin === true,
           },

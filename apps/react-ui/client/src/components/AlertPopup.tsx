@@ -1,11 +1,11 @@
 import { useEffect, useState, useRef } from "react";
-import Alert from "./Alert";
-
-export type AlertLevel = "info" | "success" | "warning" | "error";
+import type { AlertType } from "@src/types/alert";
+import Alert from "@src/components/Alert";
+import CONST from "@src/CONST";
 
 export type AlertPopupProps = {
   message: string;
-  type?: AlertLevel;
+  type?: AlertType;
   open: boolean;
   onClose: () => void;
   duration?: number; // ms
@@ -16,7 +16,7 @@ const FADE_OUT_DURATION = 300; // ms
 
 const AlertPopup = ({
   message,
-  type = "info",
+  type = CONST.ALERT_TYPES.INFO,
   open,
   onClose,
   duration = 2500,

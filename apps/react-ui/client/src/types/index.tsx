@@ -1,6 +1,7 @@
 import type CONST from "@src/CONST";
 import type DeepValueOf from "./DeepValueOf";
 import type RuntimeConfig from "./RuntimeConfig";
+import type { AlertType } from "./alert";
 import type {
   ModelParameters,
   ModelRequest,
@@ -27,4 +28,5 @@ export type {
   ModelResults,
   PingResponse,
   RuntimeConfig,
+  AlertType,
 };
