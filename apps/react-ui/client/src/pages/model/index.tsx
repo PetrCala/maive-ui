@@ -233,7 +233,7 @@ export default function ModelPage() {
               ) : (
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
                   <div className="flex flex-col gap-6">
-                    <div className="flex items-center mb-3">
+                    <div className="flex items-center mb-2">
                       <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
                         Model Parameters
                       </h1>
@@ -241,8 +241,8 @@ export default function ModelPage() {
                         <HelpButton modalComponent={ParametersHelpModal} />
                       )}
                     </div>
-                    <div className="mb-3">
-                      <p className="text-gray-700 dark:text-gray-300 mb-2">
+                    <div className="mb-2">
+                      <p className="text-gray-700 dark:text-gray-300">
                         Please select the model type and parameters you would
                         like to use.
                       </p>
