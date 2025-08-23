@@ -6,11 +6,12 @@ import React, {
   useRef,
   useMemo,
 } from "react";
-import type { AlertLevel } from "./AlertPopup";
 import AlertPopup from "./AlertPopup";
+import type { AlertType } from "@src/types/alert";
+import CONST from "@src/CONST";
 
 type GlobalAlertContextType = {
-  showAlert: (message: string, type?: AlertLevel, duration?: number) => void;
+  showAlert: (message: string, type?: AlertType, duration?: number) => void;
 };
 
 const GlobalAlertContext = createContext<GlobalAlertContextType | undefined>(
@@ -30,12 +31,12 @@ export const GlobalAlertProvider: React.FC<{ children: React.ReactNode }> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState("");
-  const [type, setType] = useState<AlertLevel>("info");
+  const [type, setType] = useState<AlertType>(CONST.ALERT_TYPES.INFO);
   const [duration, setDuration] = useState(2500);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const showAlert = useCallback(
-    (msg: string, lvl: AlertLevel = "info", dur = 2500) => {
+    (msg: string, lvl: AlertType = CONST.ALERT_TYPES.INFO, dur = 2500) => {
       setMessage(msg);
       setType(lvl);
       setDuration(dur);

@@ -1,27 +1,22 @@
-type AlertProps = {
-  message: string;
-  type?: "info" | "success" | "warning" | "error";
-  className?: string;
-  onClick?: () => void;
-  standalone?: boolean;
-};
+import type { AlertProps } from "./types";
+import CONST from "@src/CONST";
 
 const Alert = ({
   message,
-  type = "info",
+  type = CONST.ALERT_TYPES.INFO,
   className = "",
   onClick,
   standalone = false,
 }: AlertProps) => {
   const getAlertStyles = () => {
     switch (type) {
-      case "warning":
+      case CONST.ALERT_TYPES.WARNING:
         return "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200";
-      case "info":
+      case CONST.ALERT_TYPES.INFO:
         return "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-200";
-      case "error":
+      case CONST.ALERT_TYPES.ERROR:
         return "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-800 dark:text-red-200";
-      case "success":
+      case CONST.ALERT_TYPES.SUCCESS:
         return "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-200";
       default:
         return "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-200";
@@ -30,7 +25,7 @@ const Alert = ({
 
   const getIcon = () => {
     switch (type) {
-      case "warning":
+      case CONST.ALERT_TYPES.WARNING:
         return (
           <svg
             className="w-5 h-5 text-yellow-400 dark:text-yellow-300"
@@ -44,7 +39,7 @@ const Alert = ({
             />
           </svg>
         );
-      case "info":
+      case CONST.ALERT_TYPES.INFO:
         return (
           <svg
             className="w-5 h-5 text-blue-400 dark:text-blue-300"
@@ -58,7 +53,7 @@ const Alert = ({
             />
           </svg>
         );
-      case "error":
+      case CONST.ALERT_TYPES.ERROR:
         return (
           <svg
             className="w-5 h-5 text-red-400 dark:text-red-300"
@@ -72,7 +67,7 @@ const Alert = ({
             />
           </svg>
         );
-      case "success":
+      case CONST.ALERT_TYPES.SUCCESS:
         return (
           <svg
             className="w-5 h-5 text-green-400 dark:text-green-300"

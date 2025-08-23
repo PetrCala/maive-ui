@@ -22,6 +22,12 @@ const CONST = {
     PET_PEESE: "PET-PEESE",
     EK: "EK",
   },
+  ALERT_TYPES: {
+    WARNING: "warning",
+    INFO: "info",
+    ERROR: "error",
+    SUCCESS: "success",
+  },
   WEIGHT_OPTIONS: {
     NO_WEIGHTS: {
       VALUE: "no_weights",

@@ -13,10 +13,10 @@ import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
 import RowInfoComponent from "@src/components/RowInfoComponent";
 import CONFIG from "@src/CONFIG";
-import type { DataArray } from "@src/types";
+import type { AlertType, DataArray } from "@src/types";
 
 type ValidationMessage = {
-  type: "success" | "error" | "warning" | "info";
+  type: AlertType;
   message: string;
 };
 
@@ -238,7 +238,7 @@ export default function ValidationPage() {
     return {
       isValid: !hasErrors,
       messages,
-      containsInfo: messages.some((msg) => msg.type === "info"),
+      containsInfo: messages.some((msg) => msg.type === CONST.ALERT_TYPES.INFO),
     };
   };
 

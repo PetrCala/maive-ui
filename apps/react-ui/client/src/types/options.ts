@@ -1,9 +1,10 @@
+import type { AlertType } from "./alert";
 import type { ModelParameters } from "./api";
 
 // Warning configuration for options
 export type OptionWarning = {
   message: string;
-  type: "warning" | "info" | "error";
+  type: AlertType;
   condition: (parameters: ModelParameters) => boolean;
 };
 
