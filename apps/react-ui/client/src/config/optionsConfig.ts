@@ -77,12 +77,6 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         })),
       },
       {
-        key: "includeStudyDummies",
-        label: TEXT.model.includeStudyDummies.label,
-        tooltip: TEXT.model.includeStudyDummies.tooltip,
-        type: "yesno",
-      },
-      {
         key: "weight",
         label: TEXT.model.weight.label,
         tooltip: TEXT.model.weight.tooltip,
@@ -91,6 +85,12 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           value: option.VALUE,
           label: option.TEXT,
         })),
+      },
+      {
+        key: "includeStudyDummies",
+        label: TEXT.model.includeStudyDummies.label,
+        tooltip: TEXT.model.includeStudyDummies.tooltip,
+        type: "yesno",
       },
       {
         key: "shouldUseInstrumenting",
