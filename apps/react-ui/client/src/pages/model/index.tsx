@@ -64,6 +64,7 @@ export default function ModelPage() {
       setUploadedData(data);
 
       if (hasStudyIdColumn(data.data)) {
+        console.log("setting parameters through loadDataFromStore");
         setParameters((prev) => ({
           ...prev,
           includeStudyClustering: true,
@@ -97,6 +98,7 @@ export default function ModelPage() {
         decodeURIComponent(searchParams.get("parameters") ?? "{}"),
       ) as Partial<ModelParameters>;
       const params = { ...parameters, ...parsed };
+      console.log("setting parameters through usememo", params);
       setParameters(params);
     }
   }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -172,6 +174,23 @@ export default function ModelPage() {
       }
     })();
   }, [dataId, parameters, uploadedData, router, showAlert]);
+
+  useEffect(() => {
+    if (!uploadedData || !hasStudyIdColumn(uploadedData.data)) {
+      return;
+    }
+
+    // When the user sets the SE treatment value to 'not clustered', we want to match the value of the 'include study clustering' option for backend compatibility
+    const shouldTreatSE =
+      parameters.standardErrorTreatment !==
+      CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE;
+    handleParameterChange(
+      "standardErrorTreatment",
+      shouldTreatSE
+        ? CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED.VALUE
+        : CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
+    );
+  }, [parameters.standardErrorTreatment, uploadedData]);
 
   const LoadingCard = () => (
     <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full max-h-[90vh] overflow-y-auto transition-all duration-500 opacity-100 scale-100">
