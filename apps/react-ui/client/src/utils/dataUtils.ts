@@ -98,6 +98,20 @@ export const processUploadedFile = async (
 };
 
 /**
+ * Checks if the uploaded data has a study ID column
+ */
+export function hasStudyIdColumn(
+  data: Array<Record<string, unknown>> | undefined,
+): boolean {
+  if (!data?.[0]) {
+    return false;
+  }
+
+  const headers = Object.keys(data[0]);
+  return headers.some((header: string) => /\bstudy[\s_-]?id\b/i.test(header));
+}
+
+/**
  * A helper function to download a file
  * @param blob - The blob to download
  * @param filename - The filename to download

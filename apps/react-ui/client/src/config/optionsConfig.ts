@@ -3,6 +3,8 @@ import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import type { ModelOptionsConfig } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
+import { hasStudyIdColumn } from "@src/utils/dataUtils";
+import type { DataArray } from "@src/types";
 
 export const modelOptionsConfig: ModelOptionsConfig = {
   basic: {
@@ -17,31 +19,13 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           label: type,
         })),
         disabled: !CONFIG.WAIVE_ENABLED,
-        visibility: {
-          // Hide if WAIVE is not enabled (alternative to disabled)
-          hideIfValue: CONFIG.WAIVE_ENABLED ? {} : { modelType: "WAIVE" },
-        },
       },
       {
         key: "includeStudyClustering",
         label: TEXT.model.includeStudyClustering.label,
         tooltip: TEXT.model.includeStudyClustering.tooltip,
         type: "yesno",
-        visibility: {
-          // Hide if no study ID column in data
-          hideIf: (context) => {
-            const data = context.uploadedData as
-              | { data: Array<Record<string, unknown>> }
-              | undefined;
-            if (!data?.data?.[0]) {
-              return true;
-            }
-            const headers = Object.keys(data.data[0]);
-            return !headers.some((header: string) =>
-              /\bstudy[\s_-]?id\b/i.test(header),
-            );
-          },
-        },
+        visibility: { hideIf: () => true }, // We don't need to show this, as it is automatically set to true if the data has a study ID column
       },
       {
         key: "standardErrorTreatment",
@@ -54,6 +38,12 @@ export const modelOptionsConfig: ModelOptionsConfig = {
             label: treatment.TEXT,
           }),
         ),
+        visibility: {
+          hideIf: (context) =>
+            !hasStudyIdColumn(
+              (context.uploadedData as { data: DataArray } | undefined)?.data,
+            ),
+        },
       },
       {
         key: "computeAndersonRubin",
