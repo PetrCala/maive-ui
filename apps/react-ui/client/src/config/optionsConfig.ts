@@ -19,12 +19,6 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         disabled: !CONFIG.WAIVE_ENABLED,
       },
       {
-        key: "includeStudyDummies",
-        label: TEXT.model.includeStudyDummies.label,
-        tooltip: TEXT.model.includeStudyDummies.tooltip,
-        type: "yesno",
-      },
-      {
         key: "includeStudyClustering",
         label: TEXT.model.includeStudyClustering.label,
         tooltip: TEXT.model.includeStudyClustering.tooltip,
@@ -87,6 +81,12 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         key: "shouldUseInstrumenting",
         label: TEXT.model.shouldUseInstrumenting.label,
         tooltip: TEXT.model.shouldUseInstrumenting.tooltip,
+        type: "yesno",
+      },
+      {
+        key: "includeStudyDummies",
+        label: TEXT.model.includeStudyDummies.label,
+        tooltip: TEXT.model.includeStudyDummies.tooltip,
         type: "yesno",
       },
     ],
