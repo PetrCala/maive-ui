@@ -7,7 +7,6 @@ import { useRouter } from "next/navigation";
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
 import { useDataStore, dataCache, type UploadedData } from "@store/dataStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
-import Alert from "@src/components/Alert";
 import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
 import { OptionSection } from "@src/components/Options";
 import ActionButton from "@src/components/Buttons/ActionButton";
@@ -253,14 +252,6 @@ export default function ModelPage() {
                         parameters={parameters}
                         onChange={handleParameterChange}
                       />
-
-                      {parameters.computeAndersonRubin && (
-                        <Alert
-                          message={TEXT.model.computeAndersonRubin.warning}
-                          type="warning"
-                          className="mt-3"
-                        />
-                      )}
 
                       <OptionSection
                         config={modelOptionsConfig.advanced}

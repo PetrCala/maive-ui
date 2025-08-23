@@ -1,5 +1,12 @@
 import type { ModelParameters } from "./api";
 
+// Warning configuration for options
+export type OptionWarning = {
+  message: string;
+  type: "warning" | "info" | "error";
+  condition: (parameters: ModelParameters) => boolean;
+};
+
 // Base option configuration that all options share
 export type BaseOptionConfig = {
   key: keyof ModelParameters;
@@ -8,6 +15,7 @@ export type BaseOptionConfig = {
   type: "yesno" | "dropdown";
   disabled?: boolean;
   className?: string;
+  warnings?: OptionWarning[];
 };
 
 // Yes/No option configuration
