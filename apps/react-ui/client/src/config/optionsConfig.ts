@@ -37,16 +37,6 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         ),
       },
       {
-        key: "weight",
-        label: TEXT.model.weight.label,
-        tooltip: TEXT.model.weight.tooltip,
-        type: "dropdown",
-        options: Object.values(CONST.WEIGHT_OPTIONS).map((option) => ({
-          value: option.VALUE,
-          label: option.TEXT,
-        })),
-      },
-      {
         key: "computeAndersonRubin",
         label: TEXT.model.computeAndersonRubin.label,
         tooltip: TEXT.model.computeAndersonRubin.tooltip,
@@ -88,6 +78,16 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.includeStudyDummies.label,
         tooltip: TEXT.model.includeStudyDummies.tooltip,
         type: "yesno",
+      },
+      {
+        key: "weight",
+        label: TEXT.model.weight.label,
+        tooltip: TEXT.model.weight.tooltip,
+        type: "dropdown",
+        options: Object.values(CONST.WEIGHT_OPTIONS).map((option) => ({
+          value: option.VALUE,
+          label: option.TEXT,
+        })),
       },
     ],
   },
