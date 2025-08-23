@@ -31,6 +31,7 @@ export default function OptionSection({
           key={option.key}
           option={option}
           value={parameters[option.key]}
+          parameters={parameters}
           onChange={onChange}
           tooltipsEnabled={tooltipsEnabled}
         />

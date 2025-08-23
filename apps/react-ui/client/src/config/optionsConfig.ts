@@ -2,6 +2,7 @@ import TEXT from "@src/lib/text";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import type { ModelOptionsConfig } from "@src/types/options";
+import type { ModelParameters } from "@src/types/api";
 
 export const modelOptionsConfig: ModelOptionsConfig = {
   basic: {
@@ -56,6 +57,14 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.computeAndersonRubin.label,
         tooltip: TEXT.model.computeAndersonRubin.tooltip,
         type: "yesno",
+        warnings: [
+          {
+            message: TEXT.model.computeAndersonRubin.warning,
+            type: "warning" as const,
+            condition: (parameters: ModelParameters) =>
+              parameters.computeAndersonRubin === true,
+          },
+        ],
       },
     ],
   },

@@ -1,6 +1,7 @@
 import React from "react";
 import { YesNoSelect, DropdownSelect } from "@src/components/Options";
 import Tooltip from "@src/components/Tooltip";
+import Alert from "@src/components/Alert";
 import type { OptionConfig } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
 import CONFIG from "@src/CONFIG";
@@ -8,6 +9,7 @@ import CONFIG from "@src/CONFIG";
 type OptionRendererProps = {
   option: OptionConfig;
   value: ModelParameters[keyof ModelParameters];
+  parameters: ModelParameters;
   onChange: (key: keyof ModelParameters, value: string | boolean) => void;
   tooltipsEnabled?: boolean;
 };
@@ -15,6 +17,7 @@ type OptionRendererProps = {
 export default function OptionRenderer({
   option,
   value,
+  parameters,
   onChange,
   tooltipsEnabled = true,
 }: OptionRendererProps) {
@@ -50,6 +53,23 @@ export default function OptionRenderer({
     }
   };
 
+  const renderWarnings = () => {
+    if (!option.warnings) {
+      return null;
+    }
+
+    return option.warnings
+      .filter((warning) => warning.condition(parameters))
+      .map((warning, index) => (
+        <Alert
+          key={index}
+          message={warning.message}
+          type={warning.type}
+          className="mt-3"
+        />
+      ));
+  };
+
   return (
     <div className="flex-shrink-0">
       <Tooltip
@@ -58,6 +78,7 @@ export default function OptionRenderer({
       >
         {renderOption()}
       </Tooltip>
+      {renderWarnings()}
     </div>
   );
 }
