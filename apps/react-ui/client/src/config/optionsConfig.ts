@@ -17,13 +17,31 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           label: type,
         })),
         disabled: !CONFIG.WAIVE_ENABLED,
+        visibility: {
+          // Hide if WAIVE is not enabled (alternative to disabled)
+          hideIfValue: CONFIG.WAIVE_ENABLED ? {} : { modelType: "WAIVE" },
+        },
       },
       {
         key: "includeStudyClustering",
         label: TEXT.model.includeStudyClustering.label,
         tooltip: TEXT.model.includeStudyClustering.tooltip,
         type: "yesno",
-        // hidden: true, // We don't need to show this, as it is automatically set to true if the data has a study ID column
+        visibility: {
+          // Hide if no study ID column in data
+          hideIf: (context) => {
+            const data = context.uploadedData as
+              | { data: Array<Record<string, unknown>> }
+              | undefined;
+            if (!data?.data?.[0]) {
+              return true;
+            }
+            const headers = Object.keys(data.data[0]);
+            return !headers.some((header: string) =>
+              /\bstudy[\s_-]?id\b/i.test(header),
+            );
+          },
+        },
       },
       {
         key: "standardErrorTreatment",

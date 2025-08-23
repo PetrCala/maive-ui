@@ -1,13 +1,18 @@
 import React, { useState } from "react";
 import OptionRenderer from "@src/components/Options/OptionRenderer";
-import type { OptionSectionConfig } from "@src/types/options";
+import type { OptionSectionConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
+import {
+  filterVisibleOptions,
+  shouldShowOption,
+} from "@src/utils/optionVisibility";
 
 type OptionSectionProps = {
   config: OptionSectionConfig;
   parameters: ModelParameters;
   onChange: (key: keyof ModelParameters, value: string | boolean) => void;
   tooltipsEnabled?: boolean;
+  context?: Partial<OptionContext>;
 };
 
 export default function OptionSection({
@@ -15,8 +20,28 @@ export default function OptionSection({
   parameters,
   onChange,
   tooltipsEnabled = true,
+  context = {},
 }: OptionSectionProps) {
   const [isOpen, setIsOpen] = useState(config.defaultOpen ?? true);
+
+  // Create full context object
+  const fullContext: OptionContext = {
+    parameters,
+    ...context,
+  };
+
+  // Check if section should be visible
+  if (config.visibility && !shouldShowOption(config.visibility, fullContext)) {
+    return null;
+  }
+
+  // Filter visible options
+  const visibleOptions = filterVisibleOptions(config.options, fullContext);
+
+  // If no options are visible, don't render the section
+  if (visibleOptions.length === 0) {
+    return null;
+  }
 
   const toggleOpen = () => {
     if (config.collapsible) {
@@ -26,7 +51,7 @@ export default function OptionSection({
 
   const renderOptions = () => (
     <div className="flex flex-col gap-6">
-      {config.options.map((option) => (
+      {visibleOptions.map((option) => (
         <OptionRenderer
           key={option.key}
           option={option}
