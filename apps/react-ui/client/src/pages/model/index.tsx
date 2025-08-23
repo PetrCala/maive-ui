@@ -63,13 +63,15 @@ export default function ModelPage() {
 
       setUploadedData(data);
 
-      if (hasStudyIdColumn(data.data)) {
-        console.log("setting parameters through loadDataFromStore");
-        setParameters((prev) => ({
-          ...prev,
-          includeStudyClustering: true,
-          standardErrorTreatment: "bootstrap",
-        }));
+      // Only set default parameters if no search params exist
+      if (!searchParams?.get("parameters")) {
+        if (hasStudyIdColumn(data.data)) {
+          setParameters((prev) => ({
+            ...prev,
+            includeStudyClustering: true,
+            standardErrorTreatment: "bootstrap",
+          }));
+        }
       }
     } catch (error) {
       console.error("Error loading data:", error);
@@ -90,10 +92,10 @@ export default function ModelPage() {
         abortControllerRef.current.abort();
       }
     };
-  }, [dataId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [dataId, searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useMemo(() => {
-    if (searchParams?.get("parameters")) {
+    if (searchParams?.get("parameters") && uploadedData) {
       const parsed = JSON.parse(
         decodeURIComponent(searchParams.get("parameters") ?? "{}"),
       ) as Partial<ModelParameters>;
@@ -101,7 +103,7 @@ export default function ModelPage() {
       console.log("setting parameters through usememo", params);
       setParameters(params);
     }
-  }, [searchParams]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [searchParams, uploadedData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleParameterChange = (
     param: keyof ModelParameters,
