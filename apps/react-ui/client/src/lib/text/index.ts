@@ -35,7 +35,8 @@ const TEXT = {
   model: {
     modelType: {
       label: "Model Type",
-      tooltip: "The type of model to use for the analysis.",
+      tooltip:
+        "The type of model to use for the analysis. Currently, only MAIVE is supported.",
     },
     includeStudyDummies: {
       label: "Include Study Level Fixed Effects",
