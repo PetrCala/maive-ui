@@ -1,5 +1,6 @@
 "use client";
 
+import MDXContent from "@src/context/MDXContent";
 import { useState, useRef } from "react";
 
 type TooltipProps = {
