@@ -95,7 +95,7 @@ const TEXT = {
   },
   results: {
     effectEstimate: {
-      title: "Effect Estimate",
+      title: "Corrected Mean Estimate",
       metrics: {
         estimate: {
           label: "Estimate",
@@ -104,20 +104,18 @@ const TEXT = {
             // For now, we only use MAIVE.
             const desc: Record<EstimateType, string> = {
               [CONST.MODEL_TYPES.MAIVE]:
-                "Point estimate of the average causal effect obtained with the MAIVE instrumental-variable estimator.",
+                "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.",
               [CONST.MODEL_TYPES.WAIVE]:
-                "Point estimate of the average causal effect obtained with the WAIVE estimator.", // subject to change
+                "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.", // subject to change
               Unknown:
-                "Point estimate of the average causal effect produced by the selected meta-analysis method.",
+                "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.",
             };
             return desc[estimateType] ?? desc.Unknown;
           },
         },
         standardError: {
           label: "Standard Error",
-          tooltip: (estimateType: EstimateType) =>
-            // An example of a simpler way of handling dynamic input
-            `Heteroskedasticity-robust standard error of the ${estimateType} effect estimate, obtained from the two-stage (sample-size-instrumented) procedure.`,
+          tooltip: "Heteroskedasticity-robust standard error.",
         },
         significance: {
           label: "Significant at 5% level",
@@ -137,7 +135,7 @@ const TEXT = {
     },
 
     publicationBias: {
-      title: "Publication Bias Analysis",
+      title: "Publication Bias and p-hacking Analysis",
       metrics: {
         pValue: {
           label: "p-value",
@@ -174,7 +172,7 @@ const TEXT = {
     },
 
     funnelPlot: {
-      title: "Funnel Plot",
+      title: "MAIVE-Adjusted Funnel Plot",
       tooltip:
         "Scatter of MAIVE-adjusted effect sizes against fitted precision; used to visualise heterogeneity and detect residual publication bias. The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing MAIVE estimate coefficients and dotted lines showing 95% confidence intervals for the estimate.",
     },

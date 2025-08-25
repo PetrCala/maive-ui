@@ -143,9 +143,10 @@ export default function ResultsPage() {
                   </div>
                   <div>
                     <Tooltip
-                      content={TEXT.results.effectEstimate.metrics.standardError.tooltip(
-                        estimateType,
-                      )}
+                      content={
+                        TEXT.results.effectEstimate.metrics.standardError
+                          .tooltip
+                      }
                       visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
                     >
                       <p className="text-sm text-gray-600 dark:text-gray-300">
