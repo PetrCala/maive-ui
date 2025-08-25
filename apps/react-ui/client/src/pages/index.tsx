@@ -4,6 +4,8 @@ import Link from "next/link";
 import Head from "next/head";
 import { useState } from "react";
 import CONST from "@src/CONST";
+import TEXT from "@src/lib/text";
+import MDXContent from "@src/context/MDXContent";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -14,18 +16,18 @@ export default function Home() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Welcome`}</title>
       </Head>
       <main className="home-page-container">
-        <div className="max-w-2xl text-center animate-fade-in">
+        <div className="max-w-4xl text-center animate-fade-in">
           <h1 className="text-5xl font-bold mb-6 text-primary tracking-tight">
-            Welcome to {CONST.APP_DISPLAY_NAME}
+            {TEXT.home.title}
           </h1>
           <p className="text-xl mb-12 text-secondary leading-relaxed">
-            Check your data for spurious precision using the MAIVE estimator.
+            <MDXContent source={TEXT.home.description} />
           </p>
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-4 justify-center items-center mb-8">
             <Link href="/upload" className="btn-primary text-white px-8 py-4">
-              Upload Your Data
+              {TEXT.home.uploadYourData}
             </Link>
 
             <button
@@ -45,7 +47,7 @@ export default function Home() {
                   d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-              What is MAIVE?
+              {TEXT.home.whatIsMaive}
             </button>
           </div>
         </div>

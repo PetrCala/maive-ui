@@ -2,6 +2,13 @@ import type { EstimateType } from "@src/types";
 import CONST from "@src/CONST";
 
 const TEXT = {
+  home: {
+    title: "Seamless Meta-Analysis with MAIVE",
+    description:
+      "Adjust your data for publication bias, p-hacking, and spurious precision.\nPowered by the MAIVE estimator (*Nature Communications*).",
+    uploadYourData: "Upload Your Data",
+    whatIsMaive: "What is MAIVE?",
+  },
   common: {
     close: "Close",
   },
