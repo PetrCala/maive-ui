@@ -172,16 +172,16 @@ const TEXT = {
     title: "What is MAIVE?",
     overview: {
       title: "Overview",
-      text: `MAIVE (Meta-Analysis Instrumental Variable Estimator) corrects “spurious precision” — over-optimistic standard errors that arise when researchers choose methods or models that under-report uncertainty.
-      By using an instrumental-variables adjustment based on the inverse sample size, MAIVE typically **reduces meta-analytic bias** while leaving publication-bias corrections (e.g. PET-PEESE) intact.
+      text: `MAIVE (Meta-Analysis Instrumental Variable Estimator) adjusts for publication bias and p-hacking while correcting for “spurious precision” — over-optimistic standard errors that arise when researchers choose methods or models that under-report uncertainty.
+      By using an instrumental-variables adjustment based on the inverse sample size, MAIVE **reduces biases due to p-hacking** while leaving publication-bias corrections (e.g. PET-PEESE) intact.
       It is most useful for observational research, where standard errors are easiest to game and inverse-variance weights can back-fire.`,
     },
 
     howItWorks: {
       title: "How MAIVE Works",
       text: [
-        `**Step 1 (First stage).** Regress the *reported* variances on the inverse sample size: SE² = ψ₀ + ψ₁(1/N) + ν. This isolates the share of variance that honest sampling theory can explain.`,
-        `**Step 2 (Second stage).** Replace each variance in your chosen funnel-plot model (PET, PEESE, PET-PEESE, EK, …) with the fitted value from Step 1 and **drop inverse- variance weights**. The resulting IV estimator is MAIVE.`,
+        `**Step 1 (First stage).** Regress the *reported* variances on the inverse sample size: SE² = ψ₀ + ψ₁(1/N) + ν. This isolates the share of variance that is not affected by p-hacking.`,
+        `**Step 2 (Second stage).** Replace each variance in your chosen funnel-plot model (PET, PEESE, PET-PEESE, EK) with the fitted value from Step 1 and **drop or adjust inverse-variance weights**. The resulting IV estimator is MAIVE.`,
         `**Step 3 (Inference).** Report a heteroskedasticity-robust standard error, the Anderson-Rubin confidence interval (valid even when the first-stage F < 10), and the first-stage F statistic so users can judge instrument strength.`,
       ],
     },
@@ -195,7 +195,7 @@ const TEXT = {
         },
         {
           head: "Model Agnostic",
-          text: "Works as a drop-in replacement for PET-PEESE, EK, WAIVE, Trim-&-Fill, selection models, or even a simple mean.",
+          text: "Works as a drop-in replacement for current meta-analysis models based on the funnel plot..",
         },
         {
           head: "Weak-Instrument Robust",
@@ -207,7 +207,7 @@ const TEXT = {
         },
         {
           head: "Bias Reduction",
-          text: "Simulation and large-scale evidence show MAIVE pulls exaggerated effects toward zero in at least 70% of cases when F > 100.",
+          text: "Simulation and large-scale evidence show that MAIVE adjusts for most bias arising from publication bias, p-hacking, and spurious precision..",
         },
       ],
     },
@@ -221,7 +221,7 @@ const TEXT = {
         },
         {
           head: "Observational Evidence",
-          text: "Economics, psychology, education, sociology - any field where sampling decisions are complex.",
+          text: "Economics, psychology, education, medical research - any field where sampling decisions are complex.",
         },
         {
           head: "Policy Analysis",
