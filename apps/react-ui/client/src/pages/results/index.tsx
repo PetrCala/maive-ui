@@ -202,6 +202,30 @@ export default function ResultsPage() {
                       </Tooltip>
                     </div>
                   )}
+                  {parsedResults.bootCI !== "NA" &&
+                    parsedParameters.standardErrorTreatment ===
+                      CONST.STANDARD_ERROR_TREATMENTS.BOOTSTRAP.VALUE && (
+                      <div>
+                        <Tooltip
+                          content={
+                            TEXT.results.effectEstimate.metrics.bootCI.tooltip
+                          }
+                          visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
+                        >
+                          <p className="text-sm text-gray-600 dark:text-gray-300">
+                            {TEXT.results.effectEstimate.metrics.bootCI.label}
+                          </p>
+                          <p className="text-lg font-medium">
+                            {typeof parsedResults.bootCI === "object"
+                              ? // Show the first CI -> matches the R package SE behavior
+                                `[${parsedResults.bootCI[0][0].toFixed(
+                                  4,
+                                )}, ${parsedResults.bootCI[0][1].toFixed(4)}]`
+                              : "NA"}
+                          </p>
+                        </Tooltip>
+                      </div>
+                    )}
                 </div>
               </div>
 
