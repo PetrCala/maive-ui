@@ -52,6 +52,7 @@ type ModelResults = {
   funnelPlot: string; // Base64 encoded image
   funnelPlotWidth: number;
   funnelPlotHeight: number;
+  bootCI: [[number, number], [number, number]] | "NA";
 };
 
 type PingResponse = {
