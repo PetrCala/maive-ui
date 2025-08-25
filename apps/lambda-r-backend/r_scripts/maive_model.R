@@ -209,6 +209,9 @@ run_maive_model <- function(data, parameters) {
     }
   )
 
+  # Boot CI: [[a, b], [c, d]]; the result object also contains 'boot_se' and 'boot_coefs
+  boot_ci <- if (!is.null(maive_res$boot_result)) maive_res$boot_result$boot_ci else "NA"
+
   funnel_plot_data <- get_funnel_plot_data( # nolint: object_usage_linter.
     effect = df$bs,
     se = df$sebs,
@@ -236,7 +239,8 @@ run_maive_model <- function(data, parameters) {
     seInstrumented = maive_res$SE_instrumented,
     funnelPlot = funnel_plot_data$data_uri,
     funnelPlotWidth = funnel_plot_data$width_px,
-    funnelPlotHeight = funnel_plot_data$height_px
+    funnelPlotHeight = funnel_plot_data$height_px,
+    bootCI = boot_ci
   )
 
   results
