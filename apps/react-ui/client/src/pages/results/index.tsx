@@ -28,6 +28,8 @@ export default function ResultsPage() {
   const parsedParameters: ModelParameters = JSON.parse(parameters ?? "{}");
   const shouldDisplayAndersonRubinCI =
     parsedParameters?.computeAndersonRubin === true;
+  const shouldDisplayHausmanTest =
+    parsedParameters?.shouldUseInstrumenting === true;
   const estimateType = parsedParameters.modelType ?? "Unknown";
 
   if (!results) {
@@ -272,15 +274,21 @@ export default function ResultsPage() {
                       </p>
                       <p
                         className={`text-lg font-medium ${
-                          parsedResults.hausmanTest.rejectsNull
-                            ? "text-green-600"
-                            : "text-red-600"
+                          shouldDisplayHausmanTest
+                            ? parsedResults.hausmanTest.rejectsNull
+                              ? "text-green-600"
+                              : "text-red-600"
+                            : ""
                         }`}
                       >
-                        {parsedResults.hausmanTest.statistic.toFixed(4)}
-                        {parsedResults.hausmanTest.rejectsNull
-                          ? " (Rejects Null)"
-                          : " (Fails to Reject Null)"}
+                        {shouldDisplayHausmanTest
+                          ? parsedResults.hausmanTest.statistic.toFixed(4)
+                          : "NA"}
+                        {shouldDisplayHausmanTest
+                          ? parsedResults.hausmanTest.rejectsNull
+                            ? " (Rejects Null)"
+                            : " (Fails to Reject Null)"
+                          : ""}
                       </p>
                     </Tooltip>
                   </div>
@@ -299,7 +307,9 @@ export default function ResultsPage() {
                         }
                       </p>
                       <p className="text-lg font-medium">
-                        {parsedResults.hausmanTest.criticalValue.toFixed(4)}
+                        {shouldDisplayHausmanTest
+                          ? parsedResults.hausmanTest.criticalValue.toFixed(4)
+                          : "-"}
                       </p>
                     </Tooltip>
                   </div>
