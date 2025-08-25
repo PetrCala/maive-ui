@@ -46,6 +46,10 @@ const TEXT = {
       tooltip:
         "The type of model to use for the analysis. Currently, only MAIVE is supported.",
     },
+    basicOptions: {
+      bottomText:
+        "These are the essential settings for running your MAIVE analysis. Most users will only need to adjust these basic options.",
+    },
     includeStudyDummies: {
       label: "Include Study Level Fixed Effects",
       tooltip: "Whether to include study-level fixed effects in the analysis.",
@@ -67,6 +71,8 @@ const TEXT = {
     },
     advancedOptions: {
       title: "Advanced Options",
+      bottomText:
+        "Note that selecting standard weights and no instrumenting allows you to run classical PET, PEESE, PET-PEESE, and EK.",
     },
     maiveMethod: {
       label: "MAIVE Method",
