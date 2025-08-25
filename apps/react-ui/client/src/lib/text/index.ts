@@ -22,15 +22,16 @@ const TEXT = {
       columnOrder:
         "**Column order determines what each column represents** - headers are optional.",
       requiredColumns:
-        "**First 3 columns** (in order): effect estimates, standard errors, number of observations.",
-      optionalColumns: "**4th column (optional)**: study ID.",
+        "**First 3 columns** (in order): effect estimates, standard errors, sample sizes.",
+      optionalColumns:
+        "**4th column (optional)**: study ID. Recommended when some studies report more than one estimate.",
       noAdditionalColumns: "**No additional columns** are allowed.",
       effectColumn:
         "The **1st column** represents effect estimates. It must contain only numbers.",
       seColumn:
         "The **2nd column** represents standard errors. It must contain only numbers.",
       nObsColumn:
-        "The **3rd column** represents the number of observations. It must contain only numbers.",
+        "The **3rd column** represents the sample size. It must contain only numbers.",
       studyIdColumn:
         "The **4th column** (if present) represents study IDs. It can contain strings or numbers.",
       minimumRows:
