@@ -41,18 +41,19 @@ const TEXT = {
     },
   },
   model: {
-    modelType: {
-      label: "Model Type",
-      tooltip:
-        "The type of model to use for the analysis. Currently, only MAIVE is supported.",
-    },
     basicOptions: {
       bottomText:
         "These are the essential settings for running your MAIVE analysis. Most users will only need to adjust these basic options.",
     },
+    modelType: {
+      label: "Model Type",
+      tooltip:
+        "The type of model to use for the analysis. By selecting standard weights and no instrumenting in advanced options you can use this UI to run classical PET, PEESE, PET-PEESE, and EK.",
+    },
     includeStudyDummies: {
       label: "Include Study Level Fixed Effects",
-      tooltip: "Whether to include study-level fixed effects in the analysis.",
+      tooltip:
+        "Whether to include study-level dummy variables in the regression. Useful to control for study-level characteristics such as quality.",
     },
     includeStudyClustering: {
       label: "Include Study Level Clustering",
@@ -61,11 +62,13 @@ const TEXT = {
     },
     standardErrorTreatment: {
       label: "Standard Error Treatment",
-      tooltip: "The method to use for standard error treatment.",
+      tooltip:
+        "The method to use for standard error treatment. Recommended options are bootstrap or CR2, which are robust to a small number of clusters.",
     },
     computeAndersonRubin: {
       label: "Compute Anderson-Rubin Confidence Interval",
-      tooltip: "Whether to compute the Anderson-Rubin confidence interval.",
+      tooltip:
+        "Whether to compute the Anderson-Rubin Confidence Interval, which is robust to weak instruments.",
       warning:
         "This option enables heavy computation and may significantly increase processing time.",
     },
@@ -76,16 +79,17 @@ const TEXT = {
     },
     maiveMethod: {
       label: "MAIVE Method",
-      tooltip: "The method to use for the MAIVE analysis.",
+      tooltip: "The correction method to use. PET-PEESE is the default.",
     },
     weight: {
       label: "Weighting",
       tooltip:
-        "The weighting scheme to use in the analysis. No weights uses equal weights, standard weights uses inverse variance weighting, and adjusted weights uses a modified version.",
+        "The weighting scheme to use in the analysis. No Weights: default, limiting case of a random-effects model with huge heterogeneity. Standard Weights: inverse-variance weights. Instrumented weights: MAIVE-adjusted inverse-variance weights.",
     },
     shouldUseInstrumenting: {
       label: "Use Instrumenting",
-      tooltip: "Whether to use instrumenting in the analysis.",
+      tooltip:
+        "Whether to use instrumenting in the analysis. When “No” is chosen, you can estimate classical (non-MAIVE) versions of PET, PEESE, PET-PEESE, and EK.",
     },
     runModel: "Run Model",
   },
