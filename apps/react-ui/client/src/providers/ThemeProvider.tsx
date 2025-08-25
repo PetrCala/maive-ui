@@ -14,14 +14,17 @@ type Theme = "light" | "dark";
 type ThemeContextType = {
   theme: Theme;
   toggleTheme: () => void;
+  mounted: boolean;
 };
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("dark");
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     // Check if user has a theme preference in localStorage
     const savedTheme = localStorage.getItem("theme") as Theme;
     if (savedTheme) {
@@ -42,9 +45,20 @@ function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme]);
 
   const contextValue = useMemo(
-    () => ({ theme, toggleTheme }),
-    [theme, toggleTheme],
+    () => ({ theme, toggleTheme, mounted }),
+    [theme, toggleTheme, mounted],
   );
+
+  // Prevent hydration mismatch by not rendering until mounted
+  if (!mounted) {
+    return (
+      <ThemeContext.Provider value={contextValue}>
+        <div className="dark" style={{ visibility: "hidden" }}>
+          {children}
+        </div>
+      </ThemeContext.Provider>
+    );
+  }
 
   return (
     <ThemeContext.Provider value={contextValue}>
