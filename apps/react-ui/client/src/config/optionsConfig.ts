@@ -91,6 +91,12 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.includeStudyDummies.label,
         tooltip: TEXT.model.includeStudyDummies.tooltip,
         type: "yesno",
+        visibility: {
+          hideIf: (context) =>
+            !hasStudyIdColumn(
+              (context.uploadedData as { data: DataArray } | undefined)?.data,
+            ),
+        },
       },
       {
         key: "shouldUseInstrumenting",
