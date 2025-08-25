@@ -53,6 +53,7 @@ type ModelResults = {
   funnelPlotWidth: number;
   funnelPlotHeight: number;
   bootCI: [[number, number], [number, number]] | "NA";
+  bootSE: [number, number] | "NA";
 };
 
 type PingResponse = {
