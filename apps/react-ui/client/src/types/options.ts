@@ -63,6 +63,7 @@ export type OptionSectionConfig = {
   collapsible?: boolean;
   defaultOpen?: boolean;
   visibility?: OptionVisibility;
+  bottomText?: string;
 };
 
 // Complete options configuration for the model page
