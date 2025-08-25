@@ -55,8 +55,9 @@ export default function ResultsPage() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const parsedResults: ModelResults = JSON.parse(results ?? "{}");
   const shouldDisplayBootstrap =
+    CONFIG.BOOTSTRAP_ENABLED &&
     parsedParameters.standardErrorTreatment ===
-    CONST.STANDARD_ERROR_TREATMENTS.BOOTSTRAP.VALUE;
+      CONST.STANDARD_ERROR_TREATMENTS.BOOTSTRAP.VALUE;
 
   const handleRerunModel = () => {
     router.push(`/model?dataId=${dataId}&parameters=${parameters}`);
