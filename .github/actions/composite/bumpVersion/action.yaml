@@ -28,8 +28,12 @@ runs:
       with:
         node-version: "20"
 
-    - name: Install npm packages
-      run: npm install
+    - name: Install bun
+      run: npm install -g bun
+      shell: bash
+
+    - name: Install dependencies
+      run: bun install
       shell: bash
 
     - name: Set up SSH
