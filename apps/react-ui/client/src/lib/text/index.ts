@@ -11,12 +11,10 @@ const TEXT = {
     close: "Close",
   },
   citation: {
-    // reminder: {
-    //   title: "Citation Reminder",
-    //   text: "These methods are included in the MAIVE app (Irsova et al., Nature Communications, 2025). Please cite the paper if you use this tool in your research.",
-    // },
-    reminder:
-      "These methods are included in the MAIVE app (Irsova et al., Nature Communications, 2025). Please cite the paper if you use this tool in your research.",
+    reminder: {
+      title: "Citation Reminder",
+      text: "This method is included in the MAIVE app (Irsova et al., Nature Communications, 2025). Please cite the paper using the button in the footer if you use this tool in your research.",
+    },
     title: "How to Cite This App",
     description:
       "Please cite the MAIVE paper when using this tool for your research.",

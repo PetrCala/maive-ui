@@ -34,7 +34,7 @@ const CitationReminder = ({
           </div>
           <p className="text-xs text-blue-800 dark:text-blue-200">
             <span className="font-medium">Citation:</span>{" "}
-            {TEXT.citation.reminder}
+            {TEXT.citation.reminder.text}
           </p>
         </div>
       </div>
@@ -62,8 +62,8 @@ const CitationReminder = ({
           </svg>
         </div>
         <div className="text-sm text-blue-800 dark:text-blue-200">
-          <p className="font-medium mb-1">Citation Reminder</p>
-          <p>{TEXT.citation.reminder}</p>
+          <p className="font-medium mb-1">{TEXT.citation.reminder.title}</p>
+          <p>{TEXT.citation.reminder.text}</p>
         </div>
       </div>
     </div>
