@@ -3,9 +3,6 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Configure Bun
-RUN bun config set registry https://registry.npmjs.org/
-
 COPY client/package*.json ./
 
 # Use bun install with production dependencies only
