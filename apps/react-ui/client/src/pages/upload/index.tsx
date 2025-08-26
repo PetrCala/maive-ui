@@ -276,7 +276,6 @@ export default function UploadPage() {
                 {isProcessing ? "Processing..." : "Upload and Process"}
               </ActionButton>
 
-              {/* Compact Citation Box */}
               <div className="mt-6">
                 <CitationBox variant="compact" />
               </div>
