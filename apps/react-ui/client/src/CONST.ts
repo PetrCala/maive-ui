@@ -6,7 +6,7 @@ const CONST = {
 
   // Footer constants
   FOOTER: {
-    COPYRIGHT: (year: string) => `© Charles University ${year}`,
+    COPYRIGHT: "© Charles University 2025-",
     GITHUB_URL: "https://github.com/PetrCala/maive-ui",
     CONTACT_EMAIL: "61505008@fsv.cuni.cz",
     ISSUE_REPORT_URL: "https://github.com/PetrCala/maive-ui/issues",
