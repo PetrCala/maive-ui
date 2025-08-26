@@ -62,7 +62,7 @@ export default function OptionSection({
         />
       ))}
       {config.bottomText && (
-        <div className="text-sm text-gray-600 dark:text-gray-400 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+        <div className="text-sm text-gray-600 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
           {config.bottomText}
         </div>
       )}
