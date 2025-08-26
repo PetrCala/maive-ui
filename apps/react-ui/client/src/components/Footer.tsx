@@ -80,7 +80,10 @@ const Footer = ({ className = "" }: FooterProps) => {
       className={`bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-4 px-6 border-t border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between transition-colors duration-200 ${className}`}
     >
       {/* Copyright */}
-      <div className="text-sm">{CONST.FOOTER.COPYRIGHT(currentYear)}</div>
+      <div className="text-sm">
+        {CONST.FOOTER.COPYRIGHT}
+        {currentYear}
+      </div>
 
       {/* Links */}
       <div className="flex items-center space-x-6 text-sm">
