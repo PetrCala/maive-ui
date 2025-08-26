@@ -12,7 +12,6 @@ import { generateMockCSVFile, loadRandomMockCsvFile } from "@utils/mockData";
 import SuccessIndicator from "@components/SuccessIndicator";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
-import CitationBox from "@components/CitationBox";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import MDXContent from "@src/context/MDXContent";
@@ -275,10 +274,6 @@ export default function UploadPage() {
               >
                 {isProcessing ? "Processing..." : "Upload and Process"}
               </ActionButton>
-
-              <div className="mt-6">
-                <CitationBox variant="compact" />
-              </div>
             </form>
           </div>
         </div>

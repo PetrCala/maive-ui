@@ -7,7 +7,6 @@ import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
 import ActionButton from "@components/Buttons/ActionButton";
 import { GoBackButton } from "@components/Buttons";
-import CitationReminder from "@components/CitationReminder";
 import TEXT from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
@@ -17,6 +16,7 @@ import {
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import type { ModelParameters, ModelResults } from "@src/types";
+import CitationBox from "@src/components/CitationBox";
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -403,7 +403,7 @@ export default function ResultsPage() {
                   />
                 </div>
               </div>
-              <CitationReminder />
+              <CitationBox variant="compact" />
             </div>
           </div>
 

@@ -76,6 +76,14 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           value: method,
           label: method,
         })),
+        warnings: [
+          {
+            message: TEXT.citation.reminder.text,
+            type: CONST.ALERT_TYPES.INFO,
+            condition: (parameters: ModelParameters) =>
+              parameters.maiveMethod !== CONST.MAIVE_METHODS.PET_PEESE,
+          },
+        ],
       },
       {
         key: "weight",

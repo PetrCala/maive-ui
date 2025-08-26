@@ -11,7 +11,6 @@ import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
 import { OptionSection } from "@src/components/Options";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
-import CitationReminder from "@src/components/CitationReminder";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
@@ -291,7 +290,6 @@ export default function ModelPage() {
                       >
                         {TEXT.model.runModel}
                       </ActionButton>
-                      <CitationReminder />
                     </div>
                   </div>
                 </div>

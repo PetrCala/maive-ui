@@ -1,6 +1,5 @@
 import PingButton from "@src/components/Buttons/PingButton";
 import MAIVEInfoModal from "@components/MAIVEInfoModal";
-import CitationBox from "@components/CitationBox";
 import Link from "next/link";
 import Head from "next/head";
 import { useState, useEffect } from "react";
@@ -57,11 +56,6 @@ export default function Home() {
               </svg>
               {TEXT.home.whatIsMaive}
             </button>
-          </div>
-
-          {/* Citation Box */}
-          <div className="max-w-2xl mx-auto">
-            <CitationBox />
           </div>
         </div>
 
