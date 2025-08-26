@@ -8,4 +8,4 @@ window.RUNTIME_CONFIG = {
 EOF
 
 # Start Next.js
-exec npm run start
+exec bun run start
