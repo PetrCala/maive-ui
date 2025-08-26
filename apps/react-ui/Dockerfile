@@ -1,27 +1,23 @@
 # Stage 1: Build
-FROM node:21-alpine AS builder
+FROM oven/bun:1 AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Install npm with retry logic and configure npm
-RUN apk add --no-cache curl && \
-    npm config set registry https://registry.npmjs.org/ && \
-    npm config set fetch-retries 5 && \
-    npm config set fetch-retry-mintimeout 20000 && \
-    npm config set fetch-retry-maxtimeout 120000
+# Configure Bun
+RUN bun config set registry https://registry.npmjs.org/
 
 COPY client/package*.json ./
 
-# Use npm ci with retry logic and better error handling
-RUN npm ci --omit=dev --prefer-offline --no-audit || \
-    (sleep 10 && npm ci --omit=dev --prefer-offline --no-audit) || \
-    (sleep 30 && npm ci --omit=dev --prefer-offline --no-audit)
+# Use bun install with production dependencies only
+RUN bun install --production --frozen-lockfile || \
+    (sleep 10 && bun install --production --frozen-lockfile) || \
+    (sleep 30 && bun install --production --frozen-lockfile)
 
 COPY client/ ./
-RUN npm run build
+RUN bun run build
 
 # Stage 2: Run
-FROM node:21-alpine
+FROM oven/bun:1
 WORKDIR /app
 COPY --from=builder /app ./
 COPY entrypoint.sh ./
