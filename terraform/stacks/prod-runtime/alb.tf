@@ -52,14 +52,20 @@ resource "aws_lb_listener" "ui_http" {
   }
 }
 
-# HTTPS listener - only create if certificate is provided
+data "aws_acm_certificate" "ui" {
+  domain      = var.domain_name
+  statuses    = ["ISSUED"]
+  most_recent = true
+}
+
+# HTTPS listener - only create if certificate is issued
 resource "aws_lb_listener" "ui_https" {
-  count             = var.certificate_arn != "" ? 1 : 0
+  count             = data.aws_acm_certificate.ui.arn != "" ? 1 : 0
   load_balancer_arn = aws_lb.ui.arn
   port              = 443
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
-  certificate_arn   = var.certificate_arn
+  certificate_arn   = data.aws_acm_certificate.ui.arn
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.ui.arn

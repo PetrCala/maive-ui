@@ -6,7 +6,6 @@ locals {
   tfstate_name="${local.project}-tf-state"
   image_tag=get_env("TF_VAR_image_tag")
   key = "prod-runtime.tfstate"
-  certificate_arn=get_env("TF_VAR_certificate_arn", "")
 }
 
 inputs = {
@@ -17,7 +16,6 @@ inputs = {
   tfstate_name = local.tfstate_name
   image_tag = local.image_tag
   key = local.key
-  certificate_arn = local.certificate_arn
 }
 
 remote_state {

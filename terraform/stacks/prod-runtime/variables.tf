@@ -37,12 +37,6 @@ variable "ui_desired_count" {
   default     = 1
 }
 
-variable "certificate_arn" {
-  type        = string
-  description = "ARN of the SSL certificate for HTTPS. If empty, the ALB will use HTTP only (not recommended for production)"
-  default     = ""
-}
-
 variable "lambda_r_backend_function_base_name" {
   type        = string
   description = "The base name of the Lambda function"
@@ -71,4 +65,16 @@ variable "lambda_r_backend_log_retention_days" {
   type        = number
   description = "Number of days to retain Lambda R backend CloudWatch logs"
   default     = 7
+}
+
+variable "domain_name" {
+  type        = string
+  description = "The domain name of the UI"
+  default     = "spuriousprecision.com"
+}
+
+variable "additional_domains" {
+  type        = list(string)
+  description = "Additional domains of the UI"
+  default     = ["maive.eu"]
 }
