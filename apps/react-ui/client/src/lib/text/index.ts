@@ -10,6 +10,16 @@ const TEXT = {
   common: {
     close: "Close",
   },
+  citation: {
+    reminder:
+      "These methods are included in the MAIVE app (Irsova et al., Nature Communications, 2025). Please cite the paper if you use this tool in your research.",
+    title: "How to Cite This App",
+    description:
+      "Please cite the MAIVE paper when using this tool for your research.",
+    viewPaper: "View full paper →",
+    copied: "Copied!",
+    copy: "Copy",
+  },
   upload: {
     title: "Upload Your Data",
     description:

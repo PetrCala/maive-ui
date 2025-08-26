@@ -1,83 +1,105 @@
 # MAIVE UI
 
-This is a [Next.js](https://nextjs.org/) application for the MAIVE (Meta-Analysis Instrumental Variable Estimation) project, bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+A modern, responsive web interface for the MAIVE (Meta-Analysis Instrumental Variable Estimator) tool.
 
-## Development Setup
+## Features
+
+### Core Functionality
+
+- **Data Upload & Validation**: Support for CSV, XLS, and XLSX files
+- **MAIVE Analysis**: Run MAIVE models with customizable parameters
+- **Results Visualization**: View effect estimates, publication bias tests, and funnel plots
+- **Data Export**: Download results with instrumented standard errors
+
+### Citation System
+
+The MAIVE UI includes a comprehensive citation system to ensure proper attribution:
+
+#### A. "How to Cite" Box
+
+- **Landing Page**: Prominent citation box with multiple format options
+- **Footer**: Accessible citation modal from anywhere in the app
+- **Multiple Formats**: APA, BibTeX, RIS, and plain text citations
+- **Copy-to-Clipboard**: One-click copying with visual feedback
+- **Paper Link**: Direct link to the Nature Communications paper
+
+#### B. Automatic Citation Footers
+
+- **Data Downloads**: CSV and Excel exports automatically include citation footers
+- **Image Downloads**: Funnel plots include embedded citation text
+- **Citation Text**: "Citation: Irsova et al., Nature Communications, 2025"
+
+#### C. Citation Reminders
+
+- **Model Page**: Reminder when configuring PET/PEESE/EK parameters
+- **Results Page**: Citation reminder below analysis results
+- **Validation Page**: Early reminder during data validation
+- **Upload Page**: Compact citation box for immediate awareness
+
+#### Citation Information
+
+```
+Irsova, Z., Bom, P. R. D., Havranek, T., & Rachinger, H. (2025). 
+Spurious Precision in Meta-Analysis of Observational Research. 
+Nature Communications, DOI: 10.1038/s41467-025-63261-0.
+```
+
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ or Bun
-- Access to the R plumber API (either local or remote)
+- Node.js 18+
+- npm or yarn
 
-### Quick Start
-
-1. **Install dependencies:**
-
-   ```bash
-   bun install
-   # or
-   npm install
-   ```
-
-2. **Set up development environment:**
-
-   ```bash
-   # Run the setup script (recommended)
-   ./setup-dev.sh
-   
-   # Or manually create .env.local with:
-   NEXT_PUBLIC_DEV_R_API_URL=http://localhost:8787
-   ```
-
-3. **Start the development server:**
-
-   ```bash
-   bun run dev
-   # or
-   npm run dev
-   ```
-
-4. **Open [http://localhost:3000](http://localhost:3000)** with your browser to see the result.
-
-### Development Configuration
-
-The application uses runtime configuration for the R API URL. In development mode, it will:
-
-1. **First try** to use the runtime config (if available)
-2. **Fall back** to `NEXT_PUBLIC_DEV_R_API_URL` from `.env.local`
-3. **Default** to `http://localhost:8787` if neither is available
-
-#### Local Development
+### Installation
 
 ```bash
-# Use local R plumber server
-NEXT_PUBLIC_DEV_R_API_URL=http://localhost:8787
+cd apps/react-ui/client
+npm install
 ```
 
-#### Remote Development Server
+### Development
 
 ```bash
-# Use remote development server
-NEXT_PUBLIC_DEV_R_API_URL=http://your-dev-server.com
+npm run dev
 ```
 
-### Available Scripts
+### Building
 
-- `bun run dev` - Start development server
-- `bun run build` - Build for production
-- `bun run start` - Start production server
-- `bun run lint` - Run ESLint
-- `bun run test` - Run tests with Vitest
+```bash
+npm run build
+npm start
+```
 
-## Production
+## Architecture
 
-In production, the application uses runtime configuration injected by the container entrypoint script. The R API URL is set via environment variables in the ECS task definition.
+### Components
 
-## Learn More
+- **CitationBox**: Main citation component with multiple variants
+- **Citation Reminders**: Contextual reminders throughout the app
+- **Footer Integration**: Global citation access
 
-To learn more about Next.js, take a look at the following resources:
+### Utilities
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **citationUtils**: Citation text constants and helper functions
+- **dataUtils**: Enhanced with automatic citation footer insertion
+- **Text Constants**: Centralized citation messages
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+### Styling
+
+- **Responsive Design**: Works on desktop and mobile devices
+- **Dark Mode Support**: Consistent theming across all components
+- **Accessibility**: Proper contrast and keyboard navigation
+
+## Contributing
+
+When adding new features or modifying existing ones:
+
+1. Follow the established TypeScript patterns
+2. Use the centralized text constants for citation messages
+3. Ensure citation reminders are appropriately placed
+4. Test the citation system across different user workflows
+
+## License
+
+This project is licensed under the same terms as the MAIVE project.
