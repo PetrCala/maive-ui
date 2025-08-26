@@ -5,7 +5,6 @@ import Head from "next/head";
 import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
-import MDXContent from "@src/context/MDXContent";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,7 +25,10 @@ export default function Home() {
             {TEXT.home.title}
           </h1>
           <p className="text-xl mb-12 text-secondary leading-relaxed">
-            <MDXContent source={TEXT.home.description} />
+            Adjust your data for publication bias, p-hacking, and spurious
+            precision.
+            <br />
+            Powered by the MAIVE estimator (<em>Nature Communications</em>).
           </p>
 
           {/* Action Buttons */}
