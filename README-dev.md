@@ -17,7 +17,6 @@
     - [Example Output](#example-output)
     - [Access Your Application](#access-your-application)
   - [Certificate Management](#certificate-management)
-    - [Requesting a Certificate](#requesting-a-certificate)
     - [Certificate Validation](#certificate-validation)
     - [Using Certificates in Deployment](#using-certificates-in-deployment)
     - [Certificate ARN Format](#certificate-arn-format)
@@ -116,28 +115,9 @@ ui_alb_dns_name = "maive-ui-alb-1455931013.eu-central-1.elb.amazonaws.com"
 
 SSL certificates are essential for securing your application with HTTPS. This section covers how to request, manage, and deploy certificates for your MAIVE application.
 
-### Requesting a Certificate
-
-To request a new SSL certificate for your domain:
-
-```bash
-# Request a new certificate
-bun run certificate:request
-
-# Or use npm
-npm run certificate:request
-```
-
-This command will:
-
-- Prompt you for your domain name
-- Request a certificate from AWS Certificate Manager (ACM)
-- Provide validation instructions (DNS or email)
-- Output the certificate ARN when ready
-
 ### Certificate Validation
 
-After requesting a certificate, you must validate it:
+A certificate is created during each deploy. To use a certificate, you must validate it:
 
 1. **DNS Validation** (Recommended):
    - **Find the CNAME records**: After requesting a certificate, AWS will provide CNAME records that need to be added to your domain's DNS
