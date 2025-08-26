@@ -2,13 +2,18 @@ import PingButton from "@src/components/Buttons/PingButton";
 import MAIVEInfoModal from "@components/MAIVEInfoModal";
 import Link from "next/link";
 import Head from "next/head";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import MDXContent from "@src/context/MDXContent";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDevelopment, setIsDevelopment] = useState(false);
+
+  useEffect(() => {
+    setIsDevelopment(process.env.NODE_ENV === "development");
+  }, []);
 
   return (
     <>
@@ -52,7 +57,7 @@ export default function Home() {
           </div>
         </div>
 
-        {process.env.NODE_ENV === "development" && <PingButton />}
+        {isDevelopment && <PingButton />}
 
         <MAIVEInfoModal
           isOpen={isModalOpen}
