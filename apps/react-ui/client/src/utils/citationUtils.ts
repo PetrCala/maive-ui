@@ -40,7 +40,7 @@ export const addCitationFooterToText = (textContent: string): string => {
 /**
  * Generates a citation reminder for PET/PEESE/EK outputs
  */
-export const getCitationReminder = (method: string): string => {
+export const getCitationReminder = (): string => {
   return `These methods are included in the MAIVE app (${CITATION_TEXT.short}). Please cite the paper if you use this tool.`;
 };
 

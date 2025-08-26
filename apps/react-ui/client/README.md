@@ -23,13 +23,7 @@ The MAIVE UI includes a comprehensive citation system to ensure proper attributi
 - **Copy-to-Clipboard**: One-click copying with visual feedback
 - **Paper Link**: Direct link to the Nature Communications paper
 
-#### B. Automatic Citation Footers
-
-- **Data Downloads**: CSV and Excel exports automatically include citation footers
-- **Image Downloads**: Funnel plots include embedded citation text
-- **Citation Text**: "Citation: Irsova et al., Nature Communications, 2025"
-
-#### C. Citation Reminders
+#### B. Citation Reminders
 
 - **Model Page**: Reminder when configuring PET/PEESE/EK parameters
 - **Results Page**: Citation reminder below analysis results
@@ -38,7 +32,7 @@ The MAIVE UI includes a comprehensive citation system to ensure proper attributi
 
 #### Citation Information
 
-```
+```plain
 Irsova, Z., Bom, P. R. D., Havranek, T., & Rachinger, H. (2025). 
 Spurious Precision in Meta-Analysis of Observational Research. 
 Nature Communications, DOI: 10.1038/s41467-025-63261-0.

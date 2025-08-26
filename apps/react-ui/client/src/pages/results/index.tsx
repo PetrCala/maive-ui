@@ -102,7 +102,11 @@ export default function ResultsPage() {
   const handleDownloadFunnelPlot = () => {
     try {
       const filename = `funnel_plot_${Date.now()}`;
-      downloadImageAsJpg(parsedResults.funnelPlot, filename);
+      downloadImageAsJpg(
+        parsedResults.funnelPlot,
+        filename,
+        !!CONFIG.SHOULD_ADD_CITATION_TO_FUNNEL_PLOT,
+      );
     } catch (error) {
       console.error("Error downloading funnel plot:", error);
       alert("Failed to download funnel plot. Please try again.");
