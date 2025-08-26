@@ -8,7 +8,6 @@ import type { UploadedData } from "@store/dataStore";
 import { useDataStore, dataCache } from "@store/dataStore";
 import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
-import CitationReminder from "@src/components/CitationReminder";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
@@ -432,7 +431,6 @@ export default function ValidationPage() {
                   ))}
                 </div>
               </div>
-              <CitationReminder className="mt-6" />
             </div>
 
             {/* Action Buttons */}
