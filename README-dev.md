@@ -8,6 +8,10 @@
 
 #### Table of Contents
 
+- [How to run locally](#how-to-run-locally)
+  - [Prerequisites](#prerequisites)
+  - [Steps](#steps)
+  - [Notes](#notes)
 - [Deploying the application](#deploying-the-application)
   - [Initial deploy to cloud](#initial-deploy-to-cloud)
   - [Deploying the app stack](#deploying-the-app-stack)
@@ -18,15 +22,12 @@
     - [Access Your Application](#access-your-application)
   - [Certificate Management](#certificate-management)
     - [Certificate Validation](#certificate-validation)
+      - [DNS Validation](#dns-validation)
     - [Using Certificates in Deployment](#using-certificates-in-deployment)
     - [Certificate ARN Format](#certificate-arn-format)
     - [Managing Existing Certificates](#managing-existing-certificates)
     - [Troubleshooting](#troubleshooting)
   - [Destroying the architecture](#destroying-the-architecture)
-- [How to run locally](#how-to-run-locally)
-  - [Prerequisites](#prerequisites)
-  - [Steps](#steps)
-  - [Notes](#notes)
   - [🔄 Development \& Releases](#-development--releases)
     - [Quarterly Release Automation](#quarterly-release-automation)
     - [Testing the Release System](#testing-the-release-system)
@@ -51,6 +52,29 @@
   - [Rules](#rules)
   - [Examples](#examples)
 - [Useful resources](#useful-resources)
+
+# How to run locally
+
+## Prerequisites
+
+- Install `node`, `Python`, `R`, `Podman` (or `Docker`),
+- [Set up podman](https://podman.io/docs/installation) or [Set up Docker](https://docs.docker.com/engine/install/)
+- Install `podman-compose` using `brew install podman-compose`
+
+## Steps
+
+- Initialize the podman using `podman machine start`.
+- Run `npm run start:dev`. This will build all necessary images, and start up relevant containers in a development environment. For production environment, execute `npm run start:prod` instead.
+- Individual parts of the application can be accessed from your browser or from the terminal under these domains:
+  - **React application:** `127.0.0.1:3000`
+  - **R:** `127.0.0.1:8787`
+
+## Notes
+
+- You can check that the containers are up and running by calling `podman ps -a` from another terminal instance.
+- Upon pressing Ctrl+C in the terminal instance where the `start:dev` command was executed, all of the running containers will be gracefully shut down and deleted.
+- Any images built during the process will remain present. You can check the list of these images by running `podman images`. Remove these using `podman rmi [image-name]`, or `podman rmi -a`, which will remove all images.
+- You can also access any of the containers by using `localhost` as the host name, such as `localhost:3000` for the React application.
 
 # Deploying the application
 
@@ -82,7 +106,7 @@ bun run cloud:status
 # Get just the UI frontend URL
 bun run cloud:ui-url
 
-# Get just the R backend URL (internal only)
+# Get just the R lambda URL
 bun run cloud:lambda-url
 ```
 
@@ -90,26 +114,23 @@ bun run cloud:lambda-url
 
 After running `bun run cloud:status`, you'll see:
 
-- **Frontend (React UI)**: `http://<ui-alb-dns-name>` - Public access
-- **Backend (R Plumber)**: `http://<r-alb-dns-name>` - Internal access only
+- **Frontend (React UI)**: `<ui-alb-dns-name>` - Public access
+- **Backend (AWS Lambda)**: `https://<lambda-url>` - Public access
 - **Monitoring Dashboard**: CloudWatch dashboard URL
 
 ### Example Output
 
 ```bash
 $ bun run cloud:status
-monitoring_dashboard_url = "https://eu-central-1.console.aws.amazon.com/cloudwatch/home?region=eu-central-1#dashboards:name=maive-dashboard"
-r_alb_dns_name = "internal-maive-r-alb-9379613.eu-central-1.elb.amazonaws.com"
-ui_alb_dns_name = "maive-ui-alb-1455931013.eu-central-1.elb.amazonaws.com"
+lambda_backend_url = "https://<url>.lambda-url.<region>.on.aws/"
+ui_alb_dns_name = "maive-ui-alb-<alb_id>.<region>.elb.amazonaws.com"
 ```
 
 ### Access Your Application
 
 1. **Open your browser** and navigate to the UI URL
-2. **Use the R backend URL** for internal API calls
+2. **Use the R lambda backend URL** for API calls
 3. **Monitor performance** via the CloudWatch dashboard
-
-**Note**: The R backend is internal-only and cannot be accessed directly from the internet. It's designed to be called by the frontend application.
 
 ## Certificate Management
 
@@ -119,42 +140,26 @@ SSL certificates are essential for securing your application with HTTPS. This se
 
 A certificate is created during each deploy. To use a certificate, you must validate it:
 
-1. **DNS Validation** (Recommended):
-   - **Find the CNAME records**: After requesting a certificate, AWS will provide CNAME records that need to be added to your domain's DNS
-   - **Add CNAME records to your DNS provider**: Go to your domain registrar (e.g., Namecheap, GoDaddy, Route 53) or DNS provider
-   - **Wait for validation**: DNS changes can take 5-30 minutes to propagate globally
+#### DNS Validation
 
-   **Step-by-step DNS validation:**
-
-   ```bash
-   # 1. Get the validation CNAME records
-   aws acm describe-certificate \
-     --certificate-arn <your-certificate-arn> \
-     --region eu-central-1 \
-     --query 'Certificate.DomainValidationOptions[0].ResourceRecord'
-   ```
-
-   **Example output:**
-
-   ```json
-   {
-     "Name": "_acme-challenge.spuriousprecision.com",
-     "Type": "CNAME",
-     "Value": "abc123.aws-acm-validation.com"
-   }
-   ```
+- **Find the CNAME records**: After requesting a certificate, AWS will provide CNAME records that need to be added to your domain's DNS. You can find these in **AWS Certificate Manager**. For each certificate, each of it's domains will have the _CNAME name_ and _CNAME value_ - you will need these in the next step
+- **Add CNAME records to your DNS provider**: Go to your domain registrar (e.g., CloudFlare, Namecheap, GoDaddy, Route 53) or DNS provider and add the values via the examples below
+- **Wait for validation**: DNS changes can take 5-30 minutes to propagate globally
 
    **Add to your DNS provider:**
-   - **Name**: `_acme-challenge.spuriousprecision.com`
-   - **Type**: `CNAME`
-   - **Value**: `abc123.aws-acm-validation.com`
-   - **TTL**: `300` (or default)
+
+- **Name**: `_<some_id>.spuriousprecision.com.`
+- **Type**: `CNAME`
+- **Value**: `_<some_id>.<some_value>.acm-validation.aws.`
+- **Proxy status**: `DNS only`
+- **TTL**: `1` (or default)
 
    **Where to add:**
-   - **Namecheap**: Domain List → Manage → Advanced DNS → Add Record
-   - **GoDaddy**: My Domains → DNS → Add Record
-   - **Route 53**: Hosted Zones → Your Domain → Create Record
-   - **Cloudflare**: DNS → Add Record
+
+- **Namecheap**: Domain List → Manage → Advanced DNS → Add Record
+- **GoDaddy**: My Domains → DNS → Add Record
+- **Route 53**: Hosted Zones → Your Domain → Create Record
+- **Cloudflare**: DNS → Add Record
 
    **Verify validation:**
 
@@ -165,22 +170,38 @@ A certificate is created during each deploy. To use a certificate, you must vali
      --query 'CertificateSummaryList[?DomainName==`spuriousprecision.com`].Status'
    ```
 
-2. **Email Validation**:
-   - Check the email address associated with your domain
-   - Click the validation link in the email
-
 ### Using Certificates in Deployment
 
 Once you have a validated certificate:
 
-1. **Copy the certificate ARN** from AWS Console or CLI
-2. **Add it to GitHub Secrets**:
-   - Go to your repository → Settings → Secrets and variables → Actions
-   - Add/update `CERTIFICATE_ARN` with your certificate ARN
-3. **Redeploy**: The next deployment will automatically:
+1. **Redeploy**: The next deployment will automatically:
    - Create HTTPS listener on port 443
    - Add HTTP redirect listener on port 80
    - Remove HTTP-only forward listener
+
+2. **Add CNAME records to the host DNS records**: You should now go to your domain registrar and point your domain to the AWS ALB.
+
+- Add the following three records to your record list:
+  - 1.
+    - **Type**: `CNAME`
+    - **Name**: `*`
+    - **Content**: <alb-dns-name> (e.g. _maive-ui-alb-<id>.<region>.elb.amazonaws.com_)
+    - **Proxy status**: `DNS only`
+    - **TTL**: `Auto`
+  - 2.
+    - **Type**: `CNAME`
+    - **Name**: `www`
+    - **Content**: <alb-dns-name> (e.g. _maive-ui-alb-<id>.<region>.elb.amazonaws.com_)
+    - **Proxy status**: `DNS only`
+    - **TTL**: `Auto`
+  - 2.
+    - **Type**: `CNAME`
+    - **Name**: `<your-domain>` (without the www prefix, e.g. _maive.eu_)
+    - **Content**: <alb-dns-name> (e.g. _maive-ui-alb-<id>.<region>.elb.amazonaws.com_)
+    - **Proxy status**: `DNS only`
+    - **TTL**: `Auto`
+
+  You must add these records **for every domain associated with your certificate**.
 
 ### Certificate ARN Format
 
@@ -238,29 +259,6 @@ If you don't have a certificate yet, your application will deploy with HTTP-only
 ## Destroying the architecture
 
 To destroy the existing architecture, simply run `npm run cloud:destroy`. This will teardown both application, and infrastructure services.
-
-# How to run locally
-
-## Prerequisites
-
-- Install `node`, `Python`, `R`, `Podman` (or `Docker`),
-- [Set up podman](https://podman.io/docs/installation) or [Set up Docker](https://docs.docker.com/engine/install/)
-- Install `podman-compose` using `brew install podman-compose`
-
-## Steps
-
-- Initialize the podman using `podman machine start`.
-- Run `npm run start:dev`. This will build all necessary images, and start up relevant containers in a development environment. For production environment, execute `npm run start:prod` instead.
-- Individual parts of the application can be accessed from your browser or from the terminal under these domains:
-  - **React application:** `127.0.0.1:3000`
-  - **R:** `127.0.0.1:8787`
-
-## Notes
-
-- You can check that the containers are up and running by calling `podman ps -a` from another terminal instance.
-- Upon pressing Ctrl+C in the terminal instance where the `start:dev` command was executed, all of the running containers will be gracefully shut down and deleted.
-- Any images built during the process will remain present. You can check the list of these images by running `podman images`. Remove these using `podman rmi [image-name]`, or `podman rmi -a`, which will remove all images.
-- You can also access any of the containers by using `localhost` as the host name, such as `localhost:3000` for the React application.
 
 ## 🔄 Development & Releases
 
