@@ -3,7 +3,8 @@ FROM oven/bun:1 AS builder
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY client/package*.json ./
+COPY client/package.json ./
+COPY client/bun.lockb ./
 
 # Use bun install with production dependencies only
 RUN bun install --production --frozen-lockfile || \
