@@ -28,16 +28,26 @@ resource "aws_lb_target_group" "ui" {
 
 # HTTP listener - redirect to HTTPS when certificate exists, forward when it doesn't
 resource "aws_lb_listener" "ui_http" {
-  count             = var.certificate_arn != "" ? 1 : 0
   load_balancer_arn = aws_lb.ui.arn
   port              = 80
   protocol          = "HTTP"
   default_action {
-    type = "redirect"
-    redirect {
-      port        = "443"
-      protocol    = "HTTPS"
-      status_code = "HTTP_301"
+    type = var.certificate_arn != "" ? "redirect" : "forward"
+    dynamic "redirect" {
+      for_each = var.certificate_arn != "" ? [1] : []
+      content {
+        port        = "443"
+        protocol    = "HTTPS"
+        status_code = "HTTP_301"
+      }
+    }
+    dynamic "forward" {
+      for_each = var.certificate_arn == "" ? [1] : []
+      content {
+        target_group {
+          arn = aws_lb_target_group.ui.arn
+        }
+      }
     }
   }
 }
@@ -50,17 +60,6 @@ resource "aws_lb_listener" "ui_https" {
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
   certificate_arn   = var.certificate_arn
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.ui.arn
-  }
-}
-
-# HTTP listener fallback when no certificate - forward directly to target group
-resource "aws_lb_listener" "ui_http_forward" {
-  count             = var.certificate_arn == "" ? 1 : 0
-  load_balancer_arn = aws_lb.ui.arn
-  port              = 80
   default_action {
     type             = "forward"
     target_group_arn = aws_lb_target_group.ui.arn
