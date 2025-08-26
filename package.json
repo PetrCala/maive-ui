@@ -38,7 +38,6 @@
 		"cloud:status": "cd terraform/stacks/prod-runtime && terragrunt output",
 		"cloud:ui-url": "cd terraform/stacks/prod-runtime && terragrunt output -raw ui_alb_dns_name",
 		"cloud:lambda-url": "cd terraform/stacks/prod-runtime && terragrunt output -raw lambda_r_backend_url",
-		"certificate:request": "./scripts/certificate.sh",
 		"release": "./scripts/openPR.sh --release",
 		"openPR": "./scripts/openPR.sh",
 		"test-quarterly": "./scripts/test-quarterly-release.sh",

@@ -159,11 +159,9 @@ if [[ "$VALIDATE_RUNTIME" == "true" ]]; then
   
   # Runtime stack needs additional variables
   export TF_VAR_image_tag="$IMAGE_TAG"
-  export TF_VAR_certificate_arn=""
   
   info "Runtime-specific variables set:"
   info "  image_tag: $TF_VAR_image_tag"
-  info "  certificate_arn: (empty)"
   
   info "Executing: terragrunt init"
   terragrunt init
