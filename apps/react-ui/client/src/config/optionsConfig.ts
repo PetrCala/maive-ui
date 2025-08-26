@@ -8,6 +8,7 @@ import type { DataArray } from "@src/types";
 
 export const modelOptionsConfig: ModelOptionsConfig = {
   basic: {
+    bottomText: TEXT.model.basicOptions.bottomText,
     options: [
       {
         key: "modelType",
@@ -65,7 +66,6 @@ export const modelOptionsConfig: ModelOptionsConfig = {
     title: TEXT.model.advancedOptions.title,
     collapsible: true,
     defaultOpen: false,
-    bottomText: TEXT.model.advancedOptions.bottomText,
     options: [
       {
         key: "maiveMethod",

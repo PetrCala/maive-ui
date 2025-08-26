@@ -41,7 +41,7 @@ const TEXT = {
   model: {
     basicOptions: {
       bottomText:
-        "These are the essential settings for running your MAIVE analysis. Most users will only need to adjust these basic options.",
+        "Note that selecting standard weights and no instrumenting in Advanced Options allows you to run classical PET, PEESE, PET-PEESE, and EK.",
     },
     modelType: {
       label: "Model Type",
@@ -72,8 +72,6 @@ const TEXT = {
     },
     advancedOptions: {
       title: "Advanced Options",
-      bottomText:
-        "Note that selecting standard weights and no instrumenting allows you to run classical PET, PEESE, PET-PEESE, and EK.",
     },
     maiveMethod: {
       label: "MAIVE Method",
