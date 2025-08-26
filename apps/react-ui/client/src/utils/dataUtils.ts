@@ -1,6 +1,5 @@
 import type { DataArray } from "@src/types";
 import * as XLSX from "xlsx";
-import { CITATION_FOOTER } from "./citationUtils";
 
 // Generate a unique ID for uploaded data
 export const generateDataId = (): string => {
@@ -203,8 +202,6 @@ export const exportDataWithInstrumentedSE = (
           })
           .join(","),
       ),
-      // Add citation footer
-      CITATION_FOOTER,
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: mimeType });
@@ -213,12 +210,6 @@ export const exportDataWithInstrumentedSE = (
     // Export as Excel
     const workbook = XLSX.utils.book_new();
     const worksheet = XLSX.utils.json_to_sheet(exportData);
-
-    // Add citation footer as a new row
-    const citationRow = { citation: CITATION_FOOTER };
-    XLSX.utils.sheet_add_aoa(worksheet, [[""], [CITATION_FOOTER]], {
-      origin: -1,
-    });
 
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
     XLSX.writeFile(workbook, newFilename);
@@ -229,8 +220,13 @@ export const exportDataWithInstrumentedSE = (
  * Download an image from a data URI as a JPG file
  * @param dataUri - The data URI of the image (e.g., "data:image/png;base64,...")
  * @param filename - The filename for the downloaded file (without extension)
+ * @param addCitation - Whether to add a citation to the image
  */
-export const downloadImageAsJpg = (dataUri: string, filename: string): void => {
+export const downloadImageAsJpg = (
+  dataUri: string,
+  filename: string,
+  addCitation?: boolean,
+): void => {
   // Create a canvas to convert the image to JPG
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -250,28 +246,31 @@ export const downloadImageAsJpg = (dataUri: string, filename: string): void => {
     // Draw the image on the canvas
     ctx.drawImage(img, 0, 0);
 
-    // Add citation text to the bottom of the image
-    ctx.fillStyle = "#6B7280"; // Gray color for citation
-    ctx.font = "12px Arial";
-    ctx.textAlign = "center";
+    if (addCitation) {
+      // Add citation text to the top of the image
+      ctx.fillStyle = "#6B7280"; // Gray color for citation
+      ctx.font = "12px Arial";
+      ctx.textAlign = "center";
 
-    // Add citation text at the bottom
-    const citationText = "Citation: Irsova et al., Nature Communications, 2025";
-    const textWidth = ctx.measureText(citationText).width;
-    const padding = 20;
+      // Add citation text at the top
+      const citationText =
+        "Citation: Irsova et al., Nature Communications, 2025";
+      const textWidth = ctx.measureText(citationText).width;
+      const padding = 20;
 
-    // Add background rectangle for citation
-    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-    ctx.fillRect(
-      (canvas.width - textWidth) / 2 - padding,
-      canvas.height - 40,
-      textWidth + padding * 2,
-      30,
-    );
+      // Add background rectangle for citation
+      ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+      ctx.fillRect(
+        (canvas.width - textWidth) / 2 - padding,
+        10,
+        textWidth + padding * 2,
+        30,
+      );
 
-    // Add citation text
-    ctx.fillStyle = "#374151";
-    ctx.fillText(citationText, canvas.width / 2, canvas.height - 20);
+      // Add citation text
+      ctx.fillStyle = "#374151";
+      ctx.fillText(citationText, canvas.width / 2, 30);
+    }
 
     // Convert to JPG blob
     canvas.toBlob(
