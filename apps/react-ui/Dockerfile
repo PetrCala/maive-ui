@@ -18,6 +18,7 @@ RUN bun run build
 FROM oven/bun:1
 WORKDIR /app
 COPY --from=builder /app ./
+RUN bun install
 COPY entrypoint.sh ./
 EXPOSE 3000
 ENTRYPOINT ["./entrypoint.sh"]
