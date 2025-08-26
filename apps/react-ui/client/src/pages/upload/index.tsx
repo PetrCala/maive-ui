@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import type { FileRejection } from "react-dropzone";
@@ -21,6 +21,12 @@ import CONFIG from "@src/CONFIG";
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isDevelopment, setIsDevelopment] = useState(false);
+
+  useEffect(() => {
+    setIsDevelopment(process.env.NODE_ENV === "development");
+  }, []);
+
   const router = useRouter();
   const { setUploadedData } = useDataStore();
 
@@ -226,7 +232,7 @@ export default function UploadPage() {
                       </div>
                     )}
                   </div>
-                  {process.env.NODE_ENV === "development" &&
+                  {isDevelopment &&
                     (!selectedFile ? (
                       <button
                         type="button"
