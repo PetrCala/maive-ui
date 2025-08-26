@@ -4,7 +4,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 COPY client/package.json ./
-COPY client/bun.lockb ./
+COPY client/bun.lock ./
 
 # Use bun install with production dependencies only
 RUN bun install --production --frozen-lockfile || \
