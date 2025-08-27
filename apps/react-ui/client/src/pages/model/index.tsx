@@ -31,7 +31,7 @@ export default function ModelPage() {
     includeStudyDummies: false,
     // The study clustering and error treatment are later automatically set to correct values if the data has a study ID column
     includeStudyClustering: false,
-    standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
+    standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED_CR2.VALUE,
     computeAndersonRubin: false,
     maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
     weight: CONST.WEIGHT_OPTIONS.NO_WEIGHTS.VALUE,
@@ -66,11 +66,15 @@ export default function ModelPage() {
 
       // Only set default parameters if no search params exist
       if (!searchParams?.get("parameters")) {
-        if (hasStudyIdColumn(data.data)) {
+        if (
+          hasStudyIdColumn(data.data) &&
+          CONFIG.SHOULD_USE_BOOTSTRAP_SE_AS_DEFAULT
+        ) {
           setParameters((prev) => ({
             ...prev,
             includeStudyClustering: true,
-            standardErrorTreatment: "bootstrap",
+            standardErrorTreatment:
+              CONST.STANDARD_ERROR_TREATMENTS.BOOTSTRAP.VALUE,
           }));
         }
       }
