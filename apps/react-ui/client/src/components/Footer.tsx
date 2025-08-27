@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
 import CitationBox from "./CitationBox";
+import InvisibleLink from "./InvisibleLink";
 
 type FooterProps = {
   className?: string;
@@ -90,6 +91,12 @@ const Footer = ({ className = "" }: FooterProps) => {
         <div className="text-sm">
           {CONST.FOOTER.COPYRIGHT}
           {currentYear}
+          <span className="text-gray-500 dark:text-gray-400 ml-2">
+            • Created by{" "}
+            <InvisibleLink href={CONST.CREATOR_URL}>
+              {CONST.CREATOR}
+            </InvisibleLink>
+          </span>
         </div>
 
         {/* Links */}

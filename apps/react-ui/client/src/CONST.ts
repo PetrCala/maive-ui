@@ -3,6 +3,8 @@ const CONST = {
   MAIVE_PAPER_URL: "https://meta-analysis.cz/maive/maive.pdf",
   MAIVE_GITHUB_URL: "https://github.com/meta-analysis-es/maive",
   APP_DISPLAY_NAME: "MAIVE UI",
+  CREATOR: "Petr Čala",
+  CREATOR_URL: "https://github.com/PetrCala",
 
   // Footer constants
   FOOTER: {
