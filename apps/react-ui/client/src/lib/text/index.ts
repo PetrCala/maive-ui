@@ -61,9 +61,9 @@ const TEXT = {
         "The type of model to use for the analysis. By selecting standard weights and no instrumenting in advanced options you can use this UI to run classical PET, PEESE, PET-PEESE, and EK.",
     },
     includeStudyDummies: {
-      label: "Include Study Level Fixed Effects",
+      label: "Fixed-Intercept Multilevel",
       tooltip:
-        "Whether to include study-level dummy variables in the regression. Useful to control for study-level characteristics such as quality.",
+        "Controls for within-study dependence by giving each study its own intercept. Accounts for unobserved study-level factors without requiring random-effects modeling.",
     },
     includeStudyClustering: {
       label: "Include Study Level Clustering",
