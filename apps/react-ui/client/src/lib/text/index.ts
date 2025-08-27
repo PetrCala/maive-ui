@@ -212,7 +212,7 @@ const TEXT = {
         },
         {
           head: "Model Agnostic",
-          text: "Works as a drop-in replacement for current meta-analysis models based on the funnel plot..",
+          text: "Works as a drop-in replacement for current meta-analysis models based on the funnel plot.",
         },
         {
           head: "Weak-Instrument Robust",
@@ -224,7 +224,7 @@ const TEXT = {
         },
         {
           head: "Bias Reduction",
-          text: "Simulation and large-scale evidence show that MAIVE adjusts for most bias arising from publication bias, p-hacking, and spurious precision..",
+          text: "Simulation and large-scale evidence show that MAIVE adjusts for most bias arising from publication bias, p-hacking, and spurious precision.",
         },
       ],
     },
