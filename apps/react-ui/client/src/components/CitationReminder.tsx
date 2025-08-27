@@ -5,16 +5,22 @@ import TEXT from "@src/lib/text";
 type CitationReminderProps = {
   className?: string;
   variant?: "default" | "compact";
+  useBlueStyling?: boolean;
 };
 
 const CitationReminder = ({
   className = "",
   variant = "default",
+  useBlueStyling = false,
 }: CitationReminderProps) => {
   if (variant === "compact") {
     return (
       <div
-        className={`p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg ${className}`}
+        className={`p-3 ${
+          useBlueStyling
+            ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+            : "bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
+        } rounded-lg ${className}`}
       >
         <div className="flex items-center space-x-2">
           <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
@@ -32,7 +38,13 @@ const CitationReminder = ({
               />
             </svg>
           </div>
-          <p className="text-xs text-blue-800 dark:text-blue-200">
+          <p
+            className={`text-xs ${
+              useBlueStyling
+                ? "text-blue-800 dark:text-blue-200"
+                : "text-gray-700 dark:text-gray-300"
+            }`}
+          >
             <span className="font-medium">Citation:</span>{" "}
             {TEXT.citation.reminder.text}
           </p>
@@ -43,7 +55,11 @@ const CitationReminder = ({
 
   return (
     <div
-      className={`p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg ${className}`}
+      className={`p-4 ${
+        useBlueStyling
+          ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+          : "bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
+      } rounded-lg ${className}`}
     >
       <div className="flex items-start space-x-3">
         <div className="flex-shrink-0 text-blue-600 dark:text-blue-400">
@@ -61,7 +77,13 @@ const CitationReminder = ({
             />
           </svg>
         </div>
-        <div className="text-sm text-blue-800 dark:text-blue-200">
+        <div
+          className={`text-sm ${
+            useBlueStyling
+              ? "text-blue-800 dark:text-blue-200"
+              : "text-gray-700 dark:text-gray-300"
+          }`}
+        >
           <p className="font-medium mb-1">{TEXT.citation.reminder.title}</p>
           <p>{TEXT.citation.reminder.text}</p>
         </div>

@@ -10,12 +10,14 @@ type CitationBoxProps = {
   className?: string;
   variant?: "compact" | "full";
   onClose?: () => void;
+  useBlueStyling?: boolean;
 };
 
 const CitationBox = ({
   className = "",
   variant = "full",
   onClose,
+  useBlueStyling = false,
 }: CitationBoxProps) => {
   const [copiedFormat, setCopiedFormat] = useState<CitationFormat | null>(null);
 
@@ -99,10 +101,20 @@ ER  -`,
   if (variant === "compact") {
     return (
       <div
-        className={`bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 ${className}`}
+        className={`${
+          useBlueStyling
+            ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+            : "bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
+        } rounded-lg p-4 ${className}`}
       >
         <div className="flex items-center justify-between">
-          <div className="text-sm text-blue-800 dark:text-blue-200">
+          <div
+            className={`text-sm ${
+              useBlueStyling
+                ? "text-blue-800 dark:text-blue-200"
+                : "text-gray-700 dark:text-gray-300"
+            }`}
+          >
             <span className="font-medium">Citation:</span> Irsova et al., Nature
             Communications, 2025.
           </div>
@@ -119,7 +131,11 @@ ER  -`,
 
   return (
     <div
-      className={`bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-6 ${className}`}
+      className={`${
+        useBlueStyling
+          ? "bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800"
+          : "bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800/50 dark:to-gray-700/50 border border-gray-200 dark:border-gray-700"
+      } rounded-xl p-6 ${className}`}
     >
       <div className="flex items-start justify-between mb-4">
         <div>

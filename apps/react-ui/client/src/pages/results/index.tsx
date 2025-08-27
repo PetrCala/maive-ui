@@ -407,7 +407,7 @@ export default function ResultsPage() {
                   />
                 </div>
               </div>
-              <CitationBox variant="compact" />
+              <CitationBox variant="compact" useBlueStyling />
             </div>
           </div>
 
