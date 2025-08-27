@@ -53,7 +53,7 @@ const CONST = {
     },
     CLUSTERED_CR2: {
       VALUE: "clustered_cr2",
-      TEXT: "Clustered using CR2",
+      TEXT: "Clustered CR2",
     },
     BOOTSTRAP: {
       VALUE: "bootstrap",
