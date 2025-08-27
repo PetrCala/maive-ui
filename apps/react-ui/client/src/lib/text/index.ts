@@ -37,7 +37,7 @@ const TEXT = {
         "**4th column (optional)**: study ID. Recommended when some studies report more than one estimate.",
       noAdditionalColumns: "**No additional columns** are allowed.",
       effectColumn:
-        "The **1st column** represents effect estimates. It must contain only numbers.",
+        "The **1st column** represents effect estimates (standardized effects or regression coefficients). It must contain only numbers.",
       seColumn:
         "The **2nd column** represents standard errors. It must contain only numbers.",
       nObsColumn:
