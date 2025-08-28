@@ -107,7 +107,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   ## Add fitted curve
   a <- intercept
   b <- slope_coef # was intercept_se, incorrectly
-  se.grid <- seq(min(se), max(se), length = 200)
+  se.grid <- seq(0, max(se), length = 200)
   x.pred <- a + b * se.grid^p
 
   lines(x.pred, se.grid, lwd = 2, col = "black") # fitted
