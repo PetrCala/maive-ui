@@ -21,8 +21,8 @@ get_funnel_plot_opts <- function() {
     ci_shades = c("white", "gray55", "gray75"),
     legend_texts = c(
       "Base effect",
-      "Adjusted effect",
-      "MAIVE estimate",
+      "Adjusted SE",
+      "MAIVE fit",
       "95% CI bounds"
     ),
     pt_cex = 2,
