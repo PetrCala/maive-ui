@@ -219,6 +219,7 @@ run_maive_model <- function(data, parameters) {
     se_adjusted = maive_res$SE_instrumented,
     intercept = maive_res$beta,
     intercept_se = maive_res$SE,
+    slope_coef = maive_res$slope_coef,
     is_quaratic_fit = is_quadratic_fit
   )
 

@@ -63,9 +63,10 @@ get_funnel_padding <- function(effect) {
 #' @param intercept [numeric] The intercept of the funnel plot. If NULL, no intercept is plotted.
 #' @param intercept_se [numeric] The standard error of the intercept. Must be provided only if intercept is provided.
 #' @param is_quaratic_fit [logical] Whether the fit is quadratic. If TRUE, the fit is quadratic. If FALSE, the fit is linear.
+#' @param slope_coef [numeric] The slope coefficient of the funnel plot. If NULL, no slope coefficient is plotted.
 #' @return A plot object
 #' @export
-get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept_se = NULL, is_quaratic_fit = FALSE) {
+get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept_se = NULL, slope_coef = NULL, is_quaratic_fit = FALSE) {
   funnel_opts <- get_funnel_plot_opts()
 
   x <- c(effect, effect)
@@ -105,7 +106,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
 
   ## Add fitted curve
   a <- intercept
-  b <- intercept_se
+  b <- slope_coef # was intercept_se, incorrectly
   se.grid <- seq(min(se), max(se), length = 200)
   x.pred <- a + b * se.grid^p
 
