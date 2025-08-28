@@ -150,7 +150,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
 #' @export
 get_plot_dims <- function(..., res = PLOT_RES) {
   get_funnel_plot(...)
-  plot_dims <- par("din") # current device size in inches
+  plot_dims <- par("din") # current device size in inches # nolint: undesirable_function_linter.
   width_px <- plot_dims[1] * res
   height_px <- plot_dims[2] * res
   list(width_px = width_px, height_px = height_px)
