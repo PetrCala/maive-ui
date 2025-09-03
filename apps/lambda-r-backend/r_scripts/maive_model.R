@@ -132,7 +132,7 @@ run_maive_model <- function(data, parameters) {
     "EK" = 4
   )
   weight <- switch(params$weight,
-    "no_weights" = 0,
+    "equal_weights" = 0,
     "standard_weights" = 1,
     "adjusted_weights" = 2
   )
@@ -172,7 +172,7 @@ run_maive_model <- function(data, parameters) {
       maive_res <- MAIVE::maive(
         dat = df,
         method = maive_method,
-        weight = weight, # no weights=0 (default), standard weights=1, adjusted weights=2
+        weight = weight, # equal weights=0 (default), standard weights=1, adjusted weights=2
         instrument = instrument, # no=0, yes=1 (default)
         studylevel = studylevel,
         SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)

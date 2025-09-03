@@ -38,6 +38,6 @@ DEFAULT_PARAMETERS <- list(
   standardErrorTreatment = "clustered_cr2",
   computeAndersonRubin = FALSE,
   maiveMethod = "PET-PEESE",
-  weight = "no_weights",
+  weight = "equal_weights",
   shouldUseInstrumenting = TRUE
 )

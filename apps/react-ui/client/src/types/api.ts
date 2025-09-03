@@ -19,7 +19,7 @@ type ModelParameters = {
     | "bootstrap";
   computeAndersonRubin: boolean;
   maiveMethod: "PET" | "PEESE" | "PET-PEESE" | "EK";
-  weight: "no_weights" | "standard_weights" | "adjusted_weights";
+  weight: "equal_weights" | "standard_weights" | "adjusted_weights";
   shouldUseInstrumenting: boolean;
 };
 

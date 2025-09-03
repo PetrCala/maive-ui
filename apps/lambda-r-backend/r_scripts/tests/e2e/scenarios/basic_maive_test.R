@@ -79,7 +79,7 @@ test_parameter_combinations <- function() {
         standardErrorTreatment = "clustered_cr2",
         computeAndersonRubin = TRUE,
         maiveMethod = "PET",
-        weight = "no_weights",
+        weight = "equal_weights",
         shouldUseInstrumenting = TRUE
       )
     ),
