@@ -68,10 +68,10 @@ export default function Home() {
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex gap-2 w-2/3"
+                className="inline-flex w-2/3"
               >
                 <svg
-                  className="w-5 h-5"
+                  className="w-5 h-5 mr-2"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
