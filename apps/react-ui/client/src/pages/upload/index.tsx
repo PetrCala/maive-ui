@@ -14,6 +14,8 @@ import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import MDXContent from "@src/context/MDXContent";
 import CONFIG from "@src/CONFIG";
+import { getRandomMockCsvFile } from "@src/utils/mockCsvFiles";
+import { generateMockCSVFile } from "@src/utils/mockData";
 
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -70,36 +72,24 @@ export default function UploadPage() {
     maxSize: 10 * 1024 * 1024, // 10MB in bytes
   });
 
-  const handleGenerateMockData = async () => {
+  const handleGenerateMockData = () => {
     try {
-      const uploadedData = await DataProcessingService.loadGeneratedMockData();
-      // Create a File object from the processed data for display
-      const blob = new Blob([uploadedData.base64Data.split(",")[1]], {
-        type: "text/csv",
-      });
-      const file = new File([blob], uploadedData.filename, {
-        type: "text/csv",
-      });
-      setSelectedFile(file);
+      const mockFile = generateMockCSVFile();
+      setSelectedFile(mockFile);
     } catch (error) {
       console.error("Error generating mock data:", error);
     }
   };
 
-  const handleLoadRandomMockCsv = async () => {
+  const handleLoadRandomMockCsv = () => {
     try {
-      const uploadedData = await DataProcessingService.loadRandomMockData();
-      const blob = new Blob([uploadedData.base64Data.split(",")[1]], {
-        type: "text/csv",
-      });
-      const file = new File([blob], uploadedData.filename, {
-        type: "text/csv",
-      });
+      const randomFile = getRandomMockCsvFile();
+      const blob = new Blob([randomFile.content], { type: "text/csv" });
+      const file = new File([blob], randomFile.filename, { type: "text/csv" });
       setSelectedFile(file);
     } catch (error) {
       console.error("Error loading random mock CSV:", error);
-      // Fallback to generated mock data
-      await handleGenerateMockData();
+      handleGenerateMockData();
     }
   };
 
