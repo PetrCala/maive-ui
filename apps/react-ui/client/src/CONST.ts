@@ -1,18 +1,23 @@
 const CONST = {
-  MAIVE_URL: "https://meta-analysis.cz/maive/",
-  MAIVE_PAPER_URL: "https://meta-analysis.cz/maive/maive.pdf",
-  MAIVE_GITHUB_URL: "https://github.com/meta-analysis-es/maive",
   APP_DISPLAY_NAME: "MAIVE UI",
-  CREATOR: "Petr Čala",
-  CREATOR_URL: "https://github.com/PetrCala",
 
-  // Footer constants
-  FOOTER: {
-    COPYRIGHT: "© Charles University 2025-",
-    GITHUB_URL: "https://github.com/PetrCala/maive-ui",
-    CONTACT_EMAIL: "61505008@fsv.cuni.cz",
-    CONTACT_URL: "https://irsova.com/",
-    ISSUE_REPORT_URL: "https://github.com/PetrCala/maive-ui/issues",
+  CREATOR: "Petr Čala",
+  CREATOR_EMAIL: "61505008@fsv.cuni.cz",
+  INSTITUTION_NAME: "Charles University",
+
+  LINKS: {
+    MAIVE: {
+      WEBSITE: "https://meta-analysis.cz/maive/",
+      PAPER: "https://meta-analysis.cz/maive/maive.pdf",
+      GITHUB: "https://github.com/meta-analysis-es/maive",
+    },
+    APP_GITHUB: {
+      HOMEPAGE: "https://github.com/PetrCala/maive-ui",
+      ISSUES: "https://github.com/PetrCala/maive-ui/issues",
+    },
+    CREATOR_URL: "https://github.com/PetrCala",
+    CONTACT_WEBSITE_URL: "https://irsova.com/",
+    INSTITUTION_URL: "https://ies.fsv.cuni.cz/en",
   },
 
   MODEL_TYPES: {
