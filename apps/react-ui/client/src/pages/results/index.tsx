@@ -415,7 +415,7 @@ export default function ResultsPage() {
             <div className="space-x-4">
               <ActionButton
                 onClick={handleExportData}
-                variant="success"
+                variant="purple"
                 size="md"
               >
                 Export Data with Instrumented SE

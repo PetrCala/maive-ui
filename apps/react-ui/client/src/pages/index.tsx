@@ -50,14 +50,14 @@ export default function Home() {
                 isLoading={isLoadingDemo}
                 setIsLoading={setIsLoadingDemo}
                 size="md"
-                className="w-3/4"
+                className="w-2/3"
               />
 
               <ActionButton
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex gap-2 w-3/4"
+                className="inline-flex gap-2 w-2/3"
               >
                 <svg
                   className="w-5 h-5"

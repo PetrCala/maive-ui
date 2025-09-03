@@ -37,7 +37,7 @@ export default function DemoButton({
       onClick={() => {
         void handleDemoClick();
       }}
-      variant="success"
+      variant="purple"
       size={size}
       disabled={isLoading}
       className={className}
