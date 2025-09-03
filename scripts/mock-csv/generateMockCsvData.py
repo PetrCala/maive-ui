@@ -29,7 +29,7 @@ def identify_columns(headers: List[str]) -> Tuple[Optional[int], Optional[int], 
     se_col = None
     n_col = None
     study_col = None
-    
+
     # First pass: look for exact matches and specific patterns
     for i, header in enumerate(headers):
         header_lower = header.lower().strip()
@@ -55,9 +55,9 @@ def identify_columns(headers: List[str]) -> Tuple[Optional[int], Optional[int], 
         
         # Study ID column
         if study_col is None:
-            if any(term in header_lower for term in ['study', 'study_id', 'id', 'group', 'cluster', 'study id', 'studyid']):
+            if any(term in header_lower for term in ['study', 'study_id', 'group', 'cluster', 'study id', 'studyid']):
                 study_col = i
-    
+
     # Second pass: if we still haven't found n_col, look for 'n' in column names
     if n_col is None:
         for i, header in enumerate(headers):
@@ -133,7 +133,7 @@ def process_csv_file(file_path: Path, file_index: int) -> Optional[Dict]:
             
             # Process data rows and assign probabilistic study IDs
             processed_rows = []
-            study_id = 1
+            random_study_id = 1
             # Probability of incrementing study ID (adjust this value to control grouping)
             increment_probability = 0.3  # 30% chance to increment to next study
             
@@ -146,14 +146,15 @@ def process_csv_file(file_path: Path, file_index: int) -> Optional[Dict]:
                     se = float(row[se_col])
                     n = int(float(row[n_col]))
 
-                    if study_col is not None:
-                        current_study_id = row[study_col]
-                    else:
-                        current_study_id = study_id
-                    
-                        # Probabilistically increment study ID for next iteration
-                        if random.random() < increment_probability:
-                            study_id += 1
+                    current_study_id = random_study_id if study_col is None else row[study_col]
+
+                    # Ensure commas don't clash with CSV delimiters
+                    if isinstance(current_study_id, str):
+                        current_study_id = current_study_id.replace(',', ';')
+
+                    # Probabilistically increment study ID for next iteration
+                    if random.random() < increment_probability:
+                        random_study_id += 1
                         
                     # Format row: effect,se,n,study_id
                     processed_rows.append(f"{effect},{se},{n},{current_study_id}")
