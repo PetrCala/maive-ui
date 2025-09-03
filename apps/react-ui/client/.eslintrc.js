@@ -186,4 +186,5 @@ module.exports = {
 	},
 
 	overrides: [],
+	ignorePatterns: ["vitest.config.ts"],
 }
