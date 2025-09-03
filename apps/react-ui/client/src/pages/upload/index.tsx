@@ -6,9 +6,7 @@ import { useRouter } from "next/navigation";
 import type { FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
 import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
-import { useDataStore, dataCache } from "@store/dataStore";
-import { generateDataId, processUploadedFile } from "@utils/dataUtils";
-import { generateMockCSVFile, loadRandomMockCsvFile } from "@utils/mockData";
+import { DataProcessingService } from "@src/services/dataProcessingService";
 import SuccessIndicator from "@components/SuccessIndicator";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
@@ -28,7 +26,6 @@ export default function UploadPage() {
   }, []);
 
   const router = useRouter();
-  const { setUploadedData } = useDataStore();
 
   const onDrop = (acceptedFiles: File[]) => {
     if (acceptedFiles[0]) {
@@ -74,20 +71,37 @@ export default function UploadPage() {
     maxSize: 10 * 1024 * 1024, // 10MB in bytes
   });
 
-  const handleGenerateMockData = () => {
-    const mockFile = generateMockCSVFile();
-    setSelectedFile(mockFile);
+  const handleGenerateMockData = async () => {
+    try {
+      const uploadedData = await DataProcessingService.loadGeneratedMockData();
+      // Create a File object from the processed data for display
+      const blob = new Blob([uploadedData.base64Data.split(",")[1]], {
+        type: "text/csv",
+      });
+      const file = new File([blob], uploadedData.filename, {
+        type: "text/csv",
+      });
+      setSelectedFile(file);
+    } catch (error) {
+      console.error("Error generating mock data:", error);
+    }
   };
 
-  const handleLoadRandomMockCsv = () => {
+  const handleLoadRandomMockCsv = async () => {
     try {
-      const mockFile = loadRandomMockCsvFile();
-      setSelectedFile(mockFile);
+      const uploadedData = await DataProcessingService.loadRandomMockData();
+      // Create a File object from the processed data for display
+      const blob = new Blob([uploadedData.base64Data.split(",")[1]], {
+        type: "text/csv",
+      });
+      const file = new File([blob], uploadedData.filename, {
+        type: "text/csv",
+      });
+      setSelectedFile(file);
     } catch (error) {
       console.error("Error loading random mock CSV:", error);
       // Fallback to generated mock data
-      const mockFile = generateMockCSVFile();
-      setSelectedFile(mockFile);
+      await handleGenerateMockData();
     }
   };
 
@@ -101,24 +115,9 @@ export default function UploadPage() {
 
         setIsProcessing(true);
         try {
-          // Process the uploaded file
-          const { data, base64Data } = await processUploadedFile(selectedFile);
-
-          // Generate unique ID for this data
-          const dataId = generateDataId();
-
-          // Create the uploaded data object
-          const uploadedData = {
-            id: dataId,
-            filename: selectedFile.name,
-            data: data,
-            base64Data: base64Data,
-            uploadedAt: new Date(),
-          };
-
-          // Store in Zustand store and cache
-          setUploadedData(uploadedData);
-          dataCache.set(dataId, uploadedData);
+          // Process and store the file using the unified service
+          const dataId =
+            await DataProcessingService.processAndStoreFile(selectedFile);
 
           // Navigate to validation page with data ID
           router.push(`/validation?dataId=${dataId}`);
@@ -132,7 +131,7 @@ export default function UploadPage() {
         }
       })();
     },
-    [selectedFile, setUploadedData, router],
+    [selectedFile, router],
   );
 
   const getFileIconComponent = (filename: string, size = 24) => {
@@ -236,7 +235,9 @@ export default function UploadPage() {
                     (!selectedFile ? (
                       <button
                         type="button"
-                        onClick={handleGenerateMockData}
+                        onClick={() => {
+                          void handleGenerateMockData();
+                        }}
                         className="ml-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors duration-200 flex-shrink-0 interactive dark:text-green-400 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30"
                       >
                         Generate Mock Data
