@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import OptionRenderer from "@src/components/Options/OptionRenderer";
 import type { OptionSectionConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
@@ -10,6 +10,7 @@ import {
   DEFAULT_MODEL_PARAMETERS,
   ADVANCED_OPTION_KEYS,
 } from "@src/constants/defaultParameters";
+import TEXT from "@src/lib/text";
 
 type OptionSectionProps = {
   config: OptionSectionConfig;
@@ -26,19 +27,20 @@ export default function OptionSection({
   tooltipsEnabled = true,
   context = {},
 }: OptionSectionProps) {
-  // Determine initial open state: open if advanced options changed, otherwise use config default
-  const initialOpenState = useMemo(() => {
-    if (config.title === "Advanced Options") {
-      // Check if any advanced options differ from defaults (only evaluated once)
+  const [isOpen, setIsOpen] = useState(config.defaultOpen ?? true);
+  const hasUserToggled = useRef(false);
+
+  useEffect(() => {
+    if (
+      config.title === TEXT.model.advancedOptions.title &&
+      !hasUserToggled.current
+    ) {
       const hasAdvancedOptionsChanged = ADVANCED_OPTION_KEYS.some(
         (key) => parameters[key] !== DEFAULT_MODEL_PARAMETERS[key],
       );
-      return hasAdvancedOptionsChanged;
+      setIsOpen(hasAdvancedOptionsChanged);
     }
-    return config.defaultOpen ?? true;
-  }, [config.title, config.defaultOpen, parameters]);
-
-  const [isOpen, setIsOpen] = useState(initialOpenState);
+  }, [config.title, parameters]);
 
   const fullContext: OptionContext = {
     parameters,
@@ -57,6 +59,7 @@ export default function OptionSection({
 
   const toggleOpen = () => {
     if (config.collapsible) {
+      hasUserToggled.current = true;
       setIsOpen((prev) => !prev);
     }
   };
