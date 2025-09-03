@@ -32,9 +32,9 @@ export default function Header({
 
       {/* Right side - icons */}
       <div className="flex items-center gap-2">
-        <ThemeToggle />
-        {!!showHelpIcon && <HelpIcon />}
-        {!!showHomeIcon && <HomeIcon />}
+        <ThemeToggle className="icon-header" />
+        {!!showHelpIcon && <HelpIcon className="icon-header" />}
+        {!!showHomeIcon && <HomeIcon className="icon-header" />}
       </div>
     </header>
   );
