@@ -31,9 +31,9 @@ const CONST = {
     SUCCESS: "success",
   },
   WEIGHT_OPTIONS: {
-    NO_WEIGHTS: {
-      VALUE: "no_weights",
-      TEXT: "No Weights",
+    EQUAL_WEIGHTS: {
+      VALUE: "equal_weights",
+      TEXT: "Equal Weights",
     },
     STANDARD_WEIGHTS: {
       VALUE: "standard_weights",

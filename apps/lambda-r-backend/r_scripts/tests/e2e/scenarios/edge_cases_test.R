@@ -263,7 +263,7 @@ test_invalid_parameters <- function() {
         standardErrorTreatment = "clustered_cr2",
         computeAndersonRubin = TRUE,
         maiveMethod = "INVALID_METHOD",
-        weight = "no_weights",
+        weight = "equal_weights",
         shouldUseInstrumenting = TRUE
       ),
       expected_error = TRUE

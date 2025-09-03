@@ -34,7 +34,7 @@ export default function ModelPage() {
     standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED_CR2.VALUE,
     computeAndersonRubin: false,
     maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
-    weight: CONST.WEIGHT_OPTIONS.NO_WEIGHTS.VALUE,
+    weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
     shouldUseInstrumenting: true,
   });
   const router = useRouter();
