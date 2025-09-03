@@ -76,5 +76,5 @@ variable "domain_name" {
 variable "additional_domains" {
   type        = list(string)
   description = "Additional domains of the UI"
-  default     = ["maive.eu", "*.maive.eu", "*.spuriousprecision.com"]
+  default     = ["maive.eu", "*.maive.eu", "*.spuriousprecision.com", "easymeta.org", "*.easymeta.org"]
 }
