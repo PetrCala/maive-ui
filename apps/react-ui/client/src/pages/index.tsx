@@ -6,7 +6,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
-import { DemoService } from "@src/services/demoService";
+import { DataProcessingService } from "@src/services/dataProcessingService";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -21,7 +21,10 @@ export default function Home() {
   const handleDemoClick = async () => {
     setIsLoadingDemo(true);
     try {
-      const dataId = await DemoService.loadAndStoreDemoData();
+      const dataId =
+        await DataProcessingService.processAndStoreMockDataByName(
+          "Mock Data 7",
+        );
       router.push(`/model?dataId=${dataId}`);
     } catch (error) {
       console.error("Error loading demo data:", error);
