@@ -58,13 +58,6 @@ export default function Home() {
                 {TEXT.home.uploadYourData}
               </ActionButton>
 
-              <DemoButton
-                isLoading={isLoadingDemo}
-                setIsLoading={setIsLoadingDemo}
-                size="md"
-                className="w-2/3"
-              />
-
               <ActionButton
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
@@ -74,6 +67,13 @@ export default function Home() {
                 <FaInfoCircle className="w-5 h-5" />
                 {TEXT.home.whatIsMaive}
               </ActionButton>
+
+              <DemoButton
+                isLoading={isLoadingDemo}
+                setIsLoading={setIsLoadingDemo}
+                size="md"
+                className="w-2/3"
+              />
             </div>
           </div>
         )}

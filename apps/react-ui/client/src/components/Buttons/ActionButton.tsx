@@ -46,7 +46,7 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
           lg: "px-6",
         }[size];
 
-    const baseClasses = `${sizeClasses[size]} ${paddingClasses} rounded-lg transition-colors duration-200 font-medium justify-center items-center`;
+    const baseClasses = `${sizeClasses[size]} ${paddingClasses} rounded-lg transition-colors duration-200 font-medium flex items-center justify-center`;
 
     const variantClasses = {
       primary:
