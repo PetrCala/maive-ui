@@ -27,12 +27,21 @@ export default function ActionButton({
   style,
 }: ActionButtonProps) {
   const sizeClasses = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-6 py-3 text-lg",
+    sm: "py-1.5 text-sm",
+    md: "py-2 text-base",
+    lg: "py-3 text-lg",
   };
 
-  const baseClasses = `${sizeClasses[size]} rounded-lg transition-colors duration-200 font-medium justify-center items-center`;
+  const hasCustomPadding = className.includes("px-");
+  const paddingClasses = hasCustomPadding
+    ? ""
+    : {
+        sm: "px-3",
+        md: "px-4",
+        lg: "px-6",
+      }[size];
+
+  const baseClasses = `${sizeClasses[size]} ${paddingClasses} rounded-lg transition-colors duration-200 font-medium justify-center items-center`;
 
   const variantClasses = {
     primary:

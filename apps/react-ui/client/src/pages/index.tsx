@@ -41,7 +41,7 @@ export default function Home() {
                 href="/upload"
                 variant="primary"
                 size="lg"
-                className="w-full"
+                className="w-full px-20"
               >
                 {TEXT.home.uploadYourData}
               </ActionButton>
