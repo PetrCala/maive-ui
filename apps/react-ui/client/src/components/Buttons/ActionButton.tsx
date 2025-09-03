@@ -3,7 +3,7 @@ import Link from "next/link";
 
 type ActionButtonProps = {
   onClick?: (event?: React.FormEvent) => void;
-  variant?: "primary" | "secondary" | "success" | "danger";
+  variant?: "primary" | "secondary" | "success" | "danger" | "purple";
   size?: "sm" | "md" | "lg";
   className?: string;
   disabled?: boolean;
@@ -40,9 +40,11 @@ export default function ActionButton({
     secondary:
       "btn-secondary disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
     success:
-      "interactive bg-green-600 text-white disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+      "btn-success disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
     danger:
-      "interactive bg-red-600 text-white disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+      "btn-danger disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+    purple:
+      "btn-purple disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
   };
 
   const classes = `${baseClasses} ${variantClasses[variant]} ${disabled ? "cursor-not-allowed" : ""} ${className}`;
