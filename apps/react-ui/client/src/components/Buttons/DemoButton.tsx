@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { DataProcessingService } from "@src/services/dataProcessingService";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import CONST from "@src/CONST";
+import { FaPlay } from "react-icons/fa";
 
 type DemoButtonProps = {
   isLoading: boolean;
@@ -52,10 +53,11 @@ export default function DemoButton({
       variant="purple"
       size={size}
       disabled={isLoading}
-      className={`${className} transition-all duration-300 ${
+      className={`${className} inline-flex gap-2 transition-all duration-300 ${
         isLoading ? "scale-95 opacity-75" : "scale-100 opacity-100"
       }`}
     >
+      <FaPlay className="w-5 h-5" />
       {`${isLoading ? "Loading..." : "Run a demo"}`}
     </ActionButton>
   );
