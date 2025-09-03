@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import OptionRenderer from "@src/components/Options/OptionRenderer";
 import type { OptionSectionConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
@@ -6,6 +6,7 @@ import {
   filterVisibleOptions,
   shouldShowOption,
 } from "@src/utils/optionVisibility";
+import CONST from "@src/CONST";
 
 type OptionSectionProps = {
   config: OptionSectionConfig;
@@ -22,7 +23,49 @@ export default function OptionSection({
   tooltipsEnabled = true,
   context = {},
 }: OptionSectionProps) {
-  const [isOpen, setIsOpen] = useState(config.defaultOpen ?? true);
+  // Check if any advanced options differ from defaults
+  const hasAdvancedOptionsChanged = useMemo(() => {
+    // Define default parameter values
+    const defaultParameters: ModelParameters = {
+      modelType: CONST.MODEL_TYPES.MAIVE,
+      includeStudyDummies: false,
+      includeStudyClustering: false,
+      standardErrorTreatment:
+        CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED_CR2.VALUE,
+      computeAndersonRubin: false,
+      maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
+      weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
+      shouldUseInstrumenting: true,
+    };
+
+    const advancedOptionKeys: Array<keyof ModelParameters> = [
+      "maiveMethod",
+      "weight",
+      "includeStudyDummies",
+      "shouldUseInstrumenting",
+    ];
+
+    return advancedOptionKeys.some(
+      (key) => parameters[key] !== defaultParameters[key],
+    );
+  }, [parameters]);
+
+  // Determine initial open state: open if advanced options changed, otherwise use config default
+  const initialOpenState = useMemo(() => {
+    if (config.title === "Advanced Options") {
+      return hasAdvancedOptionsChanged;
+    }
+    return config.defaultOpen ?? true;
+  }, [config.title, config.defaultOpen, hasAdvancedOptionsChanged]);
+
+  const [isOpen, setIsOpen] = useState(initialOpenState);
+
+  // Update open state when parameters change (for advanced options)
+  useEffect(() => {
+    if (config.title === "Advanced Options") {
+      setIsOpen(hasAdvancedOptionsChanged);
+    }
+  }, [config.title, hasAdvancedOptionsChanged]);
 
   // Create full context object
   const fullContext: OptionContext = {
