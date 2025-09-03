@@ -36,12 +36,12 @@ export default function Home() {
               Powered by the MAIVE estimator (<em>Nature Communications</em>).
             </p>
 
-            <div className="flex flex-col gap-4 justify-center items-center mb-8">
+            <div className="flex flex-col gap-4 justify-center items-center mb-8 w-fit mx-auto">
               <ActionButton
                 href="/upload"
                 variant="primary"
                 size="lg"
-                className="w-full max-w-xs"
+                className="w-full"
               >
                 {TEXT.home.uploadYourData}
               </ActionButton>
@@ -50,14 +50,14 @@ export default function Home() {
                 isLoading={isLoadingDemo}
                 setIsLoading={setIsLoadingDemo}
                 size="md"
-                className="inline-flex gap-2 w-full max-w-xs"
+                className="w-full"
               />
 
               <ActionButton
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex gap-2 w-full max-w-xs"
+                className="inline-flex gap-2 w-full"
               >
                 <svg
                   className="w-5 h-5"
