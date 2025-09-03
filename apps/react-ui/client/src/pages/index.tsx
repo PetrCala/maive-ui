@@ -36,7 +36,6 @@ export default function Home() {
               Powered by the MAIVE estimator (<em>Nature Communications</em>).
             </p>
 
-            {/* Action Buttons */}
             <div className="flex flex-col gap-4 justify-center items-center mb-8">
               <ActionButton
                 href="/upload"
@@ -47,11 +46,18 @@ export default function Home() {
                 {TEXT.home.uploadYourData}
               </ActionButton>
 
+              <DemoButton
+                isLoading={isLoadingDemo}
+                setIsLoading={setIsLoadingDemo}
+                size="md"
+                className="inline-flex gap-2 w-full max-w-xs"
+              />
+
               <ActionButton
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex items-center gap-2"
+                className="inline-flex gap-2 w-full max-w-xs"
               >
                 <svg
                   className="w-5 h-5"
@@ -68,10 +74,6 @@ export default function Home() {
                 </svg>
                 {TEXT.home.whatIsMaive}
               </ActionButton>
-              <DemoButton
-                isLoading={isLoadingDemo}
-                setIsLoading={setIsLoadingDemo}
-              />
             </div>
           </div>
         )}

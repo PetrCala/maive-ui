@@ -1,13 +1,12 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import type { FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
 import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
 import { DataProcessingService } from "@src/services/dataProcessingService";
-import SuccessIndicator from "@components/SuccessIndicator";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
 import CONST from "@src/CONST";
@@ -20,11 +19,6 @@ import { generateMockCSVFile } from "@src/utils/mockData";
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [isDevelopment, setIsDevelopment] = useState(false);
-
-  useEffect(() => {
-    setIsDevelopment(process.env.NODE_ENV === "development");
-  }, []);
 
   const router = useRouter();
 
@@ -217,21 +211,6 @@ export default function UploadPage() {
                       </div>
                     )}
                   </div>
-                  {isDevelopment &&
-                    (!selectedFile ? (
-                      <ActionButton
-                        onClick={() => {
-                          void handleGenerateMockData();
-                        }}
-                        variant="success"
-                        size="md"
-                        className="ml-3 flex-shrink-0"
-                      >
-                        Generate Mock Data
-                      </ActionButton>
-                    ) : (
-                      <SuccessIndicator />
-                    ))}
                 </div>
               </div>
 
