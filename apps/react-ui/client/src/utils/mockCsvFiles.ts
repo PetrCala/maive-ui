@@ -5,21 +5,21 @@ export const mockCsvFiles = [
   {
     name: "Mock Data 1",
     content: `1.0,0.187317162,120,1
-2.0,0.187317162,120,2
-3.0,0.206284249,100,3
-4.0,0.277555467,58,4
-5.0,0.206284249,100,5
-6.0,0.129506486,245,6
-7.0,0.129506486,245,7
-8.0,0.206284249,100,8
-9.0,0.104726619,373,9
-10.0,0.073572612,881,10
-11.0,0.135293575,226,11
-12.0,0.075860256,784,12
-13.0,0.206284249,100,13
-14.0,0.129640745,244,14
-15.0,0.197075144,109,15
-16.0,0.193762379,113,16`,
+2.0,0.187317162,120,1
+3.0,0.206284249,100,2
+4.0,0.277555467,58,3
+5.0,0.206284249,100,4
+6.0,0.129506486,245,4
+7.0,0.129506486,245,4
+8.0,0.206284249,100,4
+9.0,0.104726619,373,5
+10.0,0.073572612,881,5
+11.0,0.135293575,226,6
+12.0,0.075860256,784,7
+13.0,0.206284249,100,7
+14.0,0.129640745,244,8
+15.0,0.197075144,109,9
+16.0,0.193762379,113,9`,
     filename: "mock_data_1.csv",
     original_filename: "Schimmack.csv",
   },
@@ -277,204 +277,204 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 7",
-    content: `0.88,0.39,40,Alberts, Martijn, Greb, Merckelbach, & Vries (2007), Study 1
-1.62,0.47,40,Alberts, Martijn, Greb, Merckelbach, & Vries (2007), Study 2
-1.79,0.47,44,Baumeister, Bratslavsky, Muraven & Tice (1998), Study 1
-1.9,0.81,20,Baumeister, Bratslavsky, Muraven & Tice (1998), Study 2
-0.76,0.45,30,Baumeister, Bratslavsky, Muraven & Tice (1998), Study 3
-0.59,0.24,84,Baumeister, Bratslavsky, Muraven & Tice (1998), Study 4
-0.56,0.32,49,Bray, Ginis, Hicks & Woodgate (2008), Study 1
-0.53,0.27,68,Bruyneel, Dewitte, Franses, & Dekimpe (2009), Study 2
-0.95,0.5,27,Bruyneel, Dewitte, Franses, & Dekimpe (2009), Study 3
-0.59,0.34,44,Bruyneel, Dewitte, Franses, & Dekimpe (2009), Study 4
-0.55,0.23,89,Bruyneel, Dewitte, Vohs & Warlop (2006), Study 1
-0.64,0.35,44,Bruyneel, Dewitte, Vohs & Warlop (2006), Study 2
-0.61,0.36,42,Bruyneel, Dewitte, Vohs & Warlop (2006), Study 3
-0.47,0.26,72,Burkley (2008), Study 1
-0.91,0.57,22,Burkley (2008), Study 2
-0.45,0.24,78,Burkley (2008), Study 3
-0.59,0.29,60,Burkley (2008), Study 4
-0.73,0.39,37,Ciarocco, Sommer & Baumeister (2001), Study 1
-0.94,0.54,24,Ciarocco, Sommer & Baumeister (2001), Study 2
-1.12,0.51,28,DeWall, Baumeister, Gailliot, & Maner (2008), Study 1
-0.96,0.47,30,DeWall, Baumeister, Gailliot, & Maner (2008), Study 2
-0.37,0.17,146,DeWall, Baumeister, Gailliot, & Maner (2008), Study 3
-0.66,0.41,33,DeWall, Baumeister, Stillman & Gailliot (2007), Study 1
-0.67,0.32,53,DeWall, Baumeister, Stillman & Gailliot (2007), Study 2
-0.92,0.34,51,DeWall, Baumeister, Stillman & Gailliot (2007), Study 3
-0.52,0.22,97,DeWall, Baumeister, Stillman & Gailliot (2007), Study 4
-0.68,0.38,39,Fennis, Janssen, & Vohs (2009), Study 1
-0.59,0.29,60,Fennis, Janssen, & Vohs (2009), Study 2
-1.18,0.39,46,Fennis, Janssen, & Vohs (2009), Study 2a
-0.77,0.4,37,Fennis, Janssen, & Vohs (2009), Study 3
-1.16,0.24,108,Fennis, Janssen, & Vohs (2009), Study 4
-0.57,0.22,100,Fennis, Janssen, & Vohs (2009), Study 5
-0.38,0.32,46,Finkel & Campbell (2001), Study 2
-0.91,0.51,26,Finkel, Campbell, Brunell, Dalton, Scarbeck & Chartrand (2006), Study 1
-0.81,0.32,54,Finkel, Campbell, Brunell, Dalton, Scarbeck & Chartrand (2006), Study 2
-0.79,0.35,46,Finkel, Campbell, Brunell, Dalton, Scarbeck & Chartrand (2006), Study 3
-0.66,0.42,32,Finkel, Campbell, Brunell, Dalton, Scarbeck & Chartrand (2006), Study 4
-0.9,0.48,29,Finkel, Campbell, Brunell, Dalton, Scarbeck & Chartrand (2006), Study 5
-1.41,0.82,16,Finkel, DeWall, Slotter, Oaten, & Foshee (2009), Study 4
-0.65,0.22,100,Fischer, Greitemeyer & Frey (2007), Study 1
-0.46,0.22,97,Fischer, Greitemeyer & Frey (2007), Study 2
-0.62,0.3,56,Fischer, Greitemeyer & Frey (2007), Study 3
-0.62,0.32,52,Fischer, Greitemeyer & Frey (2007), Study 4
-0.77,0.45,30,Fischer, Greitemeyer & Frey (2007), Study 5
-0.62,0.33,49,Fischer, Greitemeyer & Frey (2008), Study 1
-0.65,0.3,56,Fischer, Greitemeyer & Frey (2008), Study 2
-0.84,0.41,36,Fischer, Greitemeyer & Frey (2008), Study 3
-0.86,0.35,48,Fischer, Greitemeyer & Frey (2008), Study 4
-0.34,0.26,69,Friese, Hofmann & Wanke (2008), Study 2
-0.31,0.31,48,Friese, Hofmann & Wanke (2008), Study 3
-0.37,0.4,32,Gailliot & Baumeister (2007), Study 1
-0.99,0.51,27,Gailliot & Baumeister (2007), Study 2
-0.92,0.59,21,Gailliot & Baumeister (2007), Study 3
-0.73,0.29,62,Gailliot et al. (2007), Study 7
-0.46,0.25,73,Gailliot et al. (2007), Study 8
-0.89,0.39,40,Gailliot, Plant, Butz & Baumeister (2007), Study 1
-0.4,0.21,98,Gailliot, Plant, Butz & Baumeister (2007), Study 2
-0.38,0.16,172,Gailliot, Plant, Butz & Baumeister (2007), Study 3
-0.99,0.64,19,Gailliot, Schmeichel & Baumeister (2006), Study 2
-0.49,0.27,67,Gailliot, Schmeichel & Baumeister (2006), Study 3
-0.59,0.3,57,Gailliot, Schmeichel & Baumeister (2006), Study 6
-0.83,0.61,19,Gailliot, Schmeichel & Baumeister (2006), Study 7S1
-0.28,0.54,19,Gailliot, Schmeichel & Baumeister (2006), Study 7S2
-0.62,0.3,57,Gailliot, Schmeichel & Baumeister (2006), Study 8
-0.7,0.31,55,Gailliot, Schmeichel & Baumeister (2006), Study 9
-1.83,0.7,24,Gailliot, Schmeichel, & Maner (2007), Study 1
-0.52,0.33,46,Geeraert & Yzerbyt (2007), Study 1b
-1.12,0.47,32,Geeraert & Yzerbyt (2007), Study 2b
-0.66,0.36,42,Gordijin, Hindricks, Koomen, Dijksterhuis & Knippenberg (2004), Study 2
-0.73,0.28,66,Gordijin, Hindricks, Koomen, Dijksterhuis & Knippenberg (2004), Study 4
-0.46,0.26,72,Govorun & Payne (2006), Study 
-0.12,0.3,50,Hofmann, Rauch & Gawronski (2007), Study 
-1.68,0.54,33,Inzlicht & Gutsell (2007), Study 
-0.84,0.37,42,Inzlicht, McKay & Aronson (2006), Study 2
-0.66,0.29,61,Inzlicht, McKay & Aronson (2006), Study 3
-0.94,0.23,107,Janssen, Fennis, Pruyn & Vohs (2008), Study 2
-0.69,0.25,81,Johns, Inzlicht, & Schmader (2008), Study 1
-0.55,0.37,39,Johns, Inzlicht, & Schmader (2008), Study 3
-1.0,0.42,37,Johns, Inzlicht, & Schmader (2008), Study 4
-0.18,0.21,99,Joireman, Balliet, Sprott, Spangenberg & Schultz (2008), Study 3
-0.53,0.29,59,Kahan, Polivy & Herman (2003), Study 
-0.58,0.27,68,Legault, Green-Demers, & Eadie (2009), Study 2
-0.7,0.39,37,Martijn, Alberts, Merckelbach, Havermans, Huijts & de Vries (2007), Study 
-0.72,0.42,33,Martijn, Tenbult, Merckelbach, Dreezens & de Vries (2002), Study 
-0.42,0.28,59,Masicampo & Baumeister (2008), Study 
-0.58,0.24,84,Mead, Baumeister, Gino, Schweitzer, & Ariely (2009), Study 1
-0.9,0.27,78,Mead, Baumeister, Gino, Schweitzer, & Ariely (2009), Study 2
-0.71,0.5,25,Moller, Deci, & Ryan (2006), Study 1
-0.85,0.32,56,Muraven (2008), Study 1
-0.66,0.36,41,Muraven (2008), Study 2
-0.53,0.29,58,Muraven, Collins & Nienhaus (2002), Study 
-1.9,0.95,16,Muraven, Gagne & Rosman (2008), Study 1
-1.14,0.37,48,Muraven, Gagne & Rosman (2008), Study 3
-0.6,0.43,30,Muraven, Rosman & Gagne (2007), Study 3
-0.11,0.16,160,Muraven & Shmueli (2006), Study 
-0.59,0.34,46,Muraven, Shmueli & Burkley (2006), Study 1
-0.47,0.39,34,Muraven, Shmueli & Burkley (2006), Study 2
-0.7,0.38,38,Muraven, Shmueli & Burkley (2006), Study 4
-0.6,0.35,43,Muraven & Slessareva (2003), Study 1
-0.62,0.36,41,Muraven & Slessareva (2003), Study 2
-0.59,0.5,24,Muraven & Slessareva (2003), Study 3
-0.64,0.29,60,Muraven, Tice & Baumeister (1998), Study 1
-0.75,0.42,34,Muraven, Tice & Baumeister (1998), Study 2
-0.57,0.32,49,Muraven, Tice & Baumeister (1998), Study 3
-0.84,0.44,32,Neshat-Doost, Dagleish & Golden (2008), Study 
-1.08,0.29,71,Oaten, Williams, Jones & Zadro (2008), Study 1
-0.59,0.26,73,Oaten, Williams, Jones & Zadro (2008), Study 2
-0.98,0.41,38,Oikawa (2005), Study 1
-1.53,0.46,40,Oikawa (2005), Study 2
-0.44,0.23,85,Ostafin, Marlatt & Greenwald (2008), Study 
-0.56,0.3,57,Park, Glaser & Knowles (2008), Study 
-0.29,0.12,284,Pocheptsova, Amir, Dhar & Baumeister (2009), Study 1
-0.18,0.09,501,Pocheptsova, Amir, Dhar & Baumeister (2009), Study 2
-0.18,0.2,105,Pocheptsova, Amir, Dhar & Baumeister (2009), Study 3
-0.25,0.26,64,Pocheptsova, Amir, Dhar & Baumeister (2009), Study 4
-0.15,0.16,162,Pocheptsova, Amir, Dhar & Baumeister (2009), Study 5
-1.42,0.65,22,Richeson & Shelton (2003), Study 
-0.79,0.3,60,Richeson & Trawalter (2005), Study 1
-0.93,0.45,32,Richeson & Trawalter (2005), Study 2
-0.91,0.43,34,Richeson & Trawalter (2005), Study 3
-0.95,0.47,30,Richeson, Trawalter & Shelton (2005), Study 
-0.45,0.24,79,Schmeichel (2007), Study 1S1
-0.52,0.28,62,Schmeichel (2007), Study 1S2
-0.51,0.28,61,Schmeichel (2007), Study 2S1
-0.08,0.27,61,Schmeichel (2007), Study 2S2
-0.68,0.44,30,Schmeichel (2007), Study 3
-0.53,0.27,65,Schmeichel (2007), Study 4
-0.85,0.34,50,Schmeichel, Demaree, Robinson & Pu (2006), Study 
-0.61,0.29,59,Schmeichel & Vohs (2009), Study 1
-0.75,0.27,72,Schmeichel & Vohs (2009), Study 2
-1.61,0.65,24,Schmeichel, Vohs & Baumeister (2003), Study 1
-0.43,0.37,37,Schmeichel, Vohs & Baumeister (2003), Study 2
-0.9,0.42,36,Schmeichel, Vohs & Baumeister (2003), Study 3
-0.41,0.25,73,Seeley & Gardner (2003), Study 1
-0.47,0.3,55,Seeley & Gardner (2003), Study 2
-0.65,0.24,83,Segerstrom & Nes (2007), Study 
-0.67,0.3,57,Shamosh & Gray (2007), Study 
-0.19,0.21,101,Shmueli & Prochaska (2009), Study 
-0.47,0.36,40,Stewart, Wright, Hui & Simmons (2009), Study 
-0.02,0.34,40,Stillman, Tice, Fincham & Lambert (2009), Study 1
-0.04,0.37,33,Stillman, Tice, Fincham & Lambert (2009), Study 3
-0.82,0.3,60,Stucke & Baumeister (2006), Study 1
-0.6,0.28,62,Stucke & Baumeister (2006), Study 2
-1.2,0.39,45,Stucke & Baumeister (2006), Study 3
-0.61,0.23,93,Tice, Baumeister, Shmueli & Muraven (2007), Study 2
-0.83,0.35,45,Trawalter & Richeson (2006), Study 
-1.07,0.46,33,Tyler (2008), Study 1
-0.97,0.47,30,Tyler (2008), Study 2
-1.36,0.53,30,Tyler (2008), Study 3
-0.58,0.29,60,Tyler (2008), Study 4
-1.56,0.37,60,Tyler & Burns (2008), Study 1
-0.99,0.4,40,Tyler & Burns (2008), Study 2
-1.36,0.69,20,Tyler & Burns (2009), Study 1
-1.22,0.66,20,Tyler & Burns (2009), Study 2S1
-1.9,0.81,20,Tyler & Burns (2009), Study 2S2
-0.44,0.54,20,Tyler & Burns (2009), Study 2S3
-1.19,0.42,40,Tyler & Burns (2009), Study 3
-0.58,0.27,68,Vohs, Baumeister & Ciarocco (2005), Study 1
-0.64,0.3,58,Vohs, Baumeister & Ciarocco (2005), Study 2
-1.59,0.56,30,Vohs, Baumeister & Ciarocco (2005), Study 3
-1.06,0.32,60,Vohs, Baumeister & Ciarocco (2005), Study 4
-0.8,0.42,34,Vohs, Baumeister & Ciarocco (2005), Study 5
-0.63,0.3,57,Vohs, Baumeister & Ciarocco (2005), Study 6
-0.7,0.27,71,Vohs, Baumeister & Ciarocco (2005), Study 7
-0.79,0.44,32,Vohs, Baumeister & Ciarocco (2005), Study 8
-1.34,0.52,30,Vohs, Baumeister, Schmeichel, Twenge, Nelson & Tice (2008), Study 1a
-1.01,0.48,30,Vohs, Baumeister, Schmeichel, Twenge, Nelson & Tice (2008), Study 1b
-0.98,0.53,25,Vohs, Baumeister, Schmeichel, Twenge, Nelson & Tice (2008), Study 2
-0.99,0.52,26,Vohs, Baumeister, Schmeichel, Twenge, Nelson & Tice (2008), Study 3
-0.84,0.39,40,Vohs, Baumeister, Schmeichel, Twenge, Nelson & Tice (2008), Study 4a
-0.93,0.39,40,Vohs, Baumeister, Schmeichel, Twenge, Nelson & Tice (2008), Study 4b
-0.73,0.29,64,Vohs, Baumeister, Schmeichel, Twenge, Nelson & Tice (2008), Study 6
-0.96,0.43,35,Vohs & Faber (2007), Study 1
-1.27,0.31,70,Vohs & Faber (2007), Study 2
-1.38,0.44,40,Vohs & Faber (2007), Study 3
-1.4,0.75,18,Vohs & Heatherton (2000), Study 1
-0.77,0.47,28,Vohs & Heatherton (2000), Study 2
-0.76,0.4,36,Vohs & Heatherton (2000), Study 3
-1.07,0.37,48,Vohs & Schmeichel (2003), Study 3
-0.76,0.34,47,Vohs & Schmeichel (2003), Study 4
-1.13,0.59,23,Wallace & Baumeister (2002), Study 
-1.25,0.57,25,Wan & Sternthal (2008), Study 1
-1.27,0.55,27,Wan & Sternthal (2008), Study 2
-0.77,0.33,50,Wan & Sternthal (2008), Study 3
-1.11,0.4,42,Wan & Sternthal (2008), Study 4
-0.95,0.46,31,Webb & Sheeran (2003), Study 1
-1.73,0.61,28,Webb & Sheeran (2003), Study 2
-0.9,0.29,68,Wheeler, Brinol & Hermann (2007), Study 
-0.3,0.31,48,Wright et al. (2007), Study 1S1
-0.13,0.31,46,Wright et al. (2007), Study 1S2
-0.34,0.31,49,Wright et al. (2007), Study 2S1
--0.11,0.3,47,Wright et al. (2007), Study 2S2
-0.21,0.36,36,Wright, Martin & Bland (2003), Study S1
-0.21,0.36,37,Wright, Martin & Bland (2003), Study S2
--0.11,0.28,53,Wright , Stewart & Barnett (2008), Study S1
-0.65,0.31,53,Wright , Stewart & Barnett (2008), Study S2
-0.65,0.28,65,Zyphur, Warren, Landis & Thoresen (2007), Study 1
-0.56,0.25,80,Zyphur, Warren, Landis & Thoresen (2007), Study 2`,
+    content: `0.88,0.39,40,Alberts; Martijn; Greb; Merckelbach; & Vries (2007); Study 1
+1.62,0.47,40,Alberts; Martijn; Greb; Merckelbach; & Vries (2007); Study 2
+1.79,0.47,44,Baumeister; Bratslavsky; Muraven & Tice (1998); Study 1
+1.9,0.81,20,Baumeister; Bratslavsky; Muraven & Tice (1998); Study 2
+0.76,0.45,30,Baumeister; Bratslavsky; Muraven & Tice (1998); Study 3
+0.59,0.24,84,Baumeister; Bratslavsky; Muraven & Tice (1998); Study 4
+0.56,0.32,49,Bray; Ginis; Hicks & Woodgate (2008); Study 1
+0.53,0.27,68,Bruyneel; Dewitte; Franses; & Dekimpe (2009); Study 2
+0.95,0.5,27,Bruyneel; Dewitte; Franses; & Dekimpe (2009); Study 3
+0.59,0.34,44,Bruyneel; Dewitte; Franses; & Dekimpe (2009); Study 4
+0.55,0.23,89,Bruyneel; Dewitte; Vohs & Warlop (2006); Study 1
+0.64,0.35,44,Bruyneel; Dewitte; Vohs & Warlop (2006); Study 2
+0.61,0.36,42,Bruyneel; Dewitte; Vohs & Warlop (2006); Study 3
+0.47,0.26,72,Burkley (2008); Study 1
+0.91,0.57,22,Burkley (2008); Study 2
+0.45,0.24,78,Burkley (2008); Study 3
+0.59,0.29,60,Burkley (2008); Study 4
+0.73,0.39,37,Ciarocco; Sommer & Baumeister (2001); Study 1
+0.94,0.54,24,Ciarocco; Sommer & Baumeister (2001); Study 2
+1.12,0.51,28,DeWall; Baumeister; Gailliot; & Maner (2008); Study 1
+0.96,0.47,30,DeWall; Baumeister; Gailliot; & Maner (2008); Study 2
+0.37,0.17,146,DeWall; Baumeister; Gailliot; & Maner (2008); Study 3
+0.66,0.41,33,DeWall; Baumeister; Stillman & Gailliot (2007); Study 1
+0.67,0.32,53,DeWall; Baumeister; Stillman & Gailliot (2007); Study 2
+0.92,0.34,51,DeWall; Baumeister; Stillman & Gailliot (2007); Study 3
+0.52,0.22,97,DeWall; Baumeister; Stillman & Gailliot (2007); Study 4
+0.68,0.38,39,Fennis; Janssen; & Vohs (2009); Study 1
+0.59,0.29,60,Fennis; Janssen; & Vohs (2009); Study 2
+1.18,0.39,46,Fennis; Janssen; & Vohs (2009); Study 2a
+0.77,0.4,37,Fennis; Janssen; & Vohs (2009); Study 3
+1.16,0.24,108,Fennis; Janssen; & Vohs (2009); Study 4
+0.57,0.22,100,Fennis; Janssen; & Vohs (2009); Study 5
+0.38,0.32,46,Finkel & Campbell (2001); Study 2
+0.91,0.51,26,Finkel; Campbell; Brunell; Dalton; Scarbeck & Chartrand (2006); Study 1
+0.81,0.32,54,Finkel; Campbell; Brunell; Dalton; Scarbeck & Chartrand (2006); Study 2
+0.79,0.35,46,Finkel; Campbell; Brunell; Dalton; Scarbeck & Chartrand (2006); Study 3
+0.66,0.42,32,Finkel; Campbell; Brunell; Dalton; Scarbeck & Chartrand (2006); Study 4
+0.9,0.48,29,Finkel; Campbell; Brunell; Dalton; Scarbeck & Chartrand (2006); Study 5
+1.41,0.82,16,Finkel; DeWall; Slotter; Oaten; & Foshee (2009); Study 4
+0.65,0.22,100,Fischer; Greitemeyer & Frey (2007); Study 1
+0.46,0.22,97,Fischer; Greitemeyer & Frey (2007); Study 2
+0.62,0.3,56,Fischer; Greitemeyer & Frey (2007); Study 3
+0.62,0.32,52,Fischer; Greitemeyer & Frey (2007); Study 4
+0.77,0.45,30,Fischer; Greitemeyer & Frey (2007); Study 5
+0.62,0.33,49,Fischer; Greitemeyer & Frey (2008); Study 1
+0.65,0.3,56,Fischer; Greitemeyer & Frey (2008); Study 2
+0.84,0.41,36,Fischer; Greitemeyer & Frey (2008); Study 3
+0.86,0.35,48,Fischer; Greitemeyer & Frey (2008); Study 4
+0.34,0.26,69,Friese; Hofmann & Wanke (2008); Study 2
+0.31,0.31,48,Friese; Hofmann & Wanke (2008); Study 3
+0.37,0.4,32,Gailliot & Baumeister (2007); Study 1
+0.99,0.51,27,Gailliot & Baumeister (2007); Study 2
+0.92,0.59,21,Gailliot & Baumeister (2007); Study 3
+0.73,0.29,62,Gailliot et al. (2007); Study 7
+0.46,0.25,73,Gailliot et al. (2007); Study 8
+0.89,0.39,40,Gailliot; Plant; Butz & Baumeister (2007); Study 1
+0.4,0.21,98,Gailliot; Plant; Butz & Baumeister (2007); Study 2
+0.38,0.16,172,Gailliot; Plant; Butz & Baumeister (2007); Study 3
+0.99,0.64,19,Gailliot; Schmeichel & Baumeister (2006); Study 2
+0.49,0.27,67,Gailliot; Schmeichel & Baumeister (2006); Study 3
+0.59,0.3,57,Gailliot; Schmeichel & Baumeister (2006); Study 6
+0.83,0.61,19,Gailliot; Schmeichel & Baumeister (2006); Study 7S1
+0.28,0.54,19,Gailliot; Schmeichel & Baumeister (2006); Study 7S2
+0.62,0.3,57,Gailliot; Schmeichel & Baumeister (2006); Study 8
+0.7,0.31,55,Gailliot; Schmeichel & Baumeister (2006); Study 9
+1.83,0.7,24,Gailliot; Schmeichel; & Maner (2007); Study 1
+0.52,0.33,46,Geeraert & Yzerbyt (2007); Study 1b
+1.12,0.47,32,Geeraert & Yzerbyt (2007); Study 2b
+0.66,0.36,42,Gordijin; Hindricks; Koomen; Dijksterhuis & Knippenberg (2004); Study 2
+0.73,0.28,66,Gordijin; Hindricks; Koomen; Dijksterhuis & Knippenberg (2004); Study 4
+0.46,0.26,72,Govorun & Payne (2006); Study 
+0.12,0.3,50,Hofmann; Rauch & Gawronski (2007); Study 
+1.68,0.54,33,Inzlicht & Gutsell (2007); Study 
+0.84,0.37,42,Inzlicht; McKay & Aronson (2006); Study 2
+0.66,0.29,61,Inzlicht; McKay & Aronson (2006); Study 3
+0.94,0.23,107,Janssen; Fennis; Pruyn & Vohs (2008); Study 2
+0.69,0.25,81,Johns; Inzlicht; & Schmader (2008); Study 1
+0.55,0.37,39,Johns; Inzlicht; & Schmader (2008); Study 3
+1.0,0.42,37,Johns; Inzlicht; & Schmader (2008); Study 4
+0.18,0.21,99,Joireman; Balliet; Sprott; Spangenberg & Schultz (2008); Study 3
+0.53,0.29,59,Kahan; Polivy & Herman (2003); Study 
+0.58,0.27,68,Legault; Green-Demers; & Eadie (2009); Study 2
+0.7,0.39,37,Martijn; Alberts; Merckelbach; Havermans; Huijts & de Vries (2007); Study 
+0.72,0.42,33,Martijn; Tenbult; Merckelbach; Dreezens & de Vries (2002); Study 
+0.42,0.28,59,Masicampo & Baumeister (2008); Study 
+0.58,0.24,84,Mead; Baumeister; Gino; Schweitzer; & Ariely (2009); Study 1
+0.9,0.27,78,Mead; Baumeister; Gino; Schweitzer; & Ariely (2009); Study 2
+0.71,0.5,25,Moller; Deci; & Ryan (2006); Study 1
+0.85,0.32,56,Muraven (2008); Study 1
+0.66,0.36,41,Muraven (2008); Study 2
+0.53,0.29,58,Muraven; Collins & Nienhaus (2002); Study 
+1.9,0.95,16,Muraven; Gagne & Rosman (2008); Study 1
+1.14,0.37,48,Muraven; Gagne & Rosman (2008); Study 3
+0.6,0.43,30,Muraven; Rosman & Gagne (2007); Study 3
+0.11,0.16,160,Muraven & Shmueli (2006); Study 
+0.59,0.34,46,Muraven; Shmueli & Burkley (2006); Study 1
+0.47,0.39,34,Muraven; Shmueli & Burkley (2006); Study 2
+0.7,0.38,38,Muraven; Shmueli & Burkley (2006); Study 4
+0.6,0.35,43,Muraven & Slessareva (2003); Study 1
+0.62,0.36,41,Muraven & Slessareva (2003); Study 2
+0.59,0.5,24,Muraven & Slessareva (2003); Study 3
+0.64,0.29,60,Muraven; Tice & Baumeister (1998); Study 1
+0.75,0.42,34,Muraven; Tice & Baumeister (1998); Study 2
+0.57,0.32,49,Muraven; Tice & Baumeister (1998); Study 3
+0.84,0.44,32,Neshat-Doost; Dagleish & Golden (2008); Study 
+1.08,0.29,71,Oaten; Williams; Jones & Zadro (2008); Study 1
+0.59,0.26,73,Oaten; Williams; Jones & Zadro (2008); Study 2
+0.98,0.41,38,Oikawa (2005); Study 1
+1.53,0.46,40,Oikawa (2005); Study 2
+0.44,0.23,85,Ostafin; Marlatt & Greenwald (2008); Study 
+0.56,0.3,57,Park; Glaser & Knowles (2008); Study 
+0.29,0.12,284,Pocheptsova; Amir; Dhar & Baumeister (2009); Study 1
+0.18,0.09,501,Pocheptsova; Amir; Dhar & Baumeister (2009); Study 2
+0.18,0.2,105,Pocheptsova; Amir; Dhar & Baumeister (2009); Study 3
+0.25,0.26,64,Pocheptsova; Amir; Dhar & Baumeister (2009); Study 4
+0.15,0.16,162,Pocheptsova; Amir; Dhar & Baumeister (2009); Study 5
+1.42,0.65,22,Richeson & Shelton (2003); Study 
+0.79,0.3,60,Richeson & Trawalter (2005); Study 1
+0.93,0.45,32,Richeson & Trawalter (2005); Study 2
+0.91,0.43,34,Richeson & Trawalter (2005); Study 3
+0.95,0.47,30,Richeson; Trawalter & Shelton (2005); Study 
+0.45,0.24,79,Schmeichel (2007); Study 1S1
+0.52,0.28,62,Schmeichel (2007); Study 1S2
+0.51,0.28,61,Schmeichel (2007); Study 2S1
+0.08,0.27,61,Schmeichel (2007); Study 2S2
+0.68,0.44,30,Schmeichel (2007); Study 3
+0.53,0.27,65,Schmeichel (2007); Study 4
+0.85,0.34,50,Schmeichel; Demaree; Robinson & Pu (2006); Study 
+0.61,0.29,59,Schmeichel & Vohs (2009); Study 1
+0.75,0.27,72,Schmeichel & Vohs (2009); Study 2
+1.61,0.65,24,Schmeichel; Vohs & Baumeister (2003); Study 1
+0.43,0.37,37,Schmeichel; Vohs & Baumeister (2003); Study 2
+0.9,0.42,36,Schmeichel; Vohs & Baumeister (2003); Study 3
+0.41,0.25,73,Seeley & Gardner (2003); Study 1
+0.47,0.3,55,Seeley & Gardner (2003); Study 2
+0.65,0.24,83,Segerstrom & Nes (2007); Study 
+0.67,0.3,57,Shamosh & Gray (2007); Study 
+0.19,0.21,101,Shmueli & Prochaska (2009); Study 
+0.47,0.36,40,Stewart; Wright; Hui & Simmons (2009); Study 
+0.02,0.34,40,Stillman; Tice; Fincham & Lambert (2009); Study 1
+0.04,0.37,33,Stillman; Tice; Fincham & Lambert (2009); Study 3
+0.82,0.3,60,Stucke & Baumeister (2006); Study 1
+0.6,0.28,62,Stucke & Baumeister (2006); Study 2
+1.2,0.39,45,Stucke & Baumeister (2006); Study 3
+0.61,0.23,93,Tice; Baumeister; Shmueli & Muraven (2007); Study 2
+0.83,0.35,45,Trawalter & Richeson (2006); Study 
+1.07,0.46,33,Tyler (2008); Study 1
+0.97,0.47,30,Tyler (2008); Study 2
+1.36,0.53,30,Tyler (2008); Study 3
+0.58,0.29,60,Tyler (2008); Study 4
+1.56,0.37,60,Tyler & Burns (2008); Study 1
+0.99,0.4,40,Tyler & Burns (2008); Study 2
+1.36,0.69,20,Tyler & Burns (2009); Study 1
+1.22,0.66,20,Tyler & Burns (2009); Study 2S1
+1.9,0.81,20,Tyler & Burns (2009); Study 2S2
+0.44,0.54,20,Tyler & Burns (2009); Study 2S3
+1.19,0.42,40,Tyler & Burns (2009); Study 3
+0.58,0.27,68,Vohs; Baumeister & Ciarocco (2005); Study 1
+0.64,0.3,58,Vohs; Baumeister & Ciarocco (2005); Study 2
+1.59,0.56,30,Vohs; Baumeister & Ciarocco (2005); Study 3
+1.06,0.32,60,Vohs; Baumeister & Ciarocco (2005); Study 4
+0.8,0.42,34,Vohs; Baumeister & Ciarocco (2005); Study 5
+0.63,0.3,57,Vohs; Baumeister & Ciarocco (2005); Study 6
+0.7,0.27,71,Vohs; Baumeister & Ciarocco (2005); Study 7
+0.79,0.44,32,Vohs; Baumeister & Ciarocco (2005); Study 8
+1.34,0.52,30,Vohs; Baumeister; Schmeichel; Twenge; Nelson & Tice (2008); Study 1a
+1.01,0.48,30,Vohs; Baumeister; Schmeichel; Twenge; Nelson & Tice (2008); Study 1b
+0.98,0.53,25,Vohs; Baumeister; Schmeichel; Twenge; Nelson & Tice (2008); Study 2
+0.99,0.52,26,Vohs; Baumeister; Schmeichel; Twenge; Nelson & Tice (2008); Study 3
+0.84,0.39,40,Vohs; Baumeister; Schmeichel; Twenge; Nelson & Tice (2008); Study 4a
+0.93,0.39,40,Vohs; Baumeister; Schmeichel; Twenge; Nelson & Tice (2008); Study 4b
+0.73,0.29,64,Vohs; Baumeister; Schmeichel; Twenge; Nelson & Tice (2008); Study 6
+0.96,0.43,35,Vohs & Faber (2007); Study 1
+1.27,0.31,70,Vohs & Faber (2007); Study 2
+1.38,0.44,40,Vohs & Faber (2007); Study 3
+1.4,0.75,18,Vohs & Heatherton (2000); Study 1
+0.77,0.47,28,Vohs & Heatherton (2000); Study 2
+0.76,0.4,36,Vohs & Heatherton (2000); Study 3
+1.07,0.37,48,Vohs & Schmeichel (2003); Study 3
+0.76,0.34,47,Vohs & Schmeichel (2003); Study 4
+1.13,0.59,23,Wallace & Baumeister (2002); Study 
+1.25,0.57,25,Wan & Sternthal (2008); Study 1
+1.27,0.55,27,Wan & Sternthal (2008); Study 2
+0.77,0.33,50,Wan & Sternthal (2008); Study 3
+1.11,0.4,42,Wan & Sternthal (2008); Study 4
+0.95,0.46,31,Webb & Sheeran (2003); Study 1
+1.73,0.61,28,Webb & Sheeran (2003); Study 2
+0.9,0.29,68,Wheeler; Brinol & Hermann (2007); Study 
+0.3,0.31,48,Wright et al. (2007); Study 1S1
+0.13,0.31,46,Wright et al. (2007); Study 1S2
+0.34,0.31,49,Wright et al. (2007); Study 2S1
+-0.11,0.3,47,Wright et al. (2007); Study 2S2
+0.21,0.36,36,Wright; Martin & Bland (2003); Study S1
+0.21,0.36,37,Wright; Martin & Bland (2003); Study S2
+-0.11,0.28,53,Wright ; Stewart & Barnett (2008); Study S1
+0.65,0.31,53,Wright ; Stewart & Barnett (2008); Study S2
+0.65,0.28,65,Zyphur; Warren; Landis & Thoresen (2007); Study 1
+0.56,0.25,80,Zyphur; Warren; Landis & Thoresen (2007); Study 2`,
     filename: "mock_data_7.csv",
     original_filename: "Hagger.csv",
   },
@@ -548,7 +548,7 @@ export const mockCsvFiles = [
 0.34845084,0.15557,210,Rand et al. (2015) S-1
 0.043015298,0.063966691,1152,Rand et al. (2015) S-2
 -0.1495343,0.10603049,479,Rand & Kraft-Todd (2014) S-1
-0.3037211,0.14602751,101,Rantapuska et al. (2014) PD, PGG, TG P2
+0.3037211,0.14602751,101,Rantapuska et al. (2014) PD; PGG; TG P2
 -0.028574722,0.078467779,1149,Tinghog et al. (2013) S-5
 0.17089416,0.10362222,288,Urbig et al. (2015) 1-shot and conditional PGG
 0.096659169,0.14794278,148,Verkoeijen & Bouwmeester (2014) S-1
@@ -563,231 +563,231 @@ export const mockCsvFiles = [
   {
     name: "Mock Data 10",
     content: `0.08,0.244948974,64,1
-0.27,0.2,91,1
+0.27,0.2,91,2
 -0.05,0.1,567,2
--0.08,0.223606798,86,3
-0.07,0.223606798,86,4
-0.05,0.331662479,38,4
-0.49,0.282842712,49,4
-0.03,0.3,47,4
-0.3,0.244948974,64,5
-0.54,0.244948974,65,5
--0.11,0.264575131,57,6
-0.12,0.282842712,53,7
-0.61,0.316227766,50,7
-0.48,0.316227766,49,8
-0.63,0.3,48,9
-0.22,0.282842712,51,9
-0.86,0.264575131,94,9
-0.24,0.173205081,133,10
--0.19,0.244948974,65,10
-0.04,0.264575131,61,10
--0.34,0.264575131,61,11
--0.25,0.223606798,83,11
--0.67,0.282842712,57,11
--0.17,0.331662479,38,11
-0.66,0.360555128,35,12
-0.17,0.3,44,12
-0.47,0.316227766,42,12
--0.7,0.282842712,56,13
-0.41,0.2,97,14
-0.58,0.316227766,43,14
--0.15,0.1,348,14
-0.04,0.282842712,49,14
-0.4,0.223606798,77,14
-0.54,0.223606798,86,14
-0.66,0.282842712,51,14
-1.26,0.3,54,14
-0.6,0.244948974,74,14
-0.44,0.2,116,14
-0.54,0.264575131,60,14
+-0.08,0.223606798,86,2
+0.07,0.223606798,86,2
+0.05,0.331662479,38,2
+0.49,0.282842712,49,2
+0.03,0.3,47,2
+0.3,0.244948974,64,2
+0.54,0.244948974,65,2
+-0.11,0.264575131,57,3
+0.12,0.282842712,53,4
+0.61,0.316227766,50,5
+0.48,0.316227766,49,6
+0.63,0.3,48,6
+0.22,0.282842712,51,6
+0.86,0.264575131,94,7
+0.24,0.173205081,133,7
+-0.19,0.244948974,65,7
+0.04,0.264575131,61,8
+-0.34,0.264575131,61,8
+-0.25,0.223606798,83,8
+-0.67,0.282842712,57,9
+-0.17,0.331662479,38,9
+0.66,0.360555128,35,9
+0.17,0.3,44,10
+0.47,0.316227766,42,11
+-0.7,0.282842712,56,11
+0.41,0.2,97,11
+0.58,0.316227766,43,11
+-0.15,0.1,348,11
+0.04,0.282842712,49,11
+0.4,0.223606798,77,12
+0.54,0.223606798,86,12
+0.66,0.282842712,51,12
+1.26,0.3,54,13
+0.6,0.244948974,74,13
+0.44,0.2,116,13
+0.54,0.264575131,60,13
 0.35,0.2,100,14
 0.23,0.1,367,14
 0.3,0.141421356,192,14
-0.33,0.282842712,51,15
-0.58,0.331662479,39,16
-0.0,0.244948974,65,17
-0.79,0.264575131,65,18
-0.59,0.3,48,19
-0.84,0.331662479,40,20
-0.53,0.282842712,50,21
-0.57,0.244948974,70,21
-0.36,0.2,92,21
-0.44,0.223606798,84,21
-0.35,0.316227766,40,22
-0.16,0.282842712,50,23
-0.25,0.173205081,157,23
-0.42,0.244948974,68,23
-0.98,0.244948974,76,23
-0.62,0.2,108,24
-0.6,0.223606798,94,24
-0.56,0.244948974,80,25
-0.39,0.223606798,80,25
-0.46,0.244948974,80,25
-0.56,0.244948974,66,25
--0.29,0.360555128,32,25
--0.04,0.2,92,25
--0.02,0.3,43,25
-0.01,0.244948974,64,25
-0.73,0.316227766,44,26
-0.55,0.2,94,27
-0.86,0.387298335,30,27
-0.29,0.223606798,76,28
-0.53,0.223606798,81,29
--0.04,0.316227766,40,29
-0.83,0.331662479,40,29
-0.6,0.223606798,88,29
--0.24,0.223606798,88,29
-0.48,0.244948974,70,29
-0.26,0.173205081,140,29
-0.71,0.2,110,29
-0.91,0.458257569,21,30
-0.89,0.479583152,19,31
-0.6,0.374165739,29,31
-1.1,0.509901951,18,32
-0.57,0.360555128,31,32
--0.42,0.264575131,62,32
-0.0,0.1,278,32
-0.38,0.223606798,84,33
-0.44,0.264575131,62,33
--0.3,0.223606798,76,33
-0.41,0.244948974,66,34
-0.29,0.244948974,68,35`,
+0.33,0.282842712,51,14
+0.58,0.331662479,39,14
+0.0,0.244948974,65,14
+0.79,0.264575131,65,14
+0.59,0.3,48,14
+0.84,0.331662479,40,14
+0.53,0.282842712,50,14
+0.57,0.244948974,70,15
+0.36,0.2,92,15
+0.44,0.223606798,84,15
+0.35,0.316227766,40,15
+0.16,0.282842712,50,15
+0.25,0.173205081,157,15
+0.42,0.244948974,68,15
+0.98,0.244948974,76,15
+0.62,0.2,108,16
+0.6,0.223606798,94,16
+0.56,0.244948974,80,16
+0.39,0.223606798,80,16
+0.46,0.244948974,80,16
+0.56,0.244948974,66,16
+-0.29,0.360555128,32,17
+-0.04,0.2,92,17
+-0.02,0.3,43,17
+0.01,0.244948974,64,18
+0.73,0.316227766,44,18
+0.55,0.2,94,19
+0.86,0.387298335,30,19
+0.29,0.223606798,76,19
+0.53,0.223606798,81,19
+-0.04,0.316227766,40,20
+0.83,0.331662479,40,20
+0.6,0.223606798,88,21
+-0.24,0.223606798,88,22
+0.48,0.244948974,70,22
+0.26,0.173205081,140,22
+0.71,0.2,110,22
+0.91,0.458257569,21,22
+0.89,0.479583152,19,23
+0.6,0.374165739,29,24
+1.1,0.509901951,18,24
+0.57,0.360555128,31,25
+-0.42,0.264575131,62,25
+0.0,0.1,278,25
+0.38,0.223606798,84,25
+0.44,0.264575131,62,25
+-0.3,0.223606798,76,25
+0.41,0.244948974,66,25
+0.29,0.244948974,68,25`,
     filename: "mock_data_10.csv",
     original_filename: "Blanken.csv",
   },
   {
     name: "Mock Data 11",
     content: `0.12,0.267892143,60,1
-0.1495,0.166825328,148,1
-0.3224,0.136486499,219,1
-0.0,0.36667576,34,1
+0.1495,0.166825328,148,2
+0.3224,0.136486499,219,2
+0.0,0.36667576,34,2
 0.5305,0.295720405,50,2
 -0.0354,0.229821085,80,2
 0.2657,0.232916673,78,2
 0.24,0.309558854,46,2
 0.3542,0.232916673,78,2
 0.0662,0.183549881,123,2
-0.6136,0.3133328,45,3
+0.6136,0.3133328,45,2
 0.2753,0.267892143,60,3
-0.3758,0.212321493,93,3
-0.7591,0.354949655,36,3
-0.1319,0.204412286,100,4
-0.4796,0.334517271,40,4
-0.529,0.267892143,60,5
-1.1316,0.317248126,44,5
-0.814,0.229821085,80,5
-0.0423,0.160786173,159,5
-0.3964,0.204412286,100,5
-1.1869,0.267892143,60,6
-0.9766,0.239502571,74,6
-0.5187,0.189212027,116,7
-0.0523,0.253013075,66,7
-0.4455,0.241238201,73,7
-0.4816,0.299005527,49,8
-0.4986,0.208821088,96,8
-0.2032,0.091890038,478,8
-0.124,0.218568194,88,9
-0.4789,0.194506328,110,9
-0.029,0.159249787,162,9
-0.3963,0.410323264,28,9
-0.083,0.166825328,148,9
-0.1382,0.208821088,96,10
-1.0464,0.377410045,32,10
-0.2398,0.196372358,108,11
-0.2432,0.168594056,145,11
-0.6259,0.153246501,174,11
-0.4207,0.120337247,280,11
-0.9393,0.150959514,179,11
-0.4724,0.182023268,125,12
-0.6187,0.334517271,40,12
-0.3425,0.129039367,224,12
-0.494,0.221225899,86,13`,
+0.3758,0.212321493,93,4
+0.7591,0.354949655,36,5
+0.1319,0.204412286,100,6
+0.4796,0.334517271,40,7
+0.529,0.267892143,60,7
+1.1316,0.317248126,44,7
+0.814,0.229821085,80,8
+0.0423,0.160786173,159,9
+0.3964,0.204412286,100,9
+1.1869,0.267892143,60,9
+0.9766,0.239502571,74,9
+0.5187,0.189212027,116,9
+0.0523,0.253013075,66,10
+0.4455,0.241238201,73,11
+0.4816,0.299005527,49,12
+0.4986,0.208821088,96,13
+0.2032,0.091890038,478,14
+0.124,0.218568194,88,15
+0.4789,0.194506328,110,15
+0.029,0.159249787,162,16
+0.3963,0.410323264,28,16
+0.083,0.166825328,148,16
+0.1382,0.208821088,96,16
+1.0464,0.377410045,32,17
+0.2398,0.196372358,108,17
+0.2432,0.168594056,145,17
+0.6259,0.153246501,174,17
+0.4207,0.120337247,280,17
+0.9393,0.150959514,179,17
+0.4724,0.182023268,125,17
+0.6187,0.334517271,40,18
+0.3425,0.129039367,224,19
+0.494,0.221225899,86,19`,
     filename: "mock_data_11.csv",
     original_filename: "DeCoster.csv",
   },
   {
     name: "Mock Data 12",
-    content: `0.167246044,0.176128026,136,Bohm & Lind, 1992
-0.872453534,0.108283179,426,Elliott & Archibald, 1989 , Study 1
-0.3581,0.150988198,190,Fagley & Miller, 1990 , Study 1
-0.4804,0.206535196,108,Fagley & Miller, 1990 , Study 2
-0.4988,0.231165663,88,Fagley & Miller, 1987 , Study 1pre
-0.9208,0.268764358,78,Fagley & Miller, 1987 , Study 2
-0.7706,0.243325455,88,Frisch, 1993 , Study 1
-0.4241,0.126506969,272,Frisch, 1993 , Study 2
-0.5205,0.212100689,104,Highouse & Paese, 1996 , Study 1pre
-0.4452,0.209589436,104,Highouse & Paese, 1996 , Study 1prosp
-0.134,0.220677676,88,Highouse & Paese, 1996 , Study 1taskr
-0.6381,0.236961367,88,Highouse & Paese, 1996 , Study 2prosp
-0.9881,0.148125972,244,Highouse & Yce, 1996 , Study 1posneg
--0.5999,0.226501393,84,Highouse & Yce, 1996 , Study 2tr-op
-0.4442,0.234970553,84,Highouse & Yce, 1996 , Study 2g-l
-0.9147,0.126614793,320,Jou et al., 1996 , Study 1
-0.5731,0.17034182,160,Jou et al., 1996 , Study 2
-0.3009,0.154259453,180,Kopp, 1995
-0.390888247,0.227338924,88,Leclerc, Schmitt & Dube, 1995 , Study 7
-0.705,0.336760118,48,Levin & Chapman, 1990 , Study 1
-0.662764777,0.225859368,97,Levin & Chapman, 1993 , Study 1
-0.622265143,0.112772018,360,Li & Adams, 1995
-0.9206,0.543054303,24,Maule, 1989 , Study 1
-0.4342,0.211420007,102,Maule, 1995
-0.5643,0.283226481,62,Maule, 1995 , Study Exp.2; 1
-0.46,0.219238506,96,Miller & Fagley, 1991
-0.952,0.138335681,274,Nightingale, 1987
-1.1413,0.209158423,136,Olszanski & Lewicka, 1988
-0.3779,0.201485311,110,Paese, 1995
-0.7944,0.15013573,220,Paese, B & T, 1993 , Study C1, Ind
-0.6074,0.145078003,220,Paese, B & T, 1993 , Study C1, gr
-1.0452,0.158401757,220,Paese, B & T, 1993 , Study C2, ind
-0.2748,0.138703356,220,Paese, B & T, 1993 , Study C2, gr
-0.9063,0.38143483,42,Reyna & Brainerd, 1991 , Study 1
-0.4215,0.175887664,144,Reyna & Brainerd, 1991 , Study 2;1
-0.273571265,0.255137892,69,Ritov, B. & Hershey, 1993 , Study 1
-0.769230137,0.249517597,84,Ritov, B & hershey, 1993 , Study 1;1
-0.3731,0.142928287,212,Roszowski & Snelbecker, 1990
-0.627476002,0.534806998,22,Rowe & Puto, 1987
-0.4451,0.226435593,90,Schneider, 1992 , Study SR3
-0.3207,0.222483925,90,Schneider, 1992 , Study SR5
-0.2627,0.220914941,90,Schneider, 1992 , Study SR2
-0.3494,0.223325129,90,Schneider, 1992 , Study SR1
-0.3268,0.222659143,90,Schneider, 1992 , Study RR3
-0.1975,0.219362673,90,Schneider, 1992 , Study RR5
-0.3038,0.222008597,90,Schneider, 1992 , Study RR2
-0.2657,0.22099177,90,Schneider, 1992 , Study RR1
-0.7311,0.124970272,306,Sebora & Cornawll, 1995 , Study Pr2
-0.856092132,0.298326642,63,Sitkin & Weingart, 1995 , Study 2
-1.1109,0.285427736,76,Svenson & Benson, 1993 , Study 1
-1.1541,0.280389711,80,Svenson & Benson, 1993 , Study 2
-0.3322,0.145095298,204,Svytanek, 1991
-0.8384,0.21455574,114,Takemura, 1992
-0.4048,0.225068906,90,Takemura, 1994
-0.4445,0.238058992,82,Takemura, 1994 , Study 2
-0.5952,0.172111065,158,Takemura, 1993
-0.8088,0.130876102,288,Tindale, S&s, 1993 , Study indiv
-1.5378,0.416380935,48,Tindale, S & S, 1993 , Study group
-0.5402,0.124860812,288,Tindale, S6S, 1993 , Study ind, pos
-1.155044847,0.136486671,307,Tversky & Kahneman, 1981
-0.51678361,0.080638638,673,VanderPlight &, 1990 , Study 1
-0.1366,0.117028153,300,VanderPlight &Vs, 1990 , Study 2
-0.645766795,0.209403951,111,VanderPlight & Vs, 1990 , Study 3
-0.55489094,0.113202455,350,VanderPlight & Vs 1990 , Study 4
-1.2168,0.293168705,76,VS & VDP, 1995 , Study 4,1
-0.622776453,0.204614071,115,VS & VDP, 1995 , Study 4,2
-0.2229,0.219940614,90,Wang & Johnston, 1995
-0.6385,0.221164264,100,Wang & Johnston, 1995 , Study 2
-0.4567,0.27306211,64,Wang, 1996 , Study 1
-0.3342,0.237406135,80,Wang, 1996 , Study 2
-0.2492,0.264982884,64,Wang, 1996 , Study 3
--0.5575,0.217894137,90,Wilson, K & S, 1987 , Study 1
-0.4136,0.481681388,24,Khberger, 1995 , Study 1, adp,
-0.6772,0.510510226,24,Khberger, 1995 , Study 1, pp, r
--0.4988,0.440249588,24,Khberger, 1995 , Study 1, adp,
-0.2532,0.467697626,24,Khberger, 1995 , Study 1, pp, o
--0.0407,0.584264538,16,Khberger, 1995 , Study 2, adp,
-1.1591,0.776944847,16,Khberger, 1995 , Study 2, pp, r
--0.182,0.574645831,16,Khberger, 1995 , Study 2, adp,
--0.133,0.577651073,16,Khberger, 1995 , Study 2, pp, o`,
+    content: `0.167246044,0.176128026,136,Bohm & Lind; 1992
+0.872453534,0.108283179,426,Elliott & Archibald; 1989 ; Study 1
+0.3581,0.150988198,190,Fagley & Miller; 1990 ; Study 1
+0.4804,0.206535196,108,Fagley & Miller; 1990 ; Study 2
+0.4988,0.231165663,88,Fagley & Miller; 1987 ; Study 1pre
+0.9208,0.268764358,78,Fagley & Miller; 1987 ; Study 2
+0.7706,0.243325455,88,Frisch; 1993 ; Study 1
+0.4241,0.126506969,272,Frisch; 1993 ; Study 2
+0.5205,0.212100689,104,Highouse & Paese; 1996 ; Study 1pre
+0.4452,0.209589436,104,Highouse & Paese; 1996 ; Study 1prosp
+0.134,0.220677676,88,Highouse & Paese; 1996 ; Study 1taskr
+0.6381,0.236961367,88,Highouse & Paese; 1996 ; Study 2prosp
+0.9881,0.148125972,244,Highouse & Yce; 1996 ; Study 1posneg
+-0.5999,0.226501393,84,Highouse & Yce; 1996 ; Study 2tr-op
+0.4442,0.234970553,84,Highouse & Yce; 1996 ; Study 2g-l
+0.9147,0.126614793,320,Jou et al.; 1996 ; Study 1
+0.5731,0.17034182,160,Jou et al.; 1996 ; Study 2
+0.3009,0.154259453,180,Kopp; 1995
+0.390888247,0.227338924,88,Leclerc; Schmitt & Dube; 1995 ; Study 7
+0.705,0.336760118,48,Levin & Chapman; 1990 ; Study 1
+0.662764777,0.225859368,97,Levin & Chapman; 1993 ; Study 1
+0.622265143,0.112772018,360,Li & Adams; 1995
+0.9206,0.543054303,24,Maule; 1989 ; Study 1
+0.4342,0.211420007,102,Maule; 1995
+0.5643,0.283226481,62,Maule; 1995 ; Study Exp.2; 1
+0.46,0.219238506,96,Miller & Fagley; 1991
+0.952,0.138335681,274,Nightingale; 1987
+1.1413,0.209158423,136,Olszanski & Lewicka; 1988
+0.3779,0.201485311,110,Paese; 1995
+0.7944,0.15013573,220,Paese; B & T; 1993 ; Study C1; Ind
+0.6074,0.145078003,220,Paese; B & T; 1993 ; Study C1; gr
+1.0452,0.158401757,220,Paese; B & T; 1993 ; Study C2; ind
+0.2748,0.138703356,220,Paese; B & T; 1993 ; Study C2; gr
+0.9063,0.38143483,42,Reyna & Brainerd; 1991 ; Study 1
+0.4215,0.175887664,144,Reyna & Brainerd; 1991 ; Study 2;1
+0.273571265,0.255137892,69,Ritov; B. & Hershey; 1993 ; Study 1
+0.769230137,0.249517597,84,Ritov; B & hershey; 1993 ; Study 1;1
+0.3731,0.142928287,212,Roszowski & Snelbecker; 1990
+0.627476002,0.534806998,22,Rowe & Puto; 1987
+0.4451,0.226435593,90,Schneider; 1992 ; Study SR3
+0.3207,0.222483925,90,Schneider; 1992 ; Study SR5
+0.2627,0.220914941,90,Schneider; 1992 ; Study SR2
+0.3494,0.223325129,90,Schneider; 1992 ; Study SR1
+0.3268,0.222659143,90,Schneider; 1992 ; Study RR3
+0.1975,0.219362673,90,Schneider; 1992 ; Study RR5
+0.3038,0.222008597,90,Schneider; 1992 ; Study RR2
+0.2657,0.22099177,90,Schneider; 1992 ; Study RR1
+0.7311,0.124970272,306,Sebora & Cornawll; 1995 ; Study Pr2
+0.856092132,0.298326642,63,Sitkin & Weingart; 1995 ; Study 2
+1.1109,0.285427736,76,Svenson & Benson; 1993 ; Study 1
+1.1541,0.280389711,80,Svenson & Benson; 1993 ; Study 2
+0.3322,0.145095298,204,Svytanek; 1991
+0.8384,0.21455574,114,Takemura; 1992
+0.4048,0.225068906,90,Takemura; 1994
+0.4445,0.238058992,82,Takemura; 1994 ; Study 2
+0.5952,0.172111065,158,Takemura; 1993
+0.8088,0.130876102,288,Tindale; S&s; 1993 ; Study indiv
+1.5378,0.416380935,48,Tindale; S & S; 1993 ; Study group
+0.5402,0.124860812,288,Tindale; S6S; 1993 ; Study ind; pos
+1.155044847,0.136486671,307,Tversky & Kahneman; 1981
+0.51678361,0.080638638,673,VanderPlight &; 1990 ; Study 1
+0.1366,0.117028153,300,VanderPlight &Vs; 1990 ; Study 2
+0.645766795,0.209403951,111,VanderPlight & Vs; 1990 ; Study 3
+0.55489094,0.113202455,350,VanderPlight & Vs 1990 ; Study 4
+1.2168,0.293168705,76,VS & VDP; 1995 ; Study 4;1
+0.622776453,0.204614071,115,VS & VDP; 1995 ; Study 4;2
+0.2229,0.219940614,90,Wang & Johnston; 1995
+0.6385,0.221164264,100,Wang & Johnston; 1995 ; Study 2
+0.4567,0.27306211,64,Wang; 1996 ; Study 1
+0.3342,0.237406135,80,Wang; 1996 ; Study 2
+0.2492,0.264982884,64,Wang; 1996 ; Study 3
+-0.5575,0.217894137,90,Wilson; K & S; 1987 ; Study 1
+0.4136,0.481681388,24,Khberger; 1995 ; Study 1; adp;
+0.6772,0.510510226,24,Khberger; 1995 ; Study 1; pp; r
+-0.4988,0.440249588,24,Khberger; 1995 ; Study 1; adp;
+0.2532,0.467697626,24,Khberger; 1995 ; Study 1; pp; o
+-0.0407,0.584264538,16,Khberger; 1995 ; Study 2; adp;
+1.1591,0.776944847,16,Khberger; 1995 ; Study 2; pp; r
+-0.182,0.574645831,16,Khberger; 1995 ; Study 2; adp;
+-0.133,0.577651073,16,Khberger; 1995 ; Study 2; pp; o`,
     filename: "mock_data_12.csv",
     original_filename: "KÅhberger.csv",
   },
@@ -821,21 +821,21 @@ export const mockCsvFiles = [
 0.34502212,0.0964301,476,Lewis & Bates (2011)
 0.538520464,0.096442571,447,Lewis & Bates (2011)
 0.79652821,0.102490507,426,Federico et al. (2013)
-0.429579017,0.171331224,153,Cornwell & Higgins (2013), S2
-0.606043732,0.176106176,146,Hirsh et al. (2010), S2
+0.429579017,0.171331224,153,Cornwell & Higgins (2013); S2
+0.606043732,0.176106176,146,Hirsh et al. (2010); S2
 0.387050477,0.180422631,140,van Leeuwen & Park (2009)
-0.606043732,0.213041603,96,Cornwell & Higgins (2013), S1`,
+0.606043732,0.213041603,96,Cornwell & Higgins (2013); S1`,
     filename: "mock_data_13.csv",
     original_filename: "Kivikangas.csv",
   },
   {
     name: "Mock Data 14",
     content: `0.60399997,0.287,51,1
--0.018999999,0.183,119,2
-0.14399999,0.169,142,2
+-0.018999999,0.183,119,1
+0.14399999,0.169,142,1
 0.249,0.27000001,54,2
-0.42899999,0.18799999,114,3
-0.75099999,0.175,138,3
+0.42899999,0.18799999,114,2
+0.75099999,0.175,138,2
 0.121,0.222,80,3
 0.31999999,0.13699999,240,4
 0.64700001,0.23899999,72,4
@@ -843,7 +843,7 @@ export const mockCsvFiles = [
 0.77399999,0.249,68,5
 0.62099999,0.26100001,60,5
 0.63300002,0.243,71,5
-0.38600001,0.18700001,126,6
+0.38600001,0.18700001,126,5
 0.38600001,0.19,112,6`,
     filename: "mock_data_14.csv",
     original_filename: "Belle.csv",
@@ -855,63 +855,63 @@ export const mockCsvFiles = [
 0.3,0.259806125,60,1
 0.36,0.26477603,58,1
 0.1,0.256268222,61,2
-0.57,0.231030836,78,3
-0.1,0.29535448,61,3
+0.57,0.231030836,78,2
+0.1,0.29535448,61,2
 0.48,0.321104577,50,3
-0.13,0.250283291,64,4
--0.03,0.333349204,36,5
-0.33,0.257879253,61,6
-0.41,0.182235418,123,6
-0.79,0.268046793,60,7
-0.05,0.23946407,79,7
-0.51,0.226766365,90,7
-0.84,0.363408046,33,8
--0.06,0.21576489,86,9
-0.38,0.177656498,129,9
-0.69,0.300373955,47,10
-0.8,0.367399657,32,11
-0.05,0.229529205,76,11
-0.97,0.352390645,36,11
-0.92,0.328601857,41,11
-0.94,0.317721624,44,11
-1.28,0.376703776,34,11
-0.98,0.444930728,23,12
-0.54,0.259797177,72,13
-0.83,0.203457609,105,13
-0.0,0.199017456,37,13
-0.55,0.32254186,40,13
-1.3,0.245003972,81,13
-0.72,0.26656561,60,13`,
+0.13,0.250283291,64,3
+-0.03,0.333349204,36,3
+0.33,0.257879253,61,3
+0.41,0.182235418,123,3
+0.79,0.268046793,60,3
+0.05,0.23946407,79,3
+0.51,0.226766365,90,4
+0.84,0.363408046,33,4
+-0.06,0.21576489,86,4
+0.38,0.177656498,129,4
+0.69,0.300373955,47,4
+0.8,0.367399657,32,4
+0.05,0.229529205,76,5
+0.97,0.352390645,36,6
+0.92,0.328601857,41,6
+0.94,0.317721624,44,6
+1.28,0.376703776,34,6
+0.98,0.444930728,23,7
+0.54,0.259797177,72,7
+0.83,0.203457609,105,7
+0.0,0.199017456,37,7
+0.55,0.32254186,40,7
+1.3,0.245003972,81,7
+0.72,0.26656561,60,7`,
     filename: "mock_data_15.csv",
     original_filename: "Miles.csv",
   },
   {
     name: "Mock Data 16",
     content: `0.542,0.274,54,1
-0.559,0.306,43,2
-0.419,0.201,100,2
+0.559,0.306,43,1
+0.419,0.201,100,1
 0.651,0.262,60,2
 0.474,0.201,100,2
 0.52,0.259,60,3
-0.696,0.32,40,4
-0.597,0.282,50,4
-0.616,0.288,49,4
-0.711,0.32,40,5
-0.435,0.291,30,6
-0.586,0.274,54,6
-0.64,0.283,51,6
-0.541,0.239,71,6
-0.54,0.182,124,6
-0.4,0.237,71,7
-0.563,0.241,70,7
-0.447,0.227,78,7
-0.561,0.226,80,7
-0.637,0.214,90,7
-1.013,0.331,40,7
-0.636,0.283,51,8
-0.571,0.256,62,8
-0.414,0.204,97,9
-0.625,0.261,60,9`,
+0.696,0.32,40,3
+0.597,0.282,50,3
+0.616,0.288,49,3
+0.711,0.32,40,3
+0.435,0.291,30,3
+0.586,0.274,54,3
+0.64,0.283,51,3
+0.541,0.239,71,3
+0.54,0.182,124,4
+0.4,0.237,71,4
+0.563,0.241,70,4
+0.447,0.227,78,4
+0.561,0.226,80,4
+0.637,0.214,90,4
+1.013,0.331,40,4
+0.636,0.283,51,4
+0.571,0.256,62,4
+0.414,0.204,97,4
+0.625,0.261,60,4`,
     filename: "mock_data_16.csv",
     original_filename: "Rabelo.csv",
   },
