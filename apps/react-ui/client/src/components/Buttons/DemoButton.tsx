@@ -50,7 +50,7 @@ export default function DemoButton({
       onClick={() => {
         void handleDemoClick();
       }}
-      variant="purple"
+      variant="secondary"
       size={size}
       disabled={isLoading}
       className={`${className} inline-flex gap-2 transition-all duration-300 ${
