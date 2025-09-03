@@ -7,6 +7,7 @@ import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import DemoButton from "@src/components/Buttons/DemoButton";
 import DemoTransition from "@src/components/DemoTransition";
+import LoadingCard from "@src/components/LoadingCard";
 
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -24,7 +25,15 @@ export default function Home() {
       </Head>
       <main className="home-page-container">
         {isLoadingDemo ? (
-          <DemoTransition />
+          <div className="flex items-center justify-center min-h-[60vh]">
+            <LoadingCard
+              title="Loading Demo Data..."
+              subtitle="Preparing your demo analysis"
+              color="purple"
+              size="md"
+              className="mx-auto"
+            />
+          </div>
         ) : (
           <div className="max-w-4xl text-center animate-fade-in">
             <h1 className="text-5xl font-bold mb-6 text-primary tracking-tight">
