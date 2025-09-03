@@ -273,7 +273,7 @@ const TEXT = {
 
     gettingStarted: {
       title: "Getting Started",
-      text: `Ready to check your data for spurious precision? Upload your
+      text: `Ready to correct your data for spurious precision? Upload your
     dataset and let MAIVE analyze it for you. The process is simple
     and provides clear, actionable results.`,
     },
