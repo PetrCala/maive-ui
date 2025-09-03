@@ -38,9 +38,12 @@ export default function OptionSection({
       const hasAdvancedOptionsChanged = ADVANCED_OPTION_KEYS.some(
         (key) => parameters[key] !== DEFAULT_MODEL_PARAMETERS[key],
       );
-      setIsOpen(hasAdvancedOptionsChanged);
+      // Only open if advanced options are changed, never close automatically
+      if (hasAdvancedOptionsChanged && !isOpen) {
+        setIsOpen(true);
+      }
     }
-  }, [config.title, parameters]);
+  }, [config.title, parameters, isOpen]);
 
   const fullContext: OptionContext = {
     parameters,
