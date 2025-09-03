@@ -413,13 +413,25 @@ export default function ResultsPage() {
 
           <div className="flex justify-end items-center mt-8">
             <div className="space-x-4">
-              <ActionButton onClick={handleExportData} variant="success">
+              <ActionButton
+                onClick={handleExportData}
+                variant="success"
+                size="md"
+              >
                 Export Data with Instrumented SE
               </ActionButton>
-              <ActionButton onClick={handleNewUpload} variant="secondary">
+              <ActionButton
+                onClick={handleNewUpload}
+                variant="secondary"
+                size="md"
+              >
                 Upload New Data
               </ActionButton>
-              <ActionButton onClick={handleRerunModel} variant="primary">
+              <ActionButton
+                onClick={handleRerunModel}
+                variant="primary"
+                size="md"
+              >
                 Rerun Model
               </ActionButton>
             </div>

@@ -1,4 +1,5 @@
 import MDXContent from "@context/MDXContent";
+import ActionButton from "@src/components/Buttons/ActionButton";
 import TEXT from "@lib/text";
 import CONST from "@src/CONST";
 
@@ -184,25 +185,26 @@ export default function MAIVEInfoModal({
                 {TEXT.maiveModal.gettingStarted.text}
               </p>
               <div className="flex gap-3">
-                <button
+                <ActionButton
                   onClick={() => {
                     window.location.href = "/upload";
                   }}
-                  className="btn-primary px-6 py-2"
+                  variant="primary"
+                  size="md"
                 >
                   {TEXT.maiveModal.uploadYourData}
-                </button>
-                <button onClick={onClose} className="btn-secondary px-6 py-2">
+                </ActionButton>
+                <ActionButton onClick={onClose} variant="secondary" size="md">
                   {TEXT.common.close}
-                </button>
+                </ActionButton>
               </div>
             </section>
           ) : (
             <section>
               <div className="flex gap-3">
-                <button onClick={onClose} className="btn-secondary px-6 py-2">
+                <ActionButton onClick={onClose} variant="secondary" size="md">
                   {TEXT.common.close}
-                </button>
+                </ActionButton>
               </div>
             </section>
           )}

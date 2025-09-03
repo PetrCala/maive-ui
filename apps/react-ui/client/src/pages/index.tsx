@@ -1,7 +1,7 @@
+import Head from "next/head";
 import PingButton from "@src/components/Buttons/PingButton";
 import MAIVEInfoModal from "@components/MAIVEInfoModal";
-import Link from "next/link";
-import Head from "next/head";
+import ActionButton from "@src/components/Buttons/ActionButton";
 import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
@@ -38,13 +38,20 @@ export default function Home() {
 
             {/* Action Buttons */}
             <div className="flex flex-col gap-4 justify-center items-center mb-8">
-              <Link href="/upload" className="btn-primary text-white px-8 py-4">
+              <ActionButton
+                href="/upload"
+                variant="primary"
+                size="lg"
+                className="w-full max-w-xs"
+              >
                 {TEXT.home.uploadYourData}
-              </Link>
+              </ActionButton>
 
-              <button
+              <ActionButton
                 onClick={() => setIsModalOpen(true)}
-                className="btn-secondary text-base px-6 py-3 inline-flex items-center gap-2"
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2"
               >
                 <svg
                   className="w-5 h-5"
@@ -60,7 +67,7 @@ export default function Home() {
                   />
                 </svg>
                 {TEXT.home.whatIsMaive}
-              </button>
+              </ActionButton>
               <DemoButton
                 isLoading={isLoadingDemo}
                 setIsLoading={setIsLoadingDemo}

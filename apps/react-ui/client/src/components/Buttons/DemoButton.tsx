@@ -34,6 +34,7 @@ export default function DemoButton({
         void handleDemoClick();
       }}
       variant="success"
+      size="md"
       disabled={isLoading}
     >
       {isLoading ? "Loading..." : "Run a demo"}

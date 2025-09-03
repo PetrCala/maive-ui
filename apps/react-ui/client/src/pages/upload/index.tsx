@@ -187,14 +187,15 @@ export default function UploadPage() {
                           Max size: 10MB &nbsp;|&nbsp; .csv, .xls, .xlsx
                         </p>
                       </div>
-                      <button
-                        type="button"
+                      <ActionButton
                         onClick={open}
-                        className="ml-8 px-4 py-2 text-base font-bold bg-white dark:bg-gray-800 text-primary border border-gray-300 dark:border-gray-600 rounded-full shadow-md hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 transition-colors duration-200 interactive"
+                        variant="secondary"
+                        size="md"
+                        className="ml-8 rounded-full shadow-md"
                         style={{ minWidth: 120 }}
                       >
                         Choose File
-                      </button>
+                      </ActionButton>
                     </div>
                     {selectedFile && (
                       <div className="mt-2 w-full border-2 border-secondary rounded-xl px-6 py-4 text-base flex items-center shadow-lg font-semibold surface-secondary">
@@ -218,15 +219,16 @@ export default function UploadPage() {
                   </div>
                   {isDevelopment &&
                     (!selectedFile ? (
-                      <button
-                        type="button"
+                      <ActionButton
                         onClick={() => {
                           void handleGenerateMockData();
                         }}
-                        className="ml-3 px-4 py-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 transition-colors duration-200 flex-shrink-0 interactive dark:text-green-400 dark:bg-green-900/20 dark:border-green-800 dark:hover:bg-green-900/30"
+                        variant="success"
+                        size="md"
+                        className="ml-3 flex-shrink-0"
                       >
                         Generate Mock Data
-                      </button>
+                      </ActionButton>
                     ) : (
                       <SuccessIndicator />
                     ))}
