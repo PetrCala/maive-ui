@@ -113,7 +113,7 @@ const Footer = ({ className = "" }: FooterProps) => {
         </div>
 
         {/* Links */}
-        <div className="flex items-center space-x-6 text-sm">
+        <div className="flex items-center space-x-4 text-sm">
           <FooterButtonLinkItem
             onClick={handleCitationClick}
             icon={<FaFileAlt />}
