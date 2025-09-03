@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
 import CitationBox from "./CitationBox";
 import InvisibleLink from "./InvisibleLink";
+import CONFIG from "@src/CONFIG";
 
 type FooterProps = {
   className?: string;
@@ -75,7 +76,9 @@ const Footer = ({ className = "" }: FooterProps) => {
   }, []);
 
   const handleContactClick = () => {
-    window.location.href = `mailto:${CONST.FOOTER.CONTACT_EMAIL}`;
+    window.location.href = CONFIG.SHOULD_SEND_EMAIL_IN_FOOTER_CONTACT
+      ? `mailto:${CONST.FOOTER.CONTACT_EMAIL}`
+      : CONST.FOOTER.CONTACT_URL;
   };
 
   const handleCitationClick = () => {
