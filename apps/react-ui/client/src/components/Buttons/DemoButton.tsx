@@ -1,5 +1,5 @@
 import { useRouter } from "next/navigation";
-import { useState, useRef } from "react";
+import { useRef } from "react";
 import { DataProcessingService } from "@src/services/dataProcessingService";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import CONST from "@src/CONST";
@@ -18,18 +18,13 @@ export default function DemoButton({
   className,
 }: DemoButtonProps) {
   const router = useRouter();
-  const [isTransitioning, setIsTransitioning] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleDemoClick = async () => {
-    // Start the transition animation
-    setIsTransitioning(true);
-
-    // Wait for the transition animation to complete (300ms)
-    await new Promise((resolve) => setTimeout(resolve, 300));
-
-    // Now set loading state
     setIsLoading(true);
+
+    // Wait for the transition animation to complete
+    await new Promise((resolve) => setTimeout(resolve, 700));
 
     try {
       const dataId = await DataProcessingService.processAndStoreMockDataByName(
@@ -45,7 +40,6 @@ export default function DemoButton({
       console.error("Error loading demo data:", error);
       alert("Failed to load demo data. Please try again.");
       setIsLoading(false);
-      setIsTransitioning(false);
     }
   };
 
@@ -57,16 +51,12 @@ export default function DemoButton({
       }}
       variant="purple"
       size={size}
-      disabled={isLoading || isTransitioning}
+      disabled={isLoading}
       className={`${className} transition-all duration-300 ${
-        isTransitioning ? "scale-95 opacity-75" : "scale-100 opacity-100"
+        isLoading ? "scale-95 opacity-75" : "scale-100 opacity-100"
       }`}
     >
-      {isTransitioning
-        ? "Starting..."
-        : isLoading
-          ? "Loading..."
-          : "Run a demo"}
+      {`${isLoading ? "Loading..." : "Run a demo"}`}
     </ActionButton>
   );
 }
