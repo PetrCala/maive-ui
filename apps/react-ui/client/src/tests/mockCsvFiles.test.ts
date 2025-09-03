@@ -121,22 +121,11 @@ describe("Mock CSV Files", () => {
         const uniqueItems = uniqueStudyIds.size;
         const difference = totalItems - uniqueItems;
 
-        // For datasets with many unique studies (like detailed meta-analyses),
-        // we allow some flexibility but still expect some repetition
-        if (uniqueItems >= totalItems * 0.8) {
-          // If 80% or more are unique, we just require that there are multiple studies
-          expect(
-            uniqueItems > 1,
-            `CSV file "${csvFile.name}" with mostly unique studies should still have multiple studies (found ${uniqueItems} unique studies)`,
-          ).toBe(true);
-        } else {
-          // For datasets with more repetition, enforce the 3+ difference rule
-          expect(
-            difference >= 3,
-            `CSV file "${csvFile.name}" should have at least 3 more items than unique studies. ` +
-              `Found ${totalItems} total items and ${uniqueItems} unique studies (difference: ${difference})`,
-          ).toBe(true);
-        }
+        expect(
+          difference >= 3,
+          `CSV file "${csvFile.name}" should have at least 3 more items than unique studies. ` +
+            `Found ${totalItems} total items and ${uniqueItems} unique studies (difference: ${difference})`,
+        ).toBe(true);
       });
     });
 
