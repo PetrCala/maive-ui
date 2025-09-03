@@ -20,7 +20,6 @@ import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
-import { DEFAULT_MODEL_PARAMETERS } from "@src/constants/defaultParameters";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -29,7 +28,7 @@ export default function ModelPage() {
   const [hasRunModel, setHasRunModel] = useState(false);
   const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const [parameters, setParameters] = useState<ModelParameters>({
-    ...DEFAULT_MODEL_PARAMETERS,
+    ...CONFIG.DEFAULT_MODEL_PARAMETERS,
   });
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);

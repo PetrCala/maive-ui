@@ -1,3 +1,5 @@
+import CONST from "./CONST";
+
 const CONFIG = {
   BOOTSTRAP_ENABLED: false,
   WAIVE_ENABLED: false,
@@ -10,6 +12,16 @@ const CONFIG = {
   TOOLTIPS_ENABLED: {
     MODEL_PAGE: true,
     RESULTS_PAGE: true,
+  },
+  DEFAULT_MODEL_PARAMETERS: {
+    modelType: CONST.MODEL_TYPES.MAIVE,
+    includeStudyDummies: false,
+    includeStudyClustering: false,
+    standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED_CR2.VALUE,
+    computeAndersonRubin: false,
+    maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
+    weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
+    shouldUseInstrumenting: true,
   },
 } as const;
 
