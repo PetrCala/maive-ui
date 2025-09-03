@@ -13,6 +13,8 @@ import random
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
+random.seed(42)
+
 def identify_columns(headers: List[str]) -> Tuple[Optional[int], Optional[int], Optional[int], Optional[int]]:
     """
     Identify the column indices for effect, standard error, n observations, and study ID.
