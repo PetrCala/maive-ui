@@ -214,7 +214,7 @@ ER  -`,
 
       <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
         <a
-          href={CONST.MAIVE_PAPER_URL}
+          href={CONST.LINKS.MAIVE.PAPER}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 dark:text-blue-400 hover:underline"

@@ -132,7 +132,7 @@ export default function MAIVEInfoModal({
                   {TEXT.maiveModal.papersAndResources.maiveWebsite.text}
                 </p>
                 <a
-                  href={CONST.MAIVE_URL}
+                  href={CONST.LINKS.MAIVE.WEBSITE}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-600 hover:underline text-sm interactive"
@@ -148,7 +148,7 @@ export default function MAIVEInfoModal({
                   {TEXT.maiveModal.papersAndResources.maivePaper.text}
                 </p>
                 <a
-                  href={CONST.MAIVE_PAPER_URL}
+                  href={CONST.LINKS.MAIVE.PAPER}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-green-600 hover:underline text-sm interactive"
@@ -164,7 +164,7 @@ export default function MAIVEInfoModal({
                   {TEXT.maiveModal.papersAndResources.maiveCode.text}
                 </p>
                 <a
-                  href={CONST.MAIVE_GITHUB_URL}
+                  href={CONST.LINKS.MAIVE.GITHUB}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-purple-600 hover:underline text-sm interactive"
