@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 
 type ActionButtonProps = {
   onClick?: (event?: React.FormEvent) => void;
@@ -31,7 +32,7 @@ export default function ActionButton({
     lg: "px-6 py-3 text-lg",
   };
 
-  const baseClasses = `${sizeClasses[size]} rounded-lg transition-colors duration-200 font-medium`;
+  const baseClasses = `${sizeClasses[size]} rounded-lg transition-colors duration-200 font-medium justify-center items-center`;
 
   const variantClasses = {
     primary:
@@ -46,12 +47,11 @@ export default function ActionButton({
 
   const classes = `${baseClasses} ${variantClasses[variant]} ${disabled ? "cursor-not-allowed" : ""} ${className}`;
 
-  // If href is provided, render as a link
   if (href) {
     return (
-      <a href={href} className={classes} title={title} style={style}>
+      <Link href={href} className={classes} title={title} style={style}>
         {children}
-      </a>
+      </Link>
     );
   }
 

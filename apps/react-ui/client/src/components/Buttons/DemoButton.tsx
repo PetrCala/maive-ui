@@ -6,11 +6,15 @@ import CONST from "@src/CONST";
 type DemoButtonProps = {
   isLoading: boolean;
   setIsLoading: (isLoading: boolean) => void;
+  size?: "sm" | "md" | "lg";
+  className?: string;
 };
 
 export default function DemoButton({
   isLoading,
   setIsLoading,
+  size = "md",
+  className,
 }: DemoButtonProps) {
   const router = useRouter();
 
@@ -34,8 +38,9 @@ export default function DemoButton({
         void handleDemoClick();
       }}
       variant="success"
-      size="md"
+      size={size}
       disabled={isLoading}
+      className={className}
     >
       {isLoading ? "Loading..." : "Run a demo"}
     </ActionButton>

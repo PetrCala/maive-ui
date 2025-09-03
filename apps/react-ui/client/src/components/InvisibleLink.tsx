@@ -1,3 +1,4 @@
+import Link from "next/link";
 import React from "react";
 
 type InvisibleLinkProps = {
@@ -16,7 +17,7 @@ const InvisibleLink: React.FC<InvisibleLinkProps> = ({
   rel = "noopener noreferrer",
 }) => {
   return (
-    <a
+    <Link
       href={href}
       target={target}
       rel={rel}
@@ -24,7 +25,7 @@ const InvisibleLink: React.FC<InvisibleLinkProps> = ({
       style={{ textDecoration: "none", color: "inherit" }}
     >
       {children}
-    </a>
+    </Link>
   );
 };
 

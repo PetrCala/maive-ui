@@ -5,6 +5,7 @@ import CONST from "@src/CONST";
 import CitationBox from "./CitationBox";
 import InvisibleLink from "./InvisibleLink";
 import CONFIG from "@src/CONFIG";
+import Link from "next/link";
 
 type FooterProps = {
   className?: string;
@@ -37,14 +38,14 @@ const FooterHrefLinkItem = ({
   href: string;
 }) => {
   return (
-    <a
+    <Link
       href={href}
       target="_blank"
       rel="noopener noreferrer"
       className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 flex items-center"
     >
       <FooterLinkItemContents svgPath={svgPath} text={text} />
-    </a>
+    </Link>
   );
 };
 

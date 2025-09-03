@@ -2,6 +2,7 @@ import MDXContent from "@context/MDXContent";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import TEXT from "@lib/text";
 import CONST from "@src/CONST";
+import Link from "next/link";
 
 type MAIVEInfoModalProps = {
   isOpen: boolean;
@@ -132,14 +133,14 @@ export default function MAIVEInfoModal({
                 <p className="text-sm text-muted mb-2">
                   {TEXT.maiveModal.papersAndResources.maiveWebsite.text}
                 </p>
-                <a
+                <Link
                   href={CONST.LINKS.MAIVE.WEBSITE}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary-600 hover:underline text-sm interactive"
                 >
                   {TEXT.maiveModal.papersAndResources.maiveWebsite.linkText}
-                </a>
+                </Link>
               </div>
               <div className="border-l-4 border-green-500 pl-4">
                 <h4 className="font-semibold text-primary">
@@ -148,14 +149,14 @@ export default function MAIVEInfoModal({
                 <p className="text-sm text-muted mb-2">
                   {TEXT.maiveModal.papersAndResources.maivePaper.text}
                 </p>
-                <a
+                <Link
                   href={CONST.LINKS.MAIVE.PAPER}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-green-600 hover:underline text-sm interactive"
                 >
                   {TEXT.maiveModal.papersAndResources.maivePaper.linkText}
-                </a>
+                </Link>
               </div>
               <div className="border-l-4 border-purple-500 pl-4">
                 <h4 className="font-semibold text-primary">
@@ -164,14 +165,14 @@ export default function MAIVEInfoModal({
                 <p className="text-sm text-muted mb-2">
                   {TEXT.maiveModal.papersAndResources.maiveCode.text}
                 </p>
-                <a
+                <Link
                   href={CONST.LINKS.MAIVE.GITHUB}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-purple-600 hover:underline text-sm interactive"
                 >
                   {TEXT.maiveModal.papersAndResources.maiveCode.linkText}
-                </a>
+                </Link>
               </div>
             </div>
           </section>
@@ -185,13 +186,7 @@ export default function MAIVEInfoModal({
                 {TEXT.maiveModal.gettingStarted.text}
               </p>
               <div className="flex gap-3">
-                <ActionButton
-                  onClick={() => {
-                    window.location.href = "/upload";
-                  }}
-                  variant="primary"
-                  size="md"
-                >
+                <ActionButton href="/upload" variant="primary" size="md">
                   {TEXT.maiveModal.uploadYourData}
                 </ActionButton>
                 <ActionButton onClick={onClose} variant="secondary" size="md">

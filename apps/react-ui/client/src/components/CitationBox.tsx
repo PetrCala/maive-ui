@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
+import Link from "next/link";
 
 type CitationFormat = "apa" | "bibtex" | "ris" | "plain";
 
@@ -213,14 +214,14 @@ ER  -`,
       </div>
 
       <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-        <a
+        <Link
           href={CONST.LINKS.MAIVE.PAPER}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-600 dark:text-blue-400 hover:underline"
         >
           {TEXT.citation.viewPaper}
-        </a>
+        </Link>
       </div>
     </div>
   );
