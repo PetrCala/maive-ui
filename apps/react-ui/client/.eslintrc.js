@@ -153,6 +153,9 @@ module.exports = {
 		"react/prop-types": "off",
 		"react/jsx-no-constructed-context-values": "error",
 
+		// Next.js specific rules
+		"@next/next/no-html-link-for-pages": "error",
+
 		// Disallow usage of certain functions and imports
 		"no-restricted-syntax": [
 			"error",
