@@ -57,7 +57,7 @@ export default function DemoButton({
         isLoading ? "scale-95 opacity-75" : "scale-100 opacity-100"
       }`}
     >
-      <FaPlay className="w-5 h-5" />
+      <FaPlay className="icon-button" />
       {`${isLoading ? "Loading..." : "Run a demo"}`}
     </ActionButton>
   );

@@ -64,7 +64,7 @@ export default function Home() {
                 size="md"
                 className="inline-flex gap-2 w-2/3"
               >
-                <FaInfoCircle className="w-5 h-5" />
+                <FaInfoCircle className="icon-button" />
                 {TEXT.home.whatIsMaive}
               </ActionButton>
 
