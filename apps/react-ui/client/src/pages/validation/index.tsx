@@ -146,6 +146,25 @@ export default function ValidationPage() {
       }
     }
 
+    // Check for non-positive number of observations
+    const nObsColIndex = columnMapping.n_obs;
+    if (nObsColIndex !== undefined) {
+      const hasNonPositiveN = fullData.some((row) => {
+        const value = hasHeaders
+          ? Number(row[headers[nObsColIndex]])
+          : Number(row[nObsColIndex]);
+        return !isNaN(value) && (value <= 0 || !Number.isInteger(value));
+      });
+
+      if (hasNonPositiveN) {
+        messages.push({
+          type: "error",
+          message:
+            "Number of observations must be positive integers (greater than 0). Please check your data.",
+        });
+      }
+    }
+
     // Check for negative standard errors
     const seColIndex = columnMapping.se;
     if (seColIndex !== undefined) {
