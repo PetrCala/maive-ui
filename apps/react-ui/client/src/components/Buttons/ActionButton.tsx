@@ -65,7 +65,13 @@ const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
 
     if (href) {
       return (
-        <Link href={href} className={classes} title={title} style={style}>
+        <Link
+          href={href}
+          className={classes}
+          title={title}
+          style={style}
+          onClick={onClick}
+        >
           {children}
         </Link>
       );

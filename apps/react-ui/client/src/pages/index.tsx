@@ -11,6 +11,7 @@ import LoadingCard from "@src/components/LoadingCard";
 export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDevelopment, setIsDevelopment] = useState(false);
+  const [isLoadingUploadPage, setIsLoadingUploadPage] = useState(false);
   const [isLoadingDemo, setIsLoadingDemo] = useState(false);
 
   useEffect(() => {
@@ -48,9 +49,10 @@ export default function Home() {
             <div className="flex flex-col gap-4 justify-center items-center mb-8 w-fit mx-auto">
               <ActionButton
                 href="/upload"
+                onClick={() => setIsLoadingUploadPage(true)}
                 variant="primary"
                 size="lg"
-                className="w-full px-20"
+                className={`w-full px-20 opacity-${isLoadingUploadPage ? "75" : "100"}`}
               >
                 {TEXT.home.uploadYourData}
               </ActionButton>
