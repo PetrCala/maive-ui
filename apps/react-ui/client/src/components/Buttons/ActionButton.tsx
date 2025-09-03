@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { forwardRef } from "react";
 import Link from "next/link";
 
 type ActionButtonProps = {
@@ -14,68 +15,78 @@ type ActionButtonProps = {
   style?: React.CSSProperties;
 };
 
-export default function ActionButton({
-  onClick,
-  variant = "primary",
-  size = "md",
-  className = "",
-  disabled = false,
-  children,
-  title,
-  type = "button",
-  href,
-  style,
-}: ActionButtonProps) {
-  const sizeClasses = {
-    sm: "py-1.5 text-sm",
-    md: "py-2 text-base",
-    lg: "py-3 text-lg",
-  };
+const ActionButton = forwardRef<HTMLButtonElement, ActionButtonProps>(
+  (
+    {
+      onClick,
+      variant = "primary",
+      size = "md",
+      className = "",
+      disabled = false,
+      children,
+      title,
+      type = "button",
+      href,
+      style,
+    },
+    ref,
+  ) => {
+    const sizeClasses = {
+      sm: "py-1.5 text-sm",
+      md: "py-2 text-base",
+      lg: "py-3 text-lg",
+    };
 
-  const hasCustomPadding = className.includes("px-");
-  const paddingClasses = hasCustomPadding
-    ? ""
-    : {
-        sm: "px-3",
-        md: "px-4",
-        lg: "px-6",
-      }[size];
+    const hasCustomPadding = className.includes("px-");
+    const paddingClasses = hasCustomPadding
+      ? ""
+      : {
+          sm: "px-3",
+          md: "px-4",
+          lg: "px-6",
+        }[size];
 
-  const baseClasses = `${sizeClasses[size]} ${paddingClasses} rounded-lg transition-colors duration-200 font-medium justify-center items-center`;
+    const baseClasses = `${sizeClasses[size]} ${paddingClasses} rounded-lg transition-colors duration-200 font-medium justify-center items-center`;
 
-  const variantClasses = {
-    primary:
-      "btn-primary disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
-    secondary:
-      "btn-secondary disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
-    success:
-      "btn-success disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
-    danger:
-      "btn-danger disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
-    purple:
-      "btn-purple disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
-  };
+    const variantClasses = {
+      primary:
+        "btn-primary disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+      secondary:
+        "btn-secondary disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+      success:
+        "btn-success disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+      danger:
+        "btn-danger disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+      purple:
+        "btn-purple disabled:bg-gray-300 disabled:text-gray-600 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-gray-300 disabled:hover:shadow-none disabled:transform-none",
+    };
 
-  const classes = `${baseClasses} ${variantClasses[variant]} ${disabled ? "cursor-not-allowed" : ""} ${className}`;
+    const classes = `${baseClasses} ${variantClasses[variant]} ${disabled ? "cursor-not-allowed" : ""} ${className}`;
 
-  if (href) {
+    if (href) {
+      return (
+        <Link href={href} className={classes} title={title} style={style}>
+          {children}
+        </Link>
+      );
+    }
+
     return (
-      <Link href={href} className={classes} title={title} style={style}>
+      <button
+        ref={ref}
+        onClick={onClick}
+        disabled={disabled}
+        className={classes}
+        title={title}
+        type={type}
+        style={style}
+      >
         {children}
-      </Link>
+      </button>
     );
-  }
+  },
+);
 
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      className={classes}
-      title={title}
-      type={type}
-      style={style}
-    >
-      {children}
-    </button>
-  );
-}
+ActionButton.displayName = "ActionButton";
+
+export default ActionButton;
