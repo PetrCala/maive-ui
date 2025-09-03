@@ -20,6 +20,7 @@ import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
+import { DEFAULT_MODEL_PARAMETERS } from "@src/constants/defaultParameters";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -28,15 +29,7 @@ export default function ModelPage() {
   const [hasRunModel, setHasRunModel] = useState(false);
   const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const [parameters, setParameters] = useState<ModelParameters>({
-    modelType: CONST.MODEL_TYPES.MAIVE,
-    includeStudyDummies: false,
-    // The study clustering and error treatment are later automatically set to correct values if the data has a study ID column
-    includeStudyClustering: false,
-    standardErrorTreatment: CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED_CR2.VALUE,
-    computeAndersonRubin: false,
-    maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
-    weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
-    shouldUseInstrumenting: true,
+    ...DEFAULT_MODEL_PARAMETERS,
   });
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
