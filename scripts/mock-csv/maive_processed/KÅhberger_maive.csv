@@ -1,0 +1,81 @@
+effect,se,n,study_id
+0.167246044,0.176128026,136,Bohm & Lind, 1992
+0.872453534,0.108283179,426,Elliott & Archibald, 1989 , Study 1
+0.3581,0.150988198,190,Fagley & Miller, 1990 , Study 1
+0.4804,0.206535196,108,Fagley & Miller, 1990 , Study 2
+0.4988,0.231165663,88,Fagley & Miller, 1987 , Study 1pre
+0.9208,0.268764358,78,Fagley & Miller, 1987 , Study 2
+0.7706,0.243325455,88,Frisch, 1993 , Study 1
+0.4241,0.126506969,272,Frisch, 1993 , Study 2
+0.5205,0.212100689,104,Highouse & Paese, 1996 , Study 1pre
+0.4452,0.209589436,104,Highouse & Paese, 1996 , Study 1prosp
+0.134,0.220677676,88,Highouse & Paese, 1996 , Study 1taskr
+0.6381,0.236961367,88,Highouse & Paese, 1996 , Study 2prosp
+0.9881,0.148125972,244,Highouse & Yce, 1996 , Study 1posneg
+-0.5999,0.226501393,84,Highouse & Yce, 1996 , Study 2tr-op
+0.4442,0.234970553,84,Highouse & Yce, 1996 , Study 2g-l
+0.9147,0.126614793,320,Jou et al., 1996 , Study 1
+0.5731,0.17034182,160,Jou et al., 1996 , Study 2
+0.3009,0.154259453,180,Kopp, 1995
+0.390888247,0.227338924,88,Leclerc, Schmitt & Dube, 1995 , Study 7
+0.705,0.336760118,48,Levin & Chapman, 1990 , Study 1
+0.662764777,0.225859368,97,Levin & Chapman, 1993 , Study 1
+0.622265143,0.112772018,360,Li & Adams, 1995
+0.9206,0.543054303,24,Maule, 1989 , Study 1
+0.4342,0.211420007,102,Maule, 1995
+0.5643,0.283226481,62,Maule, 1995 , Study Exp.2; 1
+0.46,0.219238506,96,Miller & Fagley, 1991
+0.952,0.138335681,274,Nightingale, 1987
+1.1413,0.209158423,136,Olszanski & Lewicka, 1988
+0.3779,0.201485311,110,Paese, 1995
+0.7944,0.15013573,220,Paese, B & T, 1993 , Study C1, Ind
+0.6074,0.145078003,220,Paese, B & T, 1993 , Study C1, gr
+1.0452,0.158401757,220,Paese, B & T, 1993 , Study C2, ind
+0.2748,0.138703356,220,Paese, B & T, 1993 , Study C2, gr
+0.9063,0.38143483,42,Reyna & Brainerd, 1991 , Study 1
+0.4215,0.175887664,144,Reyna & Brainerd, 1991 , Study 2;1
+0.273571265,0.255137892,69,Ritov, B. & Hershey, 1993 , Study 1
+0.769230137,0.249517597,84,Ritov, B & hershey, 1993 , Study 1;1
+0.3731,0.142928287,212,Roszowski & Snelbecker, 1990
+0.627476002,0.534806998,22,Rowe & Puto, 1987
+0.4451,0.226435593,90,Schneider, 1992 , Study SR3
+0.3207,0.222483925,90,Schneider, 1992 , Study SR5
+0.2627,0.220914941,90,Schneider, 1992 , Study SR2
+0.3494,0.223325129,90,Schneider, 1992 , Study SR1
+0.3268,0.222659143,90,Schneider, 1992 , Study RR3
+0.1975,0.219362673,90,Schneider, 1992 , Study RR5
+0.3038,0.222008597,90,Schneider, 1992 , Study RR2
+0.2657,0.22099177,90,Schneider, 1992 , Study RR1
+0.7311,0.124970272,306,Sebora & Cornawll, 1995 , Study Pr2
+0.856092132,0.298326642,63,Sitkin & Weingart, 1995 , Study 2
+1.1109,0.285427736,76,Svenson & Benson, 1993 , Study 1
+1.1541,0.280389711,80,Svenson & Benson, 1993 , Study 2
+0.3322,0.145095298,204,Svytanek, 1991
+0.8384,0.21455574,114,Takemura, 1992
+0.4048,0.225068906,90,Takemura, 1994
+0.4445,0.238058992,82,Takemura, 1994 , Study 2
+0.5952,0.172111065,158,Takemura, 1993
+0.8088,0.130876102,288,Tindale, S&s, 1993 , Study indiv
+1.5378,0.416380935,48,Tindale, S & S, 1993 , Study group
+0.5402,0.124860812,288,Tindale, S6S, 1993 , Study ind, pos
+1.155044847,0.136486671,307,Tversky & Kahneman, 1981
+0.51678361,0.080638638,673,VanderPlight &, 1990 , Study 1
+0.1366,0.117028153,300,VanderPlight &Vs, 1990 , Study 2
+0.645766795,0.209403951,111,VanderPlight & Vs, 1990 , Study 3
+0.55489094,0.113202455,350,VanderPlight & Vs 1990 , Study 4
+1.2168,0.293168705,76,VS & VDP, 1995 , Study 4,1
+0.622776453,0.204614071,115,VS & VDP, 1995 , Study 4,2
+0.2229,0.219940614,90,Wang & Johnston, 1995
+0.6385,0.221164264,100,Wang & Johnston, 1995 , Study 2
+0.4567,0.27306211,64,Wang, 1996 , Study 1
+0.3342,0.237406135,80,Wang, 1996 , Study 2
+0.2492,0.264982884,64,Wang, 1996 , Study 3
+-0.5575,0.217894137,90,Wilson, K & S, 1987 , Study 1
+0.4136,0.481681388,24,Khberger, 1995 , Study 1, adp,
+0.6772,0.510510226,24,Khberger, 1995 , Study 1, pp, r
+-0.4988,0.440249588,24,Khberger, 1995 , Study 1, adp,
+0.2532,0.467697626,24,Khberger, 1995 , Study 1, pp, o
+-0.0407,0.584264538,16,Khberger, 1995 , Study 2, adp,
+1.1591,0.776944847,16,Khberger, 1995 , Study 2, pp, r
+-0.182,0.574645831,16,Khberger, 1995 , Study 2, adp,
+-0.133,0.577651073,16,Khberger, 1995 , Study 2, pp, o
