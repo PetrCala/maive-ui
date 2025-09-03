@@ -2,15 +2,13 @@ import React, { useState, useEffect, useRef } from "react";
 import OptionRenderer from "@src/components/Options/OptionRenderer";
 import type { OptionSectionConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
+import { modelOptionsConfig } from "@src/config/optionsConfig";
 import {
   filterVisibleOptions,
   shouldShowOption,
 } from "@src/utils/optionVisibility";
-import {
-  DEFAULT_MODEL_PARAMETERS,
-  ADVANCED_OPTION_KEYS,
-} from "@src/constants/defaultParameters";
 import TEXT from "@src/lib/text";
+import CONFIG from "@src/CONFIG";
 
 type OptionSectionProps = {
   config: OptionSectionConfig;
@@ -28,6 +26,9 @@ export default function OptionSection({
   context = {},
 }: OptionSectionProps) {
   const [isOpen, setIsOpen] = useState(config.defaultOpen ?? true);
+  const advancedOptionKeys = modelOptionsConfig.advanced.options.map(
+    (option) => option.key,
+  );
   const hasUserToggled = useRef(false);
 
   useEffect(() => {
@@ -35,15 +36,15 @@ export default function OptionSection({
       config.title === TEXT.model.advancedOptions.title &&
       !hasUserToggled.current
     ) {
-      const hasAdvancedOptionsChanged = ADVANCED_OPTION_KEYS.some(
-        (key) => parameters[key] !== DEFAULT_MODEL_PARAMETERS[key],
+      const hasAdvancedOptionsChanged = advancedOptionKeys.some(
+        (key) => parameters[key] !== CONFIG.DEFAULT_MODEL_PARAMETERS[key],
       );
       // Only open if advanced options are changed, never close automatically
       if (hasAdvancedOptionsChanged && !isOpen) {
         setIsOpen(true);
       }
     }
-  }, [config.title, parameters, isOpen]);
+  }, [config.title, parameters, isOpen, advancedOptionKeys]);
 
   const fullContext: OptionContext = {
     parameters,
