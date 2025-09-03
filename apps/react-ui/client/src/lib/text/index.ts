@@ -44,10 +44,11 @@ const TEXT = {
         "The **3rd column** represents the sample size. It must contain only numbers.",
       studyIdColumn:
         "The **4th column** (if present) represents study IDs. It can contain strings or numbers.",
-      minimumRows:
-        "The file must contain at least 4 rows of data (excluding headers if present).",
-      minimumObservations:
-        "If a study ID column is present, the number of rows must be larger than the number of unique study IDs plus 3 to ensure enough degrees of freedom for distribution functions.",
+      // Keep these two commented out for now, as the upload page gets a little overwhelming with all the requirements.
+      // minimumRows:
+      //   "The file must contain at least 4 rows of data (excluding headers if present).",
+      // minimumObservations:
+      //   "If a study ID column is present, the number of rows must be larger than the number of unique study IDs plus 3 to ensure enough degrees of freedom for distribution functions.",
     },
   },
   model: {
