@@ -15,7 +15,6 @@ import TEXT from "@src/lib/text";
 import MDXContent from "@src/context/MDXContent";
 import CONFIG from "@src/CONFIG";
 
-// Standalone function to get the file icon component based on filename
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -90,7 +89,6 @@ export default function UploadPage() {
   const handleLoadRandomMockCsv = async () => {
     try {
       const uploadedData = await DataProcessingService.loadRandomMockData();
-      // Create a File object from the processed data for display
       const blob = new Blob([uploadedData.base64Data.split(",")[1]], {
         type: "text/csv",
       });
@@ -115,11 +113,8 @@ export default function UploadPage() {
 
         setIsProcessing(true);
         try {
-          // Process and store the file using the unified service
           const dataId =
             await DataProcessingService.processAndStoreFile(selectedFile);
-
-          // Navigate to validation page with data ID
           router.push(`/validation?dataId=${dataId}`);
         } catch (error) {
           console.error("Error processing file:", error);

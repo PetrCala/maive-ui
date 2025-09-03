@@ -4,7 +4,19 @@ import { mockCsvFiles } from "@utils/mockCsvFiles";
 import { generateMockCSVFile } from "@utils/mockData";
 
 /**
- * Unified service for processing data files (uploaded or mock)
+ * Service for processing data.
+ *
+ * @example
+ * // Process an uploaded file
+ * const uploadedData = await DataProcessingService.processUploadedFile(file);
+ *
+ * @example
+ * // Load a specific mock dataset by name
+ * const mockData = await DataProcessingService.loadMockDataByName("Mock Data 7");
+ *
+ * @example
+ * // Load a random mock dataset
+ * const randomMockData = await DataProcessingService.loadRandomMockData();
  */
 export class DataProcessingService {
   /**
@@ -13,13 +25,8 @@ export class DataProcessingService {
    * @returns Promise<UploadedData> - The processed data
    */
   static async processUploadedFile(file: File): Promise<UploadedData> {
-    // Process the uploaded file
     const { data, base64Data } = await processUploadedFile(file);
-
-    // Generate unique ID for this data
     const dataId = generateDataId();
-
-    // Create the uploaded data object
     const uploadedData: UploadedData = {
       id: dataId,
       filename: file.name,
