@@ -914,7 +914,7 @@ export const mockCsvFiles = [
 0.625,0.261,60,9`,
     filename: "mock_data_16.csv",
     original_filename: "Rabelo.csv",
-  }
+  },
 ];
 
 export const getRandomMockCsvFile = () => {
