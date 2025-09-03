@@ -185,12 +185,7 @@ export const mockCsvFiles = [
     content: `{data['content']}`,
     filename: "{data['filename']}",
     original_filename: "{data['original_filename']}",
-  }}"""
-        
-        if i < len(mock_data) - 1:
-            ts_code += ","
-        ts_code += "\n"
-    
+  }},\n"""
     ts_code += """];
 
 export const getRandomMockCsvFile = () => {
