@@ -30,41 +30,61 @@ def identify_columns(headers: List[str]) -> Tuple[Optional[int], Optional[int], 
     n_col = None
     study_col = None
     
+    # First pass: look for exact matches and specific patterns
     for i, header in enumerate(headers):
         header_lower = header.lower().strip()
         
         # Effect size column (usually first, or contains effect-related terms)
         if effect_col is None:
             if (i == 0 or 
-                any(term in header_lower for term in ['d', 'es', 'effect', 'coef', 'beta', 'estimate'])):
+                any(term in header_lower for term in ['d', 'es', 'effect', 'coef', 'beta', 'estimate', 'estimates'])):
                 effect_col = i
         
         # Standard error column
         if se_col is None:
-            if any(term in header_lower for term in ['se', 'sed', 'stderr', 'standard_error', 'std_error']):
+            if any(term in header_lower for term in ['se', 'sed', 'stderr', 'standard_error', 'std_error', 'standard errors']):
                 se_col = i
         
-        # Number of observations column
+        # Number of observations column - be more specific
         if n_col is None:
-            if any(term in header_lower for term in ['n', 'nobs', 'sample_size', 'observations']):
+            # Look for exact 'n' match first, then other patterns
+            if header_lower == 'n':
+                n_col = i
+            elif any(term in header_lower for term in ['sample_size', 'sample sizes', 'observations', 'nobs']):
                 n_col = i
         
         # Study ID column
         if study_col is None:
-            if any(term in header_lower for term in ['study', 'study_id', 'id', 'group', 'cluster', 'study id', 'study_id', 'studyid']):
+            if any(term in header_lower for term in ['study', 'study_id', 'id', 'group', 'cluster', 'study id', 'studyid']):
                 study_col = i
     
-    # If we couldn't find effect column, assume it's the first numeric column
+    # Second pass: if we still haven't found n_col, look for 'n' in column names
+    if n_col is None:
+        for i, header in enumerate(headers):
+            header_lower = header.lower().strip()
+            # Look for 'n' but avoid columns like 'n_treat', 'n_control' unless no other option
+            if 'n' in header_lower and not any(term in header_lower for term in ['n_treat', 'n_control', 'n1', 'n2']):
+                n_col = i
+                break
+    
+    # Third pass: if still no n_col, look for any column with 'n' in it
+    if n_col is None:
+        for i, header in enumerate(headers):
+            header_lower = header.lower().strip()
+            if 'n' in header_lower:
+                n_col = i
+                break
+    
+    # Fallback logic - be smarter about defaults
     if effect_col is None:
         effect_col = 0
     
-    # If we couldn't find SE column, assume it's the second column
     if se_col is None:
         se_col = 1
     
-    # If we couldn't find n column, assume it's the third column
+    # For n_col, if we still haven't found it, try the last column (often contains sample sizes)
     if n_col is None:
-        n_col = 2
+        n_col = len(headers) - 1
     
     # Study column is optional
     return effect_col, se_col, n_col, study_col
