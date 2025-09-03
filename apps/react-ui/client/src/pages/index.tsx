@@ -6,7 +6,6 @@ import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import DemoButton from "@src/components/Buttons/DemoButton";
-import DemoTransition from "@src/components/DemoTransition";
 import LoadingCard from "@src/components/LoadingCard";
 
 export default function Home() {
