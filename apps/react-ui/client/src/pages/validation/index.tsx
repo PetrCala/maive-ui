@@ -149,18 +149,25 @@ export default function ValidationPage() {
     // Check for non-positive number of observations
     const nObsColIndex = columnMapping.n_obs;
     if (nObsColIndex !== undefined) {
-      const hasNonPositiveN = fullData.some((row) => {
+      const nonPositiveIndexes: number[] = [];
+      fullData.forEach((row, index) => {
         const value = hasHeaders
           ? Number(row[headers[nObsColIndex]])
           : Number(row[nObsColIndex]);
-        return !isNaN(value) && (value <= 0 || !Number.isInteger(value));
+        if (!isNaN(value) && (value <= 0 || !Number.isInteger(value))) {
+          nonPositiveIndexes.push(index + 1); // Convert to 1-based indexing for user display
+        }
       });
 
-      if (hasNonPositiveN) {
+      if (nonPositiveIndexes.length > 0) {
+        const maxIndexes = 3;
+        const displayIndexes = nonPositiveIndexes.slice(0, maxIndexes);
+        const hasMore = nonPositiveIndexes.length > maxIndexes;
+        const indexesText = displayIndexes.join(", ") + (hasMore ? "..." : "");
+
         messages.push({
           type: "error",
-          message:
-            "Number of observations must be positive integers (greater than 0). Please check your data.",
+          message: `The number of observations column must contain only positive integers (greater than 0). Found invalid values at row(s): ${indexesText}. Please check your data.`,
         });
       }
     }
