@@ -41,7 +41,7 @@ export default function Home() {
                 href="/upload"
                 variant="primary"
                 size="lg"
-                className="w-full"
+                className="w-full px-16"
               >
                 {TEXT.home.uploadYourData}
               </ActionButton>
@@ -50,14 +50,14 @@ export default function Home() {
                 isLoading={isLoadingDemo}
                 setIsLoading={setIsLoadingDemo}
                 size="md"
-                className="w-full"
+                className="w-3/4"
               />
 
               <ActionButton
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex gap-2 w-full"
+                className="inline-flex gap-2 w-3/4"
               >
                 <svg
                   className="w-5 h-5"
