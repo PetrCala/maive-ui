@@ -4,10 +4,6 @@ jsonlite
 plumber
 base64enc
 metafor
-clubSandwich
-varhandle
-pracma
-sandwich
 ragg
 systemfonts
 textshaping
