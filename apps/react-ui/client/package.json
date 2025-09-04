@@ -1,6 +1,6 @@
 {
 	"name": "client",
-	"version": "0.1.17-3",
+	"version": "0.1.18-0",
 	"private": true,
 	"type": "commonjs",
 	"scripts": {
