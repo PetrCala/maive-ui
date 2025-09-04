@@ -17,6 +17,8 @@ FROM public.ecr.aws/lambda/provided:al2023
 # ── Runtime libraries needed by R and compiled packages ──
 # Do NOT install openssl-libs (conflicts with snapsafe). Add libquadmath only on x86_64.
 RUN dnf -y update && dnf -y install \
+    libfreetype \
+    libfreetype6 \
     libicu \
     libgomp \
     libgfortran \
