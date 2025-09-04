@@ -27,7 +27,7 @@ RUN dnf -y update && dnf -y install \
     libsodium-devel \
     libicu-devel \
     # For plotting
-    freetype-devel fontconfig-devel harfbuzz-devel fribidi-devel libpng-devel libjpeg-turbo-devel pkgconf-pkg-config libtiff-devel \
+    freetype-devel fontconfig-devel harfbuzz-devel fribidi-devel libpng-devel libjpeg-turbo-devel pkgconf-pkg-config libtiff-devel libwebp-devel \
  && dnf clean all
 
 # Build & install R from source
@@ -73,6 +73,7 @@ RUN dnf -y update \
       libxml2 openssl-libs \
       libsodium \
       libgcc libgfortran \
+      libwebp \
  && dnf clean all
 
 # Bring in R & the preinstalled libraries
