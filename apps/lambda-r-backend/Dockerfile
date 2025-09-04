@@ -23,6 +23,7 @@ RUN dnf -y update && dnf -y install \
     libstdc++ \
     libsodium \
     libxml2 \
+    libwebp \
     zlib \
     bzip2-libs \
     xz-libs \
