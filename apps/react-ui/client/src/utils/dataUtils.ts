@@ -1,4 +1,4 @@
-import type { DataArray } from "@src/types";
+import type { DataArray, ModelResults, ModelParameters } from "@src/types";
 import * as XLSX from "xlsx";
 
 // Generate a unique ID for uploaded data
@@ -214,6 +214,139 @@ export const exportDataWithInstrumentedSE = (
     XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
     XLSX.writeFile(workbook, newFilename);
   }
+};
+
+/**
+ * Export comprehensive results to Excel with three sheets
+ * @param originalData - The original data
+ * @param results - The model results
+ * @param parameters - The model parameters
+ * @param seInstrumented - The instrumented standard errors
+ * @param filename - The filename
+ * @param runDuration - The run duration in milliseconds
+ * @param runTimestamp - The run timestamp
+ * @param dataInfo - Information about the data file
+ */
+export const exportComprehensiveResults = (
+  originalData: DataArray,
+  results: ModelResults,
+  parameters: ModelParameters,
+  seInstrumented: number[],
+  filename: string,
+  runDuration?: number,
+  runTimestamp?: Date,
+  dataInfo?: {
+    filename: string;
+    rowCount: number;
+    hasStudyId: boolean;
+  },
+): void => {
+  const workbook = XLSX.utils.book_new();
+
+  // Sheet 1: Results Summary
+  const resultsSummary = [
+    { Metric: "Effect Estimate", Value: results.effectEstimate },
+    { Metric: "Standard Error", Value: results.standardError },
+    { Metric: "Significant", Value: results.isSignificant ? "Yes" : "No" },
+    {
+      Metric: "Publication Bias p-value",
+      Value: results.publicationBias.pValue,
+    },
+    {
+      Metric: "Publication Bias Significant",
+      Value: results.publicationBias.isSignificant ? "Yes" : "No",
+    },
+  ];
+
+  // Add conditional results
+  if (results.andersonRubinCI !== "NA") {
+    resultsSummary.push(
+      { Metric: "Anderson-Rubin CI Lower", Value: results.andersonRubinCI[0] },
+      { Metric: "Anderson-Rubin CI Upper", Value: results.andersonRubinCI[1] },
+    );
+  }
+
+  if (results.firstStageFTest !== "NA") {
+    resultsSummary.push({
+      Metric: "First Stage F-test",
+      Value: results.firstStageFTest,
+    });
+  }
+
+  resultsSummary.push(
+    { Metric: "Hausman Test Statistic", Value: results.hausmanTest.statistic },
+    {
+      Metric: "Hausman Critical Value",
+      Value: results.hausmanTest.criticalValue,
+    },
+    {
+      Metric: "Hausman Rejects Null",
+      Value: results.hausmanTest.rejectsNull ? "Yes" : "No",
+    },
+  );
+
+  if (results.bootCI !== "NA") {
+    resultsSummary.push(
+      { Metric: "Bootstrap CI Effect Lower", Value: results.bootCI[0][0] },
+      { Metric: "Bootstrap CI Effect Upper", Value: results.bootCI[0][1] },
+      { Metric: "Bootstrap CI SE Lower", Value: results.bootCI[1][0] },
+      { Metric: "Bootstrap CI SE Upper", Value: results.bootCI[1][1] },
+    );
+  }
+
+  if (results.bootSE !== "NA") {
+    resultsSummary.push(
+      { Metric: "Bootstrap SE Effect", Value: results.bootSE[0] },
+      { Metric: "Bootstrap SE SE", Value: results.bootSE[1] },
+    );
+  }
+
+  // Add run information
+  if (runDuration !== undefined) {
+    resultsSummary.push({ Metric: "Run Duration (ms)", Value: runDuration });
+  }
+  if (runTimestamp) {
+    resultsSummary.push({
+      Metric: "Run Timestamp",
+      Value: runTimestamp.toISOString(),
+    });
+  }
+  if (dataInfo) {
+    resultsSummary.push(
+      { Metric: "Data File", Value: dataInfo.filename },
+      { Metric: "Observations", Value: dataInfo.rowCount },
+      { Metric: "Has Study ID", Value: dataInfo.hasStudyId ? "Yes" : "No" },
+    );
+  }
+
+  const resultsSheet = XLSX.utils.json_to_sheet(resultsSummary);
+  XLSX.utils.book_append_sheet(workbook, resultsSheet, "Results Summary");
+
+  // Sheet 2: Run Settings (Model Parameters)
+  const runSettings = Object.entries(parameters).map(([key, value]) => ({
+    Parameter: key,
+    Value: typeof value === "boolean" ? (value ? "Yes" : "No") : String(value),
+  }));
+
+  const settingsSheet = XLSX.utils.json_to_sheet(runSettings);
+  XLSX.utils.book_append_sheet(workbook, settingsSheet, "Run Settings");
+
+  // Sheet 3: MAIVE Adjusted SEs
+  const exportData = originalData.map((row, index) => ({
+    ...row,
+    se_instrumented: seInstrumented[index] || null,
+  }));
+
+  const dataSheet = XLSX.utils.json_to_sheet(exportData);
+  XLSX.utils.book_append_sheet(workbook, dataSheet, "Data with Adjusted SEs");
+
+  // Generate filename
+  const baseName = filename.replace(/\.[^/.]+$/, ""); // Remove extension
+  const now = new Date();
+  const salt = `_${now.toISOString().replace(/[-:T]/g, "").slice(0, 13)}`; // e.g., "_20240611_1530"
+  const newFilename = `${baseName}_comprehensive_results${salt}.xlsx`;
+
+  XLSX.writeFile(workbook, newFilename);
 };
 
 /**

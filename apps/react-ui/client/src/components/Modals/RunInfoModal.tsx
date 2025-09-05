@@ -187,6 +187,15 @@ export default function RunInfoModal({
                   {results.isSignificant ? "Yes" : "No"}
                 </span>
               </div>
+              {results.andersonRubinCI !== "NA" && (
+                <div className="flex justify-between">
+                  <span className="text-secondary">Anderson-Rubin CI:</span>
+                  <span className="font-medium text-right">
+                    [{results.andersonRubinCI[0].toFixed(4)},{" "}
+                    {results.andersonRubinCI[1].toFixed(4)}]
+                  </span>
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <div className="flex justify-between">
@@ -217,8 +226,76 @@ export default function RunInfoModal({
                   </span>
                 </div>
               )}
+              <div className="flex justify-between">
+                <span className="text-secondary">Hausman Test:</span>
+                <span className="font-medium text-right">
+                  {results.hausmanTest.statistic.toFixed(4)} (CV:{" "}
+                  {results.hausmanTest.criticalValue.toFixed(4)})
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-secondary">Hausman Rejects:</span>
+                <span
+                  className={`font-medium ${
+                    results.hausmanTest.rejectsNull
+                      ? "text-red-600"
+                      : "text-green-600"
+                  }`}
+                >
+                  {results.hausmanTest.rejectsNull ? "Yes" : "No"}
+                </span>
+              </div>
             </div>
           </div>
+
+          {/* Bootstrap Results */}
+          {(results.bootCI !== "NA" || results.bootSE !== "NA") && (
+            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="text-lg font-medium text-primary mb-3">
+                Bootstrap Results
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                {results.bootCI !== "NA" && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-secondary">
+                        Bootstrap CI (Effect):
+                      </span>
+                      <span className="font-medium text-right">
+                        [{results.bootCI[0][0].toFixed(4)},{" "}
+                        {results.bootCI[0][1].toFixed(4)}]
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-secondary">Bootstrap CI (SE):</span>
+                      <span className="font-medium text-right">
+                        [{results.bootCI[1][0].toFixed(4)},{" "}
+                        {results.bootCI[1][1].toFixed(4)}]
+                      </span>
+                    </div>
+                  </div>
+                )}
+                {results.bootSE !== "NA" && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-secondary">
+                        Bootstrap SE (Effect):
+                      </span>
+                      <span className="font-medium">
+                        {results.bootSE[0].toFixed(4)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-secondary">Bootstrap SE (SE):</span>
+                      <span className="font-medium">
+                        {results.bootSE[1].toFixed(4)}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </section>
       </div>
     </BaseModal>
