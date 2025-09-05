@@ -3,6 +3,7 @@
 import type { ModelParameters, ModelResults } from "@src/types";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
+import ResultsSummary from "@src/components/ResultsSummary";
 import BaseModal from "./BaseModal";
 
 type RunInfoModalProps = {
@@ -141,11 +142,13 @@ export default function RunInfoModal({
           <h3 className="text-xl font-semibold text-primary mb-3">
             Run Settings
           </h3>
-          <div className="space-y-3">
-            {Object.entries(parameters).map(([key, value]) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+            {Object.entries(parameters).map(([key, value], index) => (
               <div
                 key={key}
-                className="flex justify-between items-center py-2 border-b border-gray-500"
+                className={`flex justify-between items-center py-2 ${
+                  index % 2 === 0 ? "md:pr-4" : "md:pl-4"
+                }`}
               >
                 <span className="text-secondary">
                   {getParameterDisplayName(key as keyof ModelParameters)}:
@@ -163,139 +166,11 @@ export default function RunInfoModal({
           <h3 className="text-xl font-semibold text-primary mb-3">
             Results Summary
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-secondary">Effect Estimate:</span>
-                <span className="font-medium">
-                  {results.effectEstimate.toFixed(4)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-secondary">Standard Error:</span>
-                <span className="font-medium">
-                  {results.standardError.toFixed(4)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-secondary">Significant:</span>
-                <span
-                  className={`font-medium ${
-                    results.isSignificant ? "text-green-600" : "text-red-600"
-                  }`}
-                >
-                  {results.isSignificant ? "Yes" : "No"}
-                </span>
-              </div>
-              {results.andersonRubinCI !== "NA" && (
-                <div className="flex justify-between">
-                  <span className="text-secondary">Anderson-Rubin CI:</span>
-                  <span className="font-medium text-right">
-                    [{results.andersonRubinCI[0].toFixed(4)},{" "}
-                    {results.andersonRubinCI[1].toFixed(4)}]
-                  </span>
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-secondary">
-                  Publication Bias p-value:
-                </span>
-                <span className="font-medium">
-                  {results.publicationBias.pValue.toFixed(4)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-secondary">Bias Significant:</span>
-                <span
-                  className={`font-medium ${
-                    results.publicationBias.isSignificant
-                      ? "text-red-600"
-                      : "text-green-600"
-                  }`}
-                >
-                  {results.publicationBias.isSignificant ? "Yes" : "No"}
-                </span>
-              </div>
-              {results.firstStageFTest !== "NA" && (
-                <div className="flex justify-between">
-                  <span className="text-secondary">First Stage F-test:</span>
-                  <span className="font-medium">
-                    {results.firstStageFTest.toFixed(4)}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-between">
-                <span className="text-secondary">Hausman Test:</span>
-                <span className="font-medium text-right">
-                  {results.hausmanTest.statistic.toFixed(4)} (CV:{" "}
-                  {results.hausmanTest.criticalValue.toFixed(4)})
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-secondary">Hausman Rejects:</span>
-                <span
-                  className={`font-medium ${
-                    results.hausmanTest.rejectsNull
-                      ? "text-red-600"
-                      : "text-green-600"
-                  }`}
-                >
-                  {results.hausmanTest.rejectsNull ? "Yes" : "No"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Bootstrap Results */}
-          {(results.bootCI !== "NA" || results.bootSE !== "NA") && (
-            <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-              <h4 className="text-lg font-medium text-primary mb-3">
-                Bootstrap Results
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                {results.bootCI !== "NA" && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-secondary">
-                        Bootstrap CI (Effect):
-                      </span>
-                      <span className="font-medium text-right">
-                        [{results.bootCI[0][0].toFixed(4)},{" "}
-                        {results.bootCI[0][1].toFixed(4)}]
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-secondary">Bootstrap CI (SE):</span>
-                      <span className="font-medium text-right">
-                        [{results.bootCI[1][0].toFixed(4)},{" "}
-                        {results.bootCI[1][1].toFixed(4)}]
-                      </span>
-                    </div>
-                  </div>
-                )}
-                {results.bootSE !== "NA" && (
-                  <div className="space-y-2">
-                    <div className="flex justify-between">
-                      <span className="text-secondary">
-                        Bootstrap SE (Effect):
-                      </span>
-                      <span className="font-medium">
-                        {results.bootSE[0].toFixed(4)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-secondary">Bootstrap SE (SE):</span>
-                      <span className="font-medium">
-                        {results.bootSE[1].toFixed(4)}
-                      </span>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          <ResultsSummary
+            results={results}
+            variant="detailed"
+            showBootstrapSection={true}
+          />
         </section>
       </div>
     </BaseModal>
