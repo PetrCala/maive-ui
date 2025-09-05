@@ -113,7 +113,11 @@ export function hasStudyIdColumn(
   }
 
   const headers = Object.keys(data[0]);
-  return headers.some((header: string) => /\bstudy[\s_-]?id\b/i.test(header));
+
+  return (
+    headers.some((header: string) => /\bstudy[\s_-]?id\b/i.test(header)) ||
+    headers.length === 4
+  );
 }
 
 /**
