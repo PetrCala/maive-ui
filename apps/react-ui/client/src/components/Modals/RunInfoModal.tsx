@@ -173,6 +173,9 @@ export default function RunInfoModal({
             variant="detailed"
             showBootstrapSection={true}
             layout="vertical"
+            runDuration={runDuration}
+            runTimestamp={runTimestamp}
+            dataInfo={dataInfo}
           />
         </section>
       </div>

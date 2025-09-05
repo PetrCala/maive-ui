@@ -1,20 +1,23 @@
 "use client";
 
 import type { ModelResults } from "@src/types";
+import {
+  generateResultsData,
+  type ResultItem,
+} from "@src/utils/resultsDataUtils";
 
 type ResultsSummaryProps = {
   results: ModelResults;
   variant?: "detailed" | "simple";
   showBootstrapSection?: boolean;
   layout?: "horizontal" | "vertical"; // horizontal = x-axis, vertical = y-axis
-};
-
-type ResultItem = {
-  label: string;
-  value: string | number;
-  isSignificant?: boolean;
-  isSignificantType?: "positive" | "negative"; // positive = green, negative = red
-  show?: boolean;
+  runDuration?: number;
+  runTimestamp?: Date;
+  dataInfo?: {
+    filename: string;
+    rowCount: number;
+    hasStudyId: boolean;
+  };
 };
 
 export default function ResultsSummary({
@@ -22,15 +25,10 @@ export default function ResultsSummary({
   variant = "detailed",
   showBootstrapSection = true,
   layout = "horizontal",
+  runDuration,
+  runTimestamp,
+  dataInfo,
 }: ResultsSummaryProps) {
-  const formatValue = (value: number, decimals = 4): string => {
-    return value.toFixed(decimals);
-  };
-
-  const formatCI = (ci: [number, number]): string => {
-    return `[${formatValue(ci[0])}, ${formatValue(ci[1])}]`;
-  };
-
   const getSignificanceColor = (
     isSignificant: boolean,
     type: "positive" | "negative",
@@ -41,97 +39,54 @@ export default function ResultsSummary({
     return type === "positive" ? "text-green-600" : "text-red-600";
   };
 
-  // Core results that are always shown
-  const coreResults: ResultItem[] = [
-    {
-      label: "Effect Estimate",
-      value: formatValue(results.effectEstimate),
-      show: true,
-    },
-    {
-      label: "Standard Error",
-      value: formatValue(results.standardError),
-      show: true,
-    },
-    {
-      label: "Significant",
-      value: results.isSignificant ? "Yes" : "No",
-      isSignificant: results.isSignificant,
-      isSignificantType: "positive",
-      show: true,
-    },
-    {
-      label: "Publication Bias p-value",
-      value: formatValue(results.publicationBias.pValue),
-      show: true,
-    },
-    {
-      label: "Bias Significant",
-      value: results.publicationBias.isSignificant ? "Yes" : "No",
-      isSignificant: results.publicationBias.isSignificant,
-      isSignificantType: "negative",
-      show: true,
-    },
-  ];
+  // Generate results data using the utility function
+  const resultsData = generateResultsData(
+    results,
+    undefined,
+    runDuration,
+    runTimestamp,
+    dataInfo,
+  );
 
-  // Conditional results
-  const conditionalResults: ResultItem[] = [
-    {
-      label: "Anderson-Rubin CI",
-      value:
-        results.andersonRubinCI !== "NA"
-          ? formatCI(results.andersonRubinCI)
-          : "N/A",
-      show: results.andersonRubinCI !== "NA",
-    },
-    {
-      label: "First Stage F-test",
-      value:
-        results.firstStageFTest !== "NA"
-          ? formatValue(results.firstStageFTest)
-          : "N/A",
-      show: results.firstStageFTest !== "NA",
-    },
-    {
-      label: "Hausman Test",
-      value:
-        variant === "detailed"
-          ? `${formatValue(results.hausmanTest.statistic)} (CV: ${formatValue(results.hausmanTest.criticalValue)})`
-          : formatValue(results.hausmanTest.statistic),
-      show: true,
-    },
-    {
-      label: "Hausman Rejects",
-      value: results.hausmanTest.rejectsNull ? "Yes" : "No",
-      isSignificant: results.hausmanTest.rejectsNull,
-      isSignificantType: "negative",
-      show: true,
-    },
-  ];
+  // Transform the data for display (add significance types and adjust formatting)
+  const coreResults: ResultItem[] = resultsData.coreResults.map((item) => ({
+    ...item,
+    isSignificantType:
+      item.label === "Significant"
+        ? "positive"
+        : item.label === "Publication Bias Significant"
+          ? "negative"
+          : undefined,
+  }));
 
-  // Bootstrap results
-  const bootstrapResults: ResultItem[] = [
-    {
-      label: "Bootstrap CI (Effect)",
-      value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "N/A",
-      show: results.bootCI !== "NA",
+  const conditionalResults: ResultItem[] = resultsData.conditionalResults.map(
+    (item) => {
+      // Special handling for Hausman Test in detailed mode
+      if (item.label === "Hausman Test Statistic" && variant === "detailed") {
+        const criticalValue = resultsData.conditionalResults.find(
+          (r) => r.label === "Hausman Critical Value",
+        );
+        return {
+          ...item,
+          label: "Hausman Test",
+          value: `${item.value} (CV: ${criticalValue?.value ?? "N/A"})`,
+          isSignificantType: "negative",
+        };
+      }
+      return {
+        ...item,
+        isSignificantType:
+          item.label === "Hausman Rejects Null" ? "negative" : undefined,
+      };
     },
-    {
-      label: "Bootstrap CI (SE)",
-      value: results.bootCI !== "NA" ? formatCI(results.bootCI[1]) : "N/A",
-      show: results.bootCI !== "NA",
-    },
-    {
-      label: "Bootstrap SE (Effect)",
-      value: results.bootSE !== "NA" ? formatValue(results.bootSE[0]) : "N/A",
-      show: results.bootSE !== "NA",
-    },
-    {
-      label: "Bootstrap SE (SE)",
-      value: results.bootSE !== "NA" ? formatValue(results.bootSE[1]) : "N/A",
-      show: results.bootSE !== "NA",
-    },
-  ];
+  );
+
+  const bootstrapResults: ResultItem[] = resultsData.bootstrapResults.map(
+    (item) => ({
+      ...item,
+      value: item.value === "NA" ? "N/A" : item.value,
+    }),
+  );
 
   // Combine all results and filter out hidden ones
   const allResults = [...coreResults, ...conditionalResults];
