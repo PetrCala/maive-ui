@@ -142,22 +142,36 @@ export default function RunInfoModal({
           <h3 className="text-xl font-semibold text-primary mb-3">
             Run Settings
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-            {Object.entries(parameters).map(([key, value], index) => (
-              <div
-                key={key}
-                className={`flex justify-between items-start py-1 ${
-                  index % 2 === 0 ? "md:pr-4" : "md:pl-4"
-                }`}
-              >
-                <span className="text-secondary flex-shrink-0 mr-2">
-                  {getParameterDisplayName(key as keyof ModelParameters)}:
-                </span>
-                <span className="font-medium text-right break-words min-w-0">
-                  {getParameterValue(key as keyof ModelParameters, value)}
-                </span>
-              </div>
-            ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-sm">
+            {Object.entries(parameters).map(([key, value], index) => {
+              const displayName = getParameterDisplayName(
+                key as keyof ModelParameters,
+              );
+              const truncationLength = 25;
+              const truncatedName =
+                displayName.length > truncationLength
+                  ? `${displayName.substring(0, truncationLength - 3)}...`
+                  : displayName;
+
+              return (
+                <div
+                  key={key}
+                  className={`flex justify-between items-start py-0.5 ${
+                    index % 2 === 0 ? "md:pr-3" : "md:pl-3"
+                  }`}
+                >
+                  <span
+                    className="text-secondary flex-shrink-0 mr-2"
+                    title={displayName}
+                  >
+                    {truncatedName}:
+                  </span>
+                  <span className="font-medium text-right break-words min-w-0">
+                    {getParameterValue(key as keyof ModelParameters, value)}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </section>
 
