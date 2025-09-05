@@ -11,7 +11,7 @@ import { GoBackButton } from "@components/Buttons";
 import TEXT from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
-  exportDataWithInstrumentedSE,
+  exportComprehensiveResults,
   downloadImageAsJpg,
   hasStudyIdColumn,
 } from "@utils/dataUtils";
@@ -101,12 +101,21 @@ export default function ResultsPage() {
         uploadedData = storeData;
       }
 
-      // Export the data with instrumented standard errors
-      exportDataWithInstrumentedSE(
+      const dataInfo = {
+        filename: uploadedData.filename,
+        rowCount: uploadedData.data.length,
+        hasStudyId: hasStudyIdColumn(uploadedData.data),
+      };
+
+      exportComprehensiveResults(
         uploadedData.data,
+        parsedResults,
+        parsedParameters,
         parsedResults.seInstrumented,
         uploadedData.filename,
-        true,
+        runDuration ? parseInt(runDuration, 10) : undefined,
+        runTimestamp ? new Date(runTimestamp) : undefined,
+        dataInfo,
       );
     } catch (error) {
       console.error("Error exporting data:", error);
