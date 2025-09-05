@@ -8,18 +8,15 @@ The maive package version is referenced in the GitHub Actions workflow files and
 
 ## How to Update the Version
 
-### 1. Update Workflow Files
+### 1. Run the `set-maive-tag` script
 
-To bump the maive package version, you need to update the `MAIVE_TAG` environment variable in the relevant workflow files:
+To bump the maive package version, simply run the following script:
 
-```yaml
-env:
-  MAIVE_TAG: <current-tag>  # Update this value
+```bash
+npm run set-maive-tag <new-tag>
 ```
 
-**Files to update:**
-
-- `.github/workflows/release.yml`
+This updates all the relevant files and creates a commit with the newly bumped MAIVE tag.
 
 ## Local Development and Debugging
 
