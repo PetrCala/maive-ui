@@ -76,6 +76,7 @@ export default function ResultsSummary({
       effect: TEXT.results.effectEstimate.title,
       bias: TEXT.results.publicationBias.title,
       tests: TEXT.results.diagnosticTests.title,
+      bootstrap: TEXT.results.bootstrap.title,
     };
     return sectionTitles[section] || "";
   };
@@ -109,7 +110,6 @@ export default function ResultsSummary({
     {} as Record<string, ResultItem[]>,
   );
 
-  // Helper function to split results into two columns for a section
   const splitIntoColumns = (
     items: ResultItem[],
     orientation: "horizontal" | "vertical",
@@ -190,7 +190,7 @@ export default function ResultsSummary({
   }
 
   // Horizontal layout (default) - render sections dynamically
-  const sectionOrder = ["effect", "bias", "tests"];
+  const sectionOrder = ["effect", "bias", "tests", "bootstrap"];
 
   return (
     <div className="space-y-6">
