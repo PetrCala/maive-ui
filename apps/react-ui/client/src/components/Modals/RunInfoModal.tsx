@@ -4,6 +4,7 @@ import type { ModelParameters, ModelResults } from "@src/types";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import ResultsSummary from "@src/components/ResultsSummary";
+import RunDetails from "@src/components/RunDetails";
 import BaseModal from "./BaseModal";
 
 type RunInfoModalProps = {
@@ -29,26 +30,6 @@ export default function RunInfoModal({
   runDuration,
   runTimestamp,
 }: RunInfoModalProps) {
-  const formatDuration = (ms?: number): string => {
-    if (!ms) {
-      return "Unknown";
-    }
-    if (ms < 1000) {
-      return `${ms}ms`;
-    }
-    if (ms < 60000) {
-      return `${(ms / 1000).toFixed(1)}s`;
-    }
-    return `${(ms / 60000).toFixed(1)}m`;
-  };
-
-  const formatTimestamp = (timestamp?: Date): string => {
-    if (!timestamp) {
-      return "Unknown";
-    }
-    return timestamp.toLocaleString();
-  };
-
   const getParameterDisplayName = (key: keyof ModelParameters): string => {
     return TEXT.model[key].label;
   };
@@ -102,39 +83,11 @@ export default function RunInfoModal({
           <h3 className="text-xl font-semibold text-primary mb-3">
             Run Details
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-secondary">Duration:</span>
-                <span className="font-medium">
-                  {formatDuration(runDuration)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-secondary">Completed:</span>
-                <span className="font-medium">
-                  {formatTimestamp(runTimestamp)}
-                </span>
-              </div>
-            </div>
-            {dataInfo && (
-              <div className="space-y-2">
-                <div className="flex justify-between">
-                  <span className="text-secondary">Data File:</span>
-                  <span
-                    className="font-medium truncate ml-2"
-                    title={dataInfo.filename}
-                  >
-                    {dataInfo.filename}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-secondary">Observations:</span>
-                  <span className="font-medium">{dataInfo.rowCount}</span>
-                </div>
-              </div>
-            )}
-          </div>
+          <RunDetails
+            runDuration={runDuration}
+            runTimestamp={runTimestamp}
+            dataInfo={dataInfo}
+          />
         </section>
 
         {/* Model Parameters */}
@@ -143,35 +96,60 @@ export default function RunInfoModal({
             Run Settings
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-sm">
-            {Object.entries(parameters).map(([key, value], index) => {
-              const displayName = getParameterDisplayName(
-                key as keyof ModelParameters,
-              );
-              const truncationLength = 30;
-              const truncatedName =
-                displayName.length > truncationLength
-                  ? `${displayName.substring(0, truncationLength - 3)}...`
-                  : displayName;
+            {(() => {
+              const parameterEntries = Object.entries(parameters);
+              const midPoint = Math.ceil(parameterEntries.length / 2);
+              const leftColumnParams = parameterEntries.slice(0, midPoint);
+              const rightColumnParams = parameterEntries.slice(midPoint);
+
+              const renderParameter = (
+                [key, value]: [string, unknown],
+                isLeftColumn: boolean,
+              ) => {
+                const displayName = getParameterDisplayName(
+                  key as keyof ModelParameters,
+                );
+                const truncationLength = 30;
+                const truncatedName =
+                  displayName.length > truncationLength
+                    ? `${displayName.substring(0, truncationLength - 3)}...`
+                    : displayName;
+
+                return (
+                  <div
+                    key={key}
+                    className={`flex justify-between items-start py-0.5 ${
+                      isLeftColumn ? "md:pr-3" : "md:pl-3"
+                    }`}
+                  >
+                    <span
+                      className="text-secondary flex-shrink-0 mr-2"
+                      title={displayName}
+                    >
+                      {truncatedName}:
+                    </span>
+                    <span className="font-medium text-right break-words min-w-0">
+                      {getParameterValue(key as keyof ModelParameters, value)}
+                    </span>
+                  </div>
+                );
+              };
 
               return (
-                <div
-                  key={key}
-                  className={`flex justify-between items-start py-0.5 ${
-                    index % 2 === 0 ? "md:pr-3" : "md:pl-3"
-                  }`}
-                >
-                  <span
-                    className="text-secondary flex-shrink-0 mr-2"
-                    title={displayName}
-                  >
-                    {truncatedName}:
-                  </span>
-                  <span className="font-medium text-right break-words min-w-0">
-                    {getParameterValue(key as keyof ModelParameters, value)}
-                  </span>
-                </div>
+                <>
+                  <div className="space-y-0">
+                    {leftColumnParams.map(([key, value]) =>
+                      renderParameter([key, value], true),
+                    )}
+                  </div>
+                  <div className="space-y-0">
+                    {rightColumnParams.map(([key, value]) =>
+                      renderParameter([key, value], false),
+                    )}
+                  </div>
+                </>
               );
-            })}
+            })()}
           </div>
         </section>
 

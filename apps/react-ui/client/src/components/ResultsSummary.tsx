@@ -137,13 +137,10 @@ export default function ResultsSummary({
   const allResults = [...coreResults, ...conditionalResults];
   const visibleResults = allResults.filter((result) => result.show);
 
-  // Split results into two columns for balanced display
-  const leftColumnResults = visibleResults.filter(
-    (_, index) => index % 2 === 0,
-  );
-  const rightColumnResults = visibleResults.filter(
-    (_, index) => index % 2 === 1,
-  );
+  // Split results into two columns for balanced display (column-wise population)
+  const midPoint = Math.ceil(visibleResults.length / 2);
+  const leftColumnResults = visibleResults.slice(0, midPoint);
+  const rightColumnResults = visibleResults.slice(midPoint);
 
   // Add bootstrap results to the shorter column to balance
   const bootstrapVisible = bootstrapResults.filter((result) => result.show);
@@ -230,14 +227,14 @@ export default function ResultsSummary({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 {bootstrapVisible
-                  .filter((_, index) => index % 2 === 0)
+                  .slice(0, Math.ceil(bootstrapVisible.length / 2))
                   .map((item, index) =>
                     renderResultItem(item, `bootstrap-left-${index}`),
                   )}
               </div>
               <div className="space-y-2">
                 {bootstrapVisible
-                  .filter((_, index) => index % 2 === 1)
+                  .slice(Math.ceil(bootstrapVisible.length / 2))
                   .map((item, index) =>
                     renderResultItem(item, `bootstrap-right-${index}`),
                   )}
