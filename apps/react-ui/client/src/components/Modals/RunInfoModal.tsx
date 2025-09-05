@@ -74,16 +74,17 @@ export default function RunInfoModal({
       onClose={onClose}
       maxWidth="max-w-2xl"
       maxHeight="max-h-[90vh]"
-      actionButton={{
-        icon: <FaDownload className="w-5 h-5" />,
-        onClick: onExportButtonClick,
-        ariaLabel: "Export comprehensive results",
-        className: "text-blue-600 hover:text-blue-700",
-      }}
     >
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-primary">
         <h2 className="text-2xl font-bold text-primary">Run Information</h2>
+        <button
+          onClick={onExportButtonClick}
+          className={`text-muted hover:text-secondary transition-colors interactive`}
+          aria-label="Export comprehensive results"
+        >
+          <FaDownload className="w-5 h-5" />
+        </button>
       </div>
 
       <div className="p-6 space-y-6">

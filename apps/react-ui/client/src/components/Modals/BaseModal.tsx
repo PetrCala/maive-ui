@@ -2,13 +2,6 @@
 
 import { useEffect, useRef } from "react";
 
-type ActionButton = {
-  icon: React.ReactNode;
-  onClick: () => void;
-  ariaLabel: string;
-  className?: string;
-};
-
 type BaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -18,7 +11,6 @@ type BaseModalProps = {
   maxHeight?: string;
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
-  actionButton?: ActionButton;
 };
 
 export default function BaseModal({
@@ -30,7 +22,6 @@ export default function BaseModal({
   maxHeight = "max-h-[90vh]",
   showCloseButton = true,
   closeOnOverlayClick = true,
-  actionButton,
 }: BaseModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -121,15 +112,6 @@ export default function BaseModal({
         aria-modal="true"
       >
         <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
-          {actionButton && (
-            <button
-              onClick={actionButton.onClick}
-              className={`text-muted hover:text-secondary transition-colors interactive ${actionButton.className ?? ""}`}
-              aria-label={actionButton.ariaLabel}
-            >
-              {actionButton.icon}
-            </button>
-          )}
           {showCloseButton && (
             <button
               onClick={onClose}
