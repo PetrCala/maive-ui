@@ -45,41 +45,30 @@ export default function ResultsSummary({
   };
 
   const getTooltipContent = (label: string): string => {
-    const tooltipMap: Record<string, string> = {};
+    type TooltipContent = {
+      label: string;
+      tooltip: string;
+    };
+    for (const sectionKey of Object.keys(TEXT.results)) {
+      const section = (
+        TEXT.results as unknown as Record<
+          string,
+          Record<string, TooltipContent>
+        >
+      )[sectionKey];
+      if (section?.metrics) {
+        for (const metricKey of Object.keys(section.metrics)) {
+          const metric = section.metrics[
+            metricKey as keyof typeof section.metrics
+          ] as unknown as TooltipContent;
+          if (metric && metric.label === label && metric.tooltip) {
+            return metric.tooltip;
+          }
+        }
+      }
+    }
 
-    tooltipMap[TEXT.results.effectEstimate.metrics.estimate.label] =
-      TEXT.results.effectEstimate.metrics.estimate.tooltip("MAIVE");
-    tooltipMap[TEXT.results.effectEstimate.metrics.standardError.label] =
-      TEXT.results.effectEstimate.metrics.standardError.tooltip;
-    tooltipMap[TEXT.results.effectEstimate.metrics.significance.label] =
-      TEXT.results.effectEstimate.metrics.significance.tooltip;
-    tooltipMap[TEXT.results.publicationBias.metrics.pValue.label] =
-      TEXT.results.publicationBias.metrics.pValue.tooltip;
-    tooltipMap[TEXT.results.publicationBias.metrics.significance.label] =
-      TEXT.results.publicationBias.metrics.significance.tooltip;
-    tooltipMap[TEXT.results.effectEstimate.metrics.andersonRubinCI.label] =
-      TEXT.results.effectEstimate.metrics.andersonRubinCI.tooltip;
-    tooltipMap[TEXT.results.diagnosticTests.metrics.firstStageFTest.label] =
-      TEXT.results.diagnosticTests.metrics.firstStageFTest.tooltip;
-    tooltipMap[TEXT.results.diagnosticTests.metrics.hausmanTest.label] =
-      TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip;
-    tooltipMap[TEXT.results.diagnosticTests.metrics.hausmanTest.label] =
-      TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip;
-    tooltipMap[
-      TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.label
-    ] = TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.tooltip;
-    tooltipMap[TEXT.results.diagnosticTests.metrics.hausmanTest.label] =
-      TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip;
-    tooltipMap[TEXT.results.effectEstimate.metrics.bootCIEffect.label] =
-      TEXT.results.effectEstimate.metrics.bootCIEffect.tooltip;
-    tooltipMap[TEXT.results.effectEstimate.metrics.bootCISE.label] =
-      TEXT.results.effectEstimate.metrics.bootCISE.tooltip;
-    tooltipMap[TEXT.results.effectEstimate.metrics.bootSEEffect.label] =
-      TEXT.results.effectEstimate.metrics.bootSEEffect.tooltip;
-    tooltipMap[TEXT.results.effectEstimate.metrics.bootSESE.label] =
-      TEXT.results.effectEstimate.metrics.bootSESE.tooltip;
-
-    return tooltipMap[label] || "";
+    return "";
   };
 
   const getSectionTitle = (section: string): string => {
