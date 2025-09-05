@@ -1,6 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
+import { useState } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Tooltip from "@components/Tooltip";
@@ -12,11 +13,13 @@ import { useDataStore, dataCache } from "@store/dataStore";
 import {
   exportDataWithInstrumentedSE,
   downloadImageAsJpg,
+  hasStudyIdColumn,
 } from "@utils/dataUtils";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import type { ModelParameters, ModelResults } from "@src/types";
 import CitationBox from "@src/components/CitationBox";
+import RunInfoModal from "@src/components/RunInfoModal";
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -24,6 +27,10 @@ export default function ResultsPage() {
   const results = searchParams?.get("results") ?? null;
   const dataId = searchParams?.get("dataId") ?? null;
   const parameters = searchParams?.get("parameters") ?? null;
+  const runDuration = searchParams?.get("runDuration") ?? null;
+  const runTimestamp = searchParams?.get("runTimestamp") ?? null;
+
+  const [isRunInfoModalOpen, setIsRunInfoModalOpen] = useState(false);
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const parsedParameters: ModelParameters = JSON.parse(parameters ?? "{}");
@@ -414,6 +421,27 @@ export default function ResultsPage() {
           <div className="flex justify-end items-center mt-8">
             <div className="space-x-4">
               <ActionButton
+                onClick={() => setIsRunInfoModalOpen(true)}
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Run Info
+              </ActionButton>
+              <ActionButton
                 onClick={handleExportData}
                 variant="purple"
                 size="md"
@@ -438,6 +466,28 @@ export default function ResultsPage() {
           </div>
         </div>
       </main>
+
+      {/* Run Info Modal */}
+      <RunInfoModal
+        isOpen={isRunInfoModalOpen}
+        onClose={() => setIsRunInfoModalOpen(false)}
+        parameters={parsedParameters}
+        results={parsedResults}
+        dataInfo={
+          dataId
+            ? {
+                filename: dataCache.get(dataId)?.filename ?? "Unknown",
+                rowCount: dataCache.get(dataId)?.data.length ?? 0,
+                hasStudyId: (() => {
+                  const data = dataCache.get(dataId);
+                  return data ? hasStudyIdColumn(data.data) : false;
+                })(),
+              }
+            : undefined
+        }
+        runDuration={runDuration ? parseInt(runDuration, 10) : undefined}
+        runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
+      />
     </>
   );
 }

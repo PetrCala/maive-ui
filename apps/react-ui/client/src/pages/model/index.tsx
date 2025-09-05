@@ -122,6 +122,10 @@ export default function ModelPage() {
       setLoading(true);
       setHasRunModel(true);
       abortControllerRef.current = new AbortController();
+
+      const startTime = Date.now();
+      const runTimestamp = new Date();
+
       try {
         let result: { data?: unknown; error?: string; message?: string };
 
@@ -144,12 +148,17 @@ export default function ModelPage() {
           throw new Error(result?.message ?? "Failed to run model");
         }
 
+        const endTime = Date.now();
+        const runDuration = endTime - startTime;
+
         // Redirect to results page with the model output
         const results = result.data;
         const urlSearchParams = new URLSearchParams({
           results: JSON.stringify(results),
           dataId: dataId ?? "",
           parameters: JSON.stringify(parameters),
+          runDuration: runDuration.toString(),
+          runTimestamp: runTimestamp.toISOString(),
         });
         if (isMountedRef.current) {
           router.push(`/results?${urlSearchParams.toString()}`);
