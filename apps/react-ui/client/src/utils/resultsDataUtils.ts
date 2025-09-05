@@ -64,18 +64,18 @@ export const generateResultsData = (
       section: "effect",
     },
     {
+      label: TEXT.results.effectEstimate.metrics.bootCI.label,
+      value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
+      show: results.bootCI !== "NA",
+      section: "effect",
+    },
+    {
       label: TEXT.results.effectEstimate.metrics.andersonRubinCI.label,
       value:
         results.andersonRubinCI !== "NA"
           ? formatCI(results.andersonRubinCI)
           : "NA",
       show: results.andersonRubinCI !== "NA",
-      section: "effect",
-    },
-    {
-      label: TEXT.results.effectEstimate.metrics.bootCI.label,
-      value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
-      show: results.bootCI !== "NA",
       section: "effect",
     },
     {
