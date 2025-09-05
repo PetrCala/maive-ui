@@ -139,7 +139,7 @@ export default function RunInfoModal({
         {/* Model Parameters */}
         <section>
           <h3 className="text-xl font-semibold text-primary mb-3">
-            Model Parameters
+            Run Settings
           </h3>
           <div className="space-y-3">
             {Object.entries(parameters).map(([key, value]) => (
