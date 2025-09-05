@@ -9,6 +9,7 @@ export type ResultItem = {
   show: boolean;
   isSignificant?: boolean;
   isSignificantType?: "positive" | "negative";
+  section: "effect" | "bias" | "tests" | "bootstrap" | "runInfo";
 };
 
 export type ResultsData = {
@@ -46,28 +47,33 @@ export const generateResultsData = (
       label: "Effect Estimate",
       value: results.effectEstimate,
       show: true,
+      section: "effect",
     },
     {
       label: "Standard Error",
       value: results.standardError,
       show: true,
+      section: "effect",
     },
     {
       label: "Significant",
       value: results.isSignificant ? "Yes" : "No",
       show: true,
       isSignificant: results.isSignificant,
+      section: "effect",
     },
     {
       label: "Publication Bias p-value",
       value: results.publicationBias.pValue,
       show: true,
+      section: "bias",
     },
     {
       label: "Publication Bias Significant",
       value: results.publicationBias.isSignificant ? "Yes" : "No",
       show: true,
       isSignificant: results.publicationBias.isSignificant,
+      section: "bias",
     },
   ];
 
@@ -80,27 +86,32 @@ export const generateResultsData = (
           ? formatCI(results.andersonRubinCI)
           : "NA",
       show: results.andersonRubinCI !== "NA",
+      section: "effect",
     },
     {
       label: "First Stage F-test",
       value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
       show: results.firstStageFTest !== "NA",
+      section: "tests",
     },
     {
       label: "Hausman Test Statistic",
       value: results.hausmanTest.statistic,
       show: true,
+      section: "tests",
     },
     {
       label: "Hausman Critical Value",
       value: results.hausmanTest.criticalValue,
       show: true,
+      section: "tests",
     },
     {
       label: "Hausman Rejects Null",
       value: results.hausmanTest.rejectsNull ? "Yes" : "No",
       show: true,
       isSignificant: results.hausmanTest.rejectsNull,
+      section: "tests",
     },
   ];
 
@@ -111,21 +122,25 @@ export const generateResultsData = (
           label: "Bootstrap CI (Effect)",
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
           show: results.bootCI !== "NA",
+          section: "bootstrap",
         },
         {
           label: "Bootstrap CI (SE)",
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[1]) : "NA",
           show: results.bootCI !== "NA",
+          section: "bootstrap",
         },
         {
           label: "Bootstrap SE (Effect)",
           value: results.bootSE !== "NA" ? results.bootSE[0] : "NA",
           show: results.bootSE !== "NA",
+          section: "bootstrap",
         },
         {
           label: "Bootstrap SE (SE)",
           value: results.bootSE !== "NA" ? results.bootSE[1] : "NA",
           show: results.bootSE !== "NA",
+          section: "bootstrap",
         },
       ]
     : [];
@@ -138,6 +153,7 @@ export const generateResultsData = (
       label: "Run Duration (ms)",
       value: runDuration,
       show: true,
+      section: "runInfo",
     });
   }
 
@@ -146,6 +162,7 @@ export const generateResultsData = (
       label: "Run Timestamp",
       value: runTimestamp.toISOString(),
       show: true,
+      section: "runInfo",
     });
   }
 
@@ -155,16 +172,19 @@ export const generateResultsData = (
         label: "Data File",
         value: dataInfo.filename,
         show: true,
+        section: "runInfo",
       },
       {
         label: "Observations",
         value: dataInfo.rowCount,
         show: true,
+        section: "runInfo",
       },
       {
         label: "Has Study ID",
         value: dataInfo.hasStudyId ? "Yes" : "No",
         show: true,
+        section: "runInfo",
       },
     );
   }
