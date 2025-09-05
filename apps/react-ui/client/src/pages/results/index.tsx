@@ -426,9 +426,9 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-8 mt-8">
+          <div className="flex gap-4 mt-8">
             {/* Left Column - Current Run Actions */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <FaChartLine className="w-4 h-4 text-blue-600" />
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -439,7 +439,7 @@ export default function ResultsPage() {
                 onClick={() => setIsRunInfoModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex items-center gap-2"
+                className="inline-flex items-center gap-2 w-full"
               >
                 <FaInfoCircle className="w-4 h-4" />
                 Show Run Info
@@ -448,7 +448,7 @@ export default function ResultsPage() {
                 onClick={handleExportData}
                 variant="purple"
                 size="md"
-                className="inline-flex items-center gap-2"
+                className="inline-flex items-center gap-2 w-full"
               >
                 <FaDownload className="w-4 h-4" />
                 Export Data with Instrumented SE
@@ -456,12 +456,12 @@ export default function ResultsPage() {
             </div>
 
             {/* Elegant Separator */}
-            <div className="flex justify-center">
+            <div className="flex justify-center w-px">
               <div className="w-px h-32 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
             </div>
 
             {/* Right Column - New Run Actions */}
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 flex-1">
               <div className="flex items-center gap-2 mb-2">
                 <FaPlay className="w-4 h-4 text-green-600" />
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
@@ -472,7 +472,7 @@ export default function ResultsPage() {
                 onClick={handleNewUpload}
                 variant="secondary"
                 size="md"
-                className="inline-flex items-center gap-2"
+                className="inline-flex items-center gap-2 w-full"
               >
                 <FaUpload className="w-4 h-4" />
                 Upload New Data
@@ -481,7 +481,7 @@ export default function ResultsPage() {
                 onClick={handleRerunModel}
                 variant="primary"
                 size="md"
-                className="inline-flex items-center gap-2"
+                className="inline-flex items-center gap-2 w-full"
               >
                 <FaRedo className="w-4 h-4" />
                 Rerun Model
