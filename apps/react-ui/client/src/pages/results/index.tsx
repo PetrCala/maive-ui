@@ -15,11 +15,11 @@ import {
   downloadImageAsJpg,
   hasStudyIdColumn,
 } from "@utils/dataUtils";
-import CONST from "@src/CONST";
-import CONFIG from "@src/CONFIG";
 import type { ModelParameters, ModelResults } from "@src/types";
 import CitationBox from "@src/components/CitationBox";
-import RunInfoModal from "@src/components/RunInfoModal";
+import { RunInfoModal } from "@src/components/Modals";
+import CONST from "@src/CONST";
+import CONFIG from "@src/CONFIG";
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();

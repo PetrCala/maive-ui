@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
 import { useDataStore, dataCache, type UploadedData } from "@store/dataStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
-import ParametersHelpModal from "@src/components/Model/ParametersHelpModal";
+import { ParametersHelpModal } from "@src/components/Modals";
 import { OptionSection } from "@src/components/Options";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";

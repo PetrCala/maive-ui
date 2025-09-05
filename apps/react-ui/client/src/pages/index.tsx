@@ -1,6 +1,6 @@
 import Head from "next/head";
 import PingButton from "@src/components/Buttons/PingButton";
-import MAIVEInfoModal from "@components/MAIVEInfoModal";
+import { MAIVEInfoModal } from "@src/components/Modals";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { useState, useEffect } from "react";
 import CONST from "@src/CONST";

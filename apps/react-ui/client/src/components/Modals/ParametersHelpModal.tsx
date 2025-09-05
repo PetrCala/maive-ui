@@ -1,4 +1,4 @@
-import BaseModal from "../BaseModal";
+import BaseModal from "./BaseModal";
 
 export default function ParametersHelpModal({
   isOpen,
@@ -22,8 +22,8 @@ export default function ParametersHelpModal({
       </div>
       <div className="p-6 space-y-4">
         <p className="text-gray-700 dark:text-gray-300">
-          Model parameters are the options that you can choose to customize
-          your model.
+          Model parameters are the options that you can choose to customize your
+          model.
         </p>
       </div>
     </BaseModal>

@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { useState } from "react";
 import HoverableIconButton from "@src/components/Buttons/HoverableIconButton";
-import MAIVEInfoModal from "@src/components/MAIVEInfoModal";
+import { MAIVEInfoModal } from "@src/components/Modals";
 import { FaQuestionCircle } from "react-icons/fa";
 
 type HelpButtonProps = {
