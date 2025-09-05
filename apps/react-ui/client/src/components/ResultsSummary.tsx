@@ -207,21 +207,41 @@ export default function ResultsSummary({
 
   // Detailed variant for modal display
   if (layout === "vertical") {
-    // Y-axis population: all results in a single column
+    // Y-axis population: all results in two columns
     return (
       <div className="space-y-2 text-sm">
-        {visibleResults.map((item, index) =>
-          renderResultItem(item, `item-${index}`),
-        )}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            {leftColumnResults.map((item, index) =>
+              renderResultItem(item, `left-${index}`),
+            )}
+          </div>
+          <div className="space-y-2">
+            {rightColumnResults.map((item, index) =>
+              renderResultItem(item, `right-${index}`),
+            )}
+          </div>
+        </div>
         {bootstrapVisible.length > 0 && showBootstrapSection && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <div className="font-medium text-primary mb-3">
               Bootstrap Results
             </div>
-            <div className="space-y-2">
-              {bootstrapVisible.map((item, index) =>
-                renderResultItem(item, `bootstrap-${index}`),
-              )}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                {bootstrapVisible
+                  .filter((_, index) => index % 2 === 0)
+                  .map((item, index) =>
+                    renderResultItem(item, `bootstrap-left-${index}`),
+                  )}
+              </div>
+              <div className="space-y-2">
+                {bootstrapVisible
+                  .filter((_, index) => index % 2 === 1)
+                  .map((item, index) =>
+                    renderResultItem(item, `bootstrap-right-${index}`),
+                  )}
+              </div>
             </div>
           </div>
         )}
