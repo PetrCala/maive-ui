@@ -132,25 +132,25 @@ export const generateResultsData = (
   const bootstrapResults: ResultItem[] = CONFIG.BOOTSTRAP_ENABLED
     ? [
         {
-          label: TEXT.results.effectEstimate.metrics.bootCI.label,
+          label: TEXT.results.effectEstimate.metrics.bootCIEffect.label,
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
           show: results.bootCI !== "NA",
           section: "bootstrap",
         },
         {
-          label: TEXT.results.effectEstimate.metrics.bootCI.label,
+          label: TEXT.results.effectEstimate.metrics.bootCISE.label,
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[1]) : "NA",
           show: results.bootCI !== "NA",
           section: "bootstrap",
         },
         {
-          label: TEXT.results.effectEstimate.metrics.bootCI.label,
+          label: TEXT.results.effectEstimate.metrics.bootSEEffect.label,
           value: results.bootSE !== "NA" ? results.bootSE[0] : "NA",
           show: results.bootSE !== "NA",
           section: "bootstrap",
         },
         {
-          label: TEXT.results.effectEstimate.metrics.bootCI.label,
+          label: TEXT.results.effectEstimate.metrics.bootSESE.label,
           value: results.bootSE !== "NA" ? results.bootSE[1] : "NA",
           show: results.bootSE !== "NA",
           section: "bootstrap",

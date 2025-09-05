@@ -47,36 +47,37 @@ export default function ResultsSummary({
   const getTooltipContent = (label: string): string => {
     const tooltipMap: Record<string, string> = {};
 
-    tooltipMap["Effect Estimate"] =
+    tooltipMap[TEXT.results.effectEstimate.metrics.estimate.label] =
       TEXT.results.effectEstimate.metrics.estimate.tooltip("MAIVE");
-    tooltipMap["Standard Error"] =
+    tooltipMap[TEXT.results.effectEstimate.metrics.standardError.label] =
       TEXT.results.effectEstimate.metrics.standardError.tooltip;
-    tooltipMap.Significant =
+    tooltipMap[TEXT.results.effectEstimate.metrics.significance.label] =
       TEXT.results.effectEstimate.metrics.significance.tooltip;
-    tooltipMap["Publication Bias p-value"] =
+    tooltipMap[TEXT.results.publicationBias.metrics.pValue.label] =
       TEXT.results.publicationBias.metrics.pValue.tooltip;
-    tooltipMap["Publication Bias Significant"] =
+    tooltipMap[TEXT.results.publicationBias.metrics.significance.label] =
       TEXT.results.publicationBias.metrics.significance.tooltip;
-    tooltipMap["Anderson-Rubin CI"] =
+    tooltipMap[TEXT.results.effectEstimate.metrics.andersonRubinCI.label] =
       TEXT.results.effectEstimate.metrics.andersonRubinCI.tooltip;
-    tooltipMap["First Stage F-test"] =
+    tooltipMap[TEXT.results.diagnosticTests.metrics.firstStageFTest.label] =
       TEXT.results.diagnosticTests.metrics.firstStageFTest.tooltip;
-    tooltipMap["Hausman Test"] =
+    tooltipMap[TEXT.results.diagnosticTests.metrics.hausmanTest.label] =
       TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip;
-    tooltipMap["Hausman Test Statistic"] =
+    tooltipMap[TEXT.results.diagnosticTests.metrics.hausmanTest.label] =
       TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip;
-    tooltipMap["Hausman Critical Value"] =
-      TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.tooltip;
-    tooltipMap["Hausman Rejects Null"] =
+    tooltipMap[
+      TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.label
+    ] = TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.tooltip;
+    tooltipMap[TEXT.results.diagnosticTests.metrics.hausmanTest.label] =
       TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip;
-    tooltipMap["Bootstrap CI (Effect)"] =
-      TEXT.results.effectEstimate.metrics.bootCI.tooltip;
-    tooltipMap["Bootstrap CI (SE)"] =
-      TEXT.results.effectEstimate.metrics.bootCI.tooltip;
-    tooltipMap["Bootstrap SE (Effect)"] =
-      TEXT.results.effectEstimate.metrics.bootCI.tooltip;
-    tooltipMap["Bootstrap SE (SE)"] =
-      TEXT.results.effectEstimate.metrics.bootCI.tooltip;
+    tooltipMap[TEXT.results.effectEstimate.metrics.bootCIEffect.label] =
+      TEXT.results.effectEstimate.metrics.bootCIEffect.tooltip;
+    tooltipMap[TEXT.results.effectEstimate.metrics.bootCISE.label] =
+      TEXT.results.effectEstimate.metrics.bootCISE.tooltip;
+    tooltipMap[TEXT.results.effectEstimate.metrics.bootSEEffect.label] =
+      TEXT.results.effectEstimate.metrics.bootSEEffect.tooltip;
+    tooltipMap[TEXT.results.effectEstimate.metrics.bootSESE.label] =
+      TEXT.results.effectEstimate.metrics.bootSESE.tooltip;
 
     return tooltipMap[label] || "";
   };
@@ -86,8 +87,6 @@ export default function ResultsSummary({
       effect: TEXT.results.effectEstimate.title,
       bias: TEXT.results.publicationBias.title,
       tests: TEXT.results.diagnosticTests.title,
-      bootstrap: "Bootstrap Results",
-      runInfo: "Run Information",
     };
     return sectionTitles[section] || "";
   };
@@ -101,52 +100,12 @@ export default function ResultsSummary({
     dataInfo,
   );
 
-  // Transform the data for display (add significance types and adjust formatting)
-  const coreResults: ResultItem[] = resultsData.coreResults.map((item) => ({
-    ...item,
-    isSignificantType:
-      item.label === "Significant"
-        ? "positive"
-        : item.label === "Publication Bias Significant"
-          ? "negative"
-          : undefined,
-  }));
-
-  const conditionalResults: ResultItem[] = resultsData.conditionalResults.map(
-    (item) => {
-      // Special handling for Hausman Test in detailed mode
-      if (item.label === "Hausman Test Statistic" && variant === "detailed") {
-        const criticalValue = resultsData.conditionalResults.find(
-          (r) => r.label === "Hausman Critical Value",
-        );
-        return {
-          ...item,
-          label: "Hausman Test",
-          value: `${item.value} (CV: ${criticalValue?.value ?? "N/A"})`,
-          isSignificantType: "negative",
-        };
-      }
-      return {
-        ...item,
-        isSignificantType:
-          item.label === "Hausman Rejects Null" ? "negative" : undefined,
-      };
-    },
-  );
-
-  const bootstrapResults: ResultItem[] = resultsData.bootstrapResults.map(
-    (item) => ({
-      ...item,
-      value: item.value === "NA" ? "N/A" : item.value,
-    }),
-  );
-
-  // Combine all results and filter out hidden ones
   const allResults = [
-    ...coreResults,
-    ...conditionalResults,
-    ...bootstrapResults,
+    ...resultsData.coreResults,
+    ...resultsData.conditionalResults,
+    ...resultsData.bootstrapResults,
   ];
+
   const visibleResults = allResults.filter((result) => result.show);
 
   // Group results by section
@@ -238,7 +197,7 @@ export default function ResultsSummary({
   }
 
   // Horizontal layout (default) - render sections dynamically
-  const sectionOrder = ["effect", "bias", "tests", "bootstrap", "runInfo"];
+  const sectionOrder = ["effect", "bias", "tests"];
 
   return (
     <div className="space-y-6">

@@ -137,9 +137,21 @@ const TEXT = {
           tooltip:
             "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the effect; remains valid even when the first-stage F statistic is low.",
         },
-        bootCI: {
-          label: "Bootstrap 95% CI",
+        bootCIEffect: {
+          label: "Bootstrap 95% CI (Effect)",
           tooltip: "Bootstrap 95% confidence interval for the effect estimate.",
+        },
+        bootCISE: {
+          label: "Bootstrap 95% CI (SE)",
+          tooltip: "Bootstrap 95% confidence interval for the standard error.",
+        },
+        bootSEEffect: {
+          label: "Bootstrap SE (Effect)",
+          tooltip: "Bootstrap standard error for the effect estimate.",
+        },
+        bootSESE: {
+          label: "Bootstrap SE (SE)",
+          tooltip: "Bootstrap standard error for the standard error.",
         },
       },
     },
