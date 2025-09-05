@@ -6,6 +6,7 @@ import TEXT from "@src/lib/text";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RunDetails from "@src/components/RunDetails";
 import BaseModal from "./BaseModal";
+import { FaDownload } from "react-icons/fa";
 
 type RunInfoModalProps = {
   isOpen: boolean;
@@ -19,6 +20,7 @@ type RunInfoModalProps = {
   };
   runDuration?: number; // in milliseconds
   runTimestamp?: Date;
+  onExportButtonClick: () => void;
 };
 
 export default function RunInfoModal({
@@ -29,6 +31,7 @@ export default function RunInfoModal({
   dataInfo,
   runDuration,
   runTimestamp,
+  onExportButtonClick,
 }: RunInfoModalProps) {
   const getParameterDisplayName = (key: keyof ModelParameters): string => {
     return TEXT.model[key].label;
@@ -71,6 +74,12 @@ export default function RunInfoModal({
       onClose={onClose}
       maxWidth="max-w-2xl"
       maxHeight="max-h-[90vh]"
+      actionButton={{
+        icon: <FaDownload className="w-5 h-5" />,
+        onClick: onExportButtonClick,
+        ariaLabel: "Export comprehensive results",
+        className: "text-blue-600 hover:text-blue-700",
+      }}
     >
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-primary">

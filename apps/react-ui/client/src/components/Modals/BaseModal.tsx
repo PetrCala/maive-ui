@@ -2,6 +2,13 @@
 
 import { useEffect, useRef } from "react";
 
+type ActionButton = {
+  icon: React.ReactNode;
+  onClick: () => void;
+  ariaLabel: string;
+  className?: string;
+};
+
 type BaseModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -11,6 +18,7 @@ type BaseModalProps = {
   maxHeight?: string;
   showCloseButton?: boolean;
   closeOnOverlayClick?: boolean;
+  actionButton?: ActionButton;
 };
 
 export default function BaseModal({
@@ -22,6 +30,7 @@ export default function BaseModal({
   maxHeight = "max-h-[90vh]",
   showCloseButton = true,
   closeOnOverlayClick = true,
+  actionButton,
 }: BaseModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -111,27 +120,38 @@ export default function BaseModal({
         role="dialog"
         aria-modal="true"
       >
-        {showCloseButton && (
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 text-muted hover:text-secondary transition-colors interactive z-10"
-            aria-label="Close modal"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+          {actionButton && (
+            <button
+              onClick={actionButton.onClick}
+              className={`text-muted hover:text-secondary transition-colors interactive ${actionButton.className ?? ""}`}
+              aria-label={actionButton.ariaLabel}
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        )}
+              {actionButton.icon}
+            </button>
+          )}
+          {showCloseButton && (
+            <button
+              onClick={onClose}
+              className="text-muted hover:text-secondary transition-colors interactive"
+              aria-label="Close modal"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
         {children}
       </div>
     </div>
