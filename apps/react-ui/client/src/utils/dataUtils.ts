@@ -1,3 +1,4 @@
+import TEXT from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
 import * as XLSX from "xlsx";
 
@@ -393,8 +394,7 @@ export const downloadImageAsJpg = (
       ctx.textAlign = "center";
 
       // Add citation text at the top
-      const citationText =
-        "Citation: Irsova et al., Nature Communications, 2025";
+      const citationText = TEXT.citation.shortText;
       const textWidth = ctx.measureText(citationText).width;
       const padding = 20;
 
