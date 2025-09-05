@@ -80,7 +80,7 @@ export default function RunInfoModal({
         <h2 className="text-2xl font-bold text-primary">Run Information</h2>
         <button
           onClick={onExportButtonClick}
-          className={`text-muted hover:text-secondary transition-colors interactive`}
+          className={`text-muted hover:text-secondary transition-colors interactive text-blue-600 hover:text-blue-700`}
           aria-label="Export comprehensive results"
         >
           <FaDownload className="w-5 h-5" />
