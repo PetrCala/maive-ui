@@ -2,6 +2,7 @@
 
 import type { ModelResults, ModelParameters } from "@src/types";
 import CONFIG from "@src/CONFIG";
+import TEXT from "@src/lib/text";
 
 export type ResultItem = {
   label: string;
@@ -10,6 +11,9 @@ export type ResultItem = {
   isSignificant?: boolean;
   isSignificantType?: "positive" | "negative";
   section: "effect" | "bias" | "tests" | "bootstrap" | "runInfo";
+  highlightColor?: string;
+  extraText?: string;
+  highlightCondition?: boolean;
 };
 
 export type ResultsData = {
@@ -44,35 +48,37 @@ export const generateResultsData = (
   // Core results
   const coreResults: ResultItem[] = [
     {
-      label: "Effect Estimate",
+      label: TEXT.results.effectEstimate.metrics.estimate.label,
       value: results.effectEstimate,
       show: true,
       section: "effect",
     },
     {
-      label: "Standard Error",
+      label: TEXT.results.effectEstimate.metrics.standardError.label,
       value: results.standardError,
       show: true,
       section: "effect",
     },
     {
-      label: "Significant",
+      label: TEXT.results.effectEstimate.metrics.significance.label,
       value: results.isSignificant ? "Yes" : "No",
       show: true,
-      isSignificant: results.isSignificant,
+      highlightColor: results.isSignificant ? "text-green-600" : "text-red-600",
       section: "effect",
     },
     {
-      label: "Publication Bias p-value",
+      label: TEXT.results.publicationBias.metrics.pValue.label,
       value: results.publicationBias.pValue,
       show: true,
       section: "bias",
     },
     {
-      label: "Publication Bias Significant",
+      label: TEXT.results.publicationBias.metrics.significance.label,
       value: results.publicationBias.isSignificant ? "Yes" : "No",
       show: true,
-      isSignificant: results.publicationBias.isSignificant,
+      highlightColor: results.publicationBias.isSignificant
+        ? "text-green-600"
+        : "text-red-600",
       section: "bias",
     },
   ];
@@ -80,7 +86,7 @@ export const generateResultsData = (
   // Conditional results
   const conditionalResults: ResultItem[] = [
     {
-      label: "Anderson-Rubin CI",
+      label: TEXT.results.effectEstimate.metrics.andersonRubinCI.label,
       value:
         results.andersonRubinCI !== "NA"
           ? formatCI(results.andersonRubinCI)
@@ -89,28 +95,35 @@ export const generateResultsData = (
       section: "effect",
     },
     {
-      label: "First Stage F-test",
+      label: TEXT.results.diagnosticTests.metrics.firstStageFTest.label,
       value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
       show: results.firstStageFTest !== "NA",
+      highlightColor:
+        results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
+          ? "text-green-600"
+          : "text-red-600",
+      extraText:
+        results.firstStageFTest !== "NA" && results.firstStageFTest > 10
+          ? " (Strong)"
+          : "",
       section: "tests",
     },
     {
-      label: "Hausman Test Statistic",
+      label: TEXT.results.diagnosticTests.metrics.hausmanTest.label,
       value: results.hausmanTest.statistic,
       show: true,
+      highlightColor: results.hausmanTest.rejectsNull
+        ? "text-green-600"
+        : "text-red-600",
+      extraText: results.hausmanTest.rejectsNull
+        ? " (Rejects Null)"
+        : " (Fails to Reject Null)",
       section: "tests",
     },
     {
-      label: "Hausman Critical Value",
+      label: TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.label,
       value: results.hausmanTest.criticalValue,
       show: true,
-      section: "tests",
-    },
-    {
-      label: "Hausman Rejects Null",
-      value: results.hausmanTest.rejectsNull ? "Yes" : "No",
-      show: true,
-      isSignificant: results.hausmanTest.rejectsNull,
       section: "tests",
     },
   ];
@@ -119,25 +132,25 @@ export const generateResultsData = (
   const bootstrapResults: ResultItem[] = CONFIG.BOOTSTRAP_ENABLED
     ? [
         {
-          label: "Bootstrap CI (Effect)",
+          label: TEXT.results.effectEstimate.metrics.bootCI.label,
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
           show: results.bootCI !== "NA",
           section: "bootstrap",
         },
         {
-          label: "Bootstrap CI (SE)",
+          label: TEXT.results.effectEstimate.metrics.bootCI.label,
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[1]) : "NA",
           show: results.bootCI !== "NA",
           section: "bootstrap",
         },
         {
-          label: "Bootstrap SE (Effect)",
+          label: TEXT.results.effectEstimate.metrics.bootCI.label,
           value: results.bootSE !== "NA" ? results.bootSE[0] : "NA",
           show: results.bootSE !== "NA",
           section: "bootstrap",
         },
         {
-          label: "Bootstrap SE (SE)",
+          label: TEXT.results.effectEstimate.metrics.bootCI.label,
           value: results.bootSE !== "NA" ? results.bootSE[1] : "NA",
           show: results.bootSE !== "NA",
           section: "bootstrap",
