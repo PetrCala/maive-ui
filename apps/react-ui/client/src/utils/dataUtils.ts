@@ -243,7 +243,16 @@ export const exportComprehensiveResults = (
 ): void => {
   const workbook = XLSX.utils.book_new();
 
-  // Sheet 1: Results Summary
+  // Helper function to format values consistently
+  const formatValue = (value: number, decimals = 4): string => {
+    return value.toFixed(decimals);
+  };
+
+  const formatCI = (ci: [number, number]): string => {
+    return `[${formatValue(ci[0])}, ${formatValue(ci[1])}]`;
+  };
+
+  // Sheet 1: Results Summary - using the same logic as ResultsSummary component
   const resultsSummary = [
     { Metric: "Effect Estimate", Value: results.effectEstimate },
     { Metric: "Standard Error", Value: results.standardError },
@@ -260,10 +269,10 @@ export const exportComprehensiveResults = (
 
   // Add conditional results
   if (results.andersonRubinCI !== "NA") {
-    resultsSummary.push(
-      { Metric: "Anderson-Rubin CI Lower", Value: results.andersonRubinCI[0] },
-      { Metric: "Anderson-Rubin CI Upper", Value: results.andersonRubinCI[1] },
-    );
+    resultsSummary.push({
+      Metric: "Anderson-Rubin CI",
+      Value: formatCI(results.andersonRubinCI),
+    });
   }
 
   if (results.firstStageFTest !== "NA") {
@@ -287,17 +296,15 @@ export const exportComprehensiveResults = (
 
   if (results.bootCI !== "NA") {
     resultsSummary.push(
-      { Metric: "Bootstrap CI Effect Lower", Value: results.bootCI[0][0] },
-      { Metric: "Bootstrap CI Effect Upper", Value: results.bootCI[0][1] },
-      { Metric: "Bootstrap CI SE Lower", Value: results.bootCI[1][0] },
-      { Metric: "Bootstrap CI SE Upper", Value: results.bootCI[1][1] },
+      { Metric: "Bootstrap CI (Effect)", Value: formatCI(results.bootCI[0]) },
+      { Metric: "Bootstrap CI (SE)", Value: formatCI(results.bootCI[1]) },
     );
   }
 
   if (results.bootSE !== "NA") {
     resultsSummary.push(
-      { Metric: "Bootstrap SE Effect", Value: results.bootSE[0] },
-      { Metric: "Bootstrap SE SE", Value: results.bootSE[1] },
+      { Metric: "Bootstrap SE (Effect)", Value: results.bootSE[0] },
+      { Metric: "Bootstrap SE (SE)", Value: results.bootSE[1] },
     );
   }
 
