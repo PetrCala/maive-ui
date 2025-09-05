@@ -455,7 +455,7 @@ export default function ResultsPage() {
               </ActionButton>
             </div>
 
-            {/* Elegant Separator */}
+            {/* Separator */}
             <div className="flex justify-center w-px">
               <div className="w-px h-32 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
             </div>
