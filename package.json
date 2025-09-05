@@ -27,6 +27,7 @@
 		"stop": "podman-compose down",
 		"remove-empty-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep '<none>' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
 		"remove-all-images": "podman images --format '{{.ID}}: {{.Repository}}:{{.Tag}}' | grep 'amazonaws.com/' | awk -F: '{print $1}' | xargs -I {} podman rmi {}",
+		"set-maive-tag": "./scripts/set-maive-tag.sh",
 		"cloud:init": "./scripts/bootstrap.sh",
 		"cloud:destroy": "./scripts/destroy.sh",
 		"cloud:destroy:clean": "./scripts/destroy.sh --vpc-cleanup",
