@@ -352,7 +352,7 @@ export const exportComprehensiveResults = (
   const baseName = filename.replace(/\.[^/.]+$/, ""); // Remove extension
   const now = new Date();
   const salt = `_${now.toISOString().replace(/[-:T]/g, "").slice(0, 13)}`; // e.g., "_20240611_1530"
-  const newFilename = `${baseName}_comprehensive_results${salt}.xlsx`;
+  const newFilename = `${baseName}_maive_results${salt}.xlsx`;
 
   XLSX.writeFile(workbook, newFilename);
 };
