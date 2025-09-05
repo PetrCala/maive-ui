@@ -1,5 +1,9 @@
 import TEXT from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
+import {
+  convertToExportFormat,
+  generateResultsData,
+} from "@src/utils/resultsDataUtils";
 import * as XLSX from "xlsx";
 
 // Generate a unique ID for uploaded data
@@ -244,88 +248,16 @@ export const exportComprehensiveResults = (
 ): void => {
   const workbook = XLSX.utils.book_new();
 
-  // Helper function to format values consistently
-  const formatValue = (value: number, decimals = 4): string => {
-    return value.toFixed(decimals);
-  };
-
-  const formatCI = (ci: [number, number]): string => {
-    return `[${formatValue(ci[0])}, ${formatValue(ci[1])}]`;
-  };
-
-  // Sheet 1: Results Summary - using the same logic as ResultsSummary component
-  const resultsSummary = [
-    { Metric: "Effect Estimate", Value: results.effectEstimate },
-    { Metric: "Standard Error", Value: results.standardError },
-    { Metric: "Significant", Value: results.isSignificant ? "Yes" : "No" },
-    {
-      Metric: "Publication Bias p-value",
-      Value: results.publicationBias.pValue,
-    },
-    {
-      Metric: "Publication Bias Significant",
-      Value: results.publicationBias.isSignificant ? "Yes" : "No",
-    },
-  ];
-
-  // Add conditional results
-  if (results.andersonRubinCI !== "NA") {
-    resultsSummary.push({
-      Metric: "Anderson-Rubin CI",
-      Value: formatCI(results.andersonRubinCI),
-    });
-  }
-
-  if (results.firstStageFTest !== "NA") {
-    resultsSummary.push({
-      Metric: "First Stage F-test",
-      Value: results.firstStageFTest,
-    });
-  }
-
-  resultsSummary.push(
-    { Metric: "Hausman Test Statistic", Value: results.hausmanTest.statistic },
-    {
-      Metric: "Hausman Critical Value",
-      Value: results.hausmanTest.criticalValue,
-    },
-    {
-      Metric: "Hausman Rejects Null",
-      Value: results.hausmanTest.rejectsNull ? "Yes" : "No",
-    },
+  // Sheet 1: Results Summary
+  const resultsSummary = convertToExportFormat(
+    generateResultsData(
+      results,
+      parameters,
+      runDuration,
+      runTimestamp,
+      dataInfo,
+    ),
   );
-
-  if (results.bootCI !== "NA") {
-    resultsSummary.push(
-      { Metric: "Bootstrap CI (Effect)", Value: formatCI(results.bootCI[0]) },
-      { Metric: "Bootstrap CI (SE)", Value: formatCI(results.bootCI[1]) },
-    );
-  }
-
-  if (results.bootSE !== "NA") {
-    resultsSummary.push(
-      { Metric: "Bootstrap SE (Effect)", Value: results.bootSE[0] },
-      { Metric: "Bootstrap SE (SE)", Value: results.bootSE[1] },
-    );
-  }
-
-  // Add run information
-  if (runDuration !== undefined) {
-    resultsSummary.push({ Metric: "Run Duration (ms)", Value: runDuration });
-  }
-  if (runTimestamp) {
-    resultsSummary.push({
-      Metric: "Run Timestamp",
-      Value: runTimestamp.toISOString(),
-    });
-  }
-  if (dataInfo) {
-    resultsSummary.push(
-      { Metric: "Data File", Value: dataInfo.filename },
-      { Metric: "Observations", Value: dataInfo.rowCount },
-      { Metric: "Has Study ID", Value: dataInfo.hasStudyId ? "Yes" : "No" },
-    );
-  }
 
   const resultsSheet = XLSX.utils.json_to_sheet(resultsSummary);
   XLSX.utils.book_append_sheet(workbook, resultsSheet, "Results Summary");
