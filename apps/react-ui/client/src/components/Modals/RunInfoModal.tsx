@@ -142,18 +142,18 @@ export default function RunInfoModal({
           <h3 className="text-xl font-semibold text-primary mb-3">
             Run Settings
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
             {Object.entries(parameters).map(([key, value], index) => (
               <div
                 key={key}
-                className={`flex justify-between items-center py-2 ${
+                className={`flex justify-between items-start py-1 ${
                   index % 2 === 0 ? "md:pr-4" : "md:pl-4"
                 }`}
               >
-                <span className="text-secondary">
+                <span className="text-secondary flex-shrink-0 mr-2">
                   {getParameterDisplayName(key as keyof ModelParameters)}:
                 </span>
-                <span className="font-medium text-right max-w-xs truncate">
+                <span className="font-medium text-right break-words min-w-0">
                   {getParameterValue(key as keyof ModelParameters, value)}
                 </span>
               </div>
@@ -170,6 +170,7 @@ export default function RunInfoModal({
             results={results}
             variant="detailed"
             showBootstrapSection={true}
+            layout="vertical"
           />
         </section>
       </div>
