@@ -76,7 +76,6 @@ export default function ResultsSummary({
       effect: TEXT.results.effectEstimate.title,
       bias: TEXT.results.publicationBias.title,
       tests: TEXT.results.diagnosticTests.title,
-      bootstrap: TEXT.results.bootstrap.title,
     };
     return sectionTitles[section] || "";
   };
@@ -90,11 +89,7 @@ export default function ResultsSummary({
     dataInfo,
   );
 
-  const allResults = [
-    ...resultsData.coreResults,
-    ...resultsData.conditionalResults,
-    ...resultsData.bootstrapResults,
-  ];
+  const allResults = [...resultsData.coreResults];
 
   const visibleResults = allResults.filter((result) => result.show);
 
@@ -190,7 +185,7 @@ export default function ResultsSummary({
   }
 
   // Horizontal layout (default) - render sections dynamically
-  const sectionOrder = ["effect", "bias", "tests", "bootstrap"];
+  const sectionOrder = ["effect", "bias", "tests"];
 
   return (
     <div className="space-y-6">
