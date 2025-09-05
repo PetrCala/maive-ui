@@ -172,47 +172,42 @@ export default function ResultsSummary({
     const tooltipContent = getTooltipContent(item.label);
     const shouldShowTooltip = showTooltips && tooltipContent;
 
-    const content =
-      variant === "detailed" ? (
+    const labelClass = "text-sm text-gray-600 dark:text-gray-300";
+    const valueClassDetailed = `text-lg font-medium${
+      item.isSignificant !== undefined
+        ? " " +
+          getSignificanceColor(
+            item.isSignificant,
+            item.isSignificantType ?? "positive",
+          )
+        : ""
+    }`;
+    const valueClassSimple = `text-md font-medium${
+      item.isSignificant !== undefined
+        ? " " +
+          getSignificanceColor(
+            item.isSignificant,
+            item.isSignificantType ?? "positive",
+          )
+        : ""
+    }`;
+
+    let content;
+    if (variant === "detailed") {
+      content = (
         <div>
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {item.label}
-          </p>
-          <p
-            className={`text-lg font-medium ${
-              item.isSignificant !== undefined
-                ? getSignificanceColor(
-                    item.isSignificant,
-                    item.isSignificantType ?? "positive",
-                  )
-                : ""
-            }`}
-          >
-            {item.value}
-          </p>
-        </div>
-      ) : (
-        <div className="flex justify-between">
-          <span className="text-sm text-gray-600 dark:text-gray-300">
-            {item.label}:
-          </span>
-          <span
-            className={`
-            text-md
-            font-medium
-            ${
-              item.isSignificant !== undefined
-                ? getSignificanceColor(
-                    item.isSignificant,
-                    item.isSignificantType ?? "positive",
-                  )
-                : ""
-            }`}
-          >
-            {item.value}
-          </span>
+          <p className={labelClass}>{item.label}</p>
+          <p className={valueClassDetailed}>{item.value}</p>
         </div>
       );
+    } else {
+      content = (
+        <div className="flex justify-between">
+          <span className={labelClass}>{item.label}:</span>
+          <span className={valueClassSimple}>{item.value}</span>
+        </div>
+      );
+    }
 
     if (shouldShowTooltip) {
       return (
