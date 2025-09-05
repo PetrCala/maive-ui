@@ -451,7 +451,7 @@ export default function ResultsPage() {
                 className="inline-flex items-center gap-2 w-full"
               >
                 <FaDownload className="w-4 h-4" />
-                Export Data with Instrumented SE
+                Export Results and Adjusted SEs
               </ActionButton>
             </div>
 
