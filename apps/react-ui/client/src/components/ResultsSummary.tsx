@@ -110,7 +110,16 @@ export default function ResultsSummary({
   );
 
   // Helper function to split results into two columns for a section
-  const splitIntoColumns = (items: ResultItem[]) => {
+  const splitIntoColumns = (
+    items: ResultItem[],
+    orientation: "horizontal" | "vertical",
+  ) => {
+    if (orientation === "horizontal") {
+      return {
+        left: items.filter((_, idx) => idx % 2 === 0),
+        right: items.filter((_, idx) => idx % 2 === 1),
+      };
+    }
     const midPoint = Math.ceil(items.length / 2);
     return {
       left: items.slice(0, midPoint),
@@ -162,21 +171,16 @@ export default function ResultsSummary({
 
   // Detailed variant for modal display
   if (layout === "vertical") {
-    // Y-axis population: all results in two columns (keep old logic for modal)
-    const midPoint = Math.ceil(visibleResults.length / 2);
-    const leftColumnResults = visibleResults.slice(0, midPoint);
-    const rightColumnResults = visibleResults.slice(midPoint);
+    const { left, right } = splitIntoColumns(visibleResults, "vertical");
 
     return (
       <div className="space-y-2 text-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            {leftColumnResults.map((item, index) =>
-              renderResultItem(item, `left-${index}`),
-            )}
+            {left.map((item, index) => renderResultItem(item, `left-${index}`))}
           </div>
           <div className="space-y-2">
-            {rightColumnResults.map((item, index) =>
+            {right.map((item, index) =>
               renderResultItem(item, `right-${index}`),
             )}
           </div>
@@ -196,7 +200,7 @@ export default function ResultsSummary({
           return null;
         }
 
-        const { left, right } = splitIntoColumns(sectionResults);
+        const { left, right } = splitIntoColumns(sectionResults, "horizontal");
         const sectionTitle = getSectionTitle(sectionKey);
 
         return (
