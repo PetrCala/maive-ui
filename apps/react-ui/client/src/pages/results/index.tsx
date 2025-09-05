@@ -520,6 +520,7 @@ export default function ResultsPage() {
         }
         runDuration={runDuration ? parseInt(runDuration, 10) : undefined}
         runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
+        onExportButtonClick={handleExportData}
       />
     </>
   );
