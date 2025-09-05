@@ -174,11 +174,22 @@ export default function ResultsSummary({
 
     const content =
       variant === "detailed" ? (
-        <div className="flex justify-between">
+        <div>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            {item.label}:
+            {item.label}
           </p>
-          <p className="text-lg font-medium">{item.value}</p>
+          <p
+            className={`text-lg font-medium ${
+              item.isSignificant !== undefined
+                ? getSignificanceColor(
+                    item.isSignificant,
+                    item.isSignificantType ?? "positive",
+                  )
+                : ""
+            }`}
+          >
+            {item.value}
+          </p>
         </div>
       ) : (
         <div className="flex justify-between">
@@ -217,20 +228,6 @@ export default function ResultsSummary({
 
     return <div key={key}>{content}</div>;
   };
-
-  if (variant === "simple") {
-    // Simple variant for export/summary
-    return (
-      <div className="space-y-2 text-sm">
-        {visibleResults.map((item, index) => (
-          <div key={index} className="flex justify-between">
-            <span className="text-secondary">{item.label}:</span>
-            <span className="font-medium">{item.value}</span>
-          </div>
-        ))}
-      </div>
-    );
-  }
 
   // Detailed variant for modal display
   if (layout === "vertical") {
@@ -278,15 +275,19 @@ export default function ResultsSummary({
           >
             <h2 className="text-xl font-semibold mb-4">{sectionTitle}</h2>
             <div className="grid grid-cols-2 gap-4">
-              <div className="">
-                {left.map((item, index) =>
-                  renderResultItem(item, `${sectionKey}-left-${index}`),
-                )}
+              <div className={"space-y-4"}>
+                {left.map((item, index) => (
+                  <div key={`${sectionKey}-left-${index}`}>
+                    {renderResultItem(item, `${sectionKey}-left-${index}`)}
+                  </div>
+                ))}
               </div>
-              <div className="">
-                {right.map((item, index) =>
-                  renderResultItem(item, `${sectionKey}-right-${index}`),
-                )}
+              <div className={"space-y-4"}>
+                {right.map((item, index) => (
+                  <div key={`${sectionKey}-right-${index}`}>
+                    {renderResultItem(item, `${sectionKey}-right-${index}`)}
+                  </div>
+                ))}
               </div>
             </div>
           </div>
