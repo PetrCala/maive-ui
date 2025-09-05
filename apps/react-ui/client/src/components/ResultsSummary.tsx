@@ -9,7 +9,6 @@ import {
 type ResultsSummaryProps = {
   results: ModelResults;
   variant?: "detailed" | "simple";
-  showBootstrapSection?: boolean;
   layout?: "horizontal" | "vertical"; // horizontal = x-axis, vertical = y-axis
   runDuration?: number;
   runTimestamp?: Date;
@@ -23,7 +22,6 @@ type ResultsSummaryProps = {
 export default function ResultsSummary({
   results,
   variant = "detailed",
-  showBootstrapSection = true,
   layout = "horizontal",
   runDuration,
   runTimestamp,
@@ -89,23 +87,17 @@ export default function ResultsSummary({
   );
 
   // Combine all results and filter out hidden ones
-  const allResults = [...coreResults, ...conditionalResults];
+  const allResults = [
+    ...coreResults,
+    ...conditionalResults,
+    ...bootstrapResults,
+  ];
   const visibleResults = allResults.filter((result) => result.show);
 
   // Split results into two columns for balanced display (column-wise population)
   const midPoint = Math.ceil(visibleResults.length / 2);
   const leftColumnResults = visibleResults.slice(0, midPoint);
   const rightColumnResults = visibleResults.slice(midPoint);
-
-  // Add bootstrap results to the shorter column to balance
-  const bootstrapVisible = bootstrapResults.filter((result) => result.show);
-  if (bootstrapVisible.length > 0 && showBootstrapSection) {
-    if (leftColumnResults.length <= rightColumnResults.length) {
-      leftColumnResults.push(...bootstrapVisible);
-    } else {
-      rightColumnResults.push(...bootstrapVisible);
-    }
-  }
 
   const renderResultItem = (item: ResultItem, key: string) => (
     <div key={key} className="flex justify-between">
@@ -135,24 +127,6 @@ export default function ResultsSummary({
             <span className="font-medium">{item.value}</span>
           </div>
         ))}
-        {bootstrapVisible.length > 0 && showBootstrapSection && (
-          <>
-            <div className="mt-4 pt-2 border-t border-gray-200 dark:border-gray-700">
-              <div className="font-medium text-primary mb-2">
-                Bootstrap Results
-              </div>
-              {bootstrapVisible.map((item, index) => (
-                <div
-                  key={`bootstrap-${index}`}
-                  className="flex justify-between"
-                >
-                  <span className="text-secondary">{item.label}:</span>
-                  <span className="font-medium">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
       </div>
     );
   }
@@ -174,29 +148,6 @@ export default function ResultsSummary({
             )}
           </div>
         </div>
-        {bootstrapVisible.length > 0 && showBootstrapSection && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <div className="font-medium text-primary mb-3">
-              Bootstrap Results
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                {bootstrapVisible
-                  .slice(0, Math.ceil(bootstrapVisible.length / 2))
-                  .map((item, index) =>
-                    renderResultItem(item, `bootstrap-left-${index}`),
-                  )}
-              </div>
-              <div className="space-y-2">
-                {bootstrapVisible
-                  .slice(Math.ceil(bootstrapVisible.length / 2))
-                  .map((item, index) =>
-                    renderResultItem(item, `bootstrap-right-${index}`),
-                  )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     );
   }

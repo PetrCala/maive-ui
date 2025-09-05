@@ -171,7 +171,6 @@ export default function RunInfoModal({
           <ResultsSummary
             results={results}
             variant="detailed"
-            showBootstrapSection={true}
             layout="vertical"
             runDuration={runDuration}
             runTimestamp={runTimestamp}

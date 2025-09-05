@@ -1,6 +1,7 @@
 "use client";
 
 import type { ModelResults, ModelParameters } from "@src/types";
+import CONFIG from "@src/CONFIG";
 
 export type ResultItem = {
   label: string;
@@ -104,28 +105,30 @@ export const generateResultsData = (
   ];
 
   // Bootstrap results
-  const bootstrapResults: ResultItem[] = [
-    {
-      label: "Bootstrap CI (Effect)",
-      value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
-      show: results.bootCI !== "NA",
-    },
-    {
-      label: "Bootstrap CI (SE)",
-      value: results.bootCI !== "NA" ? formatCI(results.bootCI[1]) : "NA",
-      show: results.bootCI !== "NA",
-    },
-    {
-      label: "Bootstrap SE (Effect)",
-      value: results.bootSE !== "NA" ? results.bootSE[0] : "NA",
-      show: results.bootSE !== "NA",
-    },
-    {
-      label: "Bootstrap SE (SE)",
-      value: results.bootSE !== "NA" ? results.bootSE[1] : "NA",
-      show: results.bootSE !== "NA",
-    },
-  ];
+  const bootstrapResults: ResultItem[] = CONFIG.BOOTSTRAP_ENABLED
+    ? [
+        {
+          label: "Bootstrap CI (Effect)",
+          value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
+          show: results.bootCI !== "NA",
+        },
+        {
+          label: "Bootstrap CI (SE)",
+          value: results.bootCI !== "NA" ? formatCI(results.bootCI[1]) : "NA",
+          show: results.bootCI !== "NA",
+        },
+        {
+          label: "Bootstrap SE (Effect)",
+          value: results.bootSE !== "NA" ? results.bootSE[0] : "NA",
+          show: results.bootSE !== "NA",
+        },
+        {
+          label: "Bootstrap SE (SE)",
+          value: results.bootSE !== "NA" ? results.bootSE[1] : "NA",
+          show: results.bootSE !== "NA",
+        },
+      ]
+    : [];
 
   // Run information
   const runInfo: ResultItem[] = [];
