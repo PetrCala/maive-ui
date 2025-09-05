@@ -20,6 +20,14 @@ import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
+import {
+  FaInfoCircle,
+  FaDownload,
+  FaUpload,
+  FaRedo,
+  FaChartLine,
+  FaPlay,
+} from "react-icons/fa";
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -418,40 +426,64 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-8 mt-8">
-            {/* Left Column */}
+          <div className="grid grid-cols-3 gap-8 mt-8">
+            {/* Left Column - Current Run Actions */}
             <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FaChartLine className="w-4 h-4 text-blue-600" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  Current Run
+                </span>
+              </div>
               <ActionButton
                 onClick={() => setIsRunInfoModalOpen(true)}
                 variant="secondary"
                 size="md"
                 className="inline-flex items-center gap-2"
               >
+                <FaInfoCircle className="w-4 h-4" />
                 Show Run Info
               </ActionButton>
               <ActionButton
                 onClick={handleExportData}
                 variant="purple"
                 size="md"
+                className="inline-flex items-center gap-2"
               >
+                <FaDownload className="w-4 h-4" />
                 Export Data with Instrumented SE
               </ActionButton>
             </div>
 
-            {/* Right Column */}
+            {/* Elegant Separator */}
+            <div className="flex justify-center">
+              <div className="w-px h-32 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
+            </div>
+
+            {/* Right Column - New Run Actions */}
             <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2 mb-2">
+                <FaPlay className="w-4 h-4 text-green-600" />
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  New Run
+                </span>
+              </div>
               <ActionButton
                 onClick={handleNewUpload}
                 variant="secondary"
                 size="md"
+                className="inline-flex items-center gap-2"
               >
+                <FaUpload className="w-4 h-4" />
                 Upload New Data
               </ActionButton>
               <ActionButton
                 onClick={handleRerunModel}
                 variant="primary"
                 size="md"
+                className="inline-flex items-center gap-2"
               >
+                <FaRedo className="w-4 h-4" />
                 Rerun Model
               </ActionButton>
             </div>
