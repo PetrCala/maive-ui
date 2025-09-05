@@ -1,6 +1,3 @@
-import type { EstimateType } from "@src/types";
-import CONST from "@src/CONST";
-
 const TEXT = {
   home: {
     title: "Seamless Meta-Analysis with MAIVE",
@@ -109,19 +106,8 @@ const TEXT = {
       metrics: {
         estimate: {
           label: "Estimate",
-          tooltip: (estimateType: EstimateType): string => {
-            // This is an example of how different models may be handled in the future, once WAIVE is implemented.
-            // For now, we only use MAIVE.
-            const desc: Record<EstimateType, string> = {
-              [CONST.MODEL_TYPES.MAIVE]:
-                "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.",
-              [CONST.MODEL_TYPES.WAIVE]:
-                "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.", // subject to change
-              Unknown:
-                "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.",
-            };
-            return desc[estimateType] ?? desc.Unknown;
-          },
+          tooltip:
+            "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.",
         },
         standardError: {
           label: "Standard Error",
