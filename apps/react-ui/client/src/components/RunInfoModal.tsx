@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import type { ModelParameters, ModelResults } from "@src/types";
 import CONST from "@src/CONST";
+import TEXT from "@src/lib/text";
 
 type RunInfoModalProps = {
   isOpen: boolean;
@@ -74,17 +75,7 @@ export default function RunInfoModal({
   };
 
   const getParameterDisplayName = (key: keyof ModelParameters): string => {
-    const displayNames: Record<keyof ModelParameters, string> = {
-      modelType: "Model Type",
-      includeStudyDummies: "Include Study Dummies",
-      includeStudyClustering: "Include Study Clustering",
-      standardErrorTreatment: "Standard Error Treatment",
-      computeAndersonRubin: "Compute Anderson-Rubin CI",
-      maiveMethod: "MAIVE Method",
-      weight: "Weighting",
-      shouldUseInstrumenting: "Use Instrumenting",
-    };
-    return displayNames[key];
+    return TEXT.model[key].label;
   };
 
   const getParameterValue = (
