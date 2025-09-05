@@ -13,11 +13,12 @@ import { useDataStore, dataCache } from "@store/dataStore";
 import {
   exportComprehensiveResults,
   downloadImageAsJpg,
-  hasStudyIdColumn,
 } from "@utils/dataUtils";
+import { generateDataInfo } from "@utils/dataInfoUtils";
 import type { ModelParameters, ModelResults } from "@src/types";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
+import ResultsSummary from "@src/components/ResultsSummary";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import {
@@ -42,11 +43,6 @@ export default function ResultsPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const parsedParameters: ModelParameters = JSON.parse(parameters ?? "{}");
-  const shouldDisplayAndersonRubinCI =
-    parsedParameters?.computeAndersonRubin === true;
-  const shouldDisplayHausmanTest =
-    parsedParameters?.shouldUseInstrumenting === true;
-  const estimateType = parsedParameters.modelType ?? "Unknown";
 
   if (!results) {
     return (
@@ -70,10 +66,6 @@ export default function ResultsPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const parsedResults: ModelResults = JSON.parse(results ?? "{}");
-  const shouldDisplayBootstrap =
-    CONFIG.BOOTSTRAP_ENABLED &&
-    parsedParameters.standardErrorTreatment ===
-      CONST.STANDARD_ERROR_TREATMENTS.BOOTSTRAP.VALUE;
 
   const handleRerunModel = () => {
     router.push(`/model?dataId=${dataId}&parameters=${parameters}`);
@@ -101,11 +93,7 @@ export default function ResultsPage() {
         uploadedData = storeData;
       }
 
-      const dataInfo = {
-        filename: uploadedData.filename,
-        rowCount: uploadedData.data.length,
-        hasStudyId: hasStudyIdColumn(uploadedData.data),
-      };
+      const dataInfo = generateDataInfo(dataId);
 
       exportComprehensiveResults(
         uploadedData.data,
@@ -150,259 +138,18 @@ export default function ResultsPage() {
             </h1>
 
             <div className="space-y-6">
-              {/* Effect Estimate Section */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">
-                  {TEXT.results.effectEstimate.title}
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Tooltip
-                      content={TEXT.results.effectEstimate.metrics.estimate.tooltip(
-                        estimateType,
-                      )}
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {TEXT.results.effectEstimate.metrics.estimate.label}
-                      </p>
-                      <p className="text-lg font-medium">
-                        {parsedResults.effectEstimate.toFixed(4)}
-                      </p>
-                    </Tooltip>
-                  </div>
-                  <div>
-                    <Tooltip
-                      content={
-                        TEXT.results.effectEstimate.metrics.standardError
-                          .tooltip
-                      }
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {
-                          TEXT.results.effectEstimate.metrics.standardError
-                            .label
-                        }
-                      </p>
-                      <p className="text-lg font-medium">
-                        {shouldDisplayBootstrap && parsedResults.bootSE !== "NA"
-                          ? parsedResults.bootSE[0]?.toFixed(4)
-                          : parsedResults.standardError.toFixed(4)}
-                      </p>
-                    </Tooltip>
-                  </div>
-                  <div>
-                    <Tooltip
-                      content={
-                        TEXT.results.effectEstimate.metrics.significance.tooltip
-                      }
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {TEXT.results.effectEstimate.metrics.significance.label}
-                      </p>
-                      <p
-                        className={`text-lg font-medium ${
-                          parsedResults.isSignificant
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {parsedResults.isSignificant ? "Yes" : "No"}
-                      </p>
-                    </Tooltip>
-                  </div>
-                  {!!shouldDisplayAndersonRubinCI && (
-                    <div>
-                      <Tooltip
-                        content={
-                          TEXT.results.effectEstimate.metrics.andersonRubinCI
-                            .tooltip
-                        }
-                        visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                      >
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          {
-                            TEXT.results.effectEstimate.metrics.andersonRubinCI
-                              .label
-                          }
-                        </p>
-                        <p className="text-lg font-medium">
-                          {typeof parsedResults.andersonRubinCI === "object"
-                            ? `[${parsedResults.andersonRubinCI[0].toFixed(
-                                4,
-                              )}, ${parsedResults.andersonRubinCI[1].toFixed(4)}]`
-                            : "NA"}
-                        </p>
-                      </Tooltip>
-                    </div>
-                  )}
-                  {shouldDisplayBootstrap && parsedResults.bootCI !== "NA" && (
-                    <div>
-                      <Tooltip
-                        content={
-                          TEXT.results.effectEstimate.metrics.bootCI.tooltip
-                        }
-                        visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                      >
-                        <p className="text-sm text-gray-600 dark:text-gray-300">
-                          {TEXT.results.effectEstimate.metrics.bootCI.label}
-                        </p>
-                        <p className="text-lg font-medium">
-                          {typeof parsedResults.bootCI === "object"
-                            ? // Show the first CI -> matches the R package SE behavior
-                              `[${parsedResults.bootCI[0][0].toFixed(
-                                4,
-                              )}, ${parsedResults.bootCI[0][1].toFixed(4)}]`
-                            : "NA"}
-                        </p>
-                      </Tooltip>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Publication Bias Section */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">
-                  {TEXT.results.publicationBias.title}
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Tooltip
-                      content={
-                        TEXT.results.publicationBias.metrics.pValue.tooltip
-                      }
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {TEXT.results.publicationBias.metrics.pValue.label}
-                      </p>
-                      <p className="text-lg font-medium">
-                        {parsedResults.publicationBias.pValue.toFixed(4)}
-                      </p>
-                    </Tooltip>
-                  </div>
-                  <div>
-                    <Tooltip
-                      content={
-                        TEXT.results.publicationBias.metrics.significance
-                          .tooltip
-                      }
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {
-                          TEXT.results.publicationBias.metrics.significance
-                            .label
-                        }
-                      </p>
-                      <p
-                        className={`text-lg font-medium ${
-                          parsedResults.publicationBias.isSignificant
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {parsedResults.publicationBias.isSignificant
-                          ? "Yes"
-                          : "No"}
-                      </p>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tests Section */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <h2 className="text-xl font-semibold mb-4">
-                  {TEXT.results.diagnosticTests.title}
-                </h2>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Tooltip
-                      content={
-                        TEXT.results.diagnosticTests.metrics.hausmanTest.tooltip
-                      }
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {TEXT.results.diagnosticTests.metrics.hausmanTest.label}
-                      </p>
-                      <p
-                        className={`text-lg font-medium ${
-                          shouldDisplayHausmanTest
-                            ? parsedResults.hausmanTest.rejectsNull
-                              ? "text-green-600"
-                              : "text-red-600"
-                            : ""
-                        }`}
-                      >
-                        {shouldDisplayHausmanTest
-                          ? parsedResults.hausmanTest.statistic.toFixed(4)
-                          : "NA"}
-                        {shouldDisplayHausmanTest
-                          ? parsedResults.hausmanTest.rejectsNull
-                            ? " (Rejects Null)"
-                            : " (Fails to Reject Null)"
-                          : ""}
-                      </p>
-                    </Tooltip>
-                  </div>
-                  <div>
-                    <Tooltip
-                      content={
-                        TEXT.results.diagnosticTests.metrics
-                          .hausmanCriticalValue.tooltip
-                      }
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {
-                          TEXT.results.diagnosticTests.metrics
-                            .hausmanCriticalValue.label
-                        }
-                      </p>
-                      <p className="text-lg font-medium">
-                        {shouldDisplayHausmanTest
-                          ? parsedResults.hausmanTest.criticalValue.toFixed(4)
-                          : "-"}
-                      </p>
-                    </Tooltip>
-                  </div>
-                  <div>
-                    <Tooltip
-                      content={
-                        TEXT.results.diagnosticTests.metrics.firstStageFTest
-                          .tooltip
-                      }
-                      visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                    >
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {
-                          TEXT.results.diagnosticTests.metrics.firstStageFTest
-                            .label
-                        }
-                      </p>
-                      {parsedResults.firstStageFTest === "NA" ? (
-                        <p className="text-lg font-medium">NA</p>
-                      ) : (
-                        <p
-                          className={`text-lg font-medium ${
-                            parsedResults.firstStageFTest >= 10
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {parsedResults.firstStageFTest.toFixed(4)}
-                          {parsedResults.firstStageFTest > 10 && " (Strong)"}
-                        </p>
-                      )}
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
+              {/* Results Summary */}
+              <ResultsSummary
+                results={parsedResults}
+                variant="detailed"
+                layout="horizontal"
+                runDuration={
+                  runDuration ? parseInt(runDuration, 10) : undefined
+                }
+                runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
+                dataInfo={generateDataInfo(dataId)}
+                showTooltips={true}
+              />
 
               {/* Funnel Plot */}
               <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
@@ -506,18 +253,7 @@ export default function ResultsPage() {
         onClose={() => setIsRunInfoModalOpen(false)}
         parameters={parsedParameters}
         results={parsedResults}
-        dataInfo={
-          dataId
-            ? {
-                filename: dataCache.get(dataId)?.filename ?? "Unknown",
-                rowCount: dataCache.get(dataId)?.data.length ?? 0,
-                hasStudyId: (() => {
-                  const data = dataCache.get(dataId);
-                  return data ? hasStudyIdColumn(data.data) : false;
-                })(),
-              }
-            : undefined
-        }
+        dataInfo={generateDataInfo(dataId)}
         runDuration={runDuration ? parseInt(runDuration, 10) : undefined}
         runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
         onExportButtonClick={handleExportData}
