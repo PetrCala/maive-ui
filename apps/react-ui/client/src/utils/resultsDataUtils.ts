@@ -86,29 +86,6 @@ export const generateResultsData = (
   // Conditional results
   const conditionalResults: ResultItem[] = [
     {
-      label: TEXT.results.effectEstimate.metrics.andersonRubinCI.label,
-      value:
-        results.andersonRubinCI !== "NA"
-          ? formatCI(results.andersonRubinCI)
-          : "NA",
-      show: results.andersonRubinCI !== "NA",
-      section: "effect",
-    },
-    {
-      label: TEXT.results.diagnosticTests.metrics.firstStageFTest.label,
-      value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
-      show: results.firstStageFTest !== "NA",
-      highlightColor:
-        results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
-          ? "text-green-600"
-          : "text-red-600",
-      extraText:
-        results.firstStageFTest !== "NA" && results.firstStageFTest > 10
-          ? " (Strong)"
-          : "",
-      section: "tests",
-    },
-    {
       label: TEXT.results.diagnosticTests.metrics.hausmanTest.label,
       value: results.hausmanTest.statistic,
       show: true,
@@ -126,31 +103,54 @@ export const generateResultsData = (
       show: true,
       section: "tests",
     },
+    {
+      label: TEXT.results.diagnosticTests.metrics.firstStageFTest.label,
+      value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
+      show: results.firstStageFTest !== "NA",
+      highlightColor:
+        results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
+          ? "text-green-600"
+          : "text-red-600",
+      extraText:
+        results.firstStageFTest !== "NA" && results.firstStageFTest > 10
+          ? " (Strong)"
+          : "",
+      section: "tests",
+    },
+    {
+      label: TEXT.results.effectEstimate.metrics.andersonRubinCI.label,
+      value:
+        results.andersonRubinCI !== "NA"
+          ? formatCI(results.andersonRubinCI)
+          : "NA",
+      show: results.andersonRubinCI !== "NA",
+      section: "effect",
+    },
   ];
 
   // Bootstrap results
   const bootstrapResults: ResultItem[] = CONFIG.BOOTSTRAP_ENABLED
     ? [
         {
-          label: TEXT.results.effectEstimate.metrics.bootCIEffect.label,
+          label: TEXT.results.bootstrap.metrics.bootCIEffect.label,
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
           show: results.bootCI !== "NA",
           section: "bootstrap",
         },
         {
-          label: TEXT.results.effectEstimate.metrics.bootCISE.label,
+          label: TEXT.results.bootstrap.metrics.bootCISE.label,
           value: results.bootCI !== "NA" ? formatCI(results.bootCI[1]) : "NA",
           show: results.bootCI !== "NA",
           section: "bootstrap",
         },
         {
-          label: TEXT.results.effectEstimate.metrics.bootSEEffect.label,
+          label: TEXT.results.bootstrap.metrics.bootSEEffect.label,
           value: results.bootSE !== "NA" ? results.bootSE[0] : "NA",
           show: results.bootSE !== "NA",
           section: "bootstrap",
         },
         {
-          label: TEXT.results.effectEstimate.metrics.bootSESE.label,
+          label: TEXT.results.bootstrap.metrics.bootSESE.label,
           value: results.bootSE !== "NA" ? results.bootSE[1] : "NA",
           show: results.bootSE !== "NA",
           section: "bootstrap",

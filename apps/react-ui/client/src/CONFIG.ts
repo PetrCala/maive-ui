@@ -13,6 +13,7 @@ const CONFIG = {
     MODEL_PAGE: true,
     RESULTS_PAGE: true,
   },
+
   DEFAULT_MODEL_PARAMETERS: {
     modelType: CONST.MODEL_TYPES.MAIVE,
     includeStudyDummies: false,
