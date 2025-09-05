@@ -32,14 +32,16 @@ export default function ResultsSummary({
   dataInfo,
   showTooltips = false,
 }: ResultsSummaryProps) {
-  const getSignificanceColor = (
-    isSignificant: boolean,
-    type: "positive" | "negative",
-  ): string => {
-    if (!isSignificant) {
-      return "text-gray-600 dark:text-gray-400";
-    }
-    return type === "positive" ? "text-green-600" : "text-red-600";
+  const getValueDisplay = (item: ResultItem): string => {
+    const baseValue = item.value.toString();
+    return item.extraText ? `${baseValue}${item.extraText}` : baseValue;
+  };
+
+  const getValueClassName = (item: ResultItem): string => {
+    const baseClass = "text-lg font-medium";
+    return item.highlightColor
+      ? `${baseClass} ${item.highlightColor}`
+      : baseClass;
   };
 
   const getTooltipContent = (label: string): string => {
@@ -173,38 +175,24 @@ export default function ResultsSummary({
     const shouldShowTooltip = showTooltips && tooltipContent;
 
     const labelClass = "text-sm text-gray-600 dark:text-gray-300";
-    const valueClassDetailed = `text-lg font-medium${
-      item.isSignificant !== undefined
-        ? " " +
-          getSignificanceColor(
-            item.isSignificant,
-            item.isSignificantType ?? "positive",
-          )
-        : ""
-    }`;
-    const valueClassSimple = `text-md font-medium${
-      item.isSignificant !== undefined
-        ? " " +
-          getSignificanceColor(
-            item.isSignificant,
-            item.isSignificantType ?? "positive",
-          )
-        : ""
-    }`;
+    const valueClassDetailed = getValueClassName(item);
+    const valueClassSimple = item.highlightColor
+      ? `text-md font-medium ${item.highlightColor}`
+      : "text-md font-medium";
 
     let content;
     if (variant === "detailed") {
       content = (
         <div>
           <p className={labelClass}>{item.label}</p>
-          <p className={valueClassDetailed}>{item.value}</p>
+          <p className={valueClassDetailed}>{getValueDisplay(item)}</p>
         </div>
       );
     } else {
       content = (
         <div className="flex justify-between">
           <span className={labelClass}>{item.label}:</span>
-          <span className={valueClassSimple}>{item.value}</span>
+          <span className={valueClassSimple}>{getValueDisplay(item)}</span>
         </div>
       );
     }
