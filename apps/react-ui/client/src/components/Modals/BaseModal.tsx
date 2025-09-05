@@ -115,7 +115,7 @@ export default function BaseModal({
           {showCloseButton && (
             <button
               onClick={onClose}
-              className="text-muted hover:text-secondary transition-colors interactive"
+              className="surface-secondary rounded-full p-1 text-muted hover:text-secondary transition-colors interactive shadow"
               aria-label="Close modal"
             >
               <svg
