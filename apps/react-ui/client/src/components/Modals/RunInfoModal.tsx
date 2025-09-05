@@ -131,12 +131,6 @@ export default function RunInfoModal({
                   <span className="text-secondary">Observations:</span>
                   <span className="font-medium">{dataInfo.rowCount}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-secondary">Has Study ID:</span>
-                  <span className="font-medium">
-                    {dataInfo.hasStudyId ? "Yes" : "No"}
-                  </span>
-                </div>
               </div>
             )}
           </div>
@@ -151,7 +145,7 @@ export default function RunInfoModal({
             {Object.entries(parameters).map(([key, value]) => (
               <div
                 key={key}
-                className="flex justify-between items-center py-2 border-b border-gray-100"
+                className="flex justify-between items-center py-2 border-b border-gray-500"
               >
                 <span className="text-secondary">
                   {getParameterDisplayName(key as keyof ModelParameters)}:
