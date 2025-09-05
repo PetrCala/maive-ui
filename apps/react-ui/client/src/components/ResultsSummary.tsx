@@ -6,6 +6,7 @@ type ResultsSummaryProps = {
   results: ModelResults;
   variant?: "detailed" | "simple";
   showBootstrapSection?: boolean;
+  layout?: "horizontal" | "vertical"; // horizontal = x-axis, vertical = y-axis
 };
 
 type ResultItem = {
@@ -20,6 +21,7 @@ export default function ResultsSummary({
   results,
   variant = "detailed",
   showBootstrapSection = true,
+  layout = "horizontal",
 }: ResultsSummaryProps) {
   const formatValue = (value: number, decimals = 4): string => {
     return value.toFixed(decimals);
@@ -204,6 +206,30 @@ export default function ResultsSummary({
   }
 
   // Detailed variant for modal display
+  if (layout === "vertical") {
+    // Y-axis population: all results in a single column
+    return (
+      <div className="space-y-2 text-sm">
+        {visibleResults.map((item, index) =>
+          renderResultItem(item, `item-${index}`),
+        )}
+        {bootstrapVisible.length > 0 && showBootstrapSection && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="font-medium text-primary mb-3">
+              Bootstrap Results
+            </div>
+            <div className="space-y-2">
+              {bootstrapVisible.map((item, index) =>
+                renderResultItem(item, `bootstrap-${index}`),
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Horizontal layout (default)
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
       <div className="space-y-2">
