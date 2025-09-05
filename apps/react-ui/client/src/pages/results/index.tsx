@@ -16,6 +16,7 @@ import {
   hasStudyIdColumn,
 } from "@utils/dataUtils";
 import type { ModelParameters, ModelResults } from "@src/types";
+import { FaInfoCircle } from "react-icons/fa";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import CONST from "@src/CONST";
@@ -418,52 +419,36 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          <div className="flex justify-end items-center mt-8">
-            <div className="space-x-4">
-              <ActionButton
-                onClick={() => setIsRunInfoModalOpen(true)}
-                variant="secondary"
-                size="md"
-                className="inline-flex items-center gap-2"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
-                Run Info
-              </ActionButton>
-              <ActionButton
-                onClick={handleExportData}
-                variant="purple"
-                size="md"
-              >
-                Export Data with Instrumented SE
-              </ActionButton>
-              <ActionButton
-                onClick={handleNewUpload}
-                variant="secondary"
-                size="md"
-              >
-                Upload New Data
-              </ActionButton>
-              <ActionButton
-                onClick={handleRerunModel}
-                variant="primary"
-                size="md"
-              >
-                Rerun Model
-              </ActionButton>
-            </div>
+          <div className="flex justify-end flex-col gap-4 items-center mt-8">
+            {/* <div className="space-x-4"> */}
+            <ActionButton onClick={handleExportData} variant="purple" size="md">
+              Export Data with Instrumented SE
+            </ActionButton>
+            <ActionButton
+              onClick={() => setIsRunInfoModalOpen(true)}
+              variant="secondary"
+              size="md"
+              className="inline-flex items-center gap-2"
+            >
+              {/* <FaInfoCircle className="w-4 h-4" /> */}
+              Show Run Info
+            </ActionButton>
+            <ActionButton
+              onClick={handleNewUpload}
+              variant="secondary"
+              size="md"
+            >
+              Upload New Data
+            </ActionButton>
+            <ActionButton
+              onClick={handleRerunModel}
+              variant="primary"
+              size="md"
+            >
+              Rerun Model
+            </ActionButton>
           </div>
+          {/* </div> */}
         </div>
       </main>
 
