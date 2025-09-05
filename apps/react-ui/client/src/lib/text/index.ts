@@ -11,6 +11,7 @@ const TEXT = {
     close: "Close",
   },
   citation: {
+    shortText: "Irsova et al., Nature Communications, 2025",
     reminder: {
       title: "Citation Reminder",
       text: "This method is included in the MAIVE app (Irsova et al., Nature Communications, 2025). Please cite the paper using the button in the footer if you use this tool in your research.",
