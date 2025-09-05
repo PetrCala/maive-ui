@@ -37,11 +37,27 @@ export default function BaseModal({
       document.body.style.width = "100%";
 
       return () => {
-        // Restore body scroll
+        // Restore body scroll without visible animation
         document.body.style.position = "";
         document.body.style.top = "";
         document.body.style.width = "";
-        window.scrollTo(0, scrollY);
+
+        // Use requestAnimationFrame to ensure the DOM is updated before scrolling
+        requestAnimationFrame(() => {
+          // Temporarily disable smooth scrolling
+          const originalScrollBehavior =
+            document.documentElement.style.scrollBehavior;
+          document.documentElement.style.scrollBehavior = "auto";
+
+          // Restore scroll position instantly
+          window.scrollTo(0, scrollY);
+
+          // Restore smooth scrolling behavior
+          requestAnimationFrame(() => {
+            document.documentElement.style.scrollBehavior =
+              originalScrollBehavior;
+          });
+        });
       };
     }
   }, [isOpen]);
