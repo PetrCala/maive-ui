@@ -147,7 +147,7 @@ export default function RunInfoModal({
               const displayName = getParameterDisplayName(
                 key as keyof ModelParameters,
               );
-              const truncationLength = 25;
+              const truncationLength = 30;
               const truncatedName =
                 displayName.length > truncationLength
                   ? `${displayName.substring(0, truncationLength - 3)}...`
