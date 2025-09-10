@@ -96,7 +96,7 @@ export const generateResultsData = (
     {
       label: TEXT.results.diagnosticTests.metrics.hausmanTest.label,
       value: results.hausmanTest.statistic,
-      show: true,
+      show: parameters?.shouldUseInstrumenting ?? true,
       highlightColor: results.hausmanTest.rejectsNull
         ? "text-green-600"
         : "text-red-600",
@@ -108,13 +108,15 @@ export const generateResultsData = (
     {
       label: TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.label,
       value: results.hausmanTest.criticalValue,
-      show: true,
+      show: parameters?.shouldUseInstrumenting ?? true,
       section: "tests",
     },
     {
       label: TEXT.results.diagnosticTests.metrics.firstStageFTest.label,
       value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
-      show: results.firstStageFTest !== "NA",
+      show:
+        (parameters?.shouldUseInstrumenting ?? true) &&
+        results.firstStageFTest !== "NA",
       highlightColor:
         results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
           ? "text-green-600"

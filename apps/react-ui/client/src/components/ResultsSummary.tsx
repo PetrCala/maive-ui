@@ -1,6 +1,6 @@
 "use client";
 
-import type { ModelResults } from "@src/types";
+import type { ModelResults, ModelParameters } from "@src/types";
 import {
   generateResultsData,
   type ResultItem,
@@ -11,6 +11,7 @@ import CONFIG from "@src/CONFIG";
 
 type ResultsSummaryProps = {
   results: ModelResults;
+  parameters?: ModelParameters;
   variant?: "detailed" | "simple";
   layout?: "horizontal" | "vertical"; // horizontal = x-axis, vertical = y-axis
   runDuration?: number;
@@ -25,6 +26,7 @@ type ResultsSummaryProps = {
 
 export default function ResultsSummary({
   results,
+  parameters,
   variant = "detailed",
   layout = "horizontal",
   runDuration,
@@ -98,7 +100,7 @@ export default function ResultsSummary({
   // Generate results data using the utility function
   const resultsData = generateResultsData(
     results,
-    undefined,
+    parameters,
     runDuration,
     runTimestamp,
     dataInfo,
