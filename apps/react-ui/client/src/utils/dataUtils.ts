@@ -248,6 +248,8 @@ export const exportComprehensiveResults = (
     filename: string;
     rowCount: number;
     hasStudyId: boolean;
+    studyCount?: number;
+    medianObservationsPerStudy?: number;
   },
 ): void => {
   const workbook = XLSX.utils.book_new();
