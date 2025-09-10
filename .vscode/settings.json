@@ -5,5 +5,8 @@
 	"editor.formatOnSave": true,
 	"editor.formatOnSaveMode": "file",
 	"files.autoSave": "onFocusChange",
-	"vs-code-prettier-eslint.prettierLast": false
+	"vs-code-prettier-eslint.prettierLast": false,
+	"[typescript]": {
+		"editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+	}
 }
