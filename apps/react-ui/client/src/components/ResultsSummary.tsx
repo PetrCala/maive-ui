@@ -42,23 +42,18 @@ export default function ResultsSummary({
       return {};
     }
 
-    // Check if we're in dark mode by looking at the document
-    const isDarkMode =
-      typeof document !== "undefined" &&
-      document.documentElement.classList.contains("dark");
-
     // Convert Tailwind color classes to inline styles
     if (item.highlightColor.includes("text-green-600")) {
-      return { color: isDarkMode ? "#4ade80" : "#16a34a" }; // green-400 for dark, green-600 for light
+      return { color: "#16a34a" }; // Tailwind green-600
     }
     if (item.highlightColor.includes("text-green-400")) {
-      return { color: "#4ade80" }; // green-400
+      return { color: "#22c55e" }; // Tailwind green-400
     }
     if (item.highlightColor.includes("text-red-600")) {
-      return { color: isDarkMode ? "#f87171" : "#dc2626" }; // red-400 for dark, red-600 for light
+      return { color: "#dc2626" }; // Tailwind red-600
     }
     if (item.highlightColor.includes("text-red-400")) {
-      return { color: "#f87171" }; // red-400
+      return { color: "#f87171" }; // Tailwind red-400
     }
 
     return {};
