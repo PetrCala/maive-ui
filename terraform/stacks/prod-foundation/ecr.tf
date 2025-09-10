@@ -12,7 +12,6 @@ resource "aws_ecr_repository" "repos" {
   force_delete = true
 }
 
-# Keep only the 5 most recent images
 resource "aws_ecr_lifecycle_policy" "cleanup" {
   for_each   = aws_ecr_repository.repos
   repository = each.value.name
@@ -20,11 +19,11 @@ resource "aws_ecr_lifecycle_policy" "cleanup" {
     rules = [
       {
         rulePriority = 1
-        description  = "Retain last 5 images"
+        description  = "Retain last 3 images"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = 5
+          countNumber = 3
         }
         action = { type = "expire" }
       }
