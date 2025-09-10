@@ -141,6 +141,7 @@ export default function ResultsPage() {
               {/* Results Summary */}
               <ResultsSummary
                 results={parsedResults}
+                parameters={parsedParameters}
                 variant="detailed"
                 layout="horizontal"
                 runDuration={

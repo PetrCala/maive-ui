@@ -170,6 +170,7 @@ export default function RunInfoModal({
           </h3>
           <ResultsSummary
             results={results}
+            parameters={parameters}
             variant="simple"
             layout="vertical"
             runDuration={runDuration}
