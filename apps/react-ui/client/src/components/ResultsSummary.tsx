@@ -1,6 +1,7 @@
 "use client";
 
 import type { ModelResults, ModelParameters } from "@src/types";
+import type { DataInfo } from "@src/types/data";
 import {
   generateResultsData,
   type ResultItem,
@@ -16,13 +17,7 @@ type ResultsSummaryProps = {
   layout?: "horizontal" | "vertical"; // horizontal = x-axis, vertical = y-axis
   runDuration?: number;
   runTimestamp?: Date;
-  dataInfo?: {
-    filename: string;
-    rowCount: number;
-    hasStudyId: boolean;
-    studyCount?: number;
-    medianObservationsPerStudy?: number;
-  };
+  dataInfo?: DataInfo;
   showTooltips?: boolean;
 };
 

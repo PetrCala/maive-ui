@@ -2,14 +2,7 @@
 
 import { dataCache } from "@store/dataStore";
 import { hasStudyIdColumn } from "./dataUtils";
-
-export type DataInfo = {
-  filename: string;
-  rowCount: number;
-  hasStudyId: boolean;
-  studyCount?: number;
-  medianObservationsPerStudy?: number;
-};
+import type { DataInfo } from "@src/types/data";
 
 /**
  * Generate data info from dataId

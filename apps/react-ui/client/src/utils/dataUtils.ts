@@ -1,5 +1,6 @@
 import TEXT from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
+import type { DataInfo } from "@src/types/data";
 import {
   convertToExportFormat,
   generateResultsData,
@@ -244,13 +245,7 @@ export const exportComprehensiveResults = (
   filename: string,
   runDuration?: number,
   runTimestamp?: Date,
-  dataInfo?: {
-    filename: string;
-    rowCount: number;
-    hasStudyId: boolean;
-    studyCount?: number;
-    medianObservationsPerStudy?: number;
-  },
+  dataInfo?: DataInfo,
 ): void => {
   const workbook = XLSX.utils.book_new();
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { ModelParameters, ModelResults } from "@src/types";
+import type { DataInfo } from "@src/types/data";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import ResultsSummary from "@src/components/ResultsSummary";
@@ -13,13 +14,7 @@ type RunInfoModalProps = {
   onClose: () => void;
   parameters: ModelParameters;
   results: ModelResults;
-  dataInfo?: {
-    filename: string;
-    rowCount: number;
-    hasStudyId: boolean;
-    studyCount?: number;
-    medianObservationsPerStudy?: number;
-  };
+  dataInfo?: DataInfo;
   runDuration?: number; // in milliseconds
   runTimestamp?: Date;
   onExportButtonClick: () => void;

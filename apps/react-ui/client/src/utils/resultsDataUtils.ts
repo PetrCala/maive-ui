@@ -1,6 +1,7 @@
 "use client";
 
 import type { ModelResults, ModelParameters } from "@src/types";
+import type { DataInfo } from "@src/types/data";
 import TEXT from "@src/lib/text";
 
 export type ResultItem = {
@@ -28,13 +29,7 @@ export const generateResultsData = (
   parameters?: ModelParameters,
   runDuration?: number,
   runTimestamp?: Date,
-  dataInfo?: {
-    filename: string;
-    rowCount: number;
-    hasStudyId: boolean;
-    studyCount?: number;
-    medianObservationsPerStudy?: number;
-  },
+  dataInfo?: DataInfo,
 ): ResultsData => {
   const formatValue = (value: number, decimals = 4): string => {
     return value.toFixed(decimals);
