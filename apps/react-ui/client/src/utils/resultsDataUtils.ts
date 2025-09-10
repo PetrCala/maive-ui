@@ -98,8 +98,8 @@ export const generateResultsData = (
       value: results.hausmanTest.statistic,
       show: true,
       highlightColor: results.hausmanTest.rejectsNull
-        ? "text-green-600"
-        : "text-red-600",
+        ? "text-red-600"
+        : "text-green-600",
       extraText: results.hausmanTest.rejectsNull
         ? " (Rejects Null)"
         : " (Fails to Reject Null)",
@@ -120,9 +120,9 @@ export const generateResultsData = (
           ? "text-green-600"
           : "text-red-600",
       extraText:
-        results.firstStageFTest !== "NA" && results.firstStageFTest > 10
+        results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
           ? " (Strong)"
-          : "",
+          : " (Weak)",
       section: "tests",
     },
   ];
