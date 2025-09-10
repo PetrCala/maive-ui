@@ -1,13 +1,18 @@
 "use client";
 
+import type { DataInfo } from "@src/types/data";
+
 type RunDetailsProps = {
   runDuration?: number;
   runTimestamp?: Date;
-  dataInfo?: {
-    filename: string;
-    rowCount: number;
-    hasStudyId: boolean;
-  };
+  dataInfo?: DataInfo;
+};
+
+type DetailItem = {
+  label: string;
+  value: string | number;
+  show: boolean;
+  tooltip?: string;
 };
 
 export default function RunDetails({
@@ -35,35 +40,77 @@ export default function RunDetails({
     return timestamp.toLocaleString();
   };
 
+  // Create a data-driven list of all available information
+  const runDetails: DetailItem[] = [
+    {
+      label: "Duration",
+      value: formatDuration(runDuration),
+      show: true,
+    },
+    {
+      label: "Completed",
+      value: formatTimestamp(runTimestamp),
+      show: true,
+    },
+  ];
+
+  const dataDetails: DetailItem[] = dataInfo
+    ? [
+        {
+          label: "Data File",
+          value: dataInfo.filename,
+          show: true,
+          tooltip: dataInfo.filename,
+        },
+        {
+          label: "Observations",
+          value: dataInfo.rowCount,
+          show: true,
+        },
+        {
+          label: "Has Study ID",
+          value: dataInfo.hasStudyId ? "Yes" : "No",
+          show: true,
+        },
+        {
+          label: "Number of Studies",
+          value: dataInfo.studyCount ?? "N/A",
+          show: dataInfo.studyCount !== undefined,
+        },
+        {
+          label: "Median Observations per Study",
+          value: dataInfo.medianObservationsPerStudy
+            ? dataInfo.medianObservationsPerStudy.toFixed(1)
+            : "N/A",
+          show: dataInfo.medianObservationsPerStudy !== undefined,
+        },
+      ]
+    : [];
+
+  const allDetails = [...runDetails, ...dataDetails];
+  const visibleDetails = allDetails.filter((detail) => detail.show);
+
+  // Split details into two columns for better layout
+  const midPoint = Math.ceil(visibleDetails.length / 2);
+  const leftColumn = visibleDetails.slice(0, midPoint);
+  const rightColumn = visibleDetails.slice(midPoint);
+
+  const renderDetailItem = (item: DetailItem) => (
+    <div key={item.label} className="flex justify-between">
+      <span className="text-secondary">{item.label}:</span>
+      <span
+        className="font-medium truncate ml-2"
+        title={item.tooltip ?? String(item.value)}
+      >
+        {item.value}
+      </span>
+    </div>
+  );
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-      <div className="space-y-2">
-        <div className="flex justify-between">
-          <span className="text-secondary">Duration:</span>
-          <span className="font-medium">{formatDuration(runDuration)}</span>
-        </div>
-        <div className="flex justify-between">
-          <span className="text-secondary">Completed:</span>
-          <span className="font-medium">{formatTimestamp(runTimestamp)}</span>
-        </div>
-      </div>
-      {dataInfo && (
-        <div className="space-y-2">
-          <div className="flex justify-between">
-            <span className="text-secondary">Data File:</span>
-            <span
-              className="font-medium truncate ml-2"
-              title={dataInfo.filename}
-            >
-              {dataInfo.filename}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-secondary">Observations:</span>
-            <span className="font-medium">{dataInfo.rowCount}</span>
-          </div>
-        </div>
-      )}
+      <div className="space-y-2">{leftColumn.map(renderDetailItem)}</div>
+      <div className="space-y-2">{rightColumn.map(renderDetailItem)}</div>
     </div>
   );
 }
