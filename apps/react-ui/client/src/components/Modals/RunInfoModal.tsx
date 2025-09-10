@@ -17,6 +17,8 @@ type RunInfoModalProps = {
     filename: string;
     rowCount: number;
     hasStudyId: boolean;
+    studyCount?: number;
+    medianObservationsPerStudy?: number;
   };
   runDuration?: number; // in milliseconds
   runTimestamp?: Date;

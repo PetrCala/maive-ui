@@ -20,6 +20,8 @@ type ResultsSummaryProps = {
     filename: string;
     rowCount: number;
     hasStudyId: boolean;
+    studyCount?: number;
+    medianObservationsPerStudy?: number;
   };
   showTooltips?: boolean;
 };

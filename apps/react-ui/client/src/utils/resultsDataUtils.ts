@@ -32,6 +32,8 @@ export const generateResultsData = (
     filename: string;
     rowCount: number;
     hasStudyId: boolean;
+    studyCount?: number;
+    medianObservationsPerStudy?: number;
   },
 ): ResultsData => {
   const formatValue = (value: number, decimals = 4): string => {
@@ -171,6 +173,24 @@ export const generateResultsData = (
         section: "runInfo",
       },
     );
+
+    if (dataInfo.studyCount !== undefined) {
+      runInfo.push({
+        label: "Number of Studies",
+        value: dataInfo.studyCount,
+        show: true,
+        section: "runInfo",
+      });
+    }
+
+    if (dataInfo.medianObservationsPerStudy !== undefined) {
+      runInfo.push({
+        label: "Median Observations per Study",
+        value: dataInfo.medianObservationsPerStudy.toFixed(1),
+        show: true,
+        section: "runInfo",
+      });
+    }
   }
 
   return {
