@@ -37,11 +37,31 @@ export default function ResultsSummary({
     return item.extraText ? `${baseValue}${item.extraText}` : baseValue;
   };
 
-  const getValueClassName = (item: ResultItem): string => {
-    const baseClass = "text-lg font-medium";
-    return item.highlightColor
-      ? `${baseClass} ${item.highlightColor}`
-      : baseClass;
+  const getValueStyle = (item: ResultItem): React.CSSProperties => {
+    if (!item.highlightColor) {
+      return {};
+    }
+
+    // Check if we're in dark mode by looking at the document
+    const isDarkMode =
+      typeof document !== "undefined" &&
+      document.documentElement.classList.contains("dark");
+
+    // Convert Tailwind color classes to inline styles
+    if (item.highlightColor.includes("text-green-600")) {
+      return { color: isDarkMode ? "#4ade80" : "#16a34a" }; // green-400 for dark, green-600 for light
+    }
+    if (item.highlightColor.includes("text-green-400")) {
+      return { color: "#4ade80" }; // green-400
+    }
+    if (item.highlightColor.includes("text-red-600")) {
+      return { color: isDarkMode ? "#f87171" : "#dc2626" }; // red-400 for dark, red-600 for light
+    }
+    if (item.highlightColor.includes("text-red-400")) {
+      return { color: "#f87171" }; // red-400
+    }
+
+    return {};
   };
 
   const getTooltipContent = (label: string): string => {
@@ -127,24 +147,27 @@ export default function ResultsSummary({
     const shouldShowTooltip = showTooltips && tooltipContent;
 
     const labelClass = "text-sm text-gray-600 dark:text-gray-300";
-    const valueClassDetailed = getValueClassName(item);
-    const valueClassSimple = item.highlightColor
-      ? `text-md font-medium ${item.highlightColor}`
-      : "text-md font-medium";
+    const valueClassDetailed = "text-lg font-medium";
+    const valueClassSimple = "text-md font-medium";
+    const valueStyle = getValueStyle(item);
 
     let content;
     if (variant === "detailed") {
       content = (
         <div>
           <p className={labelClass}>{item.label}</p>
-          <p className={valueClassDetailed}>{getValueDisplay(item)}</p>
+          <p className={valueClassDetailed} style={valueStyle}>
+            {getValueDisplay(item)}
+          </p>
         </div>
       );
     } else {
       content = (
         <div className="flex justify-between">
           <span className={labelClass}>{item.label}:</span>
-          <span className={valueClassSimple}>{getValueDisplay(item)}</span>
+          <span className={valueClassSimple} style={valueStyle}>
+            {getValueDisplay(item)}
+          </span>
         </div>
       );
     }
