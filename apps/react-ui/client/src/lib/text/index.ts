@@ -134,12 +134,12 @@ const TEXT = {
       title: "Publication Bias and p-hacking Analysis",
       metrics: {
         pValue: {
-          label: "p-value",
+          label: "Egger Test p-value",
           tooltip:
             "p-value from the instrumented FAT-PET regression that tests for publication bias / p-hacking after MAIVE adjustment.",
         },
         significance: {
-          label: "Significant at 5% level",
+          label: "Egger Test Significant at 5% level",
           tooltip:
             "Indicates whether publication bias is statistically significant at the 5% level according to the instrumented FAT test.",
         },
