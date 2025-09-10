@@ -116,7 +116,7 @@ const TEXT = {
         significance: {
           label: "Significant at 5% level",
           tooltip:
-            "Shows whether the null hypothesis of no effect is rejected at the 5% (two-sided) level using the robust standard error above.",
+            "Shows whether the null hypothesis of no bias is rejected at the 5% (two-sided) level using the robust standard error above.",
         },
         andersonRubinCI: {
           label: "Anderson-Rubin 95% CI",
