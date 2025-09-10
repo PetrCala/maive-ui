@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Tooltip from "@components/Tooltip";
@@ -43,6 +43,9 @@ export default function ResultsPage() {
 
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const parsedParameters: ModelParameters = JSON.parse(parameters ?? "{}");
+
+  // Memoize dataInfo to prevent expensive recalculations on every render
+  const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
 
   if (!results) {
     return (
@@ -92,8 +95,6 @@ export default function ResultsPage() {
         }
         uploadedData = storeData;
       }
-
-      const dataInfo = generateDataInfo(dataId);
 
       exportComprehensiveResults(
         uploadedData.data,
@@ -148,7 +149,7 @@ export default function ResultsPage() {
                   runDuration ? parseInt(runDuration, 10) : undefined
                 }
                 runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
-                dataInfo={generateDataInfo(dataId)}
+                dataInfo={dataInfo}
                 showTooltips={true}
               />
 
@@ -254,7 +255,7 @@ export default function ResultsPage() {
         onClose={() => setIsRunInfoModalOpen(false)}
         parameters={parsedParameters}
         results={parsedResults}
-        dataInfo={generateDataInfo(dataId)}
+        dataInfo={dataInfo}
         runDuration={runDuration ? parseInt(runDuration, 10) : undefined}
         runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
         onExportButtonClick={handleExportData}
