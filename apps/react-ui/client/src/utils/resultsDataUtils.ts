@@ -98,8 +98,8 @@ export const generateResultsData = (
       value: results.hausmanTest.statistic,
       show: true,
       highlightColor: results.hausmanTest.rejectsNull
-        ? "text-red-600"
-        : "text-green-600",
+        ? "text-green-600"
+        : "text-red-600",
       extraText: results.hausmanTest.rejectsNull
         ? " (Rejects Null)"
         : " (Fails to Reject Null)",
