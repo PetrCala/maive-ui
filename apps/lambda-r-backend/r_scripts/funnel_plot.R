@@ -77,28 +77,78 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
     rep(funnel_opts$effect_pch[2], length(effect)) # adjusted effect
   )
 
-  # vline_color <- "red"
-  # if (!is.null(intercept)) p <- p + ggplot2::geom_vline(ggplot2::aes(xintercept = intercept), color = vline_color, linewidth = 0.5)
-
   padding <- get_funnel_padding(effect)
 
-  # Create the funnel plot
-  p <- metafor::funnel(
-    x = x,
-    sei = y,
-    level = funnel_opts$ci_levels,
-    shade = funnel_opts$ci_shades,
-    digits = funnel_opts$digits,
-    pch = plot_pch,
-    col = funnel_opts$col,
-    yaxis = funnel_opts$yaxis,
+  # Calculate simple mean for reference line
+  simple_mean <- mean(effect)
+
+  # Create a grid for contour plotting
+  x_range <- c(padding$lower, padding$upper)
+  y_range <- c(0, max(se))
+
+  # Create grid for significance contours
+  x_grid <- seq(x_range[1], x_range[2], length.out = 100)
+  y_grid <- seq(y_range[1], y_range[2], length.out = 100)
+  grid <- expand.grid(x = x_grid, y = y_grid)
+
+  # Calculate t-statistics for significance contours (centered at x = 0)
+  t_stats <- abs(grid$x) / grid$y
+  t_stats[grid$y == 0] <- Inf # Handle division by zero
+
+  # Create significance levels
+  p_10 <- qt(0.95, df = Inf) # t-value for p < 0.10 (two-tailed)
+  p_05 <- qt(0.975, df = Inf) # t-value for p < 0.05 (two-tailed)
+  p_01 <- qt(0.995, df = Inf) # t-value for p < 0.01 (two-tailed)
+
+  # Create significance regions
+  sig_10 <- t_stats >= p_10 & t_stats < p_05
+  sig_05 <- t_stats >= p_05 & t_stats < p_01
+  sig_01 <- t_stats >= p_01
+
+  # Create the base plot
+  plot(x, y,
+    xlim = x_range,
+    ylim = y_range,
     xlab = funnel_opts$xlab,
     ylab = funnel_opts$ylab,
-    xlim = c(padding$lower, padding$upper), # shift plot to the left to avoid legend overlap
-    # atransf = exp, # x axis labels to exponential
-    # refline2 = 0.142, # To add a second reference line
-    refline = mean(effect),
-    legend = FALSE
+    pch = plot_pch,
+    col = funnel_opts$col,
+    cex = 1.2
+  )
+
+  # Add significance contours
+  # p < 0.10 region
+  contour_data_10 <- grid[sig_10, ]
+  if (nrow(contour_data_10) > 0) {
+    contour_data_10$z <- 1
+    contour_data_10 <- contour_data_10[order(contour_data_10$x, contour_data_10$y), ]
+    if (nrow(contour_data_10) > 0) {
+      contour(x_grid, y_grid,
+        matrix(ifelse(t_stats >= p_10 & t_stats < p_05, 1, 0), nrow = length(x_grid)),
+        levels = 0.5, add = TRUE, col = "gray90", lwd = 1
+      )
+    }
+  }
+
+  # p < 0.05 region
+  contour(x_grid, y_grid,
+    matrix(ifelse(t_stats >= p_05 & t_stats < p_01, 1, 0), nrow = length(x_grid)),
+    levels = 0.5, add = TRUE, col = "gray70", lwd = 1
+  )
+
+  # p < 0.01 region
+  contour(x_grid, y_grid,
+    matrix(ifelse(t_stats >= p_01, 1, 0), nrow = length(x_grid)),
+    levels = 0.5, add = TRUE, col = "gray50", lwd = 1
+  )
+
+  # Add vertical line for simple mean (dash-dot style)
+  abline(v = simple_mean, lty = 4, lwd = 2, col = "red")
+
+  # Add simple mean label at the top
+  text(simple_mean, max(se) * 0.95,
+    paste0("Simple mean = ", round(simple_mean, 2)),
+    pos = 3, cex = 0.9, col = "red"
   )
 
   ## Choose the exponent
@@ -127,21 +177,34 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   lines(ci.lo, se.grid, lty = 2, col = "black")
   lines(ci.hi, se.grid, lty = 2, col = "black")
 
+  # Add MAIVE estimate label at the top (SE = 0)
+  if (!is.null(intercept) && !is.null(intercept_se)) {
+    text(intercept, 0,
+      paste0("MAIVE = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")"),
+      pos = 3, cex = 0.9, col = "black"
+    )
+  }
+
+  # Round y-axis tick labels
+  y_ticks <- axTicks(2)
+  y_labels <- round(y_ticks)
+  axis(2, at = y_ticks, labels = y_labels)
+
   legend(
     funnel_opts$legend_position, # position
-    legend = funnel_opts$legend_texts,
-    pch = c(funnel_opts$effect_pch, funnel_opts$maive_pch),
-    col = c(rep(funnel_opts$text_color, 2), "black", "black"),
-    pt.bg = c(funnel_opts$effect_shades, funnel_opts$maive_pch),
-    pt.cex = funnel_opts$pt_cex, # make the legend symbols bigger
-    lty = c(rep(NA, 2), 1, 2), # solid line for MAIVE estimate, dashed for CI bounds
-    lwd = c(rep(NA, 2), 2, 1), # line width for MAIVE estimate and CI bounds
+    legend = c(funnel_opts$legend_texts[1:2], "Simple mean", "MAIVE fit", "95% CI bounds", "p < 0.10", "p < 0.05", "p < 0.01"),
+    pch = c(funnel_opts$effect_pch, NA, NA, NA, NA, NA, NA),
+    col = c(rep(funnel_opts$text_color, 2), "red", "black", "black", "gray90", "gray70", "gray50"),
+    pt.bg = c(funnel_opts$effect_shades, NA, NA, NA, NA, NA, NA),
+    pt.cex = c(rep(funnel_opts$pt_cex, 2), NA, NA, NA, NA, NA, NA),
+    lty = c(rep(NA, 2), 4, 1, 2, 1, 1, 1), # dash-dot for simple mean, solid for MAIVE, dashed for CI, solid for contours
+    lwd = c(rep(NA, 2), 2, 2, 1, 1, 1, 1), # line width
     bg = funnel_opts$legend_bg,
     bty = funnel_opts$legend_bty, # box type
     inset = funnel_opts$legend_inset
   )
 
-  return(p)
+  return(invisible(NULL))
 }
 
 #' Get the dimensions of the plot
