@@ -76,6 +76,18 @@ export const generateResultsData = (
       section: "effect",
     },
     {
+      label: TEXT.results.publicationBias.metrics.eggerCoef.label,
+      value: results.publicationBias.eggerCoef,
+      show: true,
+      section: "bias",
+    },
+    {
+      label: TEXT.results.publicationBias.metrics.eggerSE.label,
+      value: results.publicationBias.eggerSE,
+      show: true,
+      section: "bias",
+    },
+    {
       label: TEXT.results.publicationBias.metrics.pValue.label,
       value: results.publicationBias.pValue,
       show: true,

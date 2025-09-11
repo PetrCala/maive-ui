@@ -138,6 +138,16 @@ const TEXT = {
           tooltip:
             "p-value from the instrumented FAT-PET regression that tests for publication bias / p-hacking after MAIVE adjustment.",
         },
+        eggerCoef: {
+          label: "Egger Coefficient",
+          tooltip:
+            "Coefficient capturing funnel asymmetry in the instrumented Egger regression.",
+        },
+        eggerSE: {
+          label: "Standard Error of the Egger Coefficient",
+          tooltip:
+            "Robust standard error of the coefficient capturing funnel asymmetry in the instrumented Egger regression.",
+        },
         significance: {
           label: "Egger Test Significant at 5% level",
           tooltip:
