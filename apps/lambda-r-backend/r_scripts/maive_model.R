@@ -230,6 +230,8 @@ run_maive_model <- function(data, parameters) {
     andersonRubinCI = maive_res$AR_CI, # c(int, int) or "NA"
     publicationBias = list(
       pValue = pub_bias_p_value,
+      eggerCoef = maive_res$egger_coef,
+      eggerSE = maive_res$egger_se,
       isSignificant = pb_is_significant
     ),
     firstStageFTest = maive_res[["F-test"]],

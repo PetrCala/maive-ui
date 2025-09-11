@@ -40,6 +40,8 @@ type ModelResults = {
   andersonRubinCI: [number, number] | "NA";
   publicationBias: {
     pValue: number;
+    eggerCoef: number;
+    eggerSE: number;
     isSignificant: boolean;
   };
   firstStageFTest: number | "NA";
