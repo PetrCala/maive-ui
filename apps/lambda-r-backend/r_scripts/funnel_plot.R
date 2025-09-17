@@ -201,15 +201,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
     if (!is.finite(x_pos)) {
       return()
     }
-    if (is.finite(outer_z) && outer_z > 0) {
-      y_cap <- abs(x_pos) / outer_z
-      y_bottom <- min(y_cap, ylim[1])
-      if (y_bottom > ylim[2]) {
-        segments(x_pos, ylim[2], x_pos, y_bottom, lty = lty, lwd = lwd, col = col)
-      }
-    } else {
-      segments(x_pos, ylim[2], x_pos, ylim[1], lty = lty, lwd = lwd, col = col)
-    }
+    segments(x_pos, ylim[1], x_pos, ylim[2], lty = lty, lwd = lwd, col = col)
   }
 
   if (!is.null(ci_data) && nrow(ci_data) > 0) {
