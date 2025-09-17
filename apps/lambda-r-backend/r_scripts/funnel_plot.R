@@ -99,29 +99,42 @@ format_axis_labels <- function(ticks, digits = 3) {
 #' 
 #' @param effect [numeric] The effect size
 #' @param se [numeric] The standard error
-#' @param se_adjusted [numeric] The adjusted standard error
+#' @param se_adjusted [numeric] The adjusted standard error (optional)
 #' @param intercept [numeric] The intercept of the funnel plot. If NULL, no intercept is plotted.
 #' @param intercept_se [numeric] The standard error of the intercept. Must be provided only if intercept is provided.
 #' @param is_quaratic_fit [logical] Whether the fit is quadratic. If TRUE, the fit is quadratic. If FALSE, the fit is linear.
 #' @param slope_coef [numeric] The slope coefficient of the funnel plot. If NULL, no slope coefficient is plotted.
+#' @param instrument [numeric] Indicator for whether instrumenting is enabled (1) or disabled (0).
 #' @return A plot object
 #' @export
-get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept_se = NULL, slope_coef = NULL, is_quaratic_fit = FALSE) {
+get_funnel_plot <- function(
+    effect,
+    se,
+    se_adjusted = NULL,
+    intercept = NULL,
+    intercept_se = NULL,
+    slope_coef = NULL,
+    is_quaratic_fit = FALSE,
+    instrument = 1) {
   funnel_opts <- get_funnel_plot_opts()
 
   n_points <- length(effect)
-  x_values <- c(effect, effect)
-  y_values <- c(se, se_adjusted)
+  use_adjusted <-
+    instrument != 0 && !is.null(se_adjusted) && length(se_adjusted) == n_points &&
+      any(is.finite(se_adjusted))
 
-  plot_pch <- c(
-    rep(funnel_opts$effect_pch[1], n_points),
-    rep(funnel_opts$effect_pch[2], n_points)
-  )
+  x_values <- effect
+  y_values <- se
 
-  point_bg <- c(
-    rep(funnel_opts$effect_shades[1], n_points),
-    rep(funnel_opts$effect_shades[2], n_points)
-  )
+  plot_pch <- rep(funnel_opts$effect_pch[1], n_points)
+  point_bg <- rep(funnel_opts$effect_shades[1], n_points)
+
+  if (use_adjusted) {
+    x_values <- c(x_values, effect)
+    y_values <- c(y_values, se_adjusted)
+    plot_pch <- c(plot_pch, rep(funnel_opts$effect_pch[2], n_points))
+    point_bg <- c(point_bg, rep(funnel_opts$effect_shades[2], n_points))
+  }
 
   finite_points <- is.finite(x_values) & is.finite(y_values)
   x_values <- x_values[finite_points]
@@ -321,10 +334,12 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
       label_y_maive <- label_y_simple - y_span * 0.05
     }
 
+    intercept_label <- if (instrument == 0) "Regression fit" else "MAIVE"
+
     text(
       intercept,
       label_y_maive,
-      labels = paste0("MAIVE = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")"),
+      labels = paste0(intercept_label, " = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")"),
       cex = 0.9,
       adj = c(0.5, 0)
     )
@@ -340,52 +355,59 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
     contour_cols_ordered <- contour_cols[as.character(ci_data$level)]
   }
 
-  legend_labels <- c(
-    funnel_opts$legend_texts[1:2],
-    "Simple mean",
-    "MAIVE fit",
-    "95% CI bounds",
-    p_value_labels
-  )
+  fit_label <- if (instrument == 0) "Regression fit" else "MAIVE fit"
 
-  legend_pch <- c(
-    funnel_opts$effect_pch,
-    rep(NA, 3 + length(p_value_labels))
-  )
+  legend_labels <- c(funnel_opts$legend_texts[1])
+  legend_pch <- c(funnel_opts$effect_pch[1])
+  legend_col <- c(funnel_opts$text_color)
+  legend_pt_bg <- c(funnel_opts$effect_shades[1])
+  legend_pt_cex <- c(point_cex)
+  legend_lty <- c(NA)
+  legend_lwd <- c(NA)
 
-  legend_col <- c(
-    rep(funnel_opts$text_color, 2),
-    "black",
-    "black",
-    "black",
-    contour_cols_ordered
-  )
+  if (use_adjusted) {
+    legend_labels <- c(legend_labels, funnel_opts$legend_texts[2])
+    legend_pch <- c(legend_pch, funnel_opts$effect_pch[2])
+    legend_col <- c(legend_col, funnel_opts$text_color)
+    legend_pt_bg <- c(legend_pt_bg, funnel_opts$effect_shades[2])
+    legend_pt_cex <- c(legend_pt_cex, point_cex)
+    legend_lty <- c(legend_lty, NA)
+    legend_lwd <- c(legend_lwd, NA)
+  }
 
-  legend_pt_bg <- c(
-    funnel_opts$effect_shades,
-    rep(NA, 3 + length(p_value_labels))
-  )
+  legend_labels <- c(legend_labels, "Simple mean")
+  legend_pch <- c(legend_pch, NA)
+  legend_col <- c(legend_col, "black")
+  legend_pt_bg <- c(legend_pt_bg, NA)
+  legend_pt_cex <- c(legend_pt_cex, NA)
+  legend_lty <- c(legend_lty, 4)
+  legend_lwd <- c(legend_lwd, 2)
 
-  legend_pt_cex <- c(
-    rep(point_cex, 2),
-    rep(NA, 3 + length(p_value_labels))
-  )
+  legend_labels <- c(legend_labels, fit_label)
+  legend_pch <- c(legend_pch, NA)
+  legend_col <- c(legend_col, "black")
+  legend_pt_bg <- c(legend_pt_bg, NA)
+  legend_pt_cex <- c(legend_pt_cex, NA)
+  legend_lty <- c(legend_lty, 1)
+  legend_lwd <- c(legend_lwd, 2)
 
-  legend_lty <- c(
-    rep(NA, 2),
-    4,
-    1,
-    2,
-    rep(1, length(p_value_labels))
-  )
+  legend_labels <- c(legend_labels, funnel_opts$legend_texts[4])
+  legend_pch <- c(legend_pch, NA)
+  legend_col <- c(legend_col, "black")
+  legend_pt_bg <- c(legend_pt_bg, NA)
+  legend_pt_cex <- c(legend_pt_cex, NA)
+  legend_lty <- c(legend_lty, 2)
+  legend_lwd <- c(legend_lwd, 1)
 
-  legend_lwd <- c(
-    rep(NA, 2),
-    2,
-    2,
-    1,
-    rep(1, length(p_value_labels))
-  )
+  if (length(p_value_labels) > 0) {
+    legend_labels <- c(legend_labels, p_value_labels)
+    legend_pch <- c(legend_pch, rep(NA, length(p_value_labels)))
+    legend_col <- c(legend_col, contour_cols_ordered)
+    legend_pt_bg <- c(legend_pt_bg, rep(NA, length(p_value_labels)))
+    legend_pt_cex <- c(legend_pt_cex, rep(NA, length(p_value_labels)))
+    legend_lty <- c(legend_lty, rep(1, length(p_value_labels)))
+    legend_lwd <- c(legend_lwd, rep(1, length(p_value_labels)))
+  }
 
   legend(
     funnel_opts$legend_position,

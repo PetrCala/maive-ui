@@ -8,7 +8,7 @@ import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
 import ActionButton from "@components/Buttons/ActionButton";
 import { GoBackButton } from "@components/Buttons";
-import TEXT from "@src/lib/text";
+import { getResultsText } from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
   exportComprehensiveResults,
@@ -44,8 +44,16 @@ export default function ResultsPage() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const parsedParameters: ModelParameters = JSON.parse(parameters ?? "{}");
 
+  const shouldUseInstrumenting =
+    parsedParameters?.shouldUseInstrumenting ?? true;
+
   // Memoize dataInfo to prevent expensive recalculations on every render
   const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
+
+  const resultsText = useMemo(
+    () => getResultsText(shouldUseInstrumenting),
+    [shouldUseInstrumenting],
+  );
 
   if (!results) {
     return (
@@ -151,16 +159,17 @@ export default function ResultsPage() {
                 runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
                 dataInfo={dataInfo}
                 showTooltips={true}
+                resultsText={resultsText}
               />
 
               {/* Funnel Plot */}
               <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
                 <Tooltip
-                  content={TEXT.results.funnelPlot.tooltip}
+                  content={resultsText.funnelPlot.tooltip}
                   visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
                 >
                   <h2 className="text-xl font-semibold mb-4">
-                    {TEXT.results.funnelPlot.title}
+                    {resultsText.funnelPlot.title}
                   </h2>
                 </Tooltip>
                 <div className="flex justify-center">
@@ -259,6 +268,7 @@ export default function ResultsPage() {
         runDuration={runDuration ? parseInt(runDuration, 10) : undefined}
         runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
         onExportButtonClick={handleExportData}
+        resultsText={resultsText}
       />
     </>
   );

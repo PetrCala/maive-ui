@@ -10,6 +10,8 @@ import Tooltip from "@components/Tooltip";
 import TEXT from "@src/lib/text";
 import CONFIG from "@src/CONFIG";
 
+type ResultsTextContent = typeof TEXT.results;
+
 type ResultsSummaryProps = {
   results: ModelResults;
   parameters?: ModelParameters;
@@ -19,6 +21,7 @@ type ResultsSummaryProps = {
   runTimestamp?: Date;
   dataInfo?: DataInfo;
   showTooltips?: boolean;
+  resultsText?: ResultsTextContent;
 };
 
 export default function ResultsSummary({
@@ -30,6 +33,7 @@ export default function ResultsSummary({
   runTimestamp,
   dataInfo,
   showTooltips = false,
+  resultsText = TEXT.results,
 }: ResultsSummaryProps) {
   const getValueDisplay = (item: ResultItem): string => {
     const baseValue = item.value.toString();
@@ -63,12 +67,9 @@ export default function ResultsSummary({
       label: string;
       tooltip: string;
     };
-    for (const sectionKey of Object.keys(TEXT.results)) {
+    for (const sectionKey of Object.keys(resultsText)) {
       const section = (
-        TEXT.results as unknown as Record<
-          string,
-          Record<string, TooltipContent>
-        >
+        resultsText as unknown as Record<string, Record<string, TooltipContent>>
       )[sectionKey];
       if (section?.metrics) {
         for (const metricKey of Object.keys(section.metrics)) {
@@ -87,9 +88,9 @@ export default function ResultsSummary({
 
   const getSectionTitle = (section: string): string => {
     const sectionTitles: Record<string, string> = {
-      effect: TEXT.results.effectEstimate.title,
-      bias: TEXT.results.publicationBias.title,
-      tests: TEXT.results.diagnosticTests.title,
+      effect: resultsText.effectEstimate.title,
+      bias: resultsText.publicationBias.title,
+      tests: resultsText.diagnosticTests.title,
     };
     return sectionTitles[section] || "";
   };
@@ -101,6 +102,7 @@ export default function ResultsSummary({
     runDuration,
     runTimestamp,
     dataInfo,
+    resultsText,
   );
 
   const allResults = [...resultsData.coreResults];

@@ -1,4 +1,4 @@
-import TEXT from "@src/lib/text";
+import TEXT, { getResultsText } from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
 import type { DataInfo } from "@src/types/data";
 import {
@@ -249,6 +249,10 @@ export const exportComprehensiveResults = (
 ): void => {
   const workbook = XLSX.utils.book_new();
 
+  const resultsText = getResultsText(
+    parameters?.shouldUseInstrumenting ?? true,
+  );
+
   // Sheet 1: Results Summary
   const resultsSummary = convertToExportFormat(
     generateResultsData(
@@ -257,6 +261,7 @@ export const exportComprehensiveResults = (
       runDuration,
       runTimestamp,
       dataInfo,
+      resultsText,
     ),
   );
 
