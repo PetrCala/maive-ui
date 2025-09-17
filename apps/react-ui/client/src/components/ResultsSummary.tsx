@@ -35,6 +35,36 @@ export default function ResultsSummary({
   showTooltips = false,
   resultsText = TEXT.results,
 }: ResultsSummaryProps) {
+  const formatIntervalString = (value: string): string => {
+    const trimmed = value.trim();
+
+    if (!trimmed.startsWith("[") || !trimmed.endsWith("]")) {
+      return value;
+    }
+
+    const inner = trimmed.slice(1, -1);
+
+    if (inner.includes("[") || inner.includes("]")) {
+      return value;
+    }
+
+    const parts = inner.split(",").map((part) => part.trim());
+
+    if (parts.length === 0 || parts.some((part) => part.length === 0)) {
+      return value;
+    }
+
+    const formattedParts = parts.map((part) => {
+      const numeric = Number(part);
+      if (Number.isFinite(numeric)) {
+        return numeric.toFixed(3);
+      }
+      return part;
+    });
+
+    return `[${formattedParts.join(", ")}]`;
+  };
+
   const getValueDisplay = (item: ResultItem): string => {
     let baseValue: string;
 
@@ -43,7 +73,7 @@ export default function ResultsSummary({
         ? item.value.toFixed(3)
         : item.value.toString();
     } else {
-      baseValue = item.value.toString();
+      baseValue = formatIntervalString(item.value.toString());
     }
 
     return item.extraText ? `${baseValue}${item.extraText}` : baseValue;
