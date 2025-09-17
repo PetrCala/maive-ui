@@ -347,11 +347,27 @@ get_funnel_plot <- function(
   par(xpd = par_xpd_old)
 
   p_value_labels <- character(0)
-  contour_cols_ordered <- character(0)
+  p_legend_fill <- character(0)
   if (!is.null(ci_data) && nrow(ci_data) > 0) {
-    p_values <- 1 - (ci_data$level / 100)
-    p_value_labels <- sprintf("p < %.2f", p_values)
-    contour_cols_ordered <- contour_cols[as.character(ci_data$level)]
+    level_names <- as.character(ci_data$level)
+
+    if ("90" %in% level_names) {
+      p_value_labels <- c(p_value_labels, "p ≥ 0.10")
+      p_legend_fill <- c(p_legend_fill, shade_cols["90"])
+    }
+
+    if ("95" %in% level_names) {
+      p_value_labels <- c(p_value_labels, "0.10 > p ≥ 0.05")
+      p_legend_fill <- c(p_legend_fill, shade_cols["95"])
+    }
+
+    if ("99" %in% level_names) {
+      p_value_labels <- c(p_value_labels, "0.05 > p ≥ 0.01")
+      p_legend_fill <- c(p_legend_fill, shade_cols["99"])
+    }
+
+    p_value_labels <- c(p_value_labels, "p < 0.01")
+    p_legend_fill <- c(p_legend_fill, outer_fill_col)
   }
 
   fit_label <- if (instrument == 0) "Regression fit" else "MAIVE fit"
@@ -398,16 +414,6 @@ get_funnel_plot <- function(
   legend_lty <- c(legend_lty, 2)
   legend_lwd <- c(legend_lwd, 1)
 
-  if (length(p_value_labels) > 0) {
-    legend_labels <- c(legend_labels, p_value_labels)
-    legend_pch <- c(legend_pch, rep(NA, length(p_value_labels)))
-    legend_col <- c(legend_col, contour_cols_ordered)
-    legend_pt_bg <- c(legend_pt_bg, rep(NA, length(p_value_labels)))
-    legend_pt_cex <- c(legend_pt_cex, rep(NA, length(p_value_labels)))
-    legend_lty <- c(legend_lty, rep(1, length(p_value_labels)))
-    legend_lwd <- c(legend_lwd, rep(1, length(p_value_labels)))
-  }
-
   legend(
     funnel_opts$legend_position,
     legend = legend_labels,
@@ -421,6 +427,19 @@ get_funnel_plot <- function(
     bty = funnel_opts$legend_bty,
     inset = funnel_opts$legend_inset
   )
+
+  if (length(p_value_labels) > 0) {
+    legend(
+      "topright",
+      legend = p_value_labels,
+      fill = p_legend_fill,
+      border = "gray40",
+      bg = funnel_opts$legend_bg,
+      bty = funnel_opts$legend_bty,
+      inset = funnel_opts$legend_inset,
+      title = "p-value"
+    )
+  }
 
   invisible(NULL)
 }
