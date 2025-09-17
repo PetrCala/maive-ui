@@ -1,3 +1,5 @@
+# nolint start: undesirable_function_linter.
+
 PLOT_RES <- 120 # Changes the resolution of the plot in pixels per inch; also changes the plot size
 
 #' Get the default options for the funnel plot
@@ -153,7 +155,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   shade_cols <- rep(funnel_opts$ci_shades, length.out = ifelse(is.null(ci_data), 0, nrow(ci_data)))
   contour_cols <- rep(c("gray90", "gray70", "gray50"), length.out = ifelse(is.null(ci_data), 0, nrow(ci_data)))
   outer_fill_col <- "gray90"
-  outer_z <- NA_real_
+  outer_z <- NA_real_ # nolint: object_usage_linter.
 
   if (!is.null(ci_data) && nrow(ci_data) > 0) {
     names(shade_cols) <- ci_data$level
@@ -417,3 +419,6 @@ get_funnel_plot_data <- function(..., res = PLOT_RES) {
     height_px = height_px
   )
 }
+
+
+# nolint end: undesirable_function_linter.
