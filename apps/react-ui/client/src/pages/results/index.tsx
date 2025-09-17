@@ -181,7 +181,7 @@ export default function ResultsPage() {
                     className="max-w-full h-auto"
                   />
                 </div>
-                <div className="absolute flex bottom-4 right-4 sm:bottom-6 sm:right-6">
+                <div className="absolute flex bottom-6 right-6 sm:bottom-8 sm:right-8">
                   <DownloadButton
                     onClick={handleDownloadFunnelPlot}
                     title="Download funnel plot as JPG"

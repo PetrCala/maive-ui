@@ -47,13 +47,13 @@ export default function Home() {
               Powered by the MAIVE estimator (<em>Nature Communications</em>).
             </p>
 
-            <div className="flex flex-col gap-4 justify-center items-stretch mb-8 w-full max-w-md sm:max-w-lg mx-auto">
+            <div className="flex flex-col gap-4 justify-center items-center mb-8 w-full max-w-md sm:max-w-lg mx-auto">
               <ActionButton
                 href="/upload"
                 onClick={() => setIsLoadingUploadPage(true)}
                 variant="primary"
                 size="lg"
-                className={`w-full sm:w-auto sm:self-center px-8 sm:px-12 lg:px-20 ${
+                className={`w-full sm:w-auto self-center px-8 sm:px-12 lg:px-20 ${
                   isLoadingUploadPage ? "opacity-75" : "opacity-100"
                 }`}
               >
@@ -64,7 +64,7 @@ export default function Home() {
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex w-full items-center justify-center gap-2 sm:w-3/4"
+                className="inline-flex w-full sm:w-2/3 self-center items-center justify-center gap-2"
               >
                 <FaInfoCircle className="icon-button" />
                 {TEXT.home.whatIsMaive}
@@ -74,7 +74,7 @@ export default function Home() {
                 isLoading={isLoadingDemo}
                 setIsLoading={setIsLoadingDemo}
                 size="md"
-                className="w-full sm:w-3/4"
+                className="w-full sm:w-2/3 self-center"
               />
             </div>
           </div>
