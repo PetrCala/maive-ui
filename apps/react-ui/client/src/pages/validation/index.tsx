@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,7 @@ import { GoBackButton } from "@src/components/Buttons";
 import RowInfoComponent from "@src/components/RowInfoComponent";
 import CONFIG from "@src/CONFIG";
 import type { AlertType, DataArray } from "@src/types";
+import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 
 type ValidationMessage = {
   type: AlertType;
@@ -38,6 +39,16 @@ export default function ValidationPage() {
   const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const router = useRouter();
   const { showAlert } = useGlobalAlert();
+
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEnterKeyAction(() => {
+    const button = continueButtonRef.current;
+
+    if (button && !button.disabled) {
+      button.click();
+    }
+  });
 
   const validateData = (
     previewData: string[][],
@@ -472,6 +483,7 @@ export default function ValidationPage() {
                 </ActionButton>
               )}
               <ActionButton
+                ref={continueButtonRef}
                 onClick={handleContinue}
                 disabled={!validationResult.isValid}
                 variant="primary"
