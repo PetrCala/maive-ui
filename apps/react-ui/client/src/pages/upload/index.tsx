@@ -140,10 +140,10 @@ export default function UploadPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Upload Data`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="max-w-4xl w-full">
+        <div className="max-w-4xl w-full px-2 sm:px-0">
           <GoBackButton href="/" text="Back to Home" />
-          <div className="card p-8">
-            <h1 className="text-3xl font-bold mb-6 text-primary">
+          <div className="card p-6 sm:p-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-primary">
               {TEXT.upload.title}
             </h1>
             <div className="mb-6">
@@ -175,14 +175,14 @@ export default function UploadPage() {
                 <label className="block text-sm font-medium text-secondary">
                   Upload your data file
                 </label>
-                <div className="mt-1 flex gap-3">
+                <div className="mt-1 flex flex-col gap-4 sm:flex-row">
                   <div className="flex-grow">
                     <div
                       {...getRootProps()}
-                      className="flex flex-1 flex-row items-center border-2 border-dashed border-focus rounded-lg p-6 min-h-[60px] transition-colors duration-200 surface-secondary hover:border-primary-600 focus:border-primary-600 cursor-pointer select-none"
+                      className="flex w-full flex-col gap-4 sm:flex-row sm:items-center border-2 border-dashed border-focus rounded-lg p-6 min-h-[60px] transition-colors duration-200 surface-secondary hover:border-primary-600 focus:border-primary-600 cursor-pointer select-none"
                     >
                       <input {...getInputProps()} />
-                      <div className="flex-1 flex flex-col items-start justify-center">
+                      <div className="flex-1 flex flex-col items-start justify-center text-center sm:text-left">
                         <p className="text-primary text-base font-medium">
                           {isDragActive
                             ? "Drop the file here..."
@@ -196,27 +196,27 @@ export default function UploadPage() {
                         onClick={open}
                         variant="secondary"
                         size="md"
-                        className="ml-8 rounded-full shadow-md"
+                        className="w-full sm:w-auto sm:ml-8 sm:self-center rounded-full shadow-md"
                         style={{ minWidth: 120 }}
                       >
                         Choose File
                       </ActionButton>
                     </div>
                     {selectedFile && (
-                      <div className="mt-2 w-full border-2 border-secondary rounded-xl px-6 py-4 text-base flex items-center shadow-lg font-semibold surface-secondary">
+                      <div className="mt-2 w-full border-2 border-secondary rounded-xl px-6 py-4 text-base flex flex-col gap-3 sm:flex-row sm:items-center shadow-lg font-semibold surface-secondary">
                         {/* Icon */}
-                        <span className="mr-4 text-2xl flex-shrink-0">
+                        <span className="text-2xl flex-shrink-0 sm:mr-4">
                           {getFileIconComponent(selectedFile.name)}
                         </span>
                         {/* Filename */}
                         <span
-                          className="text-primary font-medium truncate max-w-xs"
+                          className="text-primary font-medium truncate max-w-full sm:max-w-xs"
                           title={selectedFile.name}
                         >
                           {selectedFile.name}
                         </span>
                         {/* File size */}
-                        <span className="ml-auto text-muted font-normal text-sm">
+                        <span className="text-muted font-normal text-sm sm:ml-auto sm:self-auto self-start">
                           {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
                         </span>
                       </div>
@@ -226,9 +226,11 @@ export default function UploadPage() {
               </div>
 
               {!selectedFile && CONFIG.SHOULD_SUGGEST_MOCK_DATA_USE && (
-                <div className="flex justify-end">
-                  <div className="flex items-center gap-1 text-sm text-muted">
-                    <span>Don&apos;t have your data ready yet?</span>
+                <div className="flex justify-center sm:justify-end">
+                  <div className="flex flex-col items-center gap-1 text-sm text-muted sm:flex-row sm:gap-2 sm:text-left">
+                    <span className="text-center sm:text-left">
+                      Don&apos;t have your data ready yet?
+                    </span>
                     <button
                       type="button"
                       onClick={() => {

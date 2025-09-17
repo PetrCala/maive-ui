@@ -467,18 +467,28 @@ body {
 	}
 
 	/* Common page layouts */
-	.home-page-container {
-		@apply page-container-light dark:page-container-dark;
-		padding: var(--spacing-2xl) var(--spacing-lg);
-		justify-content: center; /* Override the default flex-start */
-	}
+        .home-page-container {
+                @apply page-container-light dark:page-container-dark;
+                padding: var(--spacing-xl) var(--spacing-md);
+                justify-content: center; /* Override the default flex-start */
+        }
 
-	.content-page-container {
-		@apply page-container-base;
-		flex: 1;
-		padding: var(--spacing-2xl);
-		background-image: linear-gradient(to bottom, #fff, #f9fafb, #f3f4f6);
-	}
+        .content-page-container {
+                @apply page-container-base;
+                flex: 1;
+                padding: var(--spacing-xl) var(--spacing-md);
+                background-image: linear-gradient(to bottom, #fff, #f9fafb, #f3f4f6);
+        }
+
+        @media (min-width: 768px) {
+                .home-page-container {
+                        padding: var(--spacing-2xl) var(--spacing-lg);
+                }
+
+                .content-page-container {
+                        padding: var(--spacing-2xl);
+                }
+        }
 
 	.dark .content-page-container {
 		background-image: linear-gradient(to bottom, #111827, #1f2937, #111827);

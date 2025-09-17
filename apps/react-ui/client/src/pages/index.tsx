@@ -36,24 +36,26 @@ export default function Home() {
             />
           </div>
         ) : (
-          <div className="max-w-4xl text-center animate-fade-in">
-            <h1 className="text-5xl font-bold mb-6 text-primary tracking-tight">
+          <div className="max-w-4xl text-center animate-fade-in px-3 sm:px-0">
+            <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-primary tracking-tight">
               {TEXT.home.title}
             </h1>
-            <p className="text-xl mb-12 text-secondary leading-relaxed">
+            <p className="text-lg sm:text-xl mb-8 sm:mb-12 text-secondary leading-relaxed">
               Adjust your data for publication bias, p-hacking, and spurious
               precision.
               <br />
               Powered by the MAIVE estimator (<em>Nature Communications</em>).
             </p>
 
-            <div className="flex flex-col gap-4 justify-center items-center mb-8 w-fit mx-auto">
+            <div className="flex flex-col gap-4 justify-center items-stretch mb-8 w-full max-w-md sm:max-w-lg mx-auto">
               <ActionButton
                 href="/upload"
                 onClick={() => setIsLoadingUploadPage(true)}
                 variant="primary"
                 size="lg"
-                className={`w-full px-20 opacity-${isLoadingUploadPage ? "75" : "100"}`}
+                className={`w-full sm:w-auto sm:self-center px-8 sm:px-12 lg:px-20 ${
+                  isLoadingUploadPage ? "opacity-75" : "opacity-100"
+                }`}
               >
                 {TEXT.home.uploadYourData}
               </ActionButton>
@@ -62,7 +64,7 @@ export default function Home() {
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex gap-2 w-2/3"
+                className="inline-flex w-full items-center justify-center gap-2 sm:w-3/4"
               >
                 <FaInfoCircle className="icon-button" />
                 {TEXT.home.whatIsMaive}
@@ -72,7 +74,7 @@ export default function Home() {
                 isLoading={isLoadingDemo}
                 setIsLoading={setIsLoadingDemo}
                 size="md"
-                className="w-2/3"
+                className="w-full sm:w-3/4"
               />
             </div>
           </div>
