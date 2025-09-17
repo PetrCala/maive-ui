@@ -37,10 +37,13 @@ export function useEnterKeyAction(
       callback();
     };
 
-    eventTarget.addEventListener("keydown", handleKeyDown);
+    eventTarget.addEventListener("keydown", handleKeyDown as EventListener);
 
     return () => {
-      eventTarget.removeEventListener("keydown", handleKeyDown);
+      eventTarget.removeEventListener(
+        "keydown",
+        handleKeyDown as EventListener,
+      );
     };
   }, [callback, enabled, preventDefault, target]);
 }
