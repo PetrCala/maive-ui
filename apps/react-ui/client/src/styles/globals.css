@@ -433,6 +433,7 @@ body {
 		box-shadow:
 			0 20px 25px -5px var(--color-shadow-heavy),
 			0 10px 10px -5px var(--color-shadow-medium);
+		overscroll-behavior: contain;
 	}
 
 	/* Page container abstractions */
