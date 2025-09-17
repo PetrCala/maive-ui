@@ -88,6 +88,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   y_values <- y_values[finite_points]
   plot_pch <- plot_pch[finite_points]
   point_bg <- point_bg[finite_points]
+  point_cex <- max(0.1, funnel_opts$pt_cex * 0.6)
 
   simple_mean <- mean(effect, na.rm = TRUE)
 
@@ -103,9 +104,17 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   ylim <- c(max_se + se_pad, 0)
 
   ci_levels <- funnel_opts$ci_levels
-  alpha_levels <- 1 - (ci_levels / 100)
-  alpha_levels <- alpha_levels[is.finite(alpha_levels) & alpha_levels > 0]
-  max_z <- if (length(alpha_levels) > 0) max(qnorm(1 - alpha_levels / 2)) else qnorm(0.975)
+  ci_alpha <- 1 - (ci_levels / 100)
+  valid_idx <- which(is.finite(ci_alpha) & ci_alpha > 0)
+  ci_data <- NULL
+  if (length(valid_idx) > 0) {
+    ci_data <- data.frame(
+      level = ci_levels[valid_idx],
+      alpha = ci_alpha[valid_idx],
+      z = qnorm(1 - ci_alpha[valid_idx] / 2)
+    )
+  }
+  max_z <- if (!is.null(ci_data) && nrow(ci_data) > 0) max(ci_data$z) else qnorm(0.975)
   ci_extent <- max_z * (max_se + se_pad)
 
   xlim <- c(padding$lower, padding$upper)
@@ -127,23 +136,33 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
     yaxs = "i"
   )
 
-  se_grid <- seq(from = ylim[1], to = ylim[2], length.out = 400)
+  se_grid <- seq(0, max_se + se_pad, length.out = 400)
 
-  shade_cols <- rep(funnel_opts$ci_shades, length.out = length(ci_levels))
-  contour_cols <- rep(c("gray90", "gray70", "gray50"), length.out = length(ci_levels))
-  names(shade_cols) <- ci_levels
-  names(contour_cols) <- ci_levels
+  shade_cols <- rep(funnel_opts$ci_shades, length.out = ifelse(is.null(ci_data), 0, nrow(ci_data)))
+  contour_cols <- rep(c("gray90", "gray70", "gray50"), length.out = ifelse(is.null(ci_data), 0, nrow(ci_data)))
+  outer_fill_col <- "gray90"
+  outer_z <- NA_real_
 
-  if (length(ci_levels) > 0) {
-    alpha_full <- 1 - (ci_levels / 100)
-    draw_order <- order(alpha_full)
+  if (!is.null(ci_data) && nrow(ci_data) > 0) {
+    names(shade_cols) <- ci_data$level
+    names(contour_cols) <- ci_data$level
+
+    outer_idx <- which.max(ci_data$z)
+    outer_z <- ci_data$z[outer_idx]
+
+    p010_idx <- if (length(contour_cols) > 0) match(90, ci_data$level) else NA_integer_
+    if (!is.na(p010_idx)) {
+      outer_fill_col <- contour_cols[as.character(ci_data$level[p010_idx])]
+    } else if (length(contour_cols) > 0) {
+      outer_fill_col <- contour_cols[outer_idx]
+    }
+
+    rect(xlim[1], ylim[2], xlim[2], ylim[1], col = outer_fill_col, border = NA)
+
+    draw_order <- order(ci_data$z, decreasing = TRUE)
     for (idx in draw_order) {
-      level_value <- ci_levels[idx]
-      alpha <- alpha_full[idx]
-      if (!is.finite(alpha) || alpha <= 0) {
-        next
-      }
-      z_val <- qnorm(1 - alpha / 2)
+      level_value <- ci_data$level[idx]
+      z_val <- ci_data$z[idx]
       left <- -z_val * se_grid
       right <- z_val * se_grid
       polygon(
@@ -155,10 +174,8 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
       lines(left, se_grid, col = contour_cols[as.character(level_value)], lwd = 1)
       lines(right, se_grid, col = contour_cols[as.character(level_value)], lwd = 1)
     }
-  }
-
-  if (length(ci_levels) > 0) {
-    abline(v = 0, lty = 3, col = "black")
+  } else {
+    rect(xlim[1], ylim[2], xlim[2], ylim[1], col = outer_fill_col, border = NA)
   }
 
   y_ticks <- pretty(c(0, max_se), n = 5)
@@ -168,7 +185,28 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
     abline(h = y_ticks, col = grid_col, lwd = 0.5)
   }
 
-  abline(v = simple_mean, lty = 4, lwd = 2, col = "black")
+  draw_vertical_segment <- function(x_pos, lty, lwd, col) {
+    if (!is.finite(x_pos)) {
+      return()
+    }
+    if (is.finite(outer_z) && outer_z > 0) {
+      y_cap <- abs(x_pos) / outer_z
+      y_bottom <- min(y_cap, ylim[1])
+      if (y_bottom > ylim[2]) {
+        segments(x_pos, ylim[2], x_pos, y_bottom, lty = lty, lwd = lwd, col = col)
+      }
+    } else {
+      segments(x_pos, ylim[2], x_pos, ylim[1], lty = lty, lwd = lwd, col = col)
+    }
+  }
+
+  if (!is.null(ci_data) && nrow(ci_data) > 0) {
+    draw_vertical_segment(0, lty = 3, lwd = 1, col = "black")
+  } else {
+    abline(v = 0, lty = 3, col = "black")
+  }
+
+  draw_vertical_segment(simple_mean, lty = 4, lwd = 2, col = "black")
 
   if (!is.null(intercept) && !is.null(intercept_se) && !is.null(slope_coef)) {
     p_exp <- if (is_quaratic_fit) 2 else 1
@@ -197,14 +235,20 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
       pch = plot_pch,
       col = funnel_opts$col,
       bg = point_bg,
-      cex = funnel_opts$pt_cex
+      cex = point_cex
     )
   }
 
   x_ticks <- pretty(xlim, n = 6)
+  x_ticks_int <- sort(unique(round(x_ticks)))
+  x_ticks_int <- x_ticks_int[x_ticks_int >= floor(xlim[1]) & x_ticks_int <= ceiling(xlim[2])]
+  if (length(x_ticks_int) < 2) {
+    x_ticks_int <- round(seq(from = xlim[1], to = xlim[2], length.out = 5))
+    x_ticks_int <- sort(unique(x_ticks_int))
+  }
   axis(1,
-    at = x_ticks,
-    labels = formatC(x_ticks, format = "f", digits = funnel_opts$digits)
+    at = x_ticks_int,
+    labels = sprintf("%d", x_ticks_int)
   )
 
   if (length(y_ticks) > 0) {
@@ -258,10 +302,10 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
 
   p_value_labels <- character(0)
   contour_cols_ordered <- character(0)
-  if (length(ci_levels) > 0) {
-    p_values <- 1 - (ci_levels / 100)
+  if (!is.null(ci_data) && nrow(ci_data) > 0) {
+    p_values <- 1 - (ci_data$level / 100)
     p_value_labels <- sprintf("p < %.2f", p_values)
-    contour_cols_ordered <- contour_cols[as.character(ci_levels)]
+    contour_cols_ordered <- contour_cols[as.character(ci_data$level)]
   }
 
   legend_labels <- c(
@@ -291,7 +335,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   )
 
   legend_pt_cex <- c(
-    rep(funnel_opts$pt_cex, 2),
+    rep(point_cex, 2),
     rep(NA, 3 + length(p_value_labels))
   )
 
