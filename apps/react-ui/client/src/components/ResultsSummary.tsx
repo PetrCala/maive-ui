@@ -36,7 +36,16 @@ export default function ResultsSummary({
   resultsText = TEXT.results,
 }: ResultsSummaryProps) {
   const getValueDisplay = (item: ResultItem): string => {
-    const baseValue = item.value.toString();
+    let baseValue: string;
+
+    if (typeof item.value === "number") {
+      baseValue = Number.isFinite(item.value)
+        ? item.value.toFixed(3)
+        : item.value.toString();
+    } else {
+      baseValue = item.value.toString();
+    }
+
     return item.extraText ? `${baseValue}${item.extraText}` : baseValue;
   };
 
