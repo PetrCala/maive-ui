@@ -213,6 +213,20 @@ export default function ModelPage() {
     );
   }, [parameters.standardErrorTreatment, uploadedData]);
 
+  useEffect(() => {
+    if (
+      parameters.shouldUseInstrumenting ||
+      parameters.weight !== CONST.WEIGHT_OPTIONS.ADJUSTED_WEIGHTS.VALUE
+    ) {
+      return;
+    }
+
+    setParameters((prev) => ({
+      ...prev,
+      weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
+    }));
+  }, [parameters.shouldUseInstrumenting, parameters.weight]);
+
   return (
     <>
       <Head>
