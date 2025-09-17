@@ -102,7 +102,7 @@ format_axis_labels <- function(ticks, digits = 3) {
 #' @param se_adjusted [numeric] The adjusted standard error (optional)
 #' @param intercept [numeric] The intercept of the funnel plot. If NULL, no intercept is plotted.
 #' @param intercept_se [numeric] The standard error of the intercept. Must be provided only if intercept is provided.
-#' @param is_quaratic_fit [logical] Whether the fit is quadratic. If TRUE, the fit is quadratic. If FALSE, the fit is linear.
+#' @param is_quadratic_fit [logical] Whether the fit is quadratic. If TRUE, the fit is quadratic. If FALSE, the fit is linear.
 #' @param slope_coef [numeric] The slope coefficient of the funnel plot. If NULL, no slope coefficient is plotted.
 #' @param instrument [numeric] Indicator for whether instrumenting is enabled (1) or disabled (0).
 #' @return A plot object
@@ -114,7 +114,7 @@ get_funnel_plot <- function(
     intercept = NULL,
     intercept_se = NULL,
     slope_coef = NULL,
-    is_quaratic_fit = FALSE,
+    is_quadratic_fit = FALSE,
     instrument = 1) {
   funnel_opts <- get_funnel_plot_opts()
 
@@ -253,7 +253,7 @@ get_funnel_plot <- function(
   draw_vertical_segment(simple_mean, lty = 4, lwd = 2, col = "black")
 
   if (!is.null(intercept) && !is.null(intercept_se) && !is.null(slope_coef)) {
-    p_exp <- if (is_quaratic_fit) 2 else 1
+    p_exp <- if (is_quadratic_fit) 2 else 1
     se_curve_grid <- seq(0, max_se + se_pad, length.out = 200)
     x_pred <- intercept + slope_coef * se_curve_grid^p_exp
     lines(x_pred, se_curve_grid, lwd = 2, col = "black")
@@ -346,27 +346,28 @@ get_funnel_plot <- function(
 
   par(xpd = par_xpd_old)
 
-  p_value_labels <- character(0)
+  # Use plotmath expressions so inequality symbols render even when Unicode glyphs are missing.
+  p_value_labels <- expression()
   p_legend_fill <- character(0)
   if (!is.null(ci_data) && nrow(ci_data) > 0) {
     level_names <- as.character(ci_data$level)
 
     if ("90" %in% level_names) {
-      p_value_labels <- c(p_value_labels, "p > 0.10")
+      p_value_labels <- c(p_value_labels, expression(p > 0.10))
       p_legend_fill <- c(p_legend_fill, shade_cols["90"])
     }
 
     if ("95" %in% level_names) {
-      p_value_labels <- c(p_value_labels, "0.10 ≥ p > 0.05")
+      p_value_labels <- c(p_value_labels, expression(0.10 >= p ~ ">" ~ 0.05))
       p_legend_fill <- c(p_legend_fill, shade_cols["95"])
     }
 
     if ("99" %in% level_names) {
-      p_value_labels <- c(p_value_labels, "0.05 ≥ p > 0.01")
+      p_value_labels <- c(p_value_labels, expression(0.05 >= p ~ ">" ~ 0.01))
       p_legend_fill <- c(p_legend_fill, shade_cols["99"])
     }
 
-    p_value_labels <- c(p_value_labels, "p ≤ 0.01")
+    p_value_labels <- c(p_value_labels, expression(p <= 0.01))
     p_legend_fill <- c(p_legend_fill, outer_fill_col)
   }
 
