@@ -102,8 +102,13 @@ format_axis_labels <- function(ticks, digits = 3) {
 #' @param se_adjusted [numeric] The adjusted standard error (optional)
 #' @param intercept [numeric] The intercept of the funnel plot. If NULL, no intercept is plotted.
 #' @param intercept_se [numeric] The standard error of the intercept. Must be provided only if intercept is provided.
-#' @param is_quadratic_fit [logical] Whether the fit is quadratic. If TRUE, the fit is quadratic. If FALSE, the fit is linear.
-#' @param slope_coef [numeric] The slope coefficient of the funnel plot. If NULL, no slope coefficient is plotted.
+#' @param slope_coef [numeric|list] Legacy slope coefficient of the funnel plot. If NULL, slope construction
+#'        relies on the structured `slope` argument. Numerical values are treated as linear (or quadratic when
+#'        `is_quadratic_fit` is TRUE).
+#' @param is_quadratic_fit [logical|list] Legacy flag (or metadata list) describing whether the fit is quadratic.
+#' @param slope [list] Structured slope metadata containing `type`, `coefficient`, optional `detail`, and
+#'        an optional `quadratic` flag. This mirrors the MAIVE package output introduced in commit
+#'        f6c76aa0643910f2ee2f13d8fc49a2d398c08f3d.
 #' @param instrument [numeric] Indicator for whether instrumenting is enabled (1) or disabled (0).
 #' @return A plot object
 #' @export
@@ -114,9 +119,68 @@ get_funnel_plot <- function(
     intercept = NULL,
     intercept_se = NULL,
     slope_coef = NULL,
-    is_quadratic_fit = FALSE,
-    instrument = 1) {
+    is_quadratic_fit = NULL,
+    instrument = 1,
+    slope = NULL) {
   funnel_opts <- get_funnel_plot_opts()
+
+  first_non_null <- function(...) {
+    vals <- list(...)
+    for (val in vals) {
+      if (!is.null(val)) {
+        return(val)
+      }
+    }
+    NULL
+  }
+
+  normalize_slope <- function(primary, fallback_coef, fallback_summary) {
+    metadata <- list(
+      type = NULL,
+      quadratic = FALSE,
+      coefficient = fallback_coef,
+      detail = NULL
+    )
+
+    if (is.list(primary)) {
+      metadata$type <- first_non_null(primary$type, primary$slope_type)
+      if (!is.null(primary$quadratic)) {
+        metadata$quadratic <- isTRUE(primary$quadratic)
+      }
+      if (!is.null(primary$coefficient)) {
+        metadata$coefficient <- primary$coefficient
+      }
+      metadata$detail <- first_non_null(primary$detail, primary$slope_detail)
+    } else if (is.logical(primary) && length(primary) == 1) {
+      metadata$quadratic <- isTRUE(primary)
+    }
+
+    if (is.list(fallback_summary)) {
+      if (!is.null(fallback_summary$quadratic)) {
+        metadata$quadratic <- isTRUE(fallback_summary$quadratic)
+      }
+      if (is.null(metadata$type)) {
+        metadata$type <- first_non_null(fallback_summary$slope_type, fallback_summary$type)
+      }
+      if (is.null(metadata$detail)) {
+        metadata$detail <- first_non_null(fallback_summary$slope_detail, fallback_summary$detail)
+      }
+      if (is.null(metadata$coefficient) && !is.null(fallback_summary$coefficient)) {
+        metadata$coefficient <- fallback_summary$coefficient
+      }
+    } else if (is.logical(fallback_summary) && length(fallback_summary) == 1) {
+      metadata$quadratic <- isTRUE(fallback_summary)
+    }
+
+    if (is.null(metadata$type)) {
+      metadata$type <- if (isTRUE(metadata$quadratic)) "quadratic" else "linear"
+    }
+
+    metadata$quadratic <- isTRUE(metadata$quadratic)
+    metadata
+  }
+
+  slope_meta <- normalize_slope(primary = slope, fallback_coef = slope_coef, fallback_summary = is_quadratic_fit)
 
   n_points <- length(effect)
   use_adjusted <-
@@ -252,24 +316,79 @@ get_funnel_plot <- function(
 
   draw_vertical_segment(simple_mean, lty = 4, lwd = 2, col = "black")
 
-  if (!is.null(intercept) && !is.null(intercept_se) && !is.null(slope_coef)) {
-    p_exp <- if (is_quadratic_fit) 2 else 1
-    se_curve_grid <- seq(0, max_se + se_pad, length.out = 200)
-    x_pred <- intercept + slope_coef * se_curve_grid^p_exp
-    lines(x_pred, se_curve_grid, lwd = 2, col = "black")
+  se_curve_grid <- seq(0, max_se + se_pad, length.out = 200)
 
-    vcov <- matrix(c(intercept_se^2, 0, 0, intercept_se^2), nrow = 2)
-    se_fit <- sqrt(
-      vcov[1, 1] +
-        2 * se_curve_grid^p_exp * vcov[1, 2] +
-        (se_curve_grid^p_exp)^2 * vcov[2, 2]
-    )
+  if (!is.null(intercept) && !is.null(intercept_se) && !is.null(slope_meta$coefficient)) {
+    slope_type <- tolower(as.character(first_non_null(slope_meta$type, "linear")))
 
-    ci_lo <- x_pred - 1.96 * se_fit
-    ci_hi <- x_pred + 1.96 * se_fit
+    draw_quadratic_or_linear <- function(power) {
+      slope_value <- suppressWarnings(as.numeric(slope_meta$coefficient))
+      if (length(slope_value) != 1 || !is.finite(slope_value)) {
+        return()
+      }
+      se_term <- se_curve_grid^power
+      x_pred <- intercept + slope_value * se_term
+      lines(x_pred, se_curve_grid, lwd = 2, col = "black")
 
-    lines(ci_lo, se_curve_grid, lty = 2, col = "black")
-    lines(ci_hi, se_curve_grid, lty = 2, col = "black")
+      vcov <- matrix(c(intercept_se^2, 0, 0, intercept_se^2), nrow = 2)
+      se_fit <- sqrt(
+        vcov[1, 1] +
+          2 * se_term * vcov[1, 2] +
+          se_term^2 * vcov[2, 2]
+      )
+
+      ci_lo <- x_pred - 1.96 * se_fit
+      ci_hi <- x_pred + 1.96 * se_fit
+
+      lines(ci_lo, se_curve_grid, lty = 2, col = "black")
+      lines(ci_hi, se_curve_grid, lty = 2, col = "black")
+    }
+
+    draw_kinked <- function() {
+      kink_effect <- NA_real_
+      kink_location <- NA_real_
+
+      if (is.list(slope_meta$coefficient)) {
+        if (!is.null(slope_meta$coefficient$kink_effect)) {
+          kink_effect <- as.numeric(slope_meta$coefficient$kink_effect)
+        }
+        if (!is.null(slope_meta$coefficient$kink_location)) {
+          kink_location <- as.numeric(slope_meta$coefficient$kink_location)
+        }
+      }
+
+      if (is.list(slope_meta$detail)) {
+        if (is.na(kink_effect) && !is.null(slope_meta$detail$kink_effect)) {
+          kink_effect <- as.numeric(slope_meta$detail$kink_effect)
+        }
+        if (is.na(kink_location) && !is.null(slope_meta$detail$kink_location)) {
+          kink_location <- as.numeric(slope_meta$detail$kink_location)
+        }
+      }
+
+      if (!is.finite(kink_effect) || !is.finite(kink_location)) {
+        return()
+      }
+
+      se_term <- pmax(se_curve_grid - kink_location, 0)
+      x_pred <- intercept + kink_effect * se_term
+
+      lines(x_pred, se_curve_grid, lwd = 2, col = "black")
+
+      ci_offset <- 1.96 * intercept_se
+      lines(x_pred - ci_offset, se_curve_grid, lty = 2, col = "black")
+      lines(x_pred + ci_offset, se_curve_grid, lty = 2, col = "black")
+
+      draw_vertical_segment(kink_location, lty = 3, lwd = 1, col = adjustcolor("black", alpha.f = 0.5))
+    }
+
+    if (slope_type %in% c("quadratic") || (slope_meta$quadratic && slope_type == "linear")) {
+      draw_quadratic_or_linear(power = 2)
+    } else if (slope_type %in% c("linear")) {
+      draw_quadratic_or_linear(power = 1)
+    } else if (slope_type %in% c("kink", "kinked")) {
+      draw_kinked()
+    }
   }
 
   if (length(x_values) > 0) {

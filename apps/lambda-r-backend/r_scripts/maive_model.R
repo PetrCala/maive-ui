@@ -199,15 +199,53 @@ run_maive_model <- function(data, parameters) {
   pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
 
 
-  is_quadratic_fit <- TRUE # initialize with default value
-  tryCatch(
-    {
-      is_quadratic_fit <- maive_res$is_quadratic_fit # A custom field added to the maive function
-    },
-    error = function(e) {
-      cli::cli_alert_warning("The is_quadratic_fit field is not available in the maive function. Setting it to TRUE.")
+  parse_slope_metadata <- function(res) {
+    slope_summary <- if ("is_quadratic_fit" %in% names(res)) res$is_quadratic_fit else NULL
+    slope_coef <- if ("slope_coef" %in% names(res)) res$slope_coef else NULL
+
+    metadata <- list(
+      quadratic = FALSE,
+      type = NULL,
+      coefficient = slope_coef,
+      detail = NULL
+    )
+
+    if (is.list(slope_summary)) {
+      metadata$quadratic <- isTRUE(slope_summary$quadratic)
+
+      slope_type <- NULL
+      if (!is.null(slope_summary$slope_type)) {
+        slope_type <- slope_summary$slope_type
+      } else if (!is.null(slope_summary$type)) {
+        slope_type <- slope_summary$type
+      }
+      if (!is.null(slope_type)) {
+        metadata$type <- slope_type
+      }
+
+      if (!is.null(slope_summary$slope_detail)) {
+        metadata$detail <- slope_summary$slope_detail
+      } else if (!is.null(slope_summary$detail)) {
+        metadata$detail <- slope_summary$detail
+      }
+
+      if (!is.null(slope_summary$coefficient) && is.null(metadata$coefficient)) {
+        metadata$coefficient <- slope_summary$coefficient
+      }
+    } else if (is.logical(slope_summary) && length(slope_summary) == 1) {
+      metadata$quadratic <- isTRUE(slope_summary)
+    } else if (!is.null(slope_summary)) {
+      metadata$quadratic <- isTRUE(slope_summary)
     }
-  )
+
+    if (is.null(metadata$type)) {
+      metadata$type <- if (isTRUE(metadata$quadratic)) "quadratic" else "linear"
+    }
+
+    metadata
+  }
+
+  slope_metadata <- parse_slope_metadata(maive_res)
 
   parse_boot_result <- function(boot_result, field) if (is.null(boot_result)) "NA" else boot_result[[field]]
   boot_se <- parse_boot_result(maive_res$boot_result, "boot_se") # [a, b]
@@ -221,8 +259,7 @@ run_maive_model <- function(data, parameters) {
     se_adjusted = se_adjusted_for_plot,
     intercept = maive_res$beta,
     intercept_se = maive_res$SE,
-    slope_coef = maive_res$slope_coef,
-    is_quadratic_fit = is_quadratic_fit,
+    slope = slope_metadata,
     instrument = instrument
   )
 
