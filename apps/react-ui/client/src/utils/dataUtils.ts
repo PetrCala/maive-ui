@@ -326,28 +326,33 @@ export const downloadImageAsJpg = (
     ctx.drawImage(img, 0, 0);
 
     if (addCitation) {
-      // Add citation text to the top of the image
-      ctx.fillStyle = "#6B7280"; // Gray color for citation
-      ctx.font = "12px Arial";
-      ctx.textAlign = "center";
-
-      // Add citation text at the top
+      // Add citation text to the bottom-right corner of the image
       const citationText = TEXT.citation.shortText;
-      const textWidth = ctx.measureText(citationText).width;
-      const padding = 20;
+      ctx.font = "12px Arial";
+      ctx.textAlign = "right";
+      ctx.textBaseline = "bottom";
 
-      // Add background rectangle for citation
+      const textMetrics = ctx.measureText(citationText);
+      const textWidth = textMetrics.width;
+      const textHeight =
+        textMetrics.actualBoundingBoxAscent +
+        textMetrics.actualBoundingBoxDescent;
+
+      const margin = 16;
+      const paddingX = 12;
+      const paddingY = 8;
+      const rectWidth = textWidth + paddingX * 2;
+      const rectHeight = textHeight + paddingY * 2;
+      const rectX = canvas.width - rectWidth - margin;
+      const rectY = canvas.height - rectHeight - margin;
+
       ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
-      ctx.fillRect(
-        (canvas.width - textWidth) / 2 - padding,
-        10,
-        textWidth + padding * 2,
-        30,
-      );
+      ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
 
-      // Add citation text
       ctx.fillStyle = "#374151";
-      ctx.fillText(citationText, canvas.width / 2, 30);
+      const textX = canvas.width - margin - paddingX;
+      const textY = canvas.height - margin - paddingY;
+      ctx.fillText(citationText, textX, textY);
     }
 
     // Convert to JPG blob
