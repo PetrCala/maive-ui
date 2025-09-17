@@ -140,9 +140,9 @@ export default function ResultsPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="max-w-4xl w-full space-y-8">
-          <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
-            <h1 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+        <div className="max-w-4xl w-full space-y-8 px-2 sm:px-0">
+          <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-900 dark:text-white">
               Model Results
             </h1>
 
@@ -163,7 +163,7 @@ export default function ResultsPage() {
               />
 
               {/* Funnel Plot */}
-              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+              <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
                 <Tooltip
                   content={resultsText.funnelPlot.tooltip}
                   visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
@@ -181,7 +181,7 @@ export default function ResultsPage() {
                     className="max-w-full h-auto"
                   />
                 </div>
-                <div className="absolute flex bottom-8 right-8">
+                <div className="absolute flex bottom-4 right-4 sm:bottom-6 sm:right-6">
                   <DownloadButton
                     onClick={handleDownloadFunnelPlot}
                     title="Download funnel plot as JPG"
@@ -193,7 +193,7 @@ export default function ResultsPage() {
             </div>
           </div>
 
-          <div className="flex gap-4 mt-8">
+          <div className="flex flex-col gap-6 mt-8 lg:flex-row">
             {/* Left Column - Current Run Actions */}
             <div className="flex flex-col gap-4 flex-1">
               <div className="flex items-center gap-2 mb-2">
@@ -223,7 +223,7 @@ export default function ResultsPage() {
             </div>
 
             {/* Separator */}
-            <div className="flex justify-center w-px">
+            <div className="hidden lg:flex justify-center w-px">
               <div className="w-px h-32 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
             </div>
 

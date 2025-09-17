@@ -198,7 +198,7 @@ export default function ResultsSummary({
       );
     } else {
       content = (
-        <div className="flex justify-between">
+        <div className="flex flex-col gap-1 sm:flex-row sm:justify-between">
           <span className={labelClass}>{item.label}:</span>
           <span className={valueClassSimple} style={valueStyle}>
             {getValueDisplay(item)}
@@ -262,7 +262,7 @@ export default function ResultsSummary({
             className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
           >
             <h2 className="text-xl font-semibold mb-4">{sectionTitle}</h2>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className={"space-y-4"}>
                 {left.map((item, index) => (
                   <div key={`${sectionKey}-left-${index}`}>

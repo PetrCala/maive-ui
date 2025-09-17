@@ -67,6 +67,7 @@ const FooterButtonLinkItem = ({
   return (
     <button
       onClick={onClick}
+      type="button"
       className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 flex items-center"
     >
       <FooterLinkItemContents icon={icon} text={text} />
@@ -95,10 +96,10 @@ const Footer = ({ className = "" }: FooterProps) => {
   return (
     <>
       <footer
-        className={`bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-4 px-6 border-t border-gray-200 dark:border-gray-700 h-16 flex items-center justify-between transition-colors duration-200 ${className}`}
+        className={`bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 py-6 px-4 sm:px-6 border-t border-gray-200 dark:border-gray-700 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between transition-colors duration-200 ${className}`}
       >
         {/* Copyright */}
-        <div className="text-sm">
+        <div className="text-sm text-center sm:text-left">
           {"© "}
           <InvisibleLink href={CONST.LINKS.INSTITUTION_URL}>
             {CONST.INSTITUTION_NAME}
@@ -113,7 +114,7 @@ const Footer = ({ className = "" }: FooterProps) => {
         </div>
 
         {/* Links */}
-        <div className="flex items-center space-x-4 text-sm">
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm">
           <FooterButtonLinkItem
             onClick={handleCitationClick}
             icon={<FaFileAlt />}
