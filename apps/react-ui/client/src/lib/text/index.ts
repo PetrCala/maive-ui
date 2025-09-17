@@ -1,3 +1,120 @@
+type MetricText = Readonly<{
+  label: string;
+  tooltip: string;
+}>;
+
+type SectionWithMetrics<TMetrics extends Record<string, MetricText>> =
+  Readonly<{
+    title: string;
+    metrics: TMetrics;
+  }>;
+
+export type ResultsText = Readonly<{
+  effectEstimate: SectionWithMetrics<{
+    estimate: MetricText;
+    standardError: MetricText;
+    significance: MetricText;
+    andersonRubinCI: MetricText;
+    bootCI: MetricText;
+  }>;
+  publicationBias: SectionWithMetrics<{
+    pValue: MetricText;
+    eggerCoef: MetricText;
+    eggerSE: MetricText;
+    significance: MetricText;
+  }>;
+  diagnosticTests: SectionWithMetrics<{
+    hausmanTest: MetricText;
+    hausmanCriticalValue: MetricText;
+    firstStageFTest: MetricText;
+  }>;
+  funnelPlot: Readonly<{
+    title: string;
+    tooltip: string;
+  }>;
+}>;
+
+const RESULTS_TEXT: ResultsText = {
+  effectEstimate: {
+    title: "Corrected Mean Estimate",
+    metrics: {
+      estimate: {
+        label: "Estimate",
+        tooltip:
+          "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.",
+      },
+      standardError: {
+        label: "Standard Error",
+        tooltip: "Heteroskedasticity-robust standard error.",
+      },
+      significance: {
+        label: "Significant at 5% level",
+        tooltip:
+          "Shows whether the null hypothesis of no bias is rejected at the 5% (two-sided) level using the robust standard error above.",
+      },
+      andersonRubinCI: {
+        label: "Anderson-Rubin 95% CI",
+        tooltip:
+          "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the effect; remains valid even when the first-stage F statistic is low.",
+      },
+      bootCI: {
+        label: "Bootstrap 95% CI",
+        tooltip: "Bootstrap 95% confidence interval for the effect estimate.",
+      },
+    },
+  },
+  publicationBias: {
+    title: "Publication Bias and p-hacking Analysis",
+    metrics: {
+      pValue: {
+        label: "Egger Test p-value",
+        tooltip:
+          "p-value from the instrumented FAT-PET regression that tests for publication bias / p-hacking after MAIVE adjustment.",
+      },
+      eggerCoef: {
+        label: "Egger Coefficient",
+        tooltip:
+          "Coefficient capturing funnel asymmetry in the instrumented Egger regression.",
+      },
+      eggerSE: {
+        label: "Standard Error of the Egger Coefficient",
+        tooltip:
+          "Robust standard error of the coefficient capturing funnel asymmetry in the instrumented Egger regression.",
+      },
+      significance: {
+        label: "Egger Test Significant at 5% level",
+        tooltip:
+          "Indicates whether publication bias is statistically significant at the 5% level according to the instrumented FAT test.",
+      },
+    },
+  },
+  diagnosticTests: {
+    title: "Diagnostic Tests",
+    metrics: {
+      hausmanTest: {
+        label: "Hausman Test",
+        tooltip:
+          "Hausman-type statistic comparing the MAIVE IV estimator with the conventional PET-PEESE (OLS) estimator; large values favour the IV approach.",
+      },
+      hausmanCriticalValue: {
+        label: "Hausman Test Critical Value",
+        tooltip:
+          "5% critical value for the Hausman test. Reject exogeneity if the test statistic exceeds this value.",
+      },
+      firstStageFTest: {
+        label: "First-Stage F-Test",
+        tooltip:
+          "Heteroskedasticity-robust F statistic for the strength of the instrument (inverse sample size) in the first-stage regression of reported variances. Values above 10 denote a strong instrument.",
+      },
+    },
+  },
+  funnelPlot: {
+    title: "MAIVE-Adjusted Funnel Plot",
+    tooltip:
+      "Scatter of effect sizes MAIVE-adjusted fitted precision.The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing MAIVE fit. The MAIVE estimate is the intercept of the line with the horizontal axis.",
+  },
+};
+
 const TEXT = {
   home: {
     title: "Seamless Meta-Analysis with MAIVE",
@@ -100,89 +217,7 @@ const TEXT = {
     },
     runModel: "Run Model",
   },
-  results: {
-    effectEstimate: {
-      title: "Corrected Mean Estimate",
-      metrics: {
-        estimate: {
-          label: "Estimate",
-          tooltip:
-            "Point estimate of the effect size corrected for publication bias, p-hacking, and spurious precision.",
-        },
-        standardError: {
-          label: "Standard Error",
-          tooltip: "Heteroskedasticity-robust standard error.",
-        },
-        significance: {
-          label: "Significant at 5% level",
-          tooltip:
-            "Shows whether the null hypothesis of no bias is rejected at the 5% (two-sided) level using the robust standard error above.",
-        },
-        andersonRubinCI: {
-          label: "Anderson-Rubin 95% CI",
-          tooltip:
-            "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the effect; remains valid even when the first-stage F statistic is low.",
-        },
-        bootCI: {
-          label: "Bootstrap 95% CI",
-          tooltip: "Bootstrap 95% confidence interval for the effect estimate.",
-        },
-      },
-    },
-
-    publicationBias: {
-      title: "Publication Bias and p-hacking Analysis",
-      metrics: {
-        pValue: {
-          label: "Egger Test p-value",
-          tooltip:
-            "p-value from the instrumented FAT-PET regression that tests for publication bias / p-hacking after MAIVE adjustment.",
-        },
-        eggerCoef: {
-          label: "Egger Coefficient",
-          tooltip:
-            "Coefficient capturing funnel asymmetry in the instrumented Egger regression.",
-        },
-        eggerSE: {
-          label: "Standard Error of the Egger Coefficient",
-          tooltip:
-            "Robust standard error of the coefficient capturing funnel asymmetry in the instrumented Egger regression.",
-        },
-        significance: {
-          label: "Egger Test Significant at 5% level",
-          tooltip:
-            "Indicates whether publication bias is statistically significant at the 5% level according to the instrumented FAT test.",
-        },
-      },
-    },
-
-    diagnosticTests: {
-      title: "Diagnostic Tests",
-      metrics: {
-        hausmanTest: {
-          label: "Hausman Test",
-          tooltip:
-            "Hausman-type statistic comparing the MAIVE IV estimator with the conventional PET-PEESE (OLS) estimator; large values favour the IV approach.",
-        },
-        hausmanCriticalValue: {
-          label: "Hausman Test Critical Value",
-          tooltip:
-            "5% critical value for the Hausman test. Reject exogeneity if the test statistic exceeds this value.",
-        },
-        firstStageFTest: {
-          label: "First-Stage F-Test",
-          tooltip:
-            "Heteroskedasticity-robust F statistic for the strength of the instrument (inverse sample size) in the first-stage regression of reported variances. Values above 10 denote a strong instrument.",
-        },
-      },
-    },
-
-    funnelPlot: {
-      title: "MAIVE-Adjusted Funnel Plot",
-      tooltip:
-        "Scatter of effect sizes MAIVE-adjusted fitted precision.The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing MAIVE fit. The MAIVE estimate is the intercept of the line with the horizontal axis.",
-    },
-  },
+  results: RESULTS_TEXT,
   maiveModal: {
     title: "What is MAIVE?",
     overview: {
@@ -278,15 +313,17 @@ const TEXT = {
   },
 } as const;
 
-export const getResultsText = (shouldUseInstrumenting: boolean) => {
+export const getResultsText = (
+  shouldUseInstrumenting: boolean,
+): ResultsText => {
   if (shouldUseInstrumenting) {
-    return TEXT.results;
+    return RESULTS_TEXT;
   }
 
-  const { effectEstimate, publicationBias, funnelPlot } = TEXT.results;
+  const { effectEstimate, publicationBias, funnelPlot } = RESULTS_TEXT;
 
   return {
-    ...TEXT.results,
+    ...RESULTS_TEXT,
     effectEstimate: {
       ...effectEstimate,
       metrics: {
@@ -330,7 +367,7 @@ export const getResultsText = (shouldUseInstrumenting: boolean) => {
       tooltip:
         "Scatter of effect sizes against their standard errors. The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing the regression fit. The estimate is the intercept of the line with the horizontal axis.",
     },
-  } as typeof TEXT.results;
+  };
 };
 
 export default TEXT;
