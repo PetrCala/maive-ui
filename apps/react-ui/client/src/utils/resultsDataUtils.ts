@@ -24,12 +24,15 @@ export type ResultsData = {
 /**
  * Generate results data for display and export purposes
  */
+type ResultsTextContent = typeof TEXT.results;
+
 export const generateResultsData = (
   results: ModelResults,
   parameters?: ModelParameters,
   runDuration?: number,
   runTimestamp?: Date,
   dataInfo?: DataInfo,
+  resultsText: ResultsTextContent = TEXT.results,
 ): ResultsData => {
   const formatValue = (value: number, decimals = 4): string => {
     return value.toFixed(decimals);
@@ -42,32 +45,32 @@ export const generateResultsData = (
   // Core results
   const coreResults: ResultItem[] = [
     {
-      label: TEXT.results.effectEstimate.metrics.estimate.label,
+      label: resultsText.effectEstimate.metrics.estimate.label,
       value: results.effectEstimate,
       show: true,
       section: "effect",
     },
     {
-      label: TEXT.results.effectEstimate.metrics.standardError.label,
+      label: resultsText.effectEstimate.metrics.standardError.label,
       value: results.standardError,
       show: true,
       section: "effect",
     },
     {
-      label: TEXT.results.effectEstimate.metrics.significance.label,
+      label: resultsText.effectEstimate.metrics.significance.label,
       value: results.isSignificant ? "Yes" : "No",
       show: true,
       highlightColor: results.isSignificant ? "text-green-600" : "text-red-600",
       section: "effect",
     },
     {
-      label: TEXT.results.effectEstimate.metrics.bootCI.label,
+      label: resultsText.effectEstimate.metrics.bootCI.label,
       value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
       show: results.bootCI !== "NA",
       section: "effect",
     },
     {
-      label: TEXT.results.effectEstimate.metrics.andersonRubinCI.label,
+      label: resultsText.effectEstimate.metrics.andersonRubinCI.label,
       value:
         results.andersonRubinCI !== "NA"
           ? formatCI(results.andersonRubinCI)
@@ -76,25 +79,25 @@ export const generateResultsData = (
       section: "effect",
     },
     {
-      label: TEXT.results.publicationBias.metrics.eggerCoef.label,
+      label: resultsText.publicationBias.metrics.eggerCoef.label,
       value: results.publicationBias.eggerCoef,
       show: true,
       section: "bias",
     },
     {
-      label: TEXT.results.publicationBias.metrics.eggerSE.label,
+      label: resultsText.publicationBias.metrics.eggerSE.label,
       value: results.publicationBias.eggerSE,
       show: true,
       section: "bias",
     },
     {
-      label: TEXT.results.publicationBias.metrics.pValue.label,
+      label: resultsText.publicationBias.metrics.pValue.label,
       value: results.publicationBias.pValue,
       show: true,
       section: "bias",
     },
     {
-      label: TEXT.results.publicationBias.metrics.significance.label,
+      label: resultsText.publicationBias.metrics.significance.label,
       value: results.publicationBias.isSignificant ? "Yes" : "No",
       show: true,
       highlightColor: results.publicationBias.isSignificant
@@ -103,7 +106,7 @@ export const generateResultsData = (
       section: "bias",
     },
     {
-      label: TEXT.results.diagnosticTests.metrics.hausmanTest.label,
+      label: resultsText.diagnosticTests.metrics.hausmanTest.label,
       value: results.hausmanTest.statistic,
       show: parameters?.shouldUseInstrumenting ?? true,
       highlightColor: results.hausmanTest.rejectsNull
@@ -115,13 +118,13 @@ export const generateResultsData = (
       section: "tests",
     },
     {
-      label: TEXT.results.diagnosticTests.metrics.hausmanCriticalValue.label,
+      label: resultsText.diagnosticTests.metrics.hausmanCriticalValue.label,
       value: results.hausmanTest.criticalValue,
       show: parameters?.shouldUseInstrumenting ?? true,
       section: "tests",
     },
     {
-      label: TEXT.results.diagnosticTests.metrics.firstStageFTest.label,
+      label: resultsText.diagnosticTests.metrics.firstStageFTest.label,
       value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
       show:
         (parameters?.shouldUseInstrumenting ?? true) &&

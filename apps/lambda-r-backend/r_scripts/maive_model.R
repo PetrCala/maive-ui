@@ -213,14 +213,17 @@ run_maive_model <- function(data, parameters) {
   boot_se <- parse_boot_result(maive_res$boot_result, "boot_se") # [a, b]
   boot_ci <- parse_boot_result(maive_res$boot_result, "boot_ci") # [[a, b], [c, d]]
 
+  se_adjusted_for_plot <- if (instrument == 0) NULL else maive_res$SE_instrumented
+
   funnel_plot_data <- get_funnel_plot_data( # nolint: object_usage_linter.
     effect = df$bs,
     se = df$sebs,
-    se_adjusted = maive_res$SE_instrumented,
+    se_adjusted = se_adjusted_for_plot,
     intercept = maive_res$beta,
     intercept_se = maive_res$SE,
     slope_coef = maive_res$slope_coef,
-    is_quaratic_fit = is_quadratic_fit
+    is_quaratic_fit = is_quadratic_fit,
+    instrument = instrument
   )
 
   results <- list(

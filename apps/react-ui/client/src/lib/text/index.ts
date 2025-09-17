@@ -278,4 +278,59 @@ const TEXT = {
   },
 } as const;
 
+export const getResultsText = (shouldUseInstrumenting: boolean) => {
+  if (shouldUseInstrumenting) {
+    return TEXT.results;
+  }
+
+  const { effectEstimate, publicationBias, funnelPlot } = TEXT.results;
+
+  return {
+    ...TEXT.results,
+    effectEstimate: {
+      ...effectEstimate,
+      metrics: {
+        ...effectEstimate.metrics,
+        estimate: {
+          ...effectEstimate.metrics.estimate,
+          tooltip:
+            "Point estimate of the effect size corrected for publication bias and p-hacking.",
+        },
+      },
+    },
+    publicationBias: {
+      ...publicationBias,
+      metrics: {
+        ...publicationBias.metrics,
+        pValue: {
+          ...publicationBias.metrics.pValue,
+          tooltip:
+            "p-value from the Egger regression that tests for publication bias or p-hacking.",
+        },
+        eggerCoef: {
+          ...publicationBias.metrics.eggerCoef,
+          tooltip:
+            "Coefficient capturing funnel asymmetry in the Egger regression.",
+        },
+        eggerSE: {
+          ...publicationBias.metrics.eggerSE,
+          tooltip:
+            "Robust standard error of the coefficient capturing funnel asymmetry in the Egger regression.",
+        },
+        significance: {
+          ...publicationBias.metrics.significance,
+          tooltip:
+            "Indicates whether publication bias is statistically significant at the 5% level according to the Egger test.",
+        },
+      },
+    },
+    funnelPlot: {
+      ...funnelPlot,
+      title: "Funnel Plot",
+      tooltip:
+        "Scatter of effect sizes against their standard errors. The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing the regression fit. The estimate is the intercept of the line with the horizontal axis.",
+    },
+  } as typeof TEXT.results;
+};
+
 export default TEXT;

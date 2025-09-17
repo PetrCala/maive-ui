@@ -9,6 +9,8 @@ import RunDetails from "@src/components/RunDetails";
 import BaseModal from "./BaseModal";
 import { FaDownload } from "react-icons/fa";
 
+type ResultsTextContent = typeof TEXT.results;
+
 type RunInfoModalProps = {
   isOpen: boolean;
   onClose: () => void;
@@ -18,6 +20,7 @@ type RunInfoModalProps = {
   runDuration?: number; // in milliseconds
   runTimestamp?: Date;
   onExportButtonClick: () => void;
+  resultsText: ResultsTextContent;
 };
 
 export default function RunInfoModal({
@@ -29,6 +32,7 @@ export default function RunInfoModal({
   runDuration,
   runTimestamp,
   onExportButtonClick,
+  resultsText,
 }: RunInfoModalProps) {
   const getParameterDisplayName = (key: keyof ModelParameters): string => {
     return TEXT.model[key].label;
@@ -173,6 +177,7 @@ export default function RunInfoModal({
             runDuration={runDuration}
             runTimestamp={runTimestamp}
             dataInfo={dataInfo}
+            resultsText={resultsText}
           />
         </section>
       </div>
