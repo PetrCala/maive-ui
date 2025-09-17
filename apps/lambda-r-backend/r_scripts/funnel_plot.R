@@ -352,21 +352,21 @@ get_funnel_plot <- function(
     level_names <- as.character(ci_data$level)
 
     if ("90" %in% level_names) {
-      p_value_labels <- c(p_value_labels, "p ≥ 0.10")
+      p_value_labels <- c(p_value_labels, "p > 0.10")
       p_legend_fill <- c(p_legend_fill, shade_cols["90"])
     }
 
     if ("95" %in% level_names) {
-      p_value_labels <- c(p_value_labels, "0.10 > p ≥ 0.05")
+      p_value_labels <- c(p_value_labels, "0.10 ≥ p > 0.05")
       p_legend_fill <- c(p_legend_fill, shade_cols["95"])
     }
 
     if ("99" %in% level_names) {
-      p_value_labels <- c(p_value_labels, "0.05 > p ≥ 0.01")
+      p_value_labels <- c(p_value_labels, "0.05 ≥ p > 0.01")
       p_legend_fill <- c(p_legend_fill, shade_cols["99"])
     }
 
-    p_value_labels <- c(p_value_labels, "p < 0.01")
+    p_value_labels <- c(p_value_labels, "p ≤ 0.01")
     p_legend_fill <- c(p_legend_fill, outer_fill_col)
   }
 
@@ -436,8 +436,8 @@ get_funnel_plot <- function(
       border = "gray40",
       bg = funnel_opts$legend_bg,
       bty = funnel_opts$legend_bty,
-      inset = funnel_opts$legend_inset,
-      title = "p-value"
+      inset = funnel_opts$legend_inset
+      # title = "p-value"
     )
   }
 
