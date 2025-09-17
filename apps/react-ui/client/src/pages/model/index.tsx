@@ -31,6 +31,9 @@ export default function ModelPage() {
   const [parameters, setParameters] = useState<ModelParameters>({
     ...CONFIG.DEFAULT_MODEL_PARAMETERS,
   });
+  const previousComputeAndersonRubinRef = useRef<boolean>(
+    CONFIG.DEFAULT_MODEL_PARAMETERS.computeAndersonRubin,
+  );
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
@@ -123,8 +126,62 @@ export default function ModelPage() {
     param: keyof ModelParameters,
     value: string | boolean,
   ) => {
-    setParameters((prev) => ({ ...prev, [param]: value }));
+    setParameters((prev) => {
+      if (param === "shouldUseInstrumenting" && typeof value === "boolean") {
+        if (!value) {
+          previousComputeAndersonRubinRef.current = prev.computeAndersonRubin;
+
+          if (prev.computeAndersonRubin === false) {
+            return { ...prev, shouldUseInstrumenting: value };
+          }
+
+          return {
+            ...prev,
+            shouldUseInstrumenting: value,
+            computeAndersonRubin: false,
+          };
+        }
+
+        const restoredValue =
+          previousComputeAndersonRubinRef.current ?? prev.computeAndersonRubin;
+        return {
+          ...prev,
+          shouldUseInstrumenting: value,
+          computeAndersonRubin: restoredValue,
+        };
+      }
+
+      if (param === "computeAndersonRubin" && typeof value === "boolean") {
+        previousComputeAndersonRubinRef.current = value;
+      }
+
+      if (prev[param] === value) {
+        return prev;
+      }
+
+      return { ...prev, [param]: value };
+    });
   };
+
+  useEffect(() => {
+    if (parameters.shouldUseInstrumenting) {
+      previousComputeAndersonRubinRef.current = parameters.computeAndersonRubin;
+    }
+  }, [parameters.shouldUseInstrumenting, parameters.computeAndersonRubin]);
+
+  useEffect(() => {
+    if (
+      parameters.shouldUseInstrumenting ||
+      parameters.computeAndersonRubin === false
+    ) {
+      return;
+    }
+    previousComputeAndersonRubinRef.current = parameters.computeAndersonRubin;
+    setParameters((prev) => ({
+      ...prev,
+      computeAndersonRubin: false,
+    }));
+  }, [parameters.shouldUseInstrumenting, parameters.computeAndersonRubin]);
 
   const handleRunModel = useCallback(() => {
     void (async () => {

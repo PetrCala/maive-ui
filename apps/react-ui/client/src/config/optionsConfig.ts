@@ -51,6 +51,9 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.computeAndersonRubin.label,
         tooltip: TEXT.model.computeAndersonRubin.tooltip,
         type: "yesno",
+        visibility: {
+          hideIf: ({ parameters }) => !parameters.shouldUseInstrumenting,
+        },
         warnings: [
           {
             message: TEXT.model.computeAndersonRubin.warning,
