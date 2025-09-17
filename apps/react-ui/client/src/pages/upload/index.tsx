@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import type { FileRejection } from "react-dropzone";
@@ -15,6 +15,7 @@ import MDXContent from "@src/context/MDXContent";
 import CONFIG from "@src/CONFIG";
 import { getRandomMockCsvFile } from "@src/utils/mockCsvFiles";
 import { generateMockCSVFile } from "@src/utils/mockData";
+import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -86,6 +87,16 @@ export default function UploadPage() {
       handleGenerateMockData();
     }
   };
+
+  const uploadButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEnterKeyAction(() => {
+    const button = uploadButtonRef.current;
+
+    if (button && !button.disabled) {
+      button.click();
+    }
+  });
 
   const handleSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -232,6 +243,7 @@ export default function UploadPage() {
               )}
 
               <ActionButton
+                ref={uploadButtonRef}
                 onClick={(event) => {
                   void handleSubmit(event as React.FormEvent<HTMLFormElement>);
                 }}

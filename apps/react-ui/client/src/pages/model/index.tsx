@@ -20,6 +20,7 @@ import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
+import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
@@ -34,7 +35,16 @@ export default function ModelPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   const searchParamsAppliedRef = useRef(false);
+  const runModelButtonRef = useRef<HTMLButtonElement>(null);
   const { showAlert } = useGlobalAlert();
+
+  useEnterKeyAction(() => {
+    const button = runModelButtonRef.current;
+
+    if (button && !button.disabled) {
+      button.click();
+    }
+  });
 
   const loadDataFromStore = () => {
     try {
@@ -266,6 +276,7 @@ export default function ModelPage() {
                       />
 
                       <ActionButton
+                        ref={runModelButtonRef}
                         onClick={handleRunModel}
                         variant="primary"
                         className="w-full"
