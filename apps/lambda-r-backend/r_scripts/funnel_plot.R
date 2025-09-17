@@ -40,13 +40,25 @@ get_funnel_plot_opts <- function() {
 #' @returns A list with the two padding values
 get_funnel_padding <- function(effect) {
   # Set padding at either side - between 0 and 1, percentage of the effect range
-  left_padding <- 0
+  left_padding <- 0.05
   right_padding <- 0.25
 
-  effect_all <- c(effect, effect) # both base and adjusted
-  min_effect <- min(effect_all, na.rm = TRUE)
-  max_effect <- max(effect_all, na.rm = TRUE)
+  effect_all <- effect
+  min_effect <- suppressWarnings(min(effect_all, na.rm = TRUE))
+  max_effect <- suppressWarnings(max(effect_all, na.rm = TRUE))
+
+  if (!is.finite(min_effect) || !is.finite(max_effect)) {
+    return(list(lower = -1, upper = 1))
+  }
+
   effect_range <- max_effect - min_effect
+  if (!is.finite(effect_range) || effect_range <= 0) {
+    effect_range <- max(abs(effect_all), na.rm = TRUE)
+    if (!is.finite(effect_range) || effect_range == 0) {
+      effect_range <- 1
+    }
+  }
+
   xlim_pad_left <- left_padding * effect_range
   xlim_pad_right <- right_padding * effect_range
   list(
@@ -115,11 +127,11 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
     )
   }
   max_z <- if (!is.null(ci_data) && nrow(ci_data) > 0) max(ci_data$z) else qnorm(0.975)
-  ci_extent <- max_z * (max_se + se_pad)
-
   xlim <- c(padding$lower, padding$upper)
-  xlim[1] <- min(xlim[1], -ci_extent)
-  xlim[2] <- max(xlim[2], ci_extent)
+  if (!is.finite(xlim[1]) || !is.finite(xlim[2]) || xlim[1] == xlim[2]) {
+    x_center <- ifelse(is.finite(simple_mean), simple_mean, 0)
+    xlim <- c(x_center - 1, x_center + 1)
+  }
 
   old_par <- par(no.readonly = TRUE)
   on.exit(par(old_par))
