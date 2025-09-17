@@ -64,7 +64,7 @@ export default function Home() {
                 onClick={() => setIsModalOpen(true)}
                 variant="secondary"
                 size="md"
-                className="inline-flex w-full sm:w-2/3 self-center items-center justify-center gap-2"
+                className="inline-flex w-full sm:w-auto self-center items-center justify-center gap-2 px-4 sm:px-6"
               >
                 <FaInfoCircle className="icon-button" />
                 {TEXT.home.whatIsMaive}
@@ -74,7 +74,7 @@ export default function Home() {
                 isLoading={isLoadingDemo}
                 setIsLoading={setIsLoadingDemo}
                 size="md"
-                className="w-full sm:w-2/3 self-center"
+                className="w-full sm:w-auto self-center px-4 sm:px-6"
               />
             </div>
           </div>

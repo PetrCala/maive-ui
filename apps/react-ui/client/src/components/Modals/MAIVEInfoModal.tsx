@@ -3,8 +3,8 @@ import ActionButton from "@src/components/Buttons/ActionButton";
 import TEXT from "@lib/text";
 import CONST from "@src/CONST";
 import Link from "next/link";
-import packageInfo from "../../../package.json";
 import BaseModal from "./BaseModal";
+import VersionInfo from "@src/components/VersionInfo";
 
 type MAIVEInfoModalProps = {
   isOpen: boolean;
@@ -17,8 +17,6 @@ export default function MAIVEInfoModal({
   onClose,
   shouldShowGettingStarted = false,
 }: MAIVEInfoModalProps) {
-  const appVersion = packageInfo.version;
-
   return (
     <BaseModal
       isOpen={isOpen}
@@ -176,9 +174,7 @@ export default function MAIVEInfoModal({
           )}
         </div>
 
-        <div className="text-xs text-muted text-right mt-4">
-          Version {appVersion}
-        </div>
+        <VersionInfo className="text-right mt-4" />
       </div>
     </BaseModal>
   );
