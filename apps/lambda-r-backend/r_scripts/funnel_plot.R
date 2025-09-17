@@ -69,8 +69,34 @@ get_funnel_padding <- function(effect) {
   )
 }
 
+format_axis_labels <- function(ticks, digits = 3) {
+  finite_ticks <- ticks[is.finite(ticks)]
+  if (length(finite_ticks) == 0) {
+    return(character(0))
+  }
+
+  if (all(abs(finite_ticks - round(finite_ticks)) < .Machine$double.eps^0.5)) {
+    return(sprintf("%d", as.integer(round(ticks))))
+  }
+
+  unique_ticks <- sort(unique(finite_ticks))
+  decimals <- digits
+  if (length(unique_ticks) > 1) {
+    diffs <- diff(unique_ticks)
+    diffs <- diffs[diffs > 0]
+    if (length(diffs) > 0) {
+      min_diff <- min(diffs)
+      if (is.finite(min_diff) && min_diff > 0) {
+        decimals <- max(0, min(digits, ceiling(-log10(min_diff))))
+      }
+    }
+  }
+
+  formatC(ticks, format = "f", digits = decimals)
+}
+
 #' Get a funnel plot using base graphics
-#'
+#' 
 #' @param effect [numeric] The effect size
 #' @param se [numeric] The standard error
 #' @param se_adjusted [numeric] The adjusted standard error
@@ -260,7 +286,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
   if (length(y_ticks) > 0) {
     axis(2,
       at = y_ticks,
-      labels = round(y_ticks),
+      labels = format_axis_labels(y_ticks, digits = funnel_opts$digits),
       las = 1
     )
   }
