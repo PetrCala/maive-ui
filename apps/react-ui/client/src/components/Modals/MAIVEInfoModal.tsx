@@ -3,9 +3,7 @@ import ActionButton from "@src/components/Buttons/ActionButton";
 import TEXT from "@lib/text";
 import CONST from "@src/CONST";
 import Link from "next/link";
-
-import { version } from "../../package.json";
-
+import { version } from "../../../package.json";
 import BaseModal from "./BaseModal";
 
 type MAIVEInfoModalProps = {
