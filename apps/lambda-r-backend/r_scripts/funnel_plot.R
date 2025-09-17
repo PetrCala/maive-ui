@@ -55,7 +55,7 @@ get_funnel_padding <- function(effect) {
   )
 }
 
-#' Get a funnel plot using metafor
+#' Get a funnel plot using base graphics
 #'
 #' @param effect [numeric] The effect size
 #' @param se [numeric] The standard error
@@ -69,142 +69,263 @@ get_funnel_padding <- function(effect) {
 get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept_se = NULL, slope_coef = NULL, is_quaratic_fit = FALSE) {
   funnel_opts <- get_funnel_plot_opts()
 
-  x <- c(effect, effect)
-  y <- c(se, se_adjusted)
-  # pch changes the shape of the points
+  n_points <- length(effect)
+  x_values <- c(effect, effect)
+  y_values <- c(se, se_adjusted)
+
   plot_pch <- c(
-    rep(funnel_opts$effect_pch[1], length(effect)), # base effect
-    rep(funnel_opts$effect_pch[2], length(effect)) # adjusted effect
+    rep(funnel_opts$effect_pch[1], n_points),
+    rep(funnel_opts$effect_pch[2], n_points)
   )
+
+  point_bg <- c(
+    rep(funnel_opts$effect_shades[1], n_points),
+    rep(funnel_opts$effect_shades[2], n_points)
+  )
+
+  finite_points <- is.finite(x_values) & is.finite(y_values)
+  x_values <- x_values[finite_points]
+  y_values <- y_values[finite_points]
+  plot_pch <- plot_pch[finite_points]
+  point_bg <- point_bg[finite_points]
+
+  simple_mean <- mean(effect, na.rm = TRUE)
 
   padding <- get_funnel_padding(effect)
 
-  # Calculate simple mean for reference line
-  simple_mean <- mean(effect)
+  se_all <- y_values
+  max_se <- max(se_all, na.rm = TRUE)
+  if (!is.finite(max_se) || max_se <= 0) {
+    max_se <- 1
+  }
 
-  # Create a grid for contour plotting
-  x_range <- c(padding$lower, padding$upper)
-  y_range <- c(0, max(se))
+  se_pad <- max_se * 0.1
+  ylim <- c(max_se + se_pad, 0)
 
-  # Create grid for significance contours
-  x_grid <- seq(x_range[1], x_range[2], length.out = 100)
-  y_grid <- seq(y_range[1], y_range[2], length.out = 100)
-  grid <- expand.grid(x = x_grid, y = y_grid)
+  ci_levels <- funnel_opts$ci_levels
+  alpha_levels <- 1 - (ci_levels / 100)
+  alpha_levels <- alpha_levels[is.finite(alpha_levels) & alpha_levels > 0]
+  max_z <- if (length(alpha_levels) > 0) max(qnorm(1 - alpha_levels / 2)) else qnorm(0.975)
+  ci_extent <- max_z * (max_se + se_pad)
 
-  # Calculate t-statistics for significance contours (centered at x = 0)
-  t_stats <- abs(grid$x) / grid$y
-  t_stats[grid$y == 0] <- Inf # Handle division by zero
+  xlim <- c(padding$lower, padding$upper)
+  xlim[1] <- min(xlim[1], -ci_extent)
+  xlim[2] <- max(xlim[2], ci_extent)
 
-  # Create significance levels
-  p_10 <- qt(0.95, df = Inf) # t-value for p < 0.10 (two-tailed)
-  p_05 <- qt(0.975, df = Inf) # t-value for p < 0.05 (two-tailed)
-  p_01 <- qt(0.995, df = Inf) # t-value for p < 0.01 (two-tailed)
+  old_par <- par(no.readonly = TRUE)
+  on.exit(par(old_par))
 
-  # Create significance regions
-  sig_10 <- t_stats >= p_10 & t_stats < p_05
-  sig_05 <- t_stats >= p_05 & t_stats < p_01
-  sig_01 <- t_stats >= p_01
-
-  # Create the base plot
-  plot(x, y,
-    xlim = x_range,
-    ylim = y_range,
+  plot(
+    NA, NA,
+    xlim = xlim,
+    ylim = ylim,
     xlab = funnel_opts$xlab,
     ylab = funnel_opts$ylab,
-    pch = plot_pch,
-    col = funnel_opts$col,
-    cex = 1.2
+    type = "n",
+    axes = FALSE,
+    xaxs = "i",
+    yaxs = "i"
   )
 
-  # Add significance contours
-  # p < 0.10 region
-  contour_data_10 <- grid[sig_10, ]
-  if (nrow(contour_data_10) > 0) {
-    contour_data_10$z <- 1
-    contour_data_10 <- contour_data_10[order(contour_data_10$x, contour_data_10$y), ]
-    if (nrow(contour_data_10) > 0) {
-      contour(x_grid, y_grid,
-        matrix(ifelse(t_stats >= p_10 & t_stats < p_05, 1, 0), nrow = length(x_grid)),
-        levels = 0.5, add = TRUE, col = "gray90", lwd = 1
+  se_grid <- seq(from = ylim[1], to = ylim[2], length.out = 400)
+
+  shade_cols <- rep(funnel_opts$ci_shades, length.out = length(ci_levels))
+  contour_cols <- rep(c("gray90", "gray70", "gray50"), length.out = length(ci_levels))
+  names(shade_cols) <- ci_levels
+  names(contour_cols) <- ci_levels
+
+  if (length(ci_levels) > 0) {
+    alpha_full <- 1 - (ci_levels / 100)
+    draw_order <- order(alpha_full)
+    for (idx in draw_order) {
+      level_value <- ci_levels[idx]
+      alpha <- alpha_full[idx]
+      if (!is.finite(alpha) || alpha <= 0) {
+        next
+      }
+      z_val <- qnorm(1 - alpha / 2)
+      left <- -z_val * se_grid
+      right <- z_val * se_grid
+      polygon(
+        x = c(left, rev(right)),
+        y = c(se_grid, rev(se_grid)),
+        border = NA,
+        col = shade_cols[as.character(level_value)]
       )
+      lines(left, se_grid, col = contour_cols[as.character(level_value)], lwd = 1)
+      lines(right, se_grid, col = contour_cols[as.character(level_value)], lwd = 1)
     }
   }
 
-  # p < 0.05 region
-  contour(x_grid, y_grid,
-    matrix(ifelse(t_stats >= p_05 & t_stats < p_01, 1, 0), nrow = length(x_grid)),
-    levels = 0.5, add = TRUE, col = "gray70", lwd = 1
-  )
+  if (length(ci_levels) > 0) {
+    abline(v = 0, lty = 3, col = "black")
+  }
 
-  # p < 0.01 region
-  contour(x_grid, y_grid,
-    matrix(ifelse(t_stats >= p_01, 1, 0), nrow = length(x_grid)),
-    levels = 0.5, add = TRUE, col = "gray50", lwd = 1
-  )
+  y_ticks <- pretty(c(0, max_se), n = 5)
+  y_ticks <- unique(y_ticks[y_ticks >= 0 & y_ticks <= (max_se + se_pad)])
+  if (length(y_ticks) > 0) {
+    grid_col <- adjustcolor("gray70", alpha.f = 0.4)
+    abline(h = y_ticks, col = grid_col, lwd = 0.5)
+  }
 
-  # Add vertical line for simple mean (dash-dot style)
-  abline(v = simple_mean, lty = 4, lwd = 2, col = "red")
+  abline(v = simple_mean, lty = 4, lwd = 2, col = "black")
 
-  # Add simple mean label at the top
-  text(simple_mean, max(se) * 0.95,
-    paste0("Simple mean = ", round(simple_mean, 2)),
-    pos = 3, cex = 0.9, col = "red"
-  )
+  if (!is.null(intercept) && !is.null(intercept_se) && !is.null(slope_coef)) {
+    p_exp <- if (is_quaratic_fit) 2 else 1
+    se_curve_grid <- seq(0, max_se + se_pad, length.out = 200)
+    x_pred <- intercept + slope_coef * se_curve_grid^p_exp
+    lines(x_pred, se_curve_grid, lwd = 2, col = "black")
 
-  ## Choose the exponent
-  p <- if (is_quaratic_fit) 2 else 1 # 2 for PEESE‑style (SE²), 1 for PET/Egger
+    vcov <- matrix(c(intercept_se^2, 0, 0, intercept_se^2), nrow = 2)
+    se_fit <- sqrt(
+      vcov[1, 1] +
+        2 * se_curve_grid^p_exp * vcov[1, 2] +
+        (se_curve_grid^p_exp)^2 * vcov[2, 2]
+    )
 
-  ## Add fitted curve
-  a <- intercept
-  b <- slope_coef # was intercept_se, incorrectly
-  se.grid <- seq(0, max(se), length = 200)
-  x.pred <- a + b * se.grid^p
+    ci_lo <- x_pred - 1.96 * se_fit
+    ci_hi <- x_pred + 1.96 * se_fit
 
-  lines(x.pred, se.grid, lwd = 2, col = "black") # fitted
+    lines(ci_lo, se_curve_grid, lty = 2, col = "black")
+    lines(ci_hi, se_curve_grid, lty = 2, col = "black")
+  }
 
-  ## 95% confidence band (delta method)
-  ## needs vcov = var‑cov matrix of (a,b)
-  vcov <- matrix(c(intercept_se^2, 0, 0, intercept_se^2), nrow = 2)
-  se.fit <- sqrt(
-    vcov[1, 1] + # var(a)
-      2 * se.grid^p * vcov[1, 2] + # 2*SE^p*cov(a,b)
-      (se.grid^p)^2 * vcov[2, 2] # SE^(2p)*var(b)
-  )
-
-  ci.lo <- x.pred - 1.96 * se.fit
-  ci.hi <- x.pred + 1.96 * se.fit
-
-  lines(ci.lo, se.grid, lty = 2, col = "black")
-  lines(ci.hi, se.grid, lty = 2, col = "black")
-
-  # Add MAIVE estimate label at the top (SE = 0)
-  if (!is.null(intercept) && !is.null(intercept_se)) {
-    text(intercept, 0,
-      paste0("MAIVE = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")"),
-      pos = 3, cex = 0.9, col = "black"
+  if (length(x_values) > 0) {
+    points(
+      x = x_values,
+      y = y_values,
+      pch = plot_pch,
+      col = funnel_opts$col,
+      bg = point_bg,
+      cex = funnel_opts$pt_cex
     )
   }
 
-  # Round y-axis tick labels
-  y_ticks <- axTicks(2)
-  y_labels <- round(y_ticks)
-  axis(2, at = y_ticks, labels = y_labels)
+  x_ticks <- pretty(xlim, n = 6)
+  axis(1,
+    at = x_ticks,
+    labels = formatC(x_ticks, format = "f", digits = funnel_opts$digits)
+  )
+
+  if (length(y_ticks) > 0) {
+    axis(2,
+      at = y_ticks,
+      labels = round(y_ticks),
+      las = 1
+    )
+  }
+
+  box()
+
+  par_usr <- par("usr")
+  y_span <- abs(par_usr[4] - par_usr[3])
+  top_offset <- y_span * 0.04
+  label_y_simple <- par_usr[4] - top_offset
+  label_y_maive <- label_y_simple
+
+  par_xpd_old <- par("xpd")
+  on.exit(par(xpd = par_xpd_old), add = TRUE)
+  par(xpd = NA)
+
+  text(
+    simple_mean,
+    label_y_simple,
+    labels = paste0("Simple mean = ", round(simple_mean, 2)),
+    cex = 0.9,
+    adj = c(0.5, 0)
+  )
+
+  if (!is.null(intercept) && !is.null(intercept_se)) {
+    x_range <- diff(range(xlim))
+    if (!is.finite(x_range) || x_range == 0) {
+      x_range <- 1
+    }
+    distance <- abs(simple_mean - intercept)
+    if (is.finite(distance) && distance < 0.2 * x_range) {
+      label_y_maive <- label_y_simple - y_span * 0.05
+    }
+
+    text(
+      intercept,
+      label_y_maive,
+      labels = paste0("MAIVE = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")"),
+      cex = 0.9,
+      adj = c(0.5, 0)
+    )
+  }
+
+  par(xpd = par_xpd_old)
+
+  p_value_labels <- character(0)
+  contour_cols_ordered <- character(0)
+  if (length(ci_levels) > 0) {
+    p_values <- 1 - (ci_levels / 100)
+    p_value_labels <- sprintf("p < %.2f", p_values)
+    contour_cols_ordered <- contour_cols[as.character(ci_levels)]
+  }
+
+  legend_labels <- c(
+    funnel_opts$legend_texts[1:2],
+    "Simple mean",
+    "MAIVE fit",
+    "95% CI bounds",
+    p_value_labels
+  )
+
+  legend_pch <- c(
+    funnel_opts$effect_pch,
+    rep(NA, 3 + length(p_value_labels))
+  )
+
+  legend_col <- c(
+    rep(funnel_opts$text_color, 2),
+    "black",
+    "black",
+    "black",
+    contour_cols_ordered
+  )
+
+  legend_pt_bg <- c(
+    funnel_opts$effect_shades,
+    rep(NA, 3 + length(p_value_labels))
+  )
+
+  legend_pt_cex <- c(
+    rep(funnel_opts$pt_cex, 2),
+    rep(NA, 3 + length(p_value_labels))
+  )
+
+  legend_lty <- c(
+    rep(NA, 2),
+    4,
+    1,
+    2,
+    rep(1, length(p_value_labels))
+  )
+
+  legend_lwd <- c(
+    rep(NA, 2),
+    2,
+    2,
+    1,
+    rep(1, length(p_value_labels))
+  )
 
   legend(
-    funnel_opts$legend_position, # position
-    legend = c(funnel_opts$legend_texts[1:2], "Simple mean", "MAIVE fit", "95% CI bounds", "p < 0.10", "p < 0.05", "p < 0.01"),
-    pch = c(funnel_opts$effect_pch, NA, NA, NA, NA, NA, NA),
-    col = c(rep(funnel_opts$text_color, 2), "red", "black", "black", "gray90", "gray70", "gray50"),
-    pt.bg = c(funnel_opts$effect_shades, NA, NA, NA, NA, NA, NA),
-    pt.cex = c(rep(funnel_opts$pt_cex, 2), NA, NA, NA, NA, NA, NA),
-    lty = c(rep(NA, 2), 4, 1, 2, 1, 1, 1), # dash-dot for simple mean, solid for MAIVE, dashed for CI, solid for contours
-    lwd = c(rep(NA, 2), 2, 2, 1, 1, 1, 1), # line width
+    funnel_opts$legend_position,
+    legend = legend_labels,
+    pch = legend_pch,
+    col = legend_col,
+    pt.bg = legend_pt_bg,
+    pt.cex = legend_pt_cex,
+    lty = legend_lty,
+    lwd = legend_lwd,
     bg = funnel_opts$legend_bg,
-    bty = funnel_opts$legend_bty, # box type
+    bty = funnel_opts$legend_bty,
     inset = funnel_opts$legend_inset
   )
 
-  return(invisible(NULL))
+  invisible(NULL)
 }
 
 #' Get the dimensions of the plot
