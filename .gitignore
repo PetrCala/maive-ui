@@ -99,4 +99,5 @@ node_modules/
 **/bun.lockb
 notes/
 **/*.pdf
+**/*.png
 **/*.bak
