@@ -32,7 +32,7 @@ export default function MAIVEInfoModal({
       </div>
 
       <div className="p-6 flex flex-col h-full justify-between">
-        <div className="space-y-6 flex-1 overflow-y-auto">
+        <div className="space-y-6 flex-1 overflow-y-auto overscroll-contain">
           <section>
             <h3 className="text-xl font-semibold text-primary mb-3">
               {TEXT.maiveModal.overview.title}

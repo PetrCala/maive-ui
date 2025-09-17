@@ -105,7 +105,7 @@ export default function BaseModal({
     >
       <div
         ref={modalRef}
-        className={`modal-content ${maxWidth} w-full ${maxHeight} overflow-y-auto ${className}`}
+        className={`modal-content ${maxWidth} w-full ${maxHeight} overflow-y-auto overscroll-contain ${className}`}
         onClick={handleModalContentClick}
         tabIndex={-1}
         role="dialog"
