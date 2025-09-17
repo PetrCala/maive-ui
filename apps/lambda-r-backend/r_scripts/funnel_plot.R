@@ -96,7 +96,7 @@ format_axis_labels <- function(ticks, digits = 3) {
 }
 
 #' Get a funnel plot using base graphics
-#' 
+#'
 #' @param effect [numeric] The effect size
 #' @param se [numeric] The standard error
 #' @param se_adjusted [numeric] The adjusted standard error (optional)
@@ -120,8 +120,7 @@ get_funnel_plot <- function(
 
   n_points <- length(effect)
   use_adjusted <-
-    instrument != 0 && !is.null(se_adjusted) && length(se_adjusted) == n_points &&
-      any(is.finite(se_adjusted))
+    instrument != 0 && !is.null(se_adjusted) && length(se_adjusted) == n_points && any(is.finite(se_adjusted))
 
   x_values <- effect
   y_values <- se
