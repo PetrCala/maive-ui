@@ -128,7 +128,7 @@ get_funnel_plot <- function(effect, se, se_adjusted, intercept = NULL, intercept
       z = qnorm(1 - ci_alpha[valid_idx] / 2)
     )
   }
-  max_z <- if (!is.null(ci_data) && nrow(ci_data) > 0) max(ci_data$z) else qnorm(0.975)
+  max_z <- if (!is.null(ci_data) && nrow(ci_data) > 0) max(ci_data$z) else qnorm(0.975) # nolint: object_usage_linter.
   xlim <- c(padding$lower, padding$upper)
   if (!is.finite(xlim[1]) || !is.finite(xlim[2]) || xlim[1] == xlim[2]) {
     x_center <- ifelse(is.finite(simple_mean), simple_mean, 0)
