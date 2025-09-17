@@ -5,6 +5,7 @@ import Alert from "@src/components/Alert";
 import type { OptionConfig } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
 import CONFIG from "@src/CONFIG";
+import CONST from "@src/CONST";
 
 type OptionRendererProps = {
   option: OptionConfig;
@@ -37,17 +38,31 @@ export default function OptionRenderer({
             disabled={option.disabled}
           />
         );
-      case "dropdown":
+      case "dropdown": {
+        const dropdownOptions =
+          option.key === "weight"
+            ? option.options.filter((dropdownOption) => {
+                if (
+                  !parameters.shouldUseInstrumenting &&
+                  dropdownOption.value ===
+                    CONST.WEIGHT_OPTIONS.ADJUSTED_WEIGHTS.VALUE
+                ) {
+                  return false;
+                }
+                return true;
+              })
+            : option.options;
         return (
           <DropdownSelect
             label={option.label}
             value={value as string}
             onChange={handleChange as (value: string) => void}
-            options={option.options}
+            options={dropdownOptions}
             className={option.className}
             disabled={option.disabled}
           />
         );
+      }
       default:
         return null;
     }
