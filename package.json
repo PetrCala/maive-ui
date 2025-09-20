@@ -43,6 +43,7 @@
 		"release": "./scripts/openPR.sh --release",
 		"openPR": "./scripts/openPR.sh",
 		"test-quarterly": "./scripts/test-quarterly-release.sh",
+		"remove-non-master-branches": "git branch -r | grep origin/ | grep -v 'origin/master' | sed 's#origin/##' | xargs -n 1 git push origin --delete",
 		"mergePR": "./scripts/mergePR.sh",
 		"mergePR:admin": "./scripts/mergePR.sh --admin",
 		"terraform:validate": "./scripts/validateTerraform.sh",
