@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
-import type { UploadedData } from "@store/dataStore";
+import type { ColumnMapping, UploadedData } from "@store/dataStore";
 import { useDataStore, dataCache } from "@store/dataStore";
 import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
@@ -15,6 +15,7 @@ import RowInfoComponent from "@src/components/RowInfoComponent";
 import CONFIG from "@src/CONFIG";
 import type { AlertType, DataArray } from "@src/types";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
+import TEXT from "@src/lib/text";
 
 type ValidationMessage = {
   type: AlertType;
@@ -50,20 +51,19 @@ export default function ValidationPage() {
     }
   });
 
+  const describeField = (
+    fieldLabel: string,
+    mappedColumn?: string | null,
+  ): string => {
+    return mappedColumn ? `${fieldLabel} (${mappedColumn})` : fieldLabel;
+  };
+
   const validateData = (
-    previewData: string[][],
     fullData: DataArray,
+    mapping: ColumnMapping,
   ): ValidationResult => {
     const messages: ValidationMessage[] = [];
-    const headers = previewData[0] || [];
-    const hasHeaders =
-      headers.length > 0 &&
-      headers.some(
-        (header) =>
-          header !== undefined && header !== null && isNaN(Number(header)),
-      );
 
-    // Check if file has data
     if (fullData.length < 4) {
       messages.push({
         type: "error",
@@ -72,158 +72,118 @@ export default function ValidationPage() {
       });
     }
 
-    // Check column count
-    const columnCount = hasHeaders
-      ? headers.length
-      : ((fullData[0]?.length || 0) as number);
-    if (columnCount < 3 || columnCount > 4) {
-      messages.push({
-        type: "error",
-        message: `The file must have exactly 3 or 4 columns. Found ${columnCount} columns.`,
-      });
-    }
+    const effectField = describeField(
+      TEXT.mapping.fieldLabels.effect,
+      mapping.effect,
+    );
+    const seField = describeField(TEXT.mapping.fieldLabels.se, mapping.se);
+    const nObsField = describeField(
+      TEXT.mapping.fieldLabels.nObs,
+      mapping.nObs,
+    );
+    const studyIdField = describeField(
+      TEXT.mapping.fieldLabels.studyId,
+      mapping.studyId ?? undefined,
+    );
 
-    // Determine column mapping based on order
-    const columnMapping = {
-      effect: 0,
-      se: 1,
-      n_obs: 2,
-      study_id: columnCount === 4 ? 3 : undefined,
-    };
-
-    // Validate data types for each column
     const columnChecks = [
       {
-        name: "effect",
-        index: columnMapping.effect,
-        errorMsg:
-          "The 1st column (effect estimates) contains non-numeric values. All effect estimates must be numbers.",
+        key: "effect" as const,
+        errorMsg: `The ${effectField} column contains non-numeric values. All effect estimates must be numbers.`,
       },
       {
-        name: "se",
-        index: columnMapping.se,
-        errorMsg:
-          "The 2nd column (standard errors) contains non-numeric values. All standard errors must be numbers.",
+        key: "se" as const,
+        errorMsg: `The ${seField} column contains non-numeric values. All standard errors must be numbers.`,
       },
       {
-        name: "n_obs",
-        index: columnMapping.n_obs,
-        errorMsg:
-          "The 3rd column (number of observations) contains non-numeric values. All number of observations must be numbers.",
-      },
-      {
-        name: "study_id",
-        index: columnMapping.study_id,
-        errorMsg:
-          "The 4th column (study ID) contains invalid values. Study IDs can be strings or numbers.",
-        optional: true,
+        key: "n_obs" as const,
+        errorMsg: `The ${nObsField} column contains non-numeric values. All sample sizes must be numbers.`,
       },
     ];
 
-    // Check data types for required columns
-    columnChecks
-      .filter((col) => !col.optional && col.index !== undefined)
-      .forEach((col) => {
-        const hasNonNumeric = fullData.some((row) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const value = hasHeaders ? row[headers[col.index!]] : row[col.index!];
-          return value !== undefined && value !== null && isNaN(Number(value));
-        });
-        if (hasNonNumeric) {
-          messages.push({
-            type: "error",
-            message: col.errorMsg,
-          });
+    columnChecks.forEach((col) => {
+      const hasNonNumeric = fullData.some((row) => {
+        const value = row[col.key];
+        if (value === undefined || value === null) {
+          return false;
         }
+        if (typeof value === "number") {
+          return Number.isNaN(value);
+        }
+        return Number.isNaN(Number(value));
       });
 
-    // Check optional study_id column if present
-    const studyIdCol = columnChecks.find((col) => col.name === "study_id");
-    if (studyIdCol?.index !== undefined) {
-      // For study_id, we only check that values are not empty/null, not that they're numeric
-      const hasInvalidValues = fullData.some((row) => {
-        const value = hasHeaders
-          ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            row[headers[studyIdCol.index!]]
-          : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            row[studyIdCol.index!];
+      if (hasNonNumeric) {
+        messages.push({
+          type: "error",
+          message: col.errorMsg,
+        });
+      }
+    });
+
+    if (mapping.studyId) {
+      const hasInvalidStudyId = fullData.some((row) => {
+        const value = row.study_id;
         return value === undefined || value === null || value === "";
       });
-      if (hasInvalidValues) {
+
+      if (hasInvalidStudyId) {
         messages.push({
           type: "error",
-          message: studyIdCol.errorMsg,
+          message: `The ${studyIdField} column contains empty values. Study IDs can be strings or numbers.`,
         });
       }
     }
 
-    // Check for non-positive number of observations
-    const nObsColIndex = columnMapping.n_obs;
-    if (nObsColIndex !== undefined) {
-      const nonPositiveIndexes: number[] = [];
-      fullData.forEach((row, index) => {
-        const value = hasHeaders
-          ? Number(row[headers[nObsColIndex]])
-          : Number(row[nObsColIndex]);
-        if (!isNaN(value) && (value <= 0 || !Number.isInteger(value))) {
-          nonPositiveIndexes.push(index + 1); // Convert to 1-based indexing for user display
-        }
+    const nonPositiveIndexes: number[] = [];
+    fullData.forEach((row, index) => {
+      const value = row.n_obs;
+      if (value === undefined || value === null) {
+        return;
+      }
+
+      const numericValue = typeof value === "number" ? value : Number(value);
+      if (
+        !Number.isNaN(numericValue) &&
+        (numericValue <= 0 || !Number.isInteger(numericValue))
+      ) {
+        nonPositiveIndexes.push(index + 1);
+      }
+    });
+
+    if (nonPositiveIndexes.length > 0) {
+      const maxIndexes = 3;
+      const displayIndexes = nonPositiveIndexes.slice(0, maxIndexes);
+      const hasMore = nonPositiveIndexes.length > maxIndexes;
+      const indexesText = displayIndexes.join(", ") + (hasMore ? "..." : "");
+
+      messages.push({
+        type: "error",
+        message: `The ${nObsField} column must contain only positive integers (greater than 0). Found invalid values at row(s): ${indexesText}. Please check your data.`,
       });
-
-      if (nonPositiveIndexes.length > 0) {
-        const maxIndexes = 3;
-        const displayIndexes = nonPositiveIndexes.slice(0, maxIndexes);
-        const hasMore = nonPositiveIndexes.length > maxIndexes;
-        const indexesText = displayIndexes.join(", ") + (hasMore ? "..." : "");
-
-        messages.push({
-          type: "error",
-          message: `The number of observations column must contain only positive integers (greater than 0). Found invalid values at row(s): ${indexesText}. Please check your data.`,
-        });
-      }
     }
 
-    // Check for negative standard errors
-    const seColIndex = columnMapping.se;
-    if (seColIndex !== undefined) {
-      const hasNegativeSE = fullData.some((row) => {
-        const value = hasHeaders
-          ? Number(row[headers[seColIndex]])
-          : Number(row[seColIndex]);
-        return !isNaN(value) && value < 0;
-      });
-
-      if (hasNegativeSE) {
-        messages.push({
-          type: "error",
-          message:
-            "Standard errors cannot be negative. Please check your data.",
-        });
-      }
-    }
-
-    // Check for missing values
-    const hasMissingValues = fullData.some((row) => {
-      if (hasHeaders) {
-        return Object.values(row).some(
-          (cell: unknown) => cell === undefined || cell === null || cell === "",
-        );
-      } else {
-        // For files without headers, check the first 3 columns (required)
-        for (let i = 0; i < 3; i++) {
-          if (row[i] === undefined || row[i] === null || row[i] === "") {
-            return true;
-          }
-        }
-        // Check 4th column if present
-        if (
-          columnCount === 4 &&
-          (row[3] === undefined || row[3] === null || row[3] === "")
-        ) {
-          return true;
-        }
+    const hasNegativeSE = fullData.some((row) => {
+      const value = row.se;
+      if (value === undefined || value === null) {
         return false;
       }
+      const numericValue = typeof value === "number" ? value : Number(value);
+      return !Number.isNaN(numericValue) && numericValue < 0;
+    });
+
+    if (hasNegativeSE) {
+      messages.push({
+        type: "error",
+        message: "Standard errors cannot be negative. Please check your data.",
+      });
+    }
+
+    const hasMissingValues = fullData.some((row) => {
+      return ["effect", "se", "n_obs"].some((key) => {
+        const value = row[key];
+        return value === undefined || value === null || value === "";
+      });
     });
 
     if (hasMissingValues) {
@@ -234,17 +194,13 @@ export default function ValidationPage() {
       });
     }
 
-    // Check study_id constraint if present
-    if (columnMapping.study_id !== undefined) {
+    if (mapping.studyId) {
       const uniqueStudyIds = new Set(
-        fullData.map((row) =>
-          hasHeaders
-            ? // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              row[headers[columnMapping.study_id!]]
-            : // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              row[columnMapping.study_id!],
-        ),
+        fullData
+          .map((row) => row.study_id)
+          .filter((value) => value !== undefined && value !== null),
       ).size;
+
       if (!(fullData.length >= uniqueStudyIds + 3)) {
         messages.push({
           type: "error",
@@ -254,7 +210,6 @@ export default function ValidationPage() {
       }
     }
 
-    // Check for reasonable data size
     if (fullData.length > 2000) {
       messages.push({
         type: "warning",
@@ -263,7 +218,6 @@ export default function ValidationPage() {
       });
     }
 
-    // If no errors, add success message
     const hasErrors = messages.some((msg) => msg.type === "error");
     if (!hasErrors) {
       messages.push({
@@ -298,54 +252,47 @@ export default function ValidationPage() {
         throw new Error("Data not found");
       }
 
-      setUploadedData(data);
-
-      // Convert data to preview format
-      const headers = Object.keys(data.data[0] || {});
-      const hasHeaders =
-        headers.length > 0 &&
-        headers.some(
-          (header) =>
-            header !== undefined && header !== null && isNaN(Number(header)),
-        );
-
-      let previewData: string[][];
-
-      if (hasHeaders) {
-        // File has headers, use them
-        previewData = [
-          headers,
-          ...data.data
-            .slice(0, 4)
-            .map((row: unknown) =>
-              headers.map((header) =>
-                String((row as Record<string, unknown>)[header] || ""),
-              ),
-            ),
-        ];
-      } else {
-        // File has no headers, use positional column names
-        const columnNames = ["effect", "se", "n_obs"];
-        if (data.data[0] && Object.keys(data.data[0]).length === 4) {
-          columnNames.push("study_id");
-        }
-
-        previewData = [
-          columnNames,
-          ...data.data
-            .slice(0, 4)
-            .map((row: unknown) =>
-              columnNames.map((columnName) =>
-                String((row as Record<string, unknown>)[columnName] || ""),
-              ),
-            ),
-        ];
+      if (!data.columnMapping) {
+        showAlert(TEXT.mapping.validationRedirectError, "info");
+        router.push(`/upload/mapping?dataId=${dataId}`);
+        return;
       }
 
-      setPreview(previewData);
+      setUploadedData(data);
 
-      // Validate the data
-      const validation = validateData(previewData, data.data);
+      const previewHeaders = [
+        describeField(
+          TEXT.mapping.fieldLabels.effect,
+          data.columnMapping.effect,
+        ),
+        describeField(TEXT.mapping.fieldLabels.se, data.columnMapping.se),
+        describeField(TEXT.mapping.fieldLabels.nObs, data.columnMapping.nObs),
+      ];
+
+      if (data.columnMapping.studyId) {
+        previewHeaders.push(
+          describeField(
+            TEXT.mapping.fieldLabels.studyId,
+            data.columnMapping.studyId,
+          ),
+        );
+      }
+
+      const previewRows = data.data.slice(0, 4).map((row) => {
+        const values = [row.effect, row.se, row.n_obs];
+
+        if (data.columnMapping?.studyId) {
+          values.push(row.study_id);
+        }
+
+        return values.map((value) =>
+          value === undefined || value === null ? "" : String(value),
+        );
+      });
+
+      setPreview([previewHeaders, ...previewRows]);
+
+      const validation = validateData(data.data, data.columnMapping);
       setValidationResult(validation);
     } catch (error) {
       console.error("Error loading data:", error);

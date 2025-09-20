@@ -1,4 +1,9 @@
-import { useDataStore, dataCache, type UploadedData } from "@store/dataStore";
+import {
+  useDataStore,
+  dataCache,
+  type UploadedData,
+  type ColumnMapping,
+} from "@store/dataStore";
 import { generateDataId, processUploadedFile } from "@utils/dataUtils";
 import { mockCsvFiles } from "@utils/mockCsvFiles";
 import { generateMockCSVFile } from "@utils/mockData";
@@ -25,12 +30,16 @@ export class DataProcessingService {
    * @returns Promise<UploadedData> - The processed data
    */
   static async processUploadedFile(file: File): Promise<UploadedData> {
-    const { data, base64Data } = await processUploadedFile(file);
+    const { data, base64Data, columnNames, hasHeaders } =
+      await processUploadedFile(file);
     const dataId = generateDataId();
     const uploadedData: UploadedData = {
       id: dataId,
       filename: file.name,
       data: data,
+      rawData: data,
+      columnNames,
+      hasHeaders,
       base64Data: base64Data,
       uploadedAt: new Date(),
     };
@@ -102,6 +111,42 @@ export class DataProcessingService {
     // Store in Zustand store and cache
     setUploadedData(uploadedData);
     dataCache.set(uploadedData.id, uploadedData);
+  }
+
+  /**
+   * Update stored data (e.g., after column mapping)
+   * @param uploadedData - The updated data to store
+   */
+  static updateStoredData(uploadedData: UploadedData): void {
+    const { setUploadedData } = useDataStore.getState();
+    setUploadedData(uploadedData);
+    dataCache.set(uploadedData.id, uploadedData);
+  }
+
+  /**
+   * Apply column mapping to the uploaded dataset and persist the result
+   * @param dataId - The dataset identifier
+   * @param mapping - Column mapping configuration
+   * @param normalizedData - Data normalized to MAIVE schema
+   */
+  static applyColumnMapping(
+    dataId: string,
+    mapping: ColumnMapping,
+    normalizedData: UploadedData["data"],
+  ): void {
+    const existingData = dataCache.get(dataId);
+
+    if (!existingData) {
+      throw new Error("Uploaded data not found in cache");
+    }
+
+    const updatedData: UploadedData = {
+      ...existingData,
+      data: normalizedData,
+      columnMapping: mapping,
+    };
+
+    this.updateStoredData(updatedData);
   }
 
   /**
