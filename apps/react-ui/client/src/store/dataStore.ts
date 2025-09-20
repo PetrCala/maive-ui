@@ -2,12 +2,23 @@ import type { DataArray } from "@src/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type ColumnMapping = {
+  effect: string;
+  se: string;
+  nObs: string;
+  studyId?: string | null;
+};
+
 export type UploadedData = {
   id: string;
   filename: string;
   data: DataArray;
+  rawData: DataArray;
+  columnNames: string[];
+  hasHeaders: boolean;
   base64Data: string;
   uploadedAt: Date;
+  columnMapping?: ColumnMapping;
 };
 
 type DataStore = {

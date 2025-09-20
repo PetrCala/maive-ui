@@ -144,27 +144,37 @@ const TEXT = {
     requirements: {
       fileFormat:
         "The file must be in **.xlsx**, **.xls**, or **.csv** format.",
-      columnOrder:
-        "**Column order determines what each column represents** - headers are optional.",
+      columnMapping:
+        "After uploading, you can **map the columns** in your file to MAIVE's required fields.",
       requiredColumns:
-        "**First 3 columns** (in order): effect estimates, standard errors, sample sizes.",
-      optionalColumns:
-        "**4th column (optional)**: study ID. Recommended when some studies report more than one estimate.",
-      noAdditionalColumns: "**No additional columns** are allowed.",
-      effectColumn:
-        "The **1st column** represents effect estimates (standardized effects or regression coefficients). It must contain only numbers.",
-      seColumn:
-        "The **2nd column** represents standard errors. It must contain only numbers.",
-      nObsColumn:
-        "The **3rd column** represents the sample size. It must contain only numbers.",
-      studyIdColumn:
-        "The **4th column** (if present) represents study IDs. It can contain strings or numbers.",
-      // Keep these two commented out for now, as the upload page gets a little overwhelming with all the requirements.
-      // minimumRows:
-      //   "The file must contain at least 4 rows of data (excluding headers if present).",
-      // minimumObservations:
-      //   "If a study ID column is present, the number of rows must be larger than the number of unique study IDs plus 3 to ensure enough degrees of freedom for distribution functions.",
+        "Please include columns for **effect estimates**, **standard errors**, and **sample sizes** (study IDs are optional).",
+      numberFormats:
+        "Effect estimates and standard errors can include decimal points or commas—MAIVE will interpret both.",
+      extraColumns:
+        "Extra columns are welcome! You'll be able to ignore them during column mapping.",
     },
+  },
+  mapping: {
+    title: "Map Your Columns",
+    description:
+      "Tell MAIVE which columns contain the required information. We'll ignore any columns you leave unmapped.",
+    fieldLabels: {
+      effect: "Effect size",
+      se: "Standard error",
+      nObs: "Sample size",
+      studyId: "Study ID (optional)",
+    },
+    helperText:
+      "Each column can only be used once. Leave the Study ID field empty if your dataset doesn't include it.",
+    continueButton: "Continue to validation",
+    autoMappingNotice:
+      "We've pre-selected columns where the headers looked familiar. Feel free to adjust before continuing.",
+    previewTitle: "Column preview",
+    loading: "Preparing your data...",
+    mappingError:
+      "We couldn't find the uploaded data. Please upload your file again.",
+    validationRedirectError:
+      "Column mapping is required before running validation. Please map your columns first.",
   },
   model: {
     basicOptions: {
