@@ -110,7 +110,7 @@ export default function UploadPage() {
         try {
           const dataId =
             await DataProcessingService.processAndStoreFile(selectedFile);
-          router.push(`/validation?dataId=${dataId}`);
+          router.push(`/upload/mapping?dataId=${dataId}`);
         } catch (error) {
           console.error("Error processing file:", error);
           alert(

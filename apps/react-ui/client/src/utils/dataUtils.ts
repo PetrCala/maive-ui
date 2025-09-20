@@ -5,7 +5,228 @@ import {
   convertToExportFormat,
   generateResultsData,
 } from "@src/utils/resultsDataUtils";
+import { parse, type ParseResult } from "papaparse";
 import * as XLSX from "xlsx";
+
+/**
+ * Parses a localized numeric string, supporting decimal commas and various thousands separators
+ */
+export const parseLocalizedNumber = (value: unknown): number | null => {
+  if (value === undefined || value === null) {
+    return null;
+  }
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : null;
+  }
+
+  if (typeof value !== "string") {
+    return null;
+  }
+
+  const trimmed = value.trim();
+
+  if (trimmed === "") {
+    return null;
+  }
+
+  const normalized = trimmed.replace(/\u00a0/g, "").replace(/\s+/g, "");
+
+  const europeanPattern = /^-?\d{1,3}(?:\.\d{3})*,\d+$/;
+  const commaDecimalPattern = /^-?\d+,\d+$/;
+  const usThousandsPattern = /^-?\d{1,3}(?:,\d{3})*(?:\.\d+)?$/;
+
+  let sanitized = normalized;
+
+  if (europeanPattern.test(normalized)) {
+    sanitized = normalized.replace(/\./g, "").replace(",", ".");
+  } else if (
+    commaDecimalPattern.test(normalized) &&
+    !normalized.includes(".")
+  ) {
+    sanitized = normalized.replace(",", ".");
+  } else if (usThousandsPattern.test(normalized)) {
+    sanitized = normalized.replace(/,/g, "");
+  }
+
+  const parsed = Number(sanitized);
+  return Number.isNaN(parsed) ? null : parsed;
+};
+
+type ParsedTabularData = {
+  records: DataArray;
+  columnNames: string[];
+  hasHeaders: boolean;
+};
+
+const isCsvFile = (file: File): boolean =>
+  file.type === "text/csv" || file.name.toLowerCase().endsWith(".csv");
+
+const readFileAsDataURL = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+    reader.readAsDataURL(file);
+  });
+};
+
+const readFileAsText = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as string);
+    };
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+    reader.readAsText(file);
+  });
+};
+
+const readFileAsArrayBuffer = (file: File): Promise<ArrayBuffer> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      resolve(reader.result as ArrayBuffer);
+    };
+    reader.onerror = () => {
+      reject(new Error("Failed to read file"));
+    };
+    reader.readAsArrayBuffer(file);
+  });
+};
+
+const isLikelyNumeric = (value: unknown): boolean => {
+  return parseLocalizedNumber(value) !== null;
+};
+
+const detectHeaders = (rows: unknown[][]): boolean => {
+  if (rows.length < 2) {
+    return false;
+  }
+
+  const [firstRow, secondRow] = rows;
+  const firstRowNonNumericCount = firstRow.filter(
+    (cell) => cell !== undefined && cell !== null && !isLikelyNumeric(cell),
+  ).length;
+  const secondRowNumericCount = secondRow.filter((cell) =>
+    cell !== undefined && cell !== null ? isLikelyNumeric(cell) : false,
+  ).length;
+
+  return (
+    firstRowNonNumericCount > firstRow.length / 2 &&
+    secondRowNumericCount > secondRow.length / 2
+  );
+};
+
+const buildRecordsFromRows = (
+  rows: unknown[][],
+  columnNames: string[],
+): DataArray => {
+  return rows.map((row) => {
+    const record: Record<string, unknown> = {};
+    columnNames.forEach((columnName, index) => {
+      record[columnName] = row[index] ?? null;
+    });
+    return record;
+  });
+};
+
+const generateColumnNames = (count: number, headers?: unknown[]): string[] => {
+  if (headers && headers.length > 0) {
+    return headers.map((header, index) => {
+      const headerValue = header ?? `Column ${index + 1}`;
+      return String(headerValue).trim() || `Column ${index + 1}`;
+    });
+  }
+
+  return Array.from({ length: count }, (_, index) => `Column ${index + 1}`);
+};
+
+const sanitizeRows = (rows: unknown[][]): unknown[][] => {
+  const meaningfulRows = rows.filter((row) =>
+    row.some((cell) => cell !== null && cell !== undefined && cell !== ""),
+  );
+
+  const maxColumns = meaningfulRows.reduce((max, row) => {
+    return Math.max(max, row.length);
+  }, 0);
+
+  return meaningfulRows.map((row) => {
+    const normalizedRow = [...row];
+    if (normalizedRow.length < maxColumns) {
+      const fillCount = maxColumns - normalizedRow.length;
+      return [
+        ...normalizedRow,
+        ...Array.from({ length: fillCount }, () => null),
+      ];
+    }
+    return normalizedRow;
+  });
+};
+
+const parseCsvText = (text: string): ParsedTabularData => {
+  const parsedResult: ParseResult<string[]> = parse<string[]>(text, {
+    delimiter: "",
+    newline: "",
+    skipEmptyLines: "greedy",
+    transform: (value: string) => value.trim(),
+    delimitersToGuess: [",", ";", "\t", "|"],
+  });
+
+  const rows = sanitizeRows(parsedResult.data);
+
+  if (rows.length === 0) {
+    return { records: [], columnNames: [], hasHeaders: false };
+  }
+
+  const hasHeaders = detectHeaders(rows);
+  const columnNames = hasHeaders
+    ? generateColumnNames(rows[0]?.length ?? 0, rows[0])
+    : generateColumnNames(rows[0]?.length ?? 0);
+
+  const dataRows = hasHeaders ? rows.slice(1) : rows;
+
+  return {
+    records: buildRecordsFromRows(dataRows, columnNames),
+    columnNames,
+    hasHeaders,
+  };
+};
+
+const parseWorkbook = (arrayBuffer: ArrayBuffer): ParsedTabularData => {
+  const workbook = XLSX.read(arrayBuffer, { type: "array" });
+  const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+  const rawRows: unknown[][] = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, {
+    header: 1,
+    blankrows: false,
+    defval: null,
+  });
+
+  const rows = sanitizeRows(rawRows);
+
+  if (rows.length === 0) {
+    return { records: [], columnNames: [], hasHeaders: false };
+  }
+
+  const hasHeaders = detectHeaders(rows);
+  const columnNames = hasHeaders
+    ? generateColumnNames(rows[0]?.length ?? 0, rows[0])
+    : generateColumnNames(rows[0]?.length ?? 0);
+
+  const dataRows = hasHeaders ? rows.slice(1) : rows;
+
+  return {
+    records: buildRecordsFromRows(dataRows, columnNames),
+    columnNames,
+    hasHeaders,
+  };
+};
 
 // Generate a unique ID for uploaded data
 export const generateDataId = (): string => {
@@ -18,88 +239,31 @@ export const processUploadedFile = async (
 ): Promise<{
   data: DataArray;
   base64Data: string;
+  columnNames: string[];
+  hasHeaders: boolean;
 }> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
+    void (async () => {
       try {
-        const base64Data = reader.result as string;
-
-        // Remove the data URL prefix
-        const base64Content = base64Data.split(",")[1];
-        const binaryData = atob(base64Content);
-        const bytes = new Uint8Array(binaryData.length);
-
-        for (let i = 0; i < binaryData.length; i++) {
-          bytes[i] = binaryData.charCodeAt(i);
-        }
-
-        // Read the Excel/CSV file
-        const workbook = XLSX.read(bytes, { type: "array" });
-        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-        const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-
-        // Check if first row looks like headers (contains non-numeric values)
-        const firstRow = (jsonData as unknown[][])[0] ?? [];
-        const secondRow = (jsonData as unknown[][])[1] ?? [];
-
-        // More robust header detection: check if first row contains mostly non-numeric values
-        // and second row contains mostly numeric values
-        const firstRowNonNumericCount = firstRow.filter(
-          (cell) => cell !== undefined && cell !== null && isNaN(Number(cell)),
-        ).length;
-        const secondRowNumericCount = secondRow.filter(
-          (cell) => cell !== undefined && cell !== null && !isNaN(Number(cell)),
-        ).length;
-
-        const hasHeaders =
-          firstRowNonNumericCount > firstRow.length / 2 &&
-          secondRowNumericCount > secondRow.length / 2;
-
-        let dataRows: unknown[][];
-        let columnNames: string[];
-
-        if (hasHeaders) {
-          // Use the first row as headers
-          columnNames = (firstRow as unknown as string[]).map((header) =>
-            String(header || ""),
-          );
-          dataRows = (jsonData as unknown[][]).slice(1); // skip header row
-        } else {
-          // No headers detected, use positional column names and treat all rows as data
-          columnNames = ["effect", "se", "n_obs"];
-          if (firstRow.length === 4) {
-            columnNames.push("study_id");
-          }
-          // Include ALL rows as data when no headers are detected
-          dataRows = jsonData as unknown[][];
-        }
-
-        // Convert to structured data using column order
-        const records = dataRows.map((row) => {
-          const obj: Record<string, unknown> = {};
-          columnNames.forEach((columnName, index) => {
-            // When no headers, row is an array, so we access by index
-            obj[columnName] = row[index];
-          });
-          return obj;
-        });
+        const [base64Data, parsed] = await Promise.all([
+          readFileAsDataURL(file),
+          isCsvFile(file)
+            ? readFileAsText(file).then((text) => parseCsvText(text))
+            : readFileAsArrayBuffer(file).then((buffer) =>
+                parseWorkbook(buffer),
+              ),
+        ]);
 
         resolve({
-          data: records,
-          base64Data: base64Data,
+          data: parsed.records,
+          base64Data,
+          columnNames: parsed.columnNames,
+          hasHeaders: parsed.hasHeaders,
         });
       } catch (error) {
         reject(error);
       }
-    };
-
-    reader.onerror = () => {
-      reject(new Error("Failed to read file"));
-    };
-
-    reader.readAsDataURL(file);
+    })();
   });
 };
 
