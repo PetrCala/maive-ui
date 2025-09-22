@@ -77,6 +77,20 @@ const generateMockResults = (nrow: number) => {
       eggerCoef: faker.number.float({ min: -2, max: 2, multipleOf: 0.0001 }),
       eggerSE: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
       isSignificant: faker.datatype.boolean(),
+      eggerBootCI:
+        Math.random() > 0.5
+          ? [
+              faker.number.float({ min: -2, max: 2, multipleOf: 0.0001 }),
+              faker.number.float({ min: -2, max: 2, multipleOf: 0.0001 }),
+            ]
+          : "NA",
+      eggerAndersonRubinCI:
+        Math.random() > 0.5
+          ? [
+              faker.number.float({ min: -2, max: 2, multipleOf: 0.0001 }),
+              faker.number.float({ min: -2, max: 2, multipleOf: 0.0001 }),
+            ]
+          : "NA",
     },
     firstStageFTest:
       Math.random() > 0.5

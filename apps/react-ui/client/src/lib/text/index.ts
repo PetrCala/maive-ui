@@ -18,10 +18,11 @@ export type ResultsText = Readonly<{
     bootCI: MetricText;
   }>;
   publicationBias: SectionWithMetrics<{
-    pValue: MetricText;
     eggerCoef: MetricText;
     eggerSE: MetricText;
     significance: MetricText;
+    eggerBootCI: MetricText;
+    eggerAndersonRubinCI: MetricText;
   }>;
   diagnosticTests: SectionWithMetrics<{
     hausmanTest: MetricText;
@@ -66,25 +67,30 @@ const RESULTS_TEXT: ResultsText = {
   publicationBias: {
     title: "Publication Bias and p-hacking Analysis",
     metrics: {
-      pValue: {
-        label: "Egger Test p-value",
-        tooltip:
-          "p-value from the instrumented FAT-PET regression that tests for publication bias / p-hacking after MAIVE adjustment.",
-      },
       eggerCoef: {
-        label: "Egger Coefficient",
+        label: "Egger Coefficient (Estimate)",
         tooltip:
           "Coefficient capturing funnel asymmetry in the instrumented Egger regression.",
       },
       eggerSE: {
-        label: "Standard Error of the Egger Coefficient",
+        label: "Standard Error",
         tooltip:
           "Robust standard error of the coefficient capturing funnel asymmetry in the instrumented Egger regression.",
       },
       significance: {
-        label: "Egger Test Significant at 5% level",
+        label: "Significant at 5% level",
         tooltip:
           "Indicates whether publication bias is statistically significant at the 5% level according to the instrumented FAT test.",
+      },
+      eggerBootCI: {
+        label: "Egger Coefficient Bootstrap 95% CI",
+        tooltip:
+          "Bootstrap 95% confidence interval for the Egger coefficient from the instrumented regression.",
+      },
+      eggerAndersonRubinCI: {
+        label: "Egger Coefficient Anderson-Rubin 95% CI",
+        tooltip:
+          "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the Egger coefficient, matching the options used for the main estimate.",
       },
     },
   },
@@ -374,11 +380,6 @@ export const getResultsText = (
       ...publicationBias,
       metrics: {
         ...publicationBias.metrics,
-        pValue: {
-          ...publicationBias.metrics.pValue,
-          tooltip:
-            "p-value from the Egger regression that tests for publication bias or p-hacking.",
-        },
         eggerCoef: {
           ...publicationBias.metrics.eggerCoef,
           tooltip:
@@ -393,6 +394,16 @@ export const getResultsText = (
           ...publicationBias.metrics.significance,
           tooltip:
             "Indicates whether publication bias is statistically significant at the 5% level according to the Egger test.",
+        },
+        eggerBootCI: {
+          ...publicationBias.metrics.eggerBootCI,
+          tooltip:
+            "Bootstrap 95% confidence interval for the Egger coefficient from the regression without instrumenting.",
+        },
+        eggerAndersonRubinCI: {
+          ...publicationBias.metrics.eggerAndersonRubinCI,
+          tooltip:
+            "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the Egger coefficient when computed without instrumenting.",
         },
       },
     },

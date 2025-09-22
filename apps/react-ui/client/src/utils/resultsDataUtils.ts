@@ -91,18 +91,30 @@ export const generateResultsData = (
       section: "bias",
     },
     {
-      label: resultsText.publicationBias.metrics.pValue.label,
-      value: results.publicationBias.pValue,
-      show: true,
-      section: "bias",
-    },
-    {
       label: resultsText.publicationBias.metrics.significance.label,
       value: results.publicationBias.isSignificant ? "Yes" : "No",
       show: true,
       highlightColor: results.publicationBias.isSignificant
         ? "text-green-600"
         : "text-red-600",
+      section: "bias",
+    },
+    {
+      label: resultsText.publicationBias.metrics.eggerBootCI.label,
+      value:
+        results.publicationBias.eggerBootCI !== "NA"
+          ? formatCI(results.publicationBias.eggerBootCI)
+          : "NA",
+      show: results.publicationBias.eggerBootCI !== "NA",
+      section: "bias",
+    },
+    {
+      label: resultsText.publicationBias.metrics.eggerAndersonRubinCI.label,
+      value:
+        results.publicationBias.eggerAndersonRubinCI !== "NA"
+          ? formatCI(results.publicationBias.eggerAndersonRubinCI)
+          : "NA",
+      show: results.publicationBias.eggerAndersonRubinCI !== "NA",
       section: "bias",
     },
     {

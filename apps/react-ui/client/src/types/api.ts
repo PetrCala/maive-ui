@@ -39,10 +39,12 @@ type ModelResults = {
   isSignificant: boolean;
   andersonRubinCI: [number, number] | "NA";
   publicationBias: {
-    pValue: number;
     eggerCoef: number;
     eggerSE: number;
     isSignificant: boolean;
+    eggerBootCI: [number, number] | "NA";
+    eggerAndersonRubinCI: [number, number] | "NA";
+    pValue?: number;
   };
   firstStageFTest: number | "NA";
   hausmanTest: {
