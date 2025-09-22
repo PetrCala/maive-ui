@@ -186,9 +186,9 @@ const TEXT = {
   validation: {
     title: "Validate Your Data",
     description:
-      "We automatically check your dataset for common issues before modeling.",
+      "Map your columns, review the previews, and let MAIVE check for common issues before modeling.",
     helperText:
-      "If something doesn't look right, go back to the upload step to adjust your column mapping.",
+      "If something looks off, adjust the column mapping below and the previews will update instantly.",
     loading: "Preparing your validation results...",
     missingDataTitle: "No data selected",
     missingDataMessage:
