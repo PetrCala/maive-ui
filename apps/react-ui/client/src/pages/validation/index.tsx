@@ -104,7 +104,7 @@ const describeField = (
   fieldLabel: string,
   mappedColumn?: string | null,
 ): string => {
-  return mappedColumn ? `${fieldLabel} – ${mappedColumn}` : fieldLabel;
+  return mappedColumn ? `${fieldLabel} (${mappedColumn})` : fieldLabel;
 };
 
 const formatRawValue = (value: unknown): string => {
@@ -700,11 +700,13 @@ export default function ValidationPage() {
                   })}
                 </div>
 
-                <DataPreview
-                  title={TEXT.mapping.rawPreviewTitle}
-                  headers={availableColumns}
-                  rows={rawPreviewRows}
-                />
+                {CONFIG.SHOULD_SHOW_RAW_DATA_PREVIEW && (
+                  <DataPreview
+                    title={TEXT.mapping.rawPreviewTitle}
+                    headers={availableColumns}
+                    rows={rawPreviewRows}
+                  />
+                )}
 
                 <div className="space-y-4">
                   <DataPreview
