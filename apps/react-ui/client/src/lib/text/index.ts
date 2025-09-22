@@ -170,7 +170,7 @@ const TEXT = {
     autoMappingNotice:
       "We've pre-selected columns where the headers looked familiar. Feel free to adjust before continuing.",
     rawPreviewTitle: "Column preview",
-    mappedPreviewTitle: "Mapped data preview",
+    mappedPreviewTitle: "Data preview",
     mappedPreviewDescription:
       "Values shown here update automatically as you change the column mapping.",
     validationTitle: "Validation",
@@ -194,7 +194,7 @@ const TEXT = {
     missingDataMessage:
       "Upload your file and complete the column mapping to view validation results.",
     continueButton: "Continue to model setup",
-    previewTitle: "Mapped data preview",
+    previewTitle: "Data preview",
     previewDescription:
       "Double-check that the normalized values look correct before continuing.",
     resultsTitle: "Validation results",
