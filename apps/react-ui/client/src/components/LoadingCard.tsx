@@ -8,6 +8,8 @@ type LoadingCardProps = {
   className?: string;
   children?: ReactNode;
   showSpinner?: boolean;
+  fullWidth?: boolean;
+  containerClassName?: string;
 };
 
 export default function LoadingCard({
@@ -18,6 +20,8 @@ export default function LoadingCard({
   className = "",
   children,
   showSpinner = true,
+  fullWidth = true,
+  containerClassName = "",
 }: LoadingCardProps) {
   const sizeClasses = {
     sm: "p-6 max-w-sm",
@@ -48,8 +52,16 @@ export default function LoadingCard({
     purple: "text-purple-600 dark:text-purple-400",
   };
 
+  const containerClasses = [
+    "bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center transition-all duration-500 opacity-100 scale-100 animate-fade-in",
+    fullWidth ? "w-full" : "",
+    containerClassName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 flex flex-col items-center w-full transition-all duration-500 opacity-100 scale-100 animate-fade-in">
+    <div className={containerClasses}>
       <div
         className={`${sizeClasses[size]} flex flex-col items-center ${className}`}
       >

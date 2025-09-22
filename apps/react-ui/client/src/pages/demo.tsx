@@ -98,7 +98,8 @@ export default function DemoPage() {
             subtitle="Preparing your demo analysis"
             color="purple"
             size="md"
-            className="mx-auto"
+            fullWidth={false}
+            containerClassName="w-full max-w-md"
           />
         )}
       </div>
