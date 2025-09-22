@@ -3,9 +3,6 @@
 
 # nolint start: undesirable_function_linter.
 library(clubSandwich)
-library(varhandle)
-library(pracma)
-library(sandwich)
 library(metafor)
 
 source("funnel_plot.R")
