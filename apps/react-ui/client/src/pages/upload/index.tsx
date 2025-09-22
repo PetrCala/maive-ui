@@ -23,7 +23,7 @@ import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import { parseLocalizedNumber } from "@utils/dataUtils";
 import { dataCache, useDataStore } from "@store/dataStore";
 import type { ColumnMapping, UploadedData } from "@store/dataStore";
-import type { AlertType, DataArray } from "@src/types";
+import type { DataArray } from "@src/types";
 
 const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
 
@@ -32,17 +32,6 @@ type MappingState = {
   se: string | null;
   nObs: string | null;
   studyId: string | null;
-};
-
-type ValidationMessage = {
-  type: AlertType;
-  message: string;
-};
-
-type ValidationResult = {
-  isValid: boolean;
-  messages: ValidationMessage[];
-  containsInfo?: boolean;
 };
 
 const INITIAL_MAPPING: MappingState = {
@@ -179,179 +168,6 @@ const convertToNormalizedRow = (
   return normalized;
 };
 
-const validateData = (
-  fullData: DataArray,
-  mapping: ColumnMapping,
-): ValidationResult => {
-  const messages: ValidationMessage[] = [];
-
-  if (fullData.length < 4) {
-    messages.push({
-      type: CONST.ALERT_TYPES.ERROR,
-      message:
-        "The file must contain at least 4 rows of data (excluding headers if present).",
-    });
-  }
-
-  const effectField = describeField(
-    TEXT.mapping.fieldLabels.effect,
-    mapping.effect,
-  );
-  const seField = describeField(TEXT.mapping.fieldLabels.se, mapping.se);
-  const nObsField = describeField(TEXT.mapping.fieldLabels.nObs, mapping.nObs);
-  const studyIdField = describeField(
-    TEXT.mapping.fieldLabels.studyId,
-    mapping.studyId ?? undefined,
-  );
-
-  const columnChecks = [
-    {
-      key: "effect" as const,
-      errorMsg: `The ${effectField} column contains non-numeric values. All effect estimates must be numbers.`,
-    },
-    {
-      key: "se" as const,
-      errorMsg: `The ${seField} column contains non-numeric values. All standard errors must be numbers.`,
-    },
-    {
-      key: "n_obs" as const,
-      errorMsg: `The ${nObsField} column contains non-numeric values. All sample sizes must be numbers.`,
-    },
-  ];
-
-  columnChecks.forEach((col) => {
-    const hasNonNumeric = fullData.some((row) => {
-      const value = row[col.key];
-      if (value === undefined || value === null) {
-        return false;
-      }
-      if (typeof value === "number") {
-        return Number.isNaN(value);
-      }
-      return Number.isNaN(Number(value));
-    });
-
-    if (hasNonNumeric) {
-      messages.push({
-        type: CONST.ALERT_TYPES.ERROR,
-        message: col.errorMsg,
-      });
-    }
-  });
-
-  if (mapping.studyId) {
-    const hasInvalidStudyId = fullData.some((row) => {
-      const value = row.study_id;
-      return value === undefined || value === null || value === "";
-    });
-
-    if (hasInvalidStudyId) {
-      messages.push({
-        type: CONST.ALERT_TYPES.ERROR,
-        message: `The ${studyIdField} column contains empty values. Study IDs can be strings or numbers.`,
-      });
-    }
-  }
-
-  const nonPositiveIndexes: number[] = [];
-  fullData.forEach((row, index) => {
-    const value = row.n_obs;
-    if (value === undefined || value === null) {
-      return;
-    }
-
-    const numericValue = typeof value === "number" ? value : Number(value);
-    if (
-      !Number.isNaN(numericValue) &&
-      (numericValue <= 0 || !Number.isInteger(numericValue))
-    ) {
-      nonPositiveIndexes.push(index + 1);
-    }
-  });
-
-  if (nonPositiveIndexes.length > 0) {
-    const maxIndexes = 3;
-    const displayIndexes = nonPositiveIndexes.slice(0, maxIndexes);
-    const hasMore = nonPositiveIndexes.length > maxIndexes;
-    const indexesText = displayIndexes.join(", ") + (hasMore ? "..." : "");
-
-    messages.push({
-      type: CONST.ALERT_TYPES.ERROR,
-      message: `The ${nObsField} column must contain only positive integers (greater than 0). Found invalid values at row(s): ${indexesText}. Please check your data.`,
-    });
-  }
-
-  const hasNegativeSE = fullData.some((row) => {
-    const value = row.se;
-    if (value === undefined || value === null) {
-      return false;
-    }
-    const numericValue = typeof value === "number" ? value : Number(value);
-    return !Number.isNaN(numericValue) && numericValue < 0;
-  });
-
-  if (hasNegativeSE) {
-    messages.push({
-      type: CONST.ALERT_TYPES.ERROR,
-      message: "Standard errors cannot be negative. Please check your data.",
-    });
-  }
-
-  const hasMissingValues = fullData.some((row) => {
-    return ["effect", "se", "n_obs"].some((key) => {
-      const value = row[key];
-      return value === undefined || value === null || value === "";
-    });
-  });
-
-  if (hasMissingValues) {
-    messages.push({
-      type: CONST.ALERT_TYPES.WARNING,
-      message:
-        "The data contains missing values. These will be excluded from the analysis.",
-    });
-  }
-
-  if (mapping.studyId) {
-    const uniqueStudyIds = new Set(
-      fullData
-        .map((row) => row.study_id)
-        .filter((value) => value !== undefined && value !== null),
-    ).size;
-
-    if (!(fullData.length >= uniqueStudyIds + 3)) {
-      messages.push({
-        type: CONST.ALERT_TYPES.ERROR,
-        message:
-          "The number of rows must be larger than the number of unique study IDs plus 3.",
-      });
-    }
-  }
-
-  if (fullData.length > 2000) {
-    messages.push({
-      type: CONST.ALERT_TYPES.WARNING,
-      message: "Large dataset detected. Processing may take longer than usual.",
-    });
-  }
-
-  const hasErrors = messages.some(
-    (msg) => msg.type === CONST.ALERT_TYPES.ERROR,
-  );
-  if (!hasErrors) {
-    messages.push({
-      type: CONST.ALERT_TYPES.SUCCESS,
-      message: "Your data is valid and ready for analysis!",
-    });
-  }
-
-  return {
-    isValid: !hasErrors,
-    messages,
-    containsInfo: messages.some((msg) => msg.type === CONST.ALERT_TYPES.INFO),
-  };
-};
-
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -359,8 +175,6 @@ export default function UploadPage() {
   const [mapping, setMapping] = useState<MappingState>(INITIAL_MAPPING);
   const [autoMappingApplied, setAutoMappingApplied] = useState(false);
   const [normalizedData, setNormalizedData] = useState<DataArray>([]);
-  const [validationResult, setValidationResult] =
-    useState<ValidationResult | null>(null);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -568,15 +382,12 @@ export default function UploadPage() {
       return;
     }
 
-    if (!validationResult?.isValid || !dataId) {
-      showAlert(
-        "Please resolve the validation errors before continuing.",
-        "error",
-      );
+    if (!dataId) {
+      showAlert(TEXT.mapping.mappingError, "error");
       return;
     }
 
-    router.push(`/model?dataId=${dataId}`);
+    router.push(`/validation?dataId=${dataId}`);
   };
 
   useEffect(() => {
@@ -585,7 +396,6 @@ export default function UploadPage() {
       setMapping(INITIAL_MAPPING);
       setAutoMappingApplied(false);
       setNormalizedData([]);
-      setValidationResult(null);
       return;
     }
 
@@ -606,7 +416,6 @@ export default function UploadPage() {
         setMapping(INITIAL_MAPPING);
         setAutoMappingApplied(false);
         setNormalizedData([]);
-        setValidationResult(null);
         router.replace(pathname ?? "/upload");
         return;
       }
@@ -637,13 +446,11 @@ export default function UploadPage() {
   useEffect(() => {
     if (!uploadedData || !dataId) {
       setNormalizedData([]);
-      setValidationResult(null);
       return;
     }
 
     if (!mapping.effect || !mapping.se || !mapping.nObs) {
       setNormalizedData([]);
-      setValidationResult(null);
       return;
     }
 
@@ -666,20 +473,14 @@ export default function UploadPage() {
       );
 
       setNormalizedData(normalizedRows);
-      setValidationResult(validateData(normalizedRows, mappingConfig));
     } catch (error) {
       console.error("Failed to apply column mapping:", error);
-      setValidationResult({
-        isValid: false,
-        messages: [
-          {
-            type: CONST.ALERT_TYPES.ERROR,
-            message: "We couldn't apply the column mapping. Please try again.",
-          },
-        ],
-      });
+      showAlert(
+        "We couldn't apply the column mapping. Please try again.",
+        "error",
+      );
     }
-  }, [uploadedData, dataId, mapping]);
+  }, [uploadedData, dataId, mapping, showAlert]);
 
   return (
     <>
@@ -911,22 +712,17 @@ export default function UploadPage() {
                     message={TEXT.mapping.validationIncomplete}
                   />
                 ) : (
-                  <div className="space-y-3">
-                    {validationResult?.messages.map((item, index) => (
-                      <Alert
-                        key={`${item.type}-${index}`}
-                        type={item.type}
-                        message={item.message}
-                      />
-                    ))}
-                  </div>
+                  <Alert
+                    type={CONST.ALERT_TYPES.SUCCESS}
+                    message={TEXT.mapping.readyForValidation}
+                  />
                 )}
 
                 <ActionButton
                   onClick={handleContinue}
                   variant="primary"
                   className="w-full"
-                  disabled={!validationResult?.isValid}
+                  disabled={!mappingComplete || !dataId}
                 >
                   {TEXT.mapping.continueButton}
                 </ActionButton>
