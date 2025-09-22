@@ -16,8 +16,78 @@ import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import { dataCache, useDataStore } from "@store/dataStore";
 import type { ColumnMapping, UploadedData } from "@store/dataStore";
 import type { AlertType, DataArray } from "@src/types";
+import { parseLocalizedNumber } from "@utils/dataUtils";
+import { DataProcessingService } from "@src/services/dataProcessingService";
 
 const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
+
+type MappingState = {
+  effect: string | null;
+  se: string | null;
+  nObs: string | null;
+  studyId: string | null;
+};
+
+const INITIAL_MAPPING: MappingState = {
+  effect: null,
+  se: null,
+  nObs: null,
+  studyId: null,
+};
+
+const NORMALIZATION_RULES: Record<keyof MappingState, RegExp[]> = {
+  effect: [/^effect$/, /^effect[_\s-]?size$/, /^estimate$/, /coef/, /beta/],
+  se: [/^se$/, /standard[_\s-]?error/, /^stderr$/, /^std[_\s-]?err/],
+  nObs: [/^n$/, /^n[_\s-]?obs$/, /^n[_\s-]?size$/, /sample/, /participants/],
+  studyId: [/study/, /id$/],
+};
+
+const normalizeColumnName = (name: string): string => name.trim().toLowerCase();
+
+const autoMapColumns = (
+  columns: string[],
+): { mapping: MappingState; applied: boolean } => {
+  const usedColumns = new Set<string>();
+  const mapping: MappingState = { ...INITIAL_MAPPING };
+
+  (Object.keys(NORMALIZATION_RULES) as Array<keyof MappingState>).forEach(
+    (field) => {
+      NORMALIZATION_RULES[field].some((pattern) => {
+        const match = columns.find((column) => {
+          if (usedColumns.has(column)) {
+            return false;
+          }
+
+          const normalized = normalizeColumnName(column);
+          return pattern.test(normalized);
+        });
+
+        if (match) {
+          mapping[field] = match;
+          usedColumns.add(match);
+          return true;
+        }
+
+        return false;
+      });
+    },
+  );
+
+  const requiredMapped = REQUIRED_FIELDS.every(
+    (field) => mapping[field] !== null,
+  );
+
+  if (!requiredMapped && columns.length >= 3 && columns.length <= 4) {
+    mapping.effect = columns[0] ?? null;
+    mapping.se = columns[1] ?? null;
+    mapping.nObs = columns[2] ?? null;
+    mapping.studyId = columns[3] ?? null;
+  }
+
+  const hasAnyMapping = Object.values(mapping).some((value) => value !== null);
+
+  return { mapping, applied: hasAnyMapping };
+};
 
 type ValidationMessage = {
   type: AlertType;
@@ -37,6 +107,14 @@ const describeField = (
   return mappedColumn ? `${fieldLabel} – ${mappedColumn}` : fieldLabel;
 };
 
+const formatRawValue = (value: unknown): string => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  return String(value);
+};
+
 const formatNormalizedValue = (value: unknown): string => {
   if (value === null || value === undefined) {
     return "";
@@ -47,6 +125,52 @@ const formatNormalizedValue = (value: unknown): string => {
   }
 
   return String(value);
+};
+
+const convertToNormalizedRow = (
+  row: Record<string, unknown>,
+  mapping: MappingState,
+): Record<string, unknown> => {
+  const getValue = (column: string | null) => {
+    if (!column) {
+      return null;
+    }
+
+    const rawValue = row[column];
+
+    if (rawValue === undefined || rawValue === null) {
+      return null;
+    }
+
+    if (typeof rawValue === "string") {
+      const trimmed = rawValue.trim();
+      return trimmed === "" ? null : trimmed;
+    }
+
+    return rawValue;
+  };
+
+  const normalizeNumericValue = (column: string | null) => {
+    const value = getValue(column);
+    if (value === null || value === undefined || value === "") {
+      return null;
+    }
+
+    const parsed = parseLocalizedNumber(value);
+    return parsed ?? Number.NaN;
+  };
+
+  const normalized: Record<string, unknown> = {
+    effect: normalizeNumericValue(mapping.effect),
+    se: normalizeNumericValue(mapping.se),
+    n_obs: normalizeNumericValue(mapping.nObs),
+  };
+
+  if (mapping.studyId) {
+    normalized.study_id = getValue(mapping.studyId);
+  }
+
+  return normalized;
 };
 
 const validateData = (
@@ -229,10 +353,16 @@ export default function ValidationPage() {
   const { showAlert } = useGlobalAlert();
   const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mapping, setMapping] = useState<MappingState>(INITIAL_MAPPING);
+  const [autoMappingApplied, setAutoMappingApplied] = useState(false);
+  const [normalizedData, setNormalizedData] = useState<DataArray>([]);
 
   useEffect(() => {
     if (!dataId) {
       setUploadedData(null);
+      setMapping(INITIAL_MAPPING);
+      setAutoMappingApplied(false);
+      setNormalizedData([]);
       setLoading(false);
       return;
     }
@@ -253,7 +383,28 @@ export default function ValidationPage() {
       if (!data) {
         showAlert(TEXT.mapping.mappingError, "error");
         setUploadedData(null);
+        setMapping(INITIAL_MAPPING);
+        setAutoMappingApplied(false);
+        setNormalizedData([]);
         return;
+      }
+
+      const columns = data.columnNames?.length
+        ? data.columnNames
+        : Object.keys(data.rawData[0] ?? {});
+
+      if (data.columnMapping) {
+        setMapping({
+          effect: data.columnMapping.effect,
+          se: data.columnMapping.se,
+          nObs: data.columnMapping.nObs,
+          studyId: data.columnMapping.studyId ?? null,
+        });
+        setAutoMappingApplied(false);
+      } else {
+        const { mapping: guessedMapping, applied } = autoMapColumns(columns);
+        setMapping(guessedMapping);
+        setAutoMappingApplied(applied);
       }
 
       setUploadedData(data);
@@ -261,27 +412,45 @@ export default function ValidationPage() {
       console.error("Failed to load uploaded data:", error);
       showAlert(TEXT.mapping.mappingError, "error");
       setUploadedData(null);
+      setMapping(INITIAL_MAPPING);
+      setAutoMappingApplied(false);
+      setNormalizedData([]);
     } finally {
       setLoading(false);
     }
   }, [dataId, showAlert]);
 
-  const mapping = uploadedData?.columnMapping ?? null;
-
   const mappingComplete = useMemo(() => {
-    if (!mapping) {
-      return false;
-    }
-
     return REQUIRED_FIELDS.every((field) => Boolean(mapping[field]));
   }, [mapping]);
 
-  const normalizedData = useMemo<DataArray>(() => {
-    return uploadedData?.data ?? [];
+  const availableColumns = useMemo(() => {
+    if (!uploadedData) {
+      return [] as string[];
+    }
+
+    if (uploadedData.columnNames?.length) {
+      return uploadedData.columnNames;
+    }
+
+    const firstRow = uploadedData.rawData[0] ?? {};
+    return Object.keys(firstRow);
   }, [uploadedData]);
 
+  const rawPreviewRows = useMemo(() => {
+    if (!uploadedData) {
+      return [] as string[][];
+    }
+
+    return uploadedData.rawData
+      .slice(0, 5)
+      .map((row) =>
+        availableColumns.map((header) => formatRawValue(row[header])),
+      );
+  }, [availableColumns, uploadedData]);
+
   const mappedPreviewHeaders = useMemo(() => {
-    if (!mappingComplete || !mapping) {
+    if (!mappingComplete || !mapping.effect || !mapping.se || !mapping.nObs) {
       return [] as string[];
     }
 
@@ -298,10 +467,16 @@ export default function ValidationPage() {
     }
 
     return headers;
-  }, [mappingComplete, mapping]);
+  }, [
+    mappingComplete,
+    mapping.effect,
+    mapping.nObs,
+    mapping.se,
+    mapping.studyId,
+  ]);
 
   const mappedPreviewRows = useMemo(() => {
-    if (!mappingComplete || !mapping || !normalizedData.length) {
+    if (!mappingComplete || !normalizedData.length) {
       return [] as string[][];
     }
 
@@ -314,10 +489,55 @@ export default function ValidationPage() {
 
       return values.map((value) => formatNormalizedValue(value));
     });
-  }, [mappingComplete, mapping, normalizedData]);
+  }, [mapping.studyId, mappingComplete, normalizedData]);
+
+  const usedColumns = useMemo(() => {
+    return new Set(
+      Object.values(mapping).filter((value): value is string => Boolean(value)),
+    );
+  }, [mapping]);
+
+  useEffect(() => {
+    if (!uploadedData || !dataId) {
+      setNormalizedData([]);
+      return;
+    }
+
+    if (!mapping.effect || !mapping.se || !mapping.nObs) {
+      setNormalizedData([]);
+      return;
+    }
+
+    try {
+      const normalizedRows = uploadedData.rawData.map((row) =>
+        convertToNormalizedRow(row, mapping),
+      );
+
+      const mappingConfig: ColumnMapping = {
+        effect: mapping.effect,
+        se: mapping.se,
+        nObs: mapping.nObs,
+        studyId: mapping.studyId ?? null,
+      };
+
+      DataProcessingService.applyColumnMapping(
+        dataId,
+        mappingConfig,
+        normalizedRows,
+      );
+
+      setNormalizedData(normalizedRows);
+    } catch (error) {
+      console.error("Failed to apply column mapping:", error);
+      showAlert(
+        "We couldn't apply the column mapping. Please try again.",
+        "error",
+      );
+    }
+  }, [uploadedData, dataId, mapping, showAlert]);
 
   const validationResult = useMemo<ValidationResult | null>(() => {
-    if (!mappingComplete || !mapping) {
+    if (!mappingComplete || !mapping.effect || !mapping.se || !mapping.nObs) {
       return null;
     }
 
@@ -329,7 +549,22 @@ export default function ValidationPage() {
     };
 
     return validateData(normalizedData, mappingConfig);
-  }, [mappingComplete, mapping, normalizedData]);
+  }, [
+    mappingComplete,
+    mapping.effect,
+    mapping.nObs,
+    mapping.se,
+    mapping.studyId,
+    normalizedData,
+  ]);
+
+  const handleMappingChange = (field: keyof MappingState, value: string) => {
+    setMapping((prev) => ({
+      ...prev,
+      [field]: value || null,
+    }));
+    setAutoMappingApplied(false);
+  };
 
   const handleContinue = () => {
     if (!mappingComplete) {
@@ -353,7 +588,7 @@ export default function ValidationPage() {
     router.push(`/model?dataId=${dataId}`);
   };
 
-  const backLink = dataId ? `/upload?dataId=${dataId}` : "/upload";
+  const backLink = "/upload";
 
   return (
     <>
@@ -396,38 +631,98 @@ export default function ValidationPage() {
             </div>
           ) : (
             <div className="space-y-6 mt-6">
-              <div className="card p-6 sm:p-8 space-y-4">
+              <div className="card p-6 sm:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-bold text-primary mb-2">
-                    {TEXT.validation.previewTitle}
+                    {TEXT.mapping.title}
                   </h2>
-                  <p className="text-secondary">
-                    {TEXT.validation.previewDescription}
+                  <p className="text-secondary mb-2">
+                    {TEXT.mapping.description}
+                  </p>
+                  <p className="text-muted text-sm">
+                    {TEXT.mapping.helperText}
                   </p>
                 </div>
 
-                {!mappingComplete ? (
-                  <Alert
-                    type={CONST.ALERT_TYPES.INFO}
-                    message={TEXT.mapping.validationIncomplete}
-                  />
-                ) : (
-                  <>
-                    <DataPreview
-                      headers={mappedPreviewHeaders}
-                      rows={mappedPreviewRows}
-                      emptyMessage={TEXT.mapping.validationIncomplete}
-                    />
-                    {normalizedData.length > 0 &&
-                      CONFIG.SHOULD_SHOW_DF_ROWS_INFO && (
-                        <RowInfoComponent
-                          rowCount={normalizedData.length}
-                          showFirstRows={normalizedData.length > 5}
-                          rowCountToShow={5}
-                        />
-                      )}
-                  </>
+                {autoMappingApplied && (
+                  <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-900 dark:text-blue-100">
+                    {TEXT.mapping.autoMappingNotice}
+                  </div>
                 )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {(
+                    Object.keys(TEXT.mapping.fieldLabels) as Array<
+                      keyof typeof TEXT.mapping.fieldLabels
+                    >
+                  ).map((fieldKey) => {
+                    const label = TEXT.mapping.fieldLabels[fieldKey];
+                    const isRequired = REQUIRED_FIELDS.includes(
+                      fieldKey as keyof ColumnMapping,
+                    );
+
+                    return (
+                      <div key={fieldKey} className="flex flex-col">
+                        <label className="text-sm font-medium text-secondary mb-2">
+                          {label}
+                          {isRequired ? (
+                            <span className="text-red-500">*</span>
+                          ) : null}
+                        </label>
+                        <select
+                          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          value={mapping[fieldKey as keyof MappingState] ?? ""}
+                          onChange={(event) =>
+                            handleMappingChange(
+                              fieldKey as keyof MappingState,
+                              event.target.value,
+                            )
+                          }
+                        >
+                          <option value="">
+                            {isRequired ? "Select a column" : "Leave unmapped"}
+                          </option>
+                          {availableColumns.map((column) => (
+                            <option
+                              key={column}
+                              value={column}
+                              disabled={
+                                mapping[fieldKey as keyof MappingState] !==
+                                  column && usedColumns.has(column)
+                              }
+                            >
+                              {column}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <DataPreview
+                  title={TEXT.mapping.rawPreviewTitle}
+                  headers={availableColumns}
+                  rows={rawPreviewRows}
+                />
+
+                <div className="space-y-4">
+                  <DataPreview
+                    title={TEXT.mapping.mappedPreviewTitle}
+                    description={TEXT.mapping.mappedPreviewDescription}
+                    headers={mappedPreviewHeaders}
+                    rows={mappedPreviewRows}
+                    emptyMessage={TEXT.mapping.validationIncomplete}
+                  />
+                  {normalizedData.length > 0 &&
+                    CONFIG.SHOULD_SHOW_DF_ROWS_INFO && (
+                      <RowInfoComponent
+                        rowCount={normalizedData.length}
+                        showFirstRows={normalizedData.length > 5}
+                        rowCountToShow={5}
+                      />
+                    )}
+                </div>
               </div>
 
               <div className="card p-6 sm:p-8 space-y-4">

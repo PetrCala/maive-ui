@@ -1,17 +1,14 @@
 "use client";
 
-import { useState, useCallback, useRef, useMemo, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Head from "next/head";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { FileRejection } from "react-dropzone";
 import { useDropzone } from "react-dropzone";
 import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
-import { DataPreview } from "@src/components/DataPreview";
-import { DataProcessingService } from "@src/services/dataProcessingService";
+
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
-import Alert from "@src/components/Alert";
-import RowInfoComponent from "@src/components/RowInfoComponent";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import MDXContent from "@src/context/MDXContent";
@@ -19,178 +16,34 @@ import CONFIG from "@src/CONFIG";
 import { getRandomMockCsvFile } from "@src/utils/mockCsvFiles";
 import { generateMockCSVFile } from "@src/utils/mockData";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
-import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
-import { parseLocalizedNumber } from "@utils/dataUtils";
-import { dataCache, useDataStore } from "@store/dataStore";
-import type { ColumnMapping, UploadedData } from "@store/dataStore";
-import type { DataArray } from "@src/types";
-
-const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
-
-type MappingState = {
-  effect: string | null;
-  se: string | null;
-  nObs: string | null;
-  studyId: string | null;
-};
-
-const INITIAL_MAPPING: MappingState = {
-  effect: null,
-  se: null,
-  nObs: null,
-  studyId: null,
-};
-
-const NORMALIZATION_RULES: Record<keyof MappingState, RegExp[]> = {
-  effect: [/^effect$/, /^effect[_\s-]?size$/, /^estimate$/, /coef/, /beta/],
-  se: [/^se$/, /standard[_\s-]?error/, /^stderr$/, /^std[_\s-]?err/],
-  nObs: [/^n$/, /^n[_\s-]?obs$/, /^n[_\s-]?size$/, /sample/, /participants/],
-  studyId: [/study/, /id$/],
-};
-
-const normalizeColumnName = (name: string): string => name.trim().toLowerCase();
-
-const formatRawValue = (value: unknown): string => {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  return String(value);
-};
-
-const formatNormalizedValue = (value: unknown): string => {
-  if (value === null || value === undefined) {
-    return "";
-  }
-
-  if (typeof value === "number") {
-    return Number.isNaN(value) ? "Invalid" : value.toString();
-  }
-
-  return String(value);
-};
-
-const describeField = (
-  fieldLabel: string,
-  mappedColumn?: string | null,
-): string => {
-  return mappedColumn ? `${fieldLabel} – ${mappedColumn}` : fieldLabel;
-};
-
-const autoMapColumns = (
-  columns: string[],
-): { mapping: MappingState; applied: boolean } => {
-  const usedColumns = new Set<string>();
-  const mapping: MappingState = { ...INITIAL_MAPPING };
-
-  (Object.keys(NORMALIZATION_RULES) as Array<keyof MappingState>).forEach(
-    (field) => {
-      NORMALIZATION_RULES[field].some((pattern) => {
-        const match = columns.find((column) => {
-          if (usedColumns.has(column)) {
-            return false;
-          }
-
-          const normalized = normalizeColumnName(column);
-          return pattern.test(normalized);
-        });
-
-        if (match) {
-          mapping[field] = match;
-          usedColumns.add(match);
-          return true;
-        }
-
-        return false;
-      });
-    },
-  );
-
-  const requiredMapped = REQUIRED_FIELDS.every(
-    (field) => mapping[field] !== null,
-  );
-
-  if (!requiredMapped && columns.length >= 3 && columns.length <= 4) {
-    mapping.effect = columns[0] ?? null;
-    mapping.se = columns[1] ?? null;
-    mapping.nObs = columns[2] ?? null;
-    mapping.studyId = columns[3] ?? null;
-  }
-
-  const hasAnyMapping = Object.values(mapping).some((value) => value !== null);
-
-  return { mapping, applied: hasAnyMapping };
-};
-
-const convertToNormalizedRow = (
-  row: Record<string, unknown>,
-  mapping: MappingState,
-): Record<string, unknown> => {
-  const getValue = (column: string | null) => {
-    if (!column) {
-      return null;
-    }
-
-    const rawValue = row[column];
-
-    if (rawValue === undefined || rawValue === null) {
-      return null;
-    }
-
-    if (typeof rawValue === "string") {
-      const trimmed = rawValue.trim();
-      return trimmed === "" ? null : trimmed;
-    }
-
-    return rawValue;
-  };
-
-  const normalizeNumericValue = (column: string | null) => {
-    const value = getValue(column);
-    if (value === null || value === undefined || value === "") {
-      return null;
-    }
-
-    const parsed = parseLocalizedNumber(value);
-    return parsed ?? Number.NaN;
-  };
-
-  const normalized: Record<string, unknown> = {
-    effect: normalizeNumericValue(mapping.effect),
-    se: normalizeNumericValue(mapping.se),
-    n_obs: normalizeNumericValue(mapping.nObs),
-  };
-
-  if (mapping.studyId) {
-    normalized.study_id = getValue(mapping.studyId);
-  }
-
-  return normalized;
-};
+import { DataProcessingService } from "@src/services/dataProcessingService";
 
 export default function UploadPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
-  const [mapping, setMapping] = useState<MappingState>(INITIAL_MAPPING);
-  const [autoMappingApplied, setAutoMappingApplied] = useState(false);
-  const [normalizedData, setNormalizedData] = useState<DataArray>([]);
 
   const router = useRouter();
-  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const dataId = searchParams?.get("dataId") ?? null;
 
-  const { showAlert } = useGlobalAlert();
+  useEffect(() => {
+    const existingDataId = searchParams?.get("dataId");
+    if (existingDataId) {
+      router.replace(`/validation?dataId=${existingDataId}`);
+    }
+  }, [router, searchParams]);
 
-  const onDrop = (acceptedFiles: File[]) => {
+  const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles[0]) {
       setSelectedFile(acceptedFiles[0]);
     }
-  };
+  }, []);
 
-  const onDropRejected = (rejectedFiles: FileRejection[]) => {
+  const onDropRejected = useCallback((rejectedFiles: FileRejection[]) => {
     const rejectedFile = rejectedFiles[0];
+    if (!rejectedFile) {
+      return;
+    }
+
     if (
       rejectedFile.errors.some(
         (error: { code: string }) => error.code === "file-too-large",
@@ -206,7 +59,7 @@ export default function UploadPage() {
     } else {
       alert("File upload failed. Please try again.");
     }
-  };
+  }, []);
 
   const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
     onDrop,
@@ -227,16 +80,16 @@ export default function UploadPage() {
     maxSize: 10 * 1024 * 1024,
   });
 
-  const handleGenerateMockData = () => {
+  const handleGenerateMockData = useCallback(() => {
     try {
       const mockFile = generateMockCSVFile();
       setSelectedFile(mockFile);
     } catch (error) {
       console.error("Error generating mock data:", error);
     }
-  };
+  }, []);
 
-  const handleLoadRandomMockCsv = () => {
+  const handleLoadRandomMockCsv = useCallback(() => {
     try {
       const randomFile = getRandomMockCsvFile();
       const blob = new Blob([randomFile.content], { type: "text/csv" });
@@ -246,7 +99,7 @@ export default function UploadPage() {
       console.error("Error loading random mock CSV:", error);
       handleGenerateMockData();
     }
-  };
+  }, [handleGenerateMockData]);
 
   const uploadButtonRef = useRef<HTMLButtonElement>(null);
   useEnterKeyAction(() => {
@@ -258,229 +111,40 @@ export default function UploadPage() {
   });
 
   const handleSubmit = useCallback(
-    (event: React.FormEvent<HTMLFormElement>) => {
-      void (async () => {
-        event.preventDefault();
-        if (!selectedFile) {
-          return;
-        }
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
 
-        setIsProcessing(true);
-        try {
-          const newDataId =
-            await DataProcessingService.processAndStoreFile(selectedFile);
-          const url = new URL(window.location.href);
-          url.searchParams.set("dataId", newDataId);
-          router.replace(`${pathname}?${url.searchParams.toString()}`);
-        } catch (error) {
-          console.error("Error processing file:", error);
-          alert(
-            "Failed to process the uploaded file. Please ensure it's a valid Excel or CSV file.",
-          );
-        } finally {
-          setIsProcessing(false);
-        }
-      })();
+      if (!selectedFile) {
+        return;
+      }
+
+      setIsProcessing(true);
+      try {
+        const newDataId =
+          await DataProcessingService.processAndStoreFile(selectedFile);
+        setSelectedFile(null);
+        router.push(`/validation?dataId=${newDataId}`);
+      } catch (error) {
+        console.error("Error processing file:", error);
+        alert(
+          "Failed to process the uploaded file. Please ensure it's a valid Excel or CSV file.",
+        );
+      } finally {
+        setIsProcessing(false);
+      }
     },
-    [selectedFile, router, pathname],
+    [router, selectedFile],
   );
 
   const getFileIconComponent = (filename: string, size = 24) => {
     if (filename.endsWith(".csv")) {
       return <FaFileCsv className="text-primary" size={size} />;
-    } else if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
+    }
+    if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
       return <FaFileExcel className="text-green-600" size={size} />;
-    } else {
-      return <FaFileAlt className="text-muted" size={size} />;
     }
+    return <FaFileAlt className="text-muted" size={size} />;
   };
-
-  const availableColumns = useMemo(() => {
-    if (!uploadedData) {
-      return [] as string[];
-    }
-
-    if (uploadedData.columnNames?.length) {
-      return uploadedData.columnNames;
-    }
-
-    const firstRow = uploadedData.rawData[0] ?? {};
-    return Object.keys(firstRow);
-  }, [uploadedData]);
-
-  const rawPreviewRows = useMemo(() => {
-    if (!uploadedData) {
-      return [] as string[][];
-    }
-
-    return uploadedData.rawData
-      .slice(0, 5)
-      .map((row) =>
-        availableColumns.map((header) => formatRawValue(row[header])),
-      );
-  }, [availableColumns, uploadedData]);
-
-  const mappedPreviewHeaders = useMemo(() => {
-    if (!mapping.effect || !mapping.se || !mapping.nObs) {
-      return [] as string[];
-    }
-
-    const headers = [
-      describeField(TEXT.mapping.fieldLabels.effect, mapping.effect),
-      describeField(TEXT.mapping.fieldLabels.se, mapping.se),
-      describeField(TEXT.mapping.fieldLabels.nObs, mapping.nObs),
-    ];
-
-    if (mapping.studyId) {
-      headers.push(
-        describeField(TEXT.mapping.fieldLabels.studyId, mapping.studyId),
-      );
-    }
-
-    return headers;
-  }, [mapping.effect, mapping.se, mapping.nObs, mapping.studyId]);
-
-  const mappedPreviewRows = useMemo(() => {
-    if (!normalizedData.length || mappedPreviewHeaders.length === 0) {
-      return [] as string[][];
-    }
-
-    return normalizedData.slice(0, 5).map((row) => {
-      const values: unknown[] = [row.effect, row.se, row.n_obs];
-
-      if (mapping.studyId) {
-        values.push(row.study_id);
-      }
-
-      return values.map((value) => formatNormalizedValue(value));
-    });
-  }, [normalizedData, mapping.studyId, mappedPreviewHeaders.length]);
-
-  const usedColumns = useMemo(() => {
-    return new Set(
-      Object.entries(mapping)
-        .map(([, value]) => value)
-        .filter((value): value is string => !!value),
-    );
-  }, [mapping]);
-
-  const mappingComplete = useMemo(() => {
-    return REQUIRED_FIELDS.every((field) => mapping[field]);
-  }, [mapping]);
-
-  const handleMappingChange = (field: keyof MappingState, value: string) => {
-    setMapping((prev) => ({
-      ...prev,
-      [field]: value || null,
-    }));
-    setAutoMappingApplied(false);
-  };
-
-  const handleContinue = () => {
-    if (!mappingComplete) {
-      showAlert(TEXT.mapping.validationIncomplete, "error");
-      return;
-    }
-
-    if (!dataId) {
-      showAlert(TEXT.mapping.mappingError, "error");
-      return;
-    }
-
-    router.push(`/validation?dataId=${dataId}`);
-  };
-
-  useEffect(() => {
-    if (!dataId) {
-      setUploadedData(null);
-      setMapping(INITIAL_MAPPING);
-      setAutoMappingApplied(false);
-      setNormalizedData([]);
-      return;
-    }
-
-    try {
-      let data: UploadedData | undefined = dataCache.get(dataId);
-
-      if (!data) {
-        const storeData = useDataStore.getState().uploadedData;
-        if (storeData && storeData.id === dataId) {
-          data = storeData;
-          dataCache.set(dataId, data);
-        }
-      }
-
-      if (!data) {
-        showAlert(TEXT.mapping.mappingError, "error");
-        setUploadedData(null);
-        setMapping(INITIAL_MAPPING);
-        setAutoMappingApplied(false);
-        setNormalizedData([]);
-        router.replace(pathname ?? "/upload");
-        return;
-      }
-
-      setUploadedData(data);
-
-      if (data.columnMapping) {
-        setMapping({
-          effect: data.columnMapping.effect,
-          se: data.columnMapping.se,
-          nObs: data.columnMapping.nObs,
-          studyId: data.columnMapping.studyId ?? null,
-        });
-        setAutoMappingApplied(false);
-      } else {
-        const columns = data.columnNames?.length
-          ? data.columnNames
-          : Object.keys(data.rawData[0] ?? {});
-        const { mapping: guessedMapping, applied } = autoMapColumns(columns);
-        setMapping(guessedMapping);
-        setAutoMappingApplied(applied);
-      }
-    } catch (error) {
-      console.error("Failed to load uploaded data:", error);
-    }
-  }, [dataId, pathname, router, showAlert]);
-
-  useEffect(() => {
-    if (!uploadedData || !dataId) {
-      setNormalizedData([]);
-      return;
-    }
-
-    if (!mapping.effect || !mapping.se || !mapping.nObs) {
-      setNormalizedData([]);
-      return;
-    }
-
-    try {
-      const normalizedRows = uploadedData.rawData.map((row) =>
-        convertToNormalizedRow(row, mapping),
-      );
-
-      const mappingConfig: ColumnMapping = {
-        effect: mapping.effect,
-        se: mapping.se,
-        nObs: mapping.nObs,
-        studyId: mapping.studyId ?? null,
-      };
-
-      DataProcessingService.applyColumnMapping(
-        dataId,
-        mappingConfig,
-        normalizedRows,
-      );
-
-      setNormalizedData(normalizedRows);
-    } catch (error) {
-      console.error("Failed to apply column mapping:", error);
-      showAlert(
-        "We couldn't apply the column mapping. Please try again.",
-        "error",
-      );
-    }
-  }, [uploadedData, dataId, mapping, showAlert]);
 
   return (
     <>
@@ -514,8 +178,8 @@ export default function UploadPage() {
             </div>
 
             <form
-              onSubmit={(e) => {
-                void handleSubmit(e);
+              onSubmit={(event) => {
+                void handleSubmit(event);
               }}
               className="space-y-6"
             >
@@ -579,7 +243,7 @@ export default function UploadPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        void handleLoadRandomMockCsv();
+                        handleLoadRandomMockCsv();
                       }}
                       className="text-sm font-bold text-primary hover:text-primary/80 transition-colors duration-200 cursor-pointer underline hover:no-underline"
                     >
@@ -591,144 +255,15 @@ export default function UploadPage() {
 
               <ActionButton
                 ref={uploadButtonRef}
-                onClick={(event) => {
-                  void handleSubmit(event as React.FormEvent<HTMLFormElement>);
-                }}
+                type="submit"
                 variant="primary"
                 className="w-full"
                 disabled={!selectedFile || isProcessing}
               >
-                {isProcessing ? "Processing..." : "Upload and Process"}
+                {isProcessing ? "Processing..." : "Upload and validate"}
               </ActionButton>
             </form>
           </div>
-
-          {uploadedData && (
-            <div className="space-y-6 mt-6">
-              <div className="card p-6 sm:p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-primary mb-2">
-                    {TEXT.mapping.title}
-                  </h2>
-                  <p className="text-secondary mb-2">
-                    {TEXT.mapping.description}
-                  </p>
-                  <p className="text-muted text-sm">
-                    {TEXT.mapping.helperText}
-                  </p>
-                </div>
-
-                {autoMappingApplied && (
-                  <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-900 dark:text-blue-100">
-                    {TEXT.mapping.autoMappingNotice}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(
-                    Object.keys(TEXT.mapping.fieldLabels) as Array<
-                      keyof typeof TEXT.mapping.fieldLabels
-                    >
-                  ).map((fieldKey) => {
-                    const label = TEXT.mapping.fieldLabels[fieldKey];
-                    const isRequired = REQUIRED_FIELDS.includes(
-                      fieldKey as keyof ColumnMapping,
-                    );
-
-                    return (
-                      <div key={fieldKey} className="flex flex-col">
-                        <label className="text-sm font-medium text-secondary mb-2">
-                          {label}
-                          {isRequired ? (
-                            <span className="text-red-500">*</span>
-                          ) : null}
-                        </label>
-                        <select
-                          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-                          value={mapping[fieldKey] ?? ""}
-                          onChange={(event) =>
-                            handleMappingChange(fieldKey, event.target.value)
-                          }
-                        >
-                          <option value="">
-                            {isRequired ? "Select a column" : "Leave unmapped"}
-                          </option>
-                          {availableColumns.map((column) => (
-                            <option
-                              key={column}
-                              value={column}
-                              disabled={
-                                mapping[fieldKey] !== column &&
-                                usedColumns.has(column)
-                              }
-                            >
-                              {column}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <DataPreview
-                  title={TEXT.mapping.rawPreviewTitle}
-                  headers={availableColumns}
-                  rows={rawPreviewRows}
-                />
-
-                <div className="space-y-4">
-                  <DataPreview
-                    title={TEXT.mapping.mappedPreviewTitle}
-                    description={TEXT.mapping.mappedPreviewDescription}
-                    headers={mappedPreviewHeaders}
-                    rows={mappedPreviewRows}
-                    emptyMessage={TEXT.mapping.validationIncomplete}
-                  />
-                  {normalizedData.length > 0 &&
-                    CONFIG.SHOULD_SHOW_DF_ROWS_INFO && (
-                      <RowInfoComponent
-                        rowCount={normalizedData.length}
-                        showFirstRows={normalizedData.length > 5}
-                        rowCountToShow={5}
-                      />
-                    )}
-                </div>
-              </div>
-
-              <div className="card p-6 sm:p-8 space-y-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-primary mb-2">
-                    {TEXT.mapping.validationTitle}
-                  </h2>
-                  <p className="text-secondary">
-                    {TEXT.mapping.validationDescription}
-                  </p>
-                </div>
-
-                {!mappingComplete ? (
-                  <Alert
-                    type={CONST.ALERT_TYPES.INFO}
-                    message={TEXT.mapping.validationIncomplete}
-                  />
-                ) : (
-                  <Alert
-                    type={CONST.ALERT_TYPES.SUCCESS}
-                    message={TEXT.mapping.readyForValidation}
-                  />
-                )}
-
-                <ActionButton
-                  onClick={handleContinue}
-                  variant="primary"
-                  className="w-full"
-                  disabled={!mappingComplete || !dataId}
-                >
-                  {TEXT.mapping.continueButton}
-                </ActionButton>
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </>
