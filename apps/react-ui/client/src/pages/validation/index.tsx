@@ -115,13 +115,22 @@ const formatRawValue = (value: unknown): string => {
   return String(value);
 };
 
+const formatNumberValue = (value: number): string => {
+  return Number.isNaN(value)
+    ? "Invalid"
+    : value % 1 === 0
+      ? value.toString()
+      : // Truncate to 3 decimal places
+        value.toString().replace(/(\.\d{1,3})\d*$/, "$1");
+};
+
 const formatNormalizedValue = (value: unknown): string => {
   if (value === null || value === undefined) {
     return "";
   }
 
   if (typeof value === "number") {
-    return Number.isNaN(value) ? "Invalid" : value.toString();
+    return formatNumberValue(value);
   }
 
   return String(value);
