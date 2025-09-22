@@ -58,6 +58,7 @@ export default function Home() {
             <DemoButton
               size="md"
               className="w-full sm:w-auto self-center px-4 sm:px-6"
+              shouldShowIcon={true}
             />
           </div>
         </div>

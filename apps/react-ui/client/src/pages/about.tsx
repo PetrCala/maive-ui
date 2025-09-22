@@ -35,7 +35,7 @@ export default function AboutPage() {
 
           <section className="surface-elevated rounded-xl border border-primary/10 p-6 sm:p-8 space-y-8">
             <MAIVEInfoContent />
-            <MAIVEInfoGettingStarted className="pt-2" />
+            <MAIVEInfoGettingStarted className="pt-2" shouldShowIcon={false} />
           </section>
 
           <div className="text-right">

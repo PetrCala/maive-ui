@@ -306,7 +306,7 @@ const TEXT = {
     gettingStarted: {
       title: "Getting Started",
       text: `Ready to correct your data for spurious precision? Upload your
-    dataset and let MAIVE analyze it for you. The process is simple
+    dataset and let MAIVE analyze it for you, or run a demo using a synthetic dataset. In any case, the process is simple
     and provides clear, actionable results.`,
     },
     uploadYourData: "Upload Your Data",
