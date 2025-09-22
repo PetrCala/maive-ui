@@ -302,8 +302,8 @@ export default function ModelPage() {
         ) : (
           <div className="max-w-4xl w-full">
             <GoBackButton
-              href={`/upload?dataId=${dataId}`}
-              text="Back to Upload"
+              href={`/validation?dataId=${dataId}`}
+              text="Back to Validation"
             />
 
             {/* Card transition: parameters or loading */}
