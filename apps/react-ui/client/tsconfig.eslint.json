@@ -1,0 +1,12 @@
+{
+        "extends": "./tsconfig.json",
+        "include": [
+                "next-env.d.ts",
+                "**/*.ts",
+                "**/*.tsx",
+                ".next/types/**/*.ts",
+                "src/types/global.d.ts",
+                ".eslintrc.js"
+        ],
+        "exclude": ["node_modules", "vitest.config.ts"]
+}
