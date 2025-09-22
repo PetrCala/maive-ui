@@ -15,6 +15,7 @@ const CONST = {
       HOMEPAGE: "https://github.com/PetrCala/maive-ui",
       ISSUES: "https://github.com/PetrCala/maive-ui/issues",
     },
+    APPLICATIONS_URL: "https://meta-analysis.cz/",
     CREATOR_URL: "https://github.com/PetrCala",
     CONTACT_WEBSITE_URL: "https://irsova.com/",
     INSTITUTION_URL: "https://ies.fsv.cuni.cz/en",

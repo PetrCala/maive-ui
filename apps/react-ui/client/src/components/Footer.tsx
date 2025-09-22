@@ -11,6 +11,7 @@ import {
   FaGithub,
   FaEnvelope,
   FaExclamationTriangle,
+  FaGlobe,
 } from "react-icons/fa";
 
 type FooterProps = {
@@ -119,6 +120,11 @@ const Footer = ({ className = "" }: FooterProps) => {
             onClick={handleCitationClick}
             icon={<FaFileAlt />}
             text="Cite"
+          />
+          <FooterHrefLinkItem
+            href={CONST.LINKS.APPLICATIONS_URL}
+            icon={<FaGlobe />}
+            text="Applications"
           />
           <FooterHrefLinkItem
             href={CONST.LINKS.APP_GITHUB.HOMEPAGE}
