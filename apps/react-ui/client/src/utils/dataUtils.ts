@@ -172,8 +172,6 @@ const sanitizeRows = (rows: unknown[][]): unknown[][] => {
 
 const parseCsvText = (text: string): ParsedTabularData => {
   const parsedResult: ParseResult<string[]> = parse<string[]>(text, {
-    delimiter: "",
-    newline: "",
     skipEmptyLines: "greedy",
     transform: (value: string) => value.trim(),
     delimitersToGuess: [",", ";", "\t", "|"],
