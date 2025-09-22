@@ -166,20 +166,40 @@ const TEXT = {
     },
     helperText:
       "Each column can only be used once. Leave the Study ID field empty if your dataset doesn't include it.",
-    continueButton: "Continue to model setup",
+    continueButton: "Continue to validation",
     autoMappingNotice:
       "We've pre-selected columns where the headers looked familiar. Feel free to adjust before continuing.",
     rawPreviewTitle: "Column preview",
     mappedPreviewTitle: "Mapped data preview",
     mappedPreviewDescription:
       "Values shown here update automatically as you change the column mapping.",
-    validationTitle: "Validation results",
+    validationTitle: "Validation",
     validationDescription:
-      "We run the required checks as soon as all required fields are mapped.",
-    validationIncomplete: "Map the required fields to run validation.",
+      "Map the required fields to unlock validation and continue to the next step.",
+    validationIncomplete: "Map the required fields to continue to validation.",
+    readyForValidation:
+      "All required fields are mapped. Continue to run the validation checks.",
     loading: "Preparing your data...",
     mappingError:
       "We couldn't find the uploaded data. Please upload your file again.",
+  },
+  validation: {
+    title: "Validate Your Data",
+    description:
+      "We automatically check your dataset for common issues before modeling.",
+    helperText:
+      "If something doesn't look right, go back to the upload step to adjust your column mapping.",
+    loading: "Preparing your validation results...",
+    missingDataTitle: "No data selected",
+    missingDataMessage:
+      "Upload your file and complete the column mapping to view validation results.",
+    continueButton: "Continue to model setup",
+    previewTitle: "Mapped data preview",
+    previewDescription:
+      "Double-check that the normalized values look correct before continuing.",
+    resultsTitle: "Validation results",
+    resultsDescription:
+      "Review the findings below. Fix any errors before proceeding to modeling.",
   },
   model: {
     basicOptions: {
