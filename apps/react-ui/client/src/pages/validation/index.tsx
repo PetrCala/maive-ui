@@ -276,7 +276,7 @@ const validateData = (
     const maxIndexes = 3;
     const displayIndexes = nonPositiveIndexes.slice(0, maxIndexes);
     const hasMore = nonPositiveIndexes.length > maxIndexes;
-    const indexesText = displayIndexes.join(", ") + (hasMore ? "..." : "");
+    const indexesText = displayIndexes.join(", ") + (hasMore ? ",..." : "");
 
     messages.push({
       type: CONST.ALERT_TYPES.ERROR,
