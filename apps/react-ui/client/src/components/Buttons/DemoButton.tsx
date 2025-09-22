@@ -6,11 +6,13 @@ import { FaPlay } from "react-icons/fa";
 type DemoButtonProps = {
   size?: "sm" | "md" | "lg";
   className?: string;
+  shouldShowIcon?: boolean;
 };
 
 export default function DemoButton({
   size = "md",
   className,
+  shouldShowIcon = true,
 }: DemoButtonProps) {
   const router = useRouter();
 
@@ -27,7 +29,7 @@ export default function DemoButton({
       size={size}
       className={`${className ?? ""} inline-flex gap-2`}
     >
-      <FaPlay className="icon-button" />
+      {shouldShowIcon && <FaPlay className="icon-button" />}
       Run a demo
     </ActionButton>
   );

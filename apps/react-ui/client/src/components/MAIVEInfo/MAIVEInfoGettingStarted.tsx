@@ -4,10 +4,12 @@ import TEXT from "@lib/text";
 
 type MAIVEInfoGettingStartedProps = {
   className?: string;
+  shouldShowIcon?: boolean;
 };
 
 export default function MAIVEInfoGettingStarted({
   className = "",
+  shouldShowIcon = true,
 }: MAIVEInfoGettingStartedProps) {
   return (
     <section className={className}>
@@ -18,7 +20,11 @@ export default function MAIVEInfoGettingStarted({
         {TEXT.maiveModal.gettingStarted.text}
       </p>
       <div className="flex flex-wrap gap-3">
-        <DemoButton size="md" className="w-full sm:w-auto" />
+        <DemoButton
+          size="md"
+          className="w-full sm:w-auto"
+          shouldShowIcon={shouldShowIcon}
+        />
         <ActionButton href="/upload" variant="primary" size="md">
           {TEXT.maiveModal.uploadYourData}
         </ActionButton>
