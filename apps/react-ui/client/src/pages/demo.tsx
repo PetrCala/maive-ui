@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import LoadingCard from "@components/LoadingCard";
@@ -6,27 +6,56 @@ import ActionButton from "@components/Buttons/ActionButton";
 import CONST from "@src/CONST";
 import { DataProcessingService } from "@src/services/dataProcessingService";
 
+const MINIMUM_VISIBLE_DURATION_MS = 400;
+
 export default function DemoPage() {
   const router = useRouter();
   const [hasError, setHasError] = useState(false);
+  const minimumLoaderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const clearPendingTimeout = useCallback(() => {
+    if (minimumLoaderTimeoutRef.current) {
+      clearTimeout(minimumLoaderTimeoutRef.current);
+      minimumLoaderTimeoutRef.current = null;
+    }
+  }, []);
 
   const runDemo = useCallback(async () => {
     setHasError(false);
+    clearPendingTimeout();
 
     try {
+      const startTime = performance.now();
       const dataId = await DataProcessingService.processAndStoreMockDataByName(
         CONST.DEMO_MOCK_DATA_NAME,
       );
+      const elapsed = performance.now() - startTime;
+      const remaining = MINIMUM_VISIBLE_DURATION_MS - elapsed;
+
+      if (remaining > 0) {
+        await new Promise((resolve) => {
+          minimumLoaderTimeoutRef.current = setTimeout(() => {
+            minimumLoaderTimeoutRef.current = null;
+            resolve(undefined);
+          }, remaining);
+        });
+      }
+
       router.push(`/model?dataId=${dataId}`);
     } catch (error) {
       console.error("Error loading demo data:", error);
       setHasError(true);
     }
-  }, [router]);
+  }, [clearPendingTimeout, router]);
 
   useEffect(() => {
     void runDemo();
-  }, [runDemo]);
+    return () => {
+      clearPendingTimeout();
+    };
+  }, [clearPendingTimeout, runDemo]);
 
   return (
     <>

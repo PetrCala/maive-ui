@@ -37,11 +37,7 @@ export default function MAIVEInfoModal({
           <MAIVEInfoContent />
 
           {!!shouldShowGettingStarted ? (
-            <MAIVEInfoGettingStarted
-              onClose={onClose}
-              showCloseButton
-              className="pt-2"
-            />
+            <MAIVEInfoGettingStarted className="pt-2" />
           ) : (
             <section>
               <div className="flex gap-3">

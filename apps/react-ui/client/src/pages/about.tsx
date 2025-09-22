@@ -5,7 +5,6 @@ import {
   MAIVEInfoContent,
   MAIVEInfoGettingStarted,
 } from "@components/MAIVEInfo";
-import ActionButton from "@components/Buttons/ActionButton";
 import VersionInfo from "@components/VersionInfo";
 
 export default function AboutPage() {
@@ -37,26 +36,6 @@ export default function AboutPage() {
           <section className="surface-elevated rounded-xl border border-primary/10 p-6 sm:p-8 space-y-8">
             <MAIVEInfoContent />
             <MAIVEInfoGettingStarted className="pt-2" />
-          </section>
-
-          <section className="surface-elevated rounded-xl border border-primary/10 p-6 sm:p-8 space-y-4">
-            <h2 className="text-2xl font-semibold text-primary">
-              Beyond the basics
-            </h2>
-            <p className="text-secondary leading-relaxed">
-              Ready to dive deeper? Run the interactive demo to see MAIVE in
-              action, or review your own data with the upload workflow. You can
-              always open the in-app help modal from the header if you prefer a
-              quick refresher without leaving your analysis.
-            </p>
-            <div className="flex flex-wrap gap-3">
-              <ActionButton href="/demo" variant="secondary" size="md">
-                Explore the demo
-              </ActionButton>
-              <ActionButton href="/upload" variant="primary" size="md">
-                Start an analysis
-              </ActionButton>
-            </div>
           </section>
 
           <div className="text-right">
