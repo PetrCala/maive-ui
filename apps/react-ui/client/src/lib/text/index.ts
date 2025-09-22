@@ -155,7 +155,7 @@ const TEXT = {
     },
   },
   mapping: {
-    title: "Map Your Columns",
+    title: "Prepare Your Dataset",
     description:
       "Tell MAIVE which columns contain the required information. We'll ignore any columns you leave unmapped.",
     fieldLabels: {
@@ -166,15 +166,20 @@ const TEXT = {
     },
     helperText:
       "Each column can only be used once. Leave the Study ID field empty if your dataset doesn't include it.",
-    continueButton: "Continue to validation",
+    continueButton: "Continue to model setup",
     autoMappingNotice:
       "We've pre-selected columns where the headers looked familiar. Feel free to adjust before continuing.",
-    previewTitle: "Column preview",
+    rawPreviewTitle: "Column preview",
+    mappedPreviewTitle: "Mapped data preview",
+    mappedPreviewDescription:
+      "Values shown here update automatically as you change the column mapping.",
+    validationTitle: "Validation results",
+    validationDescription:
+      "We run the required checks as soon as all required fields are mapped.",
+    validationIncomplete: "Map the required fields to run validation.",
     loading: "Preparing your data...",
     mappingError:
       "We couldn't find the uploaded data. Please upload your file again.",
-    validationRedirectError:
-      "Column mapping is required before running validation. Please map your columns first.",
   },
   model: {
     basicOptions: {
