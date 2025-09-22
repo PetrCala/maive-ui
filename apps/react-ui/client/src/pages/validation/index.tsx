@@ -597,7 +597,7 @@ export default function ValidationPage() {
       </Head>
       <main className="content-page-container">
         <div className="max-w-4xl w-full px-2 sm:px-0">
-          <GoBackButton href={backLink} text="Back to upload" />
+          <GoBackButton href={backLink} text="Back to Upload" />
 
           <div className="card p-6 sm:p-8 space-y-4">
             <h1 className="text-2xl sm:text-3xl font-bold text-primary">
@@ -626,7 +626,7 @@ export default function ValidationPage() {
                 variant="primary"
                 className="mx-auto w-full sm:w-auto"
               >
-                Back to upload
+                Back to Upload
               </ActionButton>
             </div>
           ) : (
