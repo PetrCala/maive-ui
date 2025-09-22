@@ -64,7 +64,7 @@ variable "lambda_r_backend_reserved_concurrency" {
 variable "lambda_r_backend_log_retention_days" {
   type        = number
   description = "Number of days to retain Lambda R backend CloudWatch logs"
-  default     = 7
+  default     = 3
 }
 
 variable "domain_name" {
