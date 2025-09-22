@@ -245,8 +245,31 @@ run_maive_model <- function(data, parameters) {
   slope_metadata <- parse_slope_metadata(maive_res)
 
   parse_boot_result <- function(boot_result, field) if (is.null(boot_result)) "NA" else boot_result[[field]]
+  format_ci_field <- function(ci_field) {
+    if (is.null(ci_field)) {
+      return("NA")
+    }
+
+    ci_values <- if (is.list(ci_field)) unlist(ci_field) else ci_field
+
+    if (length(ci_values) == 0) {
+      return("NA")
+    }
+
+    if (is.character(ci_values) && length(ci_values) == 1 && ci_values == "NA") {
+      return("NA")
+    }
+
+    if (all(is.na(ci_values))) {
+      return("NA")
+    }
+
+    ci_field
+  }
   boot_se <- parse_boot_result(maive_res$boot_result, "boot_se") # [a, b]
   boot_ci <- parse_boot_result(maive_res$boot_result, "boot_ci") # [[a, b], [c, d]]
+  egger_boot_ci <- format_ci_field(maive_res$egger_boot_ci)
+  egger_ar_ci <- format_ci_field(maive_res$egger_ar_ci)
 
   se_adjusted_for_plot <- if (instrument == 0) NULL else maive_res$SE_instrumented
 
@@ -269,7 +292,9 @@ run_maive_model <- function(data, parameters) {
       pValue = pub_bias_p_value,
       eggerCoef = maive_res$egger_coef,
       eggerSE = maive_res$egger_se,
-      isSignificant = pb_is_significant
+      isSignificant = pb_is_significant,
+      eggerBootCI = egger_boot_ci,
+      eggerAndersonRubinCI = egger_ar_ci
     ),
     firstStageFTest = maive_res[["F-test"]],
     hausmanTest = list(
