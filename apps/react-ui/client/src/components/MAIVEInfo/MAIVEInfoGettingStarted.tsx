@@ -19,13 +19,18 @@ export default function MAIVEInfoGettingStarted({
       <p className="text-secondary leading-relaxed mb-4">
         {TEXT.maiveModal.gettingStarted.text}
       </p>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex flex-wrap gap-3 justify-center sm:justify-start">
         <DemoButton
           size="md"
           className="w-full sm:w-auto"
           shouldShowIcon={shouldShowIcon}
         />
-        <ActionButton href="/upload" variant="primary" size="md">
+        <ActionButton
+          href="/upload"
+          variant="primary"
+          size="md"
+          className="w-full sm:w-auto"
+        >
           {TEXT.maiveModal.uploadYourData}
         </ActionButton>
       </div>
