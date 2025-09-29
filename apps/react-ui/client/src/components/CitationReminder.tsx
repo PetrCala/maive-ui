@@ -1,6 +1,7 @@
 "use client";
 
 import TEXT from "@src/lib/text";
+import renderRichInfoMessage from "@src/lib/text/richText";
 
 type CitationReminderProps = {
   className?: string;
@@ -46,7 +47,7 @@ const CitationReminder = ({
             }`}
           >
             <span className="font-medium">Citation:</span>{" "}
-            {TEXT.citation.reminder.text}
+            {renderRichInfoMessage(TEXT.citation.reminder.richText)}
           </p>
         </div>
       </div>
@@ -85,7 +86,7 @@ const CitationReminder = ({
           }`}
         >
           <p className="font-medium mb-1">{TEXT.citation.reminder.title}</p>
-          <p>{TEXT.citation.reminder.text}</p>
+          <p>{renderRichInfoMessage(TEXT.citation.reminder.richText)}</p>
         </div>
       </div>
     </div>

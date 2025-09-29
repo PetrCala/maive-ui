@@ -3,6 +3,14 @@ type MetricText = Readonly<{
   tooltip: string;
 }>;
 
+export type RichInfoMessage = Readonly<{
+  leading: string;
+  citation: string;
+  postCitation: string;
+  citeButtonLabel: string;
+  postCiteButton: string;
+}>;
+
 type SectionWithMetrics<TMetrics extends Record<string, MetricText>> =
   Readonly<{
     title: string;
@@ -147,6 +155,15 @@ const TEXT = {
     reminder: {
       title: "Citation Reminder",
       text: "This method is included in the MAIVE app (Irsova et al., Nature Communications, 2025). Please cite the paper using the button in the footer if you use this tool in your research.",
+      richText: {
+        leading: "This method is included in the MAIVE app (",
+        citation: "Irsova et al., Nature Communications, 2025",
+        postCitation:
+          "). Please cite the paper using the ",
+        citeButtonLabel: "Cite",
+        postCiteButton:
+          " button in the footer if you use this tool in your research.",
+      },
     },
     title: "How to Cite This App",
     description:
@@ -272,7 +289,7 @@ const TEXT = {
         leading:
           "Without instrumenting, this run is not MAIVE. Please still cite ",
         citation: "Irsova et al., Nature Communications (2025)",
-        postCitation: " using the ",
+        postCitation: " as the app used using the ",
         citeButtonLabel: "Cite",
         postCiteButton:
           " button in the footer if you use this tool in your research.",

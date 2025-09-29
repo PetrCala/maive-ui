@@ -85,6 +85,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
             type: CONST.ALERT_TYPES.INFO,
             condition: (parameters: ModelParameters) =>
               parameters.maiveMethod !== CONST.MAIVE_METHODS.PET_PEESE,
+            richText: TEXT.citation.reminder.richText,
           },
         ],
       },
