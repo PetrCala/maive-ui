@@ -33,9 +33,9 @@ The MAIVE UI includes a comprehensive citation system to ensure proper attributi
 #### Citation Information
 
 ```plain
-Irsova, Z., Bom, P. R. D., Havranek, T., & Rachinger, H. (2025). 
-Spurious Precision in Meta-Analysis of Observational Research. 
-Nature Communications, DOI: 10.1038/s41467-025-63261-0.
+Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025).
+Spurious precision in meta-analysis of observational research.
+Nature Communications 16, 8454. https://doi.org/10.1038/s41467-025-63261-0
 ```
 
 ## Getting Started
