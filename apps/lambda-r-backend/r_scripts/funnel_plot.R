@@ -508,6 +508,11 @@ get_funnel_plot <- function(
 
     intercept_label_width <- convert_width_to_user(strwidth(intercept_label_text, cex = 0.9))
     intercept_label_height <- convert_height_to_user(strheight(intercept_label_text, cex = 0.9))
+    stack_gap <- max(
+      vertical_padding * 1.5,
+      simple_label_height * 0.35,
+      intercept_label_height * 0.35
+    )
 
     total_horizontal_padding <- max(horizontal_padding, intercept_label_width * 0.05)
     label_x_intercept <- clamp_value(
@@ -529,16 +534,16 @@ get_funnel_plot <- function(
     )
 
     ranges_overlap <- !(
-      is.na(simple_bounds[1]) ||
-        is.na(simple_bounds[2]) ||
-        is.na(intercept_bounds[1]) ||
-        is.na(intercept_bounds[2]) ||
+      !is.finite(simple_bounds[1]) ||
+        !is.finite(simple_bounds[2]) ||
+        !is.finite(intercept_bounds[1]) ||
+        !is.finite(intercept_bounds[2]) ||
         intercept_bounds[1] > simple_bounds[2] ||
         intercept_bounds[2] < simple_bounds[1]
     )
 
     if (ranges_overlap) {
-      desired_baseline <- label_y_simple - intercept_label_height - vertical_padding
+      desired_baseline <- label_y_simple - intercept_label_height - stack_gap
       if (is.finite(desired_baseline)) {
         label_y_maive <- min(label_y_maive, desired_baseline)
       }
@@ -548,7 +553,7 @@ get_funnel_plot <- function(
       distance <- abs(label_x_simple - label_x_intercept)
       proximity_threshold <- max(simple_label_width, intercept_label_width) * 0.6
       if (distance < proximity_threshold) {
-        desired_baseline <- label_y_simple - intercept_label_height - vertical_padding
+        desired_baseline <- label_y_simple - intercept_label_height - stack_gap
         if (is.finite(desired_baseline)) {
           label_y_maive <- min(label_y_maive, desired_baseline)
         }
