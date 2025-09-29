@@ -76,7 +76,8 @@ run_maive_model <- function(data, parameters) {
     "computeAndersonRubin",
     "maiveMethod",
     "weight",
-    "shouldUseInstrumenting"
+    "shouldUseInstrumenting",
+    "useLogFirstStage"
   )
 
   if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
@@ -142,6 +143,7 @@ run_maive_model <- function(data, parameters) {
   cli::cli_alert_info(paste("maive_method result:", maive_method))
   instrument <- if (isTRUE(params$shouldUseInstrumenting)) 1 else 0
   should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
+  log_first_stage <- isTRUE(params$useLogFirstStage)
 
   # Debug: Print MAIVE parameters
   cli::cli_h2("MAIVE parameters:")
@@ -151,7 +153,8 @@ run_maive_model <- function(data, parameters) {
     "instrument: {instrument}",
     "studylevel: {studylevel}",
     "SE: {standard_error_treatment}",
-    "AR: {should_use_ar}"
+    "AR: {should_use_ar}",
+    "log first stage: {log_first_stage}"
   ))
 
   # Debug: Check for NA values before calling MAIVE
@@ -164,17 +167,35 @@ run_maive_model <- function(data, parameters) {
   ))
 
   # Run the model
+  if (instrument == 0 && log_first_stage) {
+    cli::cli_alert_warning(
+      "Log first stage was requested but instrumenting is disabled; reverting to levels first stage.",
+    )
+    log_first_stage <- FALSE
+  }
+
+  maive_args <- list(
+    dat = df,
+    method = maive_method,
+    weight = weight, # equal weights=0 (default), standard weights=1, adjusted weights=2
+    instrument = instrument, # no=0, yes=1 (default)
+    studylevel = studylevel,
+    SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
+    AR = should_use_ar # 0 = no AR, 1 = AR (default)
+  )
+
+  maive_formals <- names(formals(MAIVE::maive))
+  if (instrument == 1) {
+    if ("log_first_stage" %in% maive_formals) {
+      maive_args$log_first_stage <- log_first_stage
+    } else if ("first_stage" %in% maive_formals) {
+      maive_args$first_stage <- if (log_first_stage) "log" else "levels"
+    }
+  }
+
   tryCatch(
     {
-      maive_res <- MAIVE::maive(
-        dat = df,
-        method = maive_method,
-        weight = weight, # equal weights=0 (default), standard weights=1, adjusted weights=2
-        instrument = instrument, # no=0, yes=1 (default)
-        studylevel = studylevel,
-        SE = standard_error_treatment, # 0 CR0 (Huber-White), 1 CR1 (std. emp. correction), 2 CR2 (bias-reduced est.), 3 wild bootstrap (default)
-        AR = should_use_ar # 0 = no AR, 1 = AR (default)
-      )
+      maive_res <- do.call(MAIVE::maive, maive_args)
     },
     error = function(e) {
       cli::cli_alert_danger(paste("MAIVE function error:", e$message))
@@ -183,6 +204,19 @@ run_maive_model <- function(data, parameters) {
       cli::cli_abort(e)
     }
   )
+
+  if (instrument == 1 && isTRUE(log_first_stage) && !is.null(maive_res$SE_instrumented)) {
+    invalid_idx <- which(!is.na(maive_res$SE_instrumented) & maive_res$SE_instrumented <= 0)
+    if (length(invalid_idx) > 0) {
+      cli::cli_alert_warning(
+        sprintf(
+          "Adjusting %d non-positive fitted variances after log first-stage; enforcing minimum positive value.",
+          length(invalid_idx)
+        )
+      )
+      maive_res$SE_instrumented[invalid_idx] <- .Machine$double.eps
+    }
+  }
 
   # Debug: Print MAIVE results
   cli::cli_h2("MAIVE results structure:")
@@ -273,6 +307,18 @@ run_maive_model <- function(data, parameters) {
 
   se_adjusted_for_plot <- if (instrument == 0) NULL else maive_res$SE_instrumented
 
+  first_stage_mode <- if (instrument == 1 && isTRUE(log_first_stage)) "log" else "levels"
+  first_stage_description <- if (first_stage_mode == "log") {
+    "First stage: log(SE²) ~ log N; Duan smearing applied."
+  } else {
+    "First stage: SE² ~ 1/N."
+  }
+  first_stage_label <- if (first_stage_mode == "log") {
+    "First-Stage F-Test (γ₁)"
+  } else {
+    "First-Stage F-Test"
+  }
+
   funnel_plot_data <- get_funnel_plot_data( # nolint: object_usage_linter.
     effect = df$bs,
     se = df$sebs,
@@ -307,7 +353,16 @@ run_maive_model <- function(data, parameters) {
     funnelPlotWidth = funnel_plot_data$width_px,
     funnelPlotHeight = funnel_plot_data$height_px,
     bootSE = boot_se,
-    bootCI = boot_ci
+    bootCI = boot_ci,
+    firstStage = if (instrument == 1) {
+      list(
+        mode = first_stage_mode,
+        description = first_stage_description,
+        fStatisticLabel = first_stage_label
+      )
+    } else {
+      NULL
+    }
   )
 
   results

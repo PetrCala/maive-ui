@@ -24,6 +24,7 @@ const CONFIG = {
     maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
     weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
     shouldUseInstrumenting: true,
+    useLogFirstStage: false,
   },
 } as const;
 

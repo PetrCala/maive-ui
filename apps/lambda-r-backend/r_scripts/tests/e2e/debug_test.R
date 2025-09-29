@@ -21,7 +21,8 @@ params <- list(
   computeAndersonRubin = TRUE,
   maiveMethod = "PET",
   weight = "standard_weights",
-  shouldUseInstrumenting = TRUE
+  shouldUseInstrumenting = TRUE,
+  useLogFirstStage = FALSE
 )
 
 # Convert to JSON

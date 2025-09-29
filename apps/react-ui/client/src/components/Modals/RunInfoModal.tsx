@@ -49,6 +49,7 @@ export default function RunInfoModal({
       case "includeStudyClustering":
       case "computeAndersonRubin":
       case "shouldUseInstrumenting":
+      case "useLogFirstStage":
         return value ? "Yes" : "No";
       case "standardErrorTreatment":
         const seTreatment = value as string;

@@ -116,6 +116,15 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         tooltip: TEXT.model.shouldUseInstrumenting.tooltip,
         type: "yesno",
       },
+      {
+        key: "useLogFirstStage",
+        label: TEXT.model.useLogFirstStage.label,
+        tooltip: TEXT.model.useLogFirstStage.tooltip,
+        type: "yesno",
+        visibility: {
+          hideIf: ({ parameters }) => !parameters.shouldUseInstrumenting,
+        },
+      },
     ],
   },
 };

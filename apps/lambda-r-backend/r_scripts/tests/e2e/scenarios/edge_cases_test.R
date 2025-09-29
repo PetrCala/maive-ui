@@ -264,7 +264,8 @@ test_invalid_parameters <- function() {
         computeAndersonRubin = TRUE,
         maiveMethod = "INVALID_METHOD",
         weight = "equal_weights",
-        shouldUseInstrumenting = TRUE
+        shouldUseInstrumenting = TRUE,
+        useLogFirstStage = FALSE
       ),
       expected_error = TRUE
     ),
@@ -278,7 +279,8 @@ test_invalid_parameters <- function() {
         computeAndersonRubin = TRUE,
         maiveMethod = "PET-PEESE",
         weight = "standard_weights",
-        shouldUseInstrumenting = TRUE
+        shouldUseInstrumenting = TRUE,
+        useLogFirstStage = FALSE
       ),
       expected_error = TRUE
     )
