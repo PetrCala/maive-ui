@@ -183,9 +183,31 @@ export default function ModelPage() {
     }));
   }, [parameters.shouldUseInstrumenting, parameters.computeAndersonRubin]);
 
+  const modelLoadingCopy = useMemo(() => {
+    switch (parameters.modelType) {
+      case CONST.MODEL_TYPES.WAIVE:
+        return {
+          title: "Running WAIVE analysis...",
+          subtitle: "Applying weighted adjustments to your dataset.",
+        };
+      case CONST.MODEL_TYPES.MAIVE:
+      default:
+        return {
+          title: "Running MAIVE analysis...",
+          subtitle:
+            "Correcting for publication bias and p-hacking in your results.",
+        };
+    }
+  }, [parameters.modelType]);
+
+  useEffect(() => {
+    if (loading || hasRunModel) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [loading, hasRunModel]);
+
   const handleRunModel = useCallback(() => {
     void (async () => {
-      window.scrollTo({ top: 0, behavior: "smooth" }); // Scroll to top of page
       setLoading(true);
       setHasRunModel(true);
       abortControllerRef.current = new AbortController();
@@ -312,7 +334,8 @@ export default function ModelPage() {
             <div className="min-h-[400px] w-full items-center justify-center">
               {loading || hasRunModel ? (
                 <LoadingCard
-                  title={`Running ${parameters.modelType}... Please wait.`}
+                  title={modelLoadingCopy.title}
+                  subtitle={modelLoadingCopy.subtitle}
                   color="blue"
                   size="md"
                 />
