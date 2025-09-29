@@ -84,11 +84,9 @@ const Footer = ({ className = "" }: FooterProps) => {
     setCurrentYear(new Date().getFullYear().toString());
   }, []);
 
-  const handleContactClick = () => {
-    window.location.href = CONFIG.SHOULD_SEND_EMAIL_IN_FOOTER_CONTACT
-      ? `mailto:${CONST.CREATOR_EMAIL}`
-      : CONST.LINKS.CONTACT_WEBSITE_URL;
-  };
+  const contactHref = CONFIG.SHOULD_SEND_EMAIL_IN_FOOTER_CONTACT
+    ? `mailto:${CONST.CREATOR_EMAIL}`
+    : CONST.LINKS.CONTACT_WEBSITE_URL;
 
   const handleCitationClick = () => {
     setShowCitation(!showCitation);
@@ -132,8 +130,8 @@ const Footer = ({ className = "" }: FooterProps) => {
             text="GitHub"
           />
 
-          <FooterButtonLinkItem
-            onClick={handleContactClick}
+          <FooterHrefLinkItem
+            href={contactHref}
             icon={<FaEnvelope />}
             text="Contact"
           />
