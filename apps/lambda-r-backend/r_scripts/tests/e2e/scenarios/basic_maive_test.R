@@ -80,7 +80,8 @@ test_parameter_combinations <- function() {
         computeAndersonRubin = TRUE,
         maiveMethod = "PET",
         weight = "equal_weights",
-        shouldUseInstrumenting = TRUE
+        shouldUseInstrumenting = TRUE,
+        useLogFirstStage = FALSE
       )
     ),
     list(
@@ -93,7 +94,8 @@ test_parameter_combinations <- function() {
         computeAndersonRubin = FALSE,
         maiveMethod = "PEESE",
         weight = "standard_weights",
-        shouldUseInstrumenting = TRUE
+        shouldUseInstrumenting = TRUE,
+        useLogFirstStage = FALSE
       )
     ),
     list(
@@ -106,7 +108,8 @@ test_parameter_combinations <- function() {
         computeAndersonRubin = TRUE,
         maiveMethod = "EK",
         weight = "adjusted_weights",
-        shouldUseInstrumenting = FALSE
+        shouldUseInstrumenting = FALSE,
+        useLogFirstStage = FALSE
       )
     )
   )

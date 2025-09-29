@@ -39,5 +39,6 @@ DEFAULT_PARAMETERS <- list(
   computeAndersonRubin = FALSE,
   maiveMethod = "PET-PEESE",
   weight = "equal_weights",
-  shouldUseInstrumenting = TRUE
+  shouldUseInstrumenting = TRUE,
+  useLogFirstStage = FALSE
 )

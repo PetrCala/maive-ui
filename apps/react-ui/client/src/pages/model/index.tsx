@@ -200,7 +200,9 @@ export default function ModelPage() {
           // Use mock data in development mode
           console.debug("Generating mock results in development mode");
           const nrow = uploadedData?.data.length ?? 0;
-          result = { data: generateMockResults(nrow) };
+          result = {
+            data: generateMockResults(nrow, parameters.useLogFirstStage),
+          };
         } else {
           // This is a client-side call to the server-side API
           // For server-side, use the runModelClient function

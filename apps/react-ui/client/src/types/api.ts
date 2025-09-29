@@ -21,6 +21,7 @@ type ModelParameters = {
   maiveMethod: "PET" | "PEESE" | "PET-PEESE" | "EK";
   weight: "equal_weights" | "standard_weights" | "adjusted_weights";
   shouldUseInstrumenting: boolean;
+  useLogFirstStage: boolean;
 };
 
 type ModelRequest = {
@@ -58,6 +59,11 @@ type ModelResults = {
   funnelPlotHeight: number;
   bootCI: [[number, number], [number, number]] | "NA";
   bootSE: [number, number] | "NA";
+  firstStage?: {
+    mode: "levels" | "log";
+    description: string;
+    fStatisticLabel?: string;
+  } | null;
 };
 
 type PingResponse = {

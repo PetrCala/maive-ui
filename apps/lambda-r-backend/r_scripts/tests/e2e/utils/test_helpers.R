@@ -119,6 +119,7 @@ assert_response_structure <- function(response, expected_fields = NULL) {
     data_fields <- c(
       "effectEstimate", "standardError", "isSignificant",
       "andersonRubinCI", "publicationBias", "firstStageFTest",
+      "firstStage",
       "hausmanTest", "seInstrumented", "funnelPlot"
     )
 

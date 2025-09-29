@@ -54,8 +54,16 @@ const loadRandomMockCsvFile = (): File => {
  * @param nrow - The number of rows in the data.
  * @returns The mock results.
  */
-const generateMockResults = (nrow: number) => {
+const generateMockResults = (nrow: number, useLogFirstStage = false) => {
   const funnelPlotBase64 = mockFunnelPlot;
+
+  const firstStageMode = useLogFirstStage ? "log" : "levels";
+  const firstStageDescription = useLogFirstStage
+    ? "First stage: log(SE²) ~ log N; Duan smearing applied."
+    : "First stage: SE² ~ 1/N.";
+  const firstStageLabel = useLogFirstStage
+    ? "First-Stage F-Test (γ₁)"
+    : "First-Stage F-Test";
 
   return {
     effectEstimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
@@ -111,6 +119,11 @@ const generateMockResults = (nrow: number) => {
     funnelPlot: funnelPlotBase64,
     funnelPlotWidth: 672,
     funnelPlotHeight: 672,
+    firstStage: {
+      mode: firstStageMode,
+      description: firstStageDescription,
+      fStatisticLabel: firstStageLabel,
+    },
   };
 };
 

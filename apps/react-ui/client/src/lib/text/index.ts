@@ -28,6 +28,8 @@ export type ResultsText = Readonly<{
     hausmanTest: MetricText;
     hausmanCriticalValue: MetricText;
     firstStageFTest: MetricText;
+    firstStageFTestLog: MetricText;
+    firstStageSpecification: MetricText;
   }>;
   funnelPlot: Readonly<{
     title: string;
@@ -110,7 +112,17 @@ const RESULTS_TEXT: ResultsText = {
       firstStageFTest: {
         label: "First-Stage F-Test",
         tooltip:
-          "Heteroskedasticity-robust F statistic for the strength of the instrument (inverse sample size) in the first-stage regression of reported variances. Values above 10 denote a strong instrument.",
+          "Heteroskedasticity-robust F statistic for the strength of the instrument (inverse sample size) in the levels first-stage regression of reported variances. Values above 10 denote a strong instrument.",
+      },
+      firstStageFTestLog: {
+        label: "First-Stage F-Test (γ₁)",
+        tooltip:
+          "Heteroskedasticity-robust F statistic for the log-scale slope coefficient (γ₁) in the first-stage regression log(SE²) ~ log N. Values above 10 denote a strong instrument.",
+      },
+      firstStageSpecification: {
+        label: "First-stage specification",
+        tooltip:
+          "Indicates the functional form used for the first-stage variance regression. Log mode reports log(SE²) ~ log N with Duan smearing to return fitted variances to levels.",
       },
     },
   },
@@ -255,6 +267,11 @@ const TEXT = {
       label: "Use Instrumenting",
       tooltip:
         "Whether to use instrumenting in the analysis. When “No” is chosen, you can estimate classical (non-MAIVE) versions of PET, PEESE, PET-PEESE, and EK.",
+    },
+    useLogFirstStage: {
+      label: "Use log first stage",
+      tooltip:
+        "Estimate the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels.",
     },
     runModel: "Run Model",
   },

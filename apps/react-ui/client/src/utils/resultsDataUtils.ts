@@ -42,6 +42,21 @@ export const generateResultsData = (
     return `[${formatValue(ci[0])}, ${formatValue(ci[1])}]`;
   };
 
+  const isInstrumented = parameters?.shouldUseInstrumenting ?? true;
+  const firstStageMode = results.firstStage?.mode ?? "levels";
+  const firstStageDescription = results.firstStage?.description ?? null;
+  const defaultSpecification =
+    firstStageMode === "log"
+      ? "First stage: log(SE²) ~ log N; Duan smearing applied."
+      : "First stage: SE² ~ 1/N.";
+  const specificationValue = firstStageDescription ?? defaultSpecification;
+  const firstStageLabelDefault =
+    firstStageMode === "log"
+      ? resultsText.diagnosticTests.metrics.firstStageFTestLog.label
+      : resultsText.diagnosticTests.metrics.firstStageFTest.label;
+  const firstStageFStatisticLabel =
+    results.firstStage?.fStatisticLabel ?? firstStageLabelDefault;
+
   // Core results
   const coreResults: ResultItem[] = [
     {
@@ -120,7 +135,7 @@ export const generateResultsData = (
     {
       label: resultsText.diagnosticTests.metrics.hausmanTest.label,
       value: results.hausmanTest.statistic,
-      show: parameters?.shouldUseInstrumenting ?? true,
+      show: isInstrumented,
       highlightColor: results.hausmanTest.rejectsNull
         ? "text-green-600"
         : "text-red-600",
@@ -132,15 +147,19 @@ export const generateResultsData = (
     {
       label: resultsText.diagnosticTests.metrics.hausmanCriticalValue.label,
       value: results.hausmanTest.criticalValue,
-      show: parameters?.shouldUseInstrumenting ?? true,
+      show: isInstrumented,
       section: "tests",
     },
     {
-      label: resultsText.diagnosticTests.metrics.firstStageFTest.label,
+      label: resultsText.diagnosticTests.metrics.firstStageSpecification.label,
+      value: specificationValue,
+      show: isInstrumented,
+      section: "tests",
+    },
+    {
+      label: firstStageFStatisticLabel,
       value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
-      show:
-        (parameters?.shouldUseInstrumenting ?? true) &&
-        results.firstStageFTest !== "NA",
+      show: isInstrumented && results.firstStageFTest !== "NA",
       highlightColor:
         results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
           ? "text-green-600"
