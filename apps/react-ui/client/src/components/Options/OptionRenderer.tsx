@@ -32,6 +32,9 @@ export default function OptionRenderer({
       ? TEXT.model.maiveMethod.nonInstrumentingLabel
       : option.label;
 
+  const noInstrumentingInfo =
+    TEXT.model.shouldUseInstrumenting.noInstrumentingInfo;
+
   const renderOption = () => {
     switch (option.type) {
       case "yesno":
@@ -102,7 +105,15 @@ export default function OptionRenderer({
       {option.key === "shouldUseInstrumenting" &&
         !parameters.shouldUseInstrumenting && (
           <Alert
-            message={TEXT.model.shouldUseInstrumenting.noInstrumentingInfo}
+            message={
+              <>
+                {noInstrumentingInfo.leading}
+                <em>{noInstrumentingInfo.citation}</em>
+                {noInstrumentingInfo.postCitation}
+                <strong>{noInstrumentingInfo.citeButtonLabel}</strong>
+                {noInstrumentingInfo.postCiteButton}
+              </>
+            }
             type={CONST.ALERT_TYPES.INFO}
             className="mt-3"
             role="status"

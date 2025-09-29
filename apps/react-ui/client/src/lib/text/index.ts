@@ -273,8 +273,15 @@ const TEXT = {
       label: "Use Instrumenting",
       tooltip:
         "Whether to use instrumenting in the analysis. When “No” is chosen, you can estimate classical (non-MAIVE) versions of PET, PEESE, PET-PEESE, and EK.",
-      noInstrumentingInfo:
-        "Without instrumenting, this run is not MAIVE. Please still cite *Irsova et al., Nature Communications (2025)* as the app used using the button in the footer if you use this tool in your research.",
+      noInstrumentingInfo: {
+        leading:
+          "Without instrumenting, this run is not MAIVE. Please still cite ",
+        citation: "Irsova et al., Nature Communications (2025)",
+        postCitation: " using the ",
+        citeButtonLabel: "Cite",
+        postCiteButton:
+          " button in the footer if you use this tool in your research.",
+      },
     },
     useLogFirstStage: {
       label: "Use log first stage",
