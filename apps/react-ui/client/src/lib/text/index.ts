@@ -158,8 +158,7 @@ const TEXT = {
       richText: {
         leading: "This method is included in the MAIVE app (",
         citation: "Irsova et al., Nature Communications, 2025",
-        postCitation:
-          "). Please cite the paper using the ",
+        postCitation: "). Please cite the paper using the ",
         citeButtonLabel: "Cite",
         postCiteButton:
           " button in the footer if you use this tool in your research.",
