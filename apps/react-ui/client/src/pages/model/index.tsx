@@ -183,22 +183,10 @@ export default function ModelPage() {
     }));
   }, [parameters.shouldUseInstrumenting, parameters.computeAndersonRubin]);
 
-  const modelLoadingCopy = useMemo(() => {
-    switch (parameters.modelType) {
-      case CONST.MODEL_TYPES.WAIVE:
-        return {
-          title: "Running WAIVE analysis...",
-          subtitle: "Applying weighted adjustments to your dataset.",
-        };
-      case CONST.MODEL_TYPES.MAIVE:
-      default:
-        return {
-          title: "Running MAIVE analysis...",
-          subtitle:
-            "Correcting for publication bias and p-hacking in your results.",
-        };
-    }
-  }, [parameters.modelType]);
+  const modelLoadingCopy = {
+    title: "Running your analysis...",
+    subtitle: "Hang tight while we process your model settings.",
+  };
 
   useEffect(() => {
     if (loading || hasRunModel) {

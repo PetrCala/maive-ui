@@ -77,7 +77,11 @@ export default function DemoPage() {
       </Head>
 
       <main className="content-page-container">
-        <div className="flex w-full flex-1 items-center justify-center px-4 py-12">
+        <div
+          className={`flex w-full flex-1 justify-center px-4 ${
+            isLoading ? "items-start pt-16 pb-12" : "items-center py-12"
+          }`}
+        >
           {hasError ? (
             <div className="max-w-lg w-full space-y-4 text-center">
               <h1 className="text-3xl font-semibold text-primary">
