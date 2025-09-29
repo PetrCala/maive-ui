@@ -70,17 +70,17 @@ const RESULTS_TEXT: ResultsText = {
     title: "Publication Bias and p-hacking Analysis",
     metrics: {
       eggerCoef: {
-        label: "Egger Coefficient (Estimate)",
+        label: "Egger Coefficient Estimate",
         tooltip:
           "Coefficient capturing funnel asymmetry in the instrumented Egger regression.",
       },
       eggerSE: {
-        label: "Standard Error",
+        label: "Egger Coefficient Standard Error",
         tooltip:
           "Robust standard error of the coefficient capturing funnel asymmetry in the instrumented Egger regression.",
       },
       significance: {
-        label: "Significant at 5% level",
+        label: "Egger Test Significant at 5% level",
         tooltip:
           "Indicates whether publication bias is statistically significant at the 5% level according to the instrumented FAT test.",
       },
