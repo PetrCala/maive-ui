@@ -24,8 +24,7 @@ const CitationBox = ({
 
   const citations = useMemo(
     () => ({
-      apa:
-        "Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious precision in meta-analysis of observational research. Nature Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0",
+      apa: "Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious precision in meta-analysis of observational research. Nature Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0",
       bibtex: `@article{irsova2025spurious,
   title={Spurious precision in meta-analysis of observational research},
   author={Irsova, Zuzana and Bom, Pedro R. D. and Havranek, Tomas and Rachinger, Heiko},
