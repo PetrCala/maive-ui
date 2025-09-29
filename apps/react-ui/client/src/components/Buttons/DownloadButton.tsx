@@ -17,6 +17,9 @@ export default function DownloadButton({
 }: DownloadButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  const buttonSize = "clamp(1.5rem, 1.5rem + 1vw, 2.5rem)";
+  const iconSizeClass = "h-[55%] w-[55%]";
+
   const handleClick = () => {
     if (disabled || isLoading) {
       return;
@@ -34,12 +37,16 @@ export default function DownloadButton({
     <button
       onClick={handleClick}
       disabled={disabled || isLoading}
-      className={`inline-flex items-center justify-center w-10 h-10 text-sm font-medium bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 text-white shadow-md hover:shadow-lg rounded-lg ${className}`}
+      className={`inline-flex items-center justify-center text-sm font-medium bg-gray-600 hover:bg-gray-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors duration-200 text-white shadow-md hover:shadow-lg rounded-lg ${className}`}
+      style={{
+        width: buttonSize,
+        height: buttonSize,
+      }}
       title={title}
     >
       {isLoading ? (
         <svg
-          className="animate-spin h-5 w-5 text-white"
+          className={`animate-spin text-white ${iconSizeClass}`}
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
@@ -60,7 +67,7 @@ export default function DownloadButton({
         </svg>
       ) : (
         <svg
-          className="w-5 h-5"
+          className={iconSizeClass}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
