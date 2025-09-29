@@ -244,7 +244,9 @@ const analyzeNormalizedRows = (
     }
   });
 
-  const sanitizedRows = rows.filter((_, index) => !invalidRowIndexes.has(index));
+  const sanitizedRows = rows.filter(
+    (_, index) => !invalidRowIndexes.has(index),
+  );
 
   return {
     sanitizedRows,
@@ -416,8 +418,7 @@ const validateData = (
       message:
         formatted.length > 0
           ? `The data contains missing values in ${formatted}. These rows will be removed from the analysis.`
-          :
-            "The data contains missing values. These rows will be removed from the analysis.",
+          : "The data contains missing values. These rows will be removed from the analysis.",
     });
   }
 
@@ -431,8 +432,7 @@ const validateData = (
       message:
         formatted.length > 0
           ? `Rows with infinite values (${formatted}) were removed before running the analysis. Please replace these values if you want them included.`
-          :
-            "Rows with infinite values were removed before running the analysis. Please replace these values if you want them included.",
+          : "Rows with infinite values were removed before running the analysis. Please replace these values if you want them included.",
     });
   }
 
