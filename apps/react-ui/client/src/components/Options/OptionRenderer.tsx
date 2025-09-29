@@ -6,6 +6,7 @@ import type { OptionConfig } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
+import TEXT from "@src/lib/text";
 
 type OptionRendererProps = {
   option: OptionConfig;
@@ -26,12 +27,17 @@ export default function OptionRenderer({
     onChange(option.key, newValue);
   };
 
+  const optionLabel =
+    option.key === "maiveMethod" && !parameters.shouldUseInstrumenting
+      ? TEXT.model.maiveMethod.nonInstrumentingLabel
+      : option.label;
+
   const renderOption = () => {
     switch (option.type) {
       case "yesno":
         return (
           <YesNoSelect
-            label={option.label}
+            label={optionLabel}
             value={value as boolean}
             onChange={handleChange as (value: boolean) => void}
             className={option.className}
@@ -54,7 +60,7 @@ export default function OptionRenderer({
             : option.options;
         return (
           <DropdownSelect
-            label={option.label}
+            label={optionLabel}
             value={value as string}
             onChange={handleChange as (value: string) => void}
             options={dropdownOptions}
@@ -93,6 +99,15 @@ export default function OptionRenderer({
       >
         {renderOption()}
       </Tooltip>
+      {option.key === "shouldUseInstrumenting" &&
+        !parameters.shouldUseInstrumenting && (
+          <Alert
+            message={TEXT.model.shouldUseInstrumenting.noInstrumentingInfo}
+            type={CONST.ALERT_TYPES.INFO}
+            className="mt-3"
+            role="status"
+          />
+        )}
       {renderWarnings()}
     </div>
   );
