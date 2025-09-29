@@ -22,6 +22,7 @@ type ModelParameters = {
   weight: "equal_weights" | "standard_weights" | "adjusted_weights";
   shouldUseInstrumenting: boolean;
   useLogFirstStage: boolean;
+  winsorize: boolean;
 };
 
 type ModelRequest = {

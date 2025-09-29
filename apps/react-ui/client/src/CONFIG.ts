@@ -25,6 +25,7 @@ const CONFIG = {
     weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
     shouldUseInstrumenting: true,
     useLogFirstStage: false,
+    winsorize: false,
   },
 } as const;
 
