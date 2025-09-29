@@ -42,12 +42,13 @@ function(data, parameters) {
       list(data = results)
     },
     error = function(e) {
-      cli::cli_alert_danger("Error in run-model endpoint: {e$message}")
+      err_message <- conditionMessage(e)
+      cli::cli_alert_danger("Error in run-model endpoint: {err_message}")
       cli::cli_h2("Error traceback:")
       cli::cli_code(capture.output(traceback()))
       list(
         error = TRUE,
-        message = paste("Internal server error:", e$message)
+        message = paste("Internal server error:", err_message)
       )
     }
   )

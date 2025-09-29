@@ -41,6 +41,65 @@ winsorize_1pct <- function(x) {
   )
 }
 
+patch_maive_confidence_interval <- local({
+  patched <- FALSE
+
+  function() {
+    if (patched) {
+      return(FALSE)
+    }
+
+    if (!requireNamespace("MAIVE", quietly = TRUE)) {
+      return(FALSE)
+    }
+
+    fn_name <- "maive_prepare_confidence_interval"
+    ns <- getNamespace("MAIVE")
+
+    if (!exists(fn_name, envir = ns, inherits = FALSE)) {
+      return(FALSE)
+    }
+
+    original <- get(fn_name, envir = ns, inherits = FALSE)
+
+    patched_fn <- function(model, coef_index, estimate, se, boot_result, alpha) {
+      res <- original(model, coef_index, estimate, se, boot_result, alpha)
+
+      if (!is.null(dim(res))) {
+        res <- as.vector(res)
+      }
+
+      if (is.null(res)) {
+        return(res)
+      }
+
+      if (is.atomic(res) && length(res) == 1L) {
+        if (all(is.na(res))) {
+          res <- c(lower = NA_real_, upper = NA_real_)
+        } else {
+          res <- rep(res, length.out = 2L)
+          names(res) <- c("lower", "upper")
+        }
+      } else if (is.atomic(res) && length(res) == 2L && is.null(names(res))) {
+        names(res) <- c("lower", "upper")
+      }
+
+      res
+    }
+
+    tryCatch(
+      {
+        assignInNamespace(fn_name, patched_fn, ns = "MAIVE")
+        patched <<- TRUE
+        TRUE
+      },
+      error = function(err) {
+        FALSE
+      }
+    )
+  }
+})
+
 # Main MAIVE model function
 run_maive_model <- function(data, parameters) {
   # Static config
@@ -265,13 +324,15 @@ run_maive_model <- function(data, parameters) {
 
   tryCatch(
     {
+      patch_maive_confidence_interval()
       maive_res <- do.call(MAIVE::maive, maive_args)
     },
     error = function(e) {
-      cli::cli_alert_danger(paste("MAIVE function error:", e$message))
+      err_message <- conditionMessage(e)
+      cli::cli_alert_danger(paste("MAIVE function error:", err_message))
       cli::cli_alert_danger(paste("Error traceback:"))
       print(traceback()) # nolint: undesirable_function_linter.
-      cli::cli_abort(e)
+      cli::cli_abort(err_message)
     }
   )
 
