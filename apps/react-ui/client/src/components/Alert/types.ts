@@ -6,6 +6,7 @@ type AlertProps = {
   className?: string;
   onClick?: () => void;
   standalone?: boolean;
+  role?: "alert" | "status";
 };
 
 export type { AlertType, AlertProps };

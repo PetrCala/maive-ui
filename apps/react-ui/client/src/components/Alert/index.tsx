@@ -7,6 +7,7 @@ const Alert = ({
   className = "",
   onClick,
   standalone = false,
+  role = "alert",
 }: AlertProps) => {
   const getAlertStyles = () => {
     switch (type) {
@@ -90,7 +91,8 @@ const Alert = ({
     <div
       className={`flex items-start p-4 rounded-lg border ${getAlertStyles()} ${!!standalone ? "fixed left-6 bottom-6 z-50 min-w-[250px] max-w-xs opacity-95" : ""} ${className} ${onClick ? "cursor-pointer" : "cursor-default"}`}
       onClick={onClick}
-      role="alert"
+      role={role}
+      aria-live={role === "status" ? "polite" : undefined}
     >
       <div className="flex-shrink-0 mr-3 mt-0.5">{getIcon()}</div>
       <div className="flex-1">
