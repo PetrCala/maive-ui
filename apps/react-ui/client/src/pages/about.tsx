@@ -9,6 +9,7 @@ import {
 import VersionInfo from "@components/VersionInfo";
 
 export default function AboutPage() {
+  const shouldShowDescription = false;
   return (
     <>
       <Head>
@@ -27,11 +28,13 @@ export default function AboutPage() {
               <h1 className="text-4xl sm:text-5xl font-bold text-primary">
                 {TEXT.maiveModal.title}
               </h1>
-              <p className="text-lg text-secondary leading-relaxed">
-                Adjust your meta-analysis for publication bias, p-hacking, and
-                spurious precision using MAIVE. Explore the methodology and
-                access the resources that power the estimator.
-              </p>
+              {shouldShowDescription && (
+                <p className="text-lg text-secondary leading-relaxed">
+                  Adjust your meta-analysis for publication bias, p-hacking, and
+                  spurious precision using MAIVE. Explore the methodology and
+                  access the resources that power the estimator.
+                </p>
+              )}
             </header>
 
             <MAIVEInfoContent />
