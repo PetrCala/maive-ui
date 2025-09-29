@@ -11,6 +11,7 @@ const MINIMUM_VISIBLE_DURATION_MS = 400;
 export default function DemoPage() {
   const router = useRouter();
   const [hasError, setHasError] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const minimumLoaderTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
@@ -24,6 +25,7 @@ export default function DemoPage() {
 
   const runDemo = useCallback(async () => {
     setHasError(false);
+    setIsLoading(true);
     clearPendingTimeout();
 
     try {
@@ -47,6 +49,7 @@ export default function DemoPage() {
     } catch (error) {
       console.error("Error loading demo data:", error);
       setHasError(true);
+      setIsLoading(false);
     }
   }, [clearPendingTimeout, router]);
 
@@ -56,6 +59,12 @@ export default function DemoPage() {
       clearPendingTimeout();
     };
   }, [clearPendingTimeout, runDemo]);
+
+  useEffect(() => {
+    if (isLoading) {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [isLoading]);
 
   return (
     <>
@@ -67,42 +76,45 @@ export default function DemoPage() {
         />
       </Head>
 
-      <div className="flex items-center justify-center min-h-[60vh] px-4 py-12">
-        {hasError ? (
-          <div className="max-w-lg w-full space-y-4 text-center">
-            <h1 className="text-3xl font-semibold text-primary">
-              We couldn&apos;t load the demo
-            </h1>
-            <p className="text-secondary leading-relaxed">
-              Something went wrong while preparing the demo dataset. Please try
-              again, or return to the home page to continue exploring MAIVE.
-            </p>
-            <div className="flex flex-wrap justify-center gap-3">
-              <ActionButton
-                onClick={() => {
-                  void runDemo();
-                }}
-                variant="primary"
-                size="md"
-              >
-                Try again
-              </ActionButton>
-              <ActionButton href="/" variant="secondary" size="md">
-                Back to home
-              </ActionButton>
+      <main className="content-page-container">
+        <div className="flex w-full flex-1 items-center justify-center px-4 py-12">
+          {hasError ? (
+            <div className="max-w-lg w-full space-y-4 text-center">
+              <h1 className="text-3xl font-semibold text-primary">
+                We couldn&apos;t load the demo
+              </h1>
+              <p className="text-secondary leading-relaxed">
+                Something went wrong while preparing the demo dataset. Please
+                try again, or return to the home page to continue exploring
+                MAIVE.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <ActionButton
+                  onClick={() => {
+                    void runDemo();
+                  }}
+                  variant="primary"
+                  size="md"
+                >
+                  Try again
+                </ActionButton>
+                <ActionButton href="/" variant="secondary" size="md">
+                  Back to home
+                </ActionButton>
+              </div>
             </div>
-          </div>
-        ) : (
-          <LoadingCard
-            title="Loading Demo Data..."
-            subtitle="Preparing your demo analysis"
-            color="purple"
-            size="md"
-            fullWidth={false}
-            containerClassName="w-full max-w-md"
-          />
-        )}
-      </div>
+          ) : (
+            <LoadingCard
+              title="Loading Demo Data..."
+              subtitle="Preparing your demo analysis"
+              color="purple"
+              size="md"
+              fullWidth={false}
+              containerClassName="w-full max-w-md"
+            />
+          )}
+        </div>
+      </main>
     </>
   );
 }
