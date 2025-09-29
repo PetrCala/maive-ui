@@ -59,8 +59,8 @@ const generateMockResults = (nrow: number, useLogFirstStage = false) => {
 
   const firstStageMode = useLogFirstStage ? "log" : "levels";
   const firstStageDescription = useLogFirstStage
-    ? "First stage: log(SE²) ~ log N; Duan smearing applied."
-    : "First stage: SE² ~ 1/N.";
+    ? "log(SE²) ~ log N; Duan smearing applied"
+    : "SE² ~ 1/N.";
   const firstStageLabel = useLogFirstStage
     ? "First-Stage F-Test (γ₁)"
     : "First-Stage F-Test";

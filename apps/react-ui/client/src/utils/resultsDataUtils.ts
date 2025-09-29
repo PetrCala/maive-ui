@@ -47,8 +47,8 @@ export const generateResultsData = (
   const firstStageDescription = results.firstStage?.description ?? null;
   const defaultSpecification =
     firstStageMode === "log"
-      ? "First stage: log(SE²) ~ log N; Duan smearing applied."
-      : "First stage: SE² ~ 1/N.";
+      ? "log(SE²) ~ log N; Duan smearing applied"
+      : "SE² ~ 1/N";
   const specificationValue = firstStageDescription ?? defaultSpecification;
   const firstStageLabelDefault =
     firstStageMode === "log"

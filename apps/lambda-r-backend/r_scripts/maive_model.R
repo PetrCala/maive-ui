@@ -309,9 +309,9 @@ run_maive_model <- function(data, parameters) {
 
   first_stage_mode <- if (instrument == 1 && isTRUE(log_first_stage)) "log" else "levels"
   first_stage_description <- if (first_stage_mode == "log") {
-    "First stage: log(SE²) ~ log N; Duan smearing applied."
+    "log(SE²) ~ log N; Duan smearing applied"
   } else {
-    "First stage: SE² ~ 1/N."
+    "SE² ~ 1/N"
   }
   first_stage_label <- if (first_stage_mode == "log") {
     "First-Stage F-Test (γ₁)"
