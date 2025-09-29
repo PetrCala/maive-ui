@@ -69,7 +69,7 @@ module.exports = {
 		"plugin:prettier/recommended",
 	],
 	plugins: ["@typescript-eslint", "react", "react-hooks"],
-	ignorePatterns: ["vite.config.ts", ".eslintrc.js"],
+	ignorePatterns: ["vite.config.ts", "vitest.config.ts", ".eslintrc.js"],
 	parser: "@typescript-eslint/parser",
 	parserOptions: {
 		project: path.resolve(__dirname, "./tsconfig.json"),
@@ -186,5 +186,4 @@ module.exports = {
 	},
 
 	overrides: [],
-	ignorePatterns: ["vitest.config.ts"],
 }
