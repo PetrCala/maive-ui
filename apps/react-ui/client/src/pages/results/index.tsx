@@ -41,8 +41,22 @@ export default function ResultsPage() {
 
   const [isRunInfoModalOpen, setIsRunInfoModalOpen] = useState(false);
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const parsedParameters: ModelParameters = JSON.parse(parameters ?? "{}");
+  let parsedParametersJson: Partial<ModelParameters> = {};
+  if (parameters) {
+    try {
+      const parsed = JSON.parse(parameters) as unknown;
+      if (parsed && typeof parsed === "object") {
+        parsedParametersJson = parsed as Partial<ModelParameters>;
+      }
+    } catch (error) {
+      console.error("Failed to parse model parameters from URL:", error);
+    }
+  }
+
+  const parsedParameters: ModelParameters = {
+    ...CONFIG.DEFAULT_MODEL_PARAMETERS,
+    ...parsedParametersJson,
+  };
 
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;

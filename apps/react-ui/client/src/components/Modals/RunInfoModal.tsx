@@ -50,6 +50,7 @@ export default function RunInfoModal({
       case "computeAndersonRubin":
       case "shouldUseInstrumenting":
       case "useLogFirstStage":
+      case "winsorize":
         return value ? "Yes" : "No";
       case "standardErrorTreatment":
         const seTreatment = value as string;

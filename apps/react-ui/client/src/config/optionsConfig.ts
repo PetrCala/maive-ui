@@ -99,6 +99,12 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         })),
       },
       {
+        key: "winsorize",
+        label: TEXT.model.winsorize.label,
+        tooltip: TEXT.model.winsorize.tooltip,
+        type: "yesno",
+      },
+      {
         key: "includeStudyDummies",
         label: TEXT.model.includeStudyDummies.label,
         tooltip: TEXT.model.includeStudyDummies.tooltip,

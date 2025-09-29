@@ -8,6 +8,39 @@ library(metafor)
 source("funnel_plot.R")
 # nolint end: undesirable_function_linter.
 
+winsorize_1pct <- function(x) {
+  idx <- !is.na(x)
+  n <- sum(idx)
+
+  if (n <= 1) {
+    return(list(
+      values = x,
+      bounds = c(NA_real_, NA_real_),
+      clipped = c(0L, 0L)
+    ))
+  }
+
+  k <- max(1L, floor(0.01 * n))
+  probs <- sort(c(k / n, 1 - k / n))
+  qs <- as.numeric(stats::quantile(x[idx], probs = probs, type = 7, names = FALSE))
+
+  if (length(qs) == 1) {
+    qs <- rep(qs, 2)
+  }
+
+  y <- x
+  lower_mask <- idx & x < qs[1]
+  upper_mask <- idx & x > qs[2]
+  y[lower_mask] <- qs[1]
+  y[upper_mask] <- qs[2]
+
+  list(
+    values = y,
+    bounds = qs,
+    clipped = c(sum(lower_mask), sum(upper_mask))
+  )
+}
+
 # Main MAIVE model function
 run_maive_model <- function(data, parameters) {
   # Static config
@@ -64,6 +97,42 @@ run_maive_model <- function(data, parameters) {
 
   df <- df[rowSums(is.na(df)) != ncol(df), ]
 
+  if (isTRUE(params$winsorize)) {
+    cli::cli_alert_info("Applying 1% winsorization to effect sizes and standard errors")
+    bs_winsor <- winsorize_1pct(df$bs)
+    se_winsor <- winsorize_1pct(df$sebs)
+
+    df$bs <- bs_winsor$values
+    df$sebs <- se_winsor$values
+
+    format_bounds <- function(bounds) {
+      if (any(is.na(bounds))) {
+        return("not applied (insufficient non-missing values)")
+      }
+
+      sprintf(
+        "[%s, %s]",
+        format(signif(bounds[1], 6), scientific = FALSE),
+        format(signif(bounds[2], 6), scientific = FALSE)
+      )
+    }
+
+    cli::cli_bullets(c(
+      sprintf(
+        "Effects clipped to %s (%d lower, %d upper replacements).",
+        format_bounds(bs_winsor$bounds),
+        bs_winsor$clipped[1],
+        bs_winsor$clipped[2]
+      ),
+      sprintf(
+        "Standard errors clipped to %s (%d lower, %d upper replacements).",
+        format_bounds(se_winsor$bounds),
+        se_winsor$clipped[1],
+        se_winsor$clipped[2]
+      )
+    ))
+  }
+
   cli::cli_h2("Final data frame for MAIVE:")
   cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
   cli::cli_text("\n")
@@ -77,7 +146,8 @@ run_maive_model <- function(data, parameters) {
     "maiveMethod",
     "weight",
     "shouldUseInstrumenting",
-    "useLogFirstStage"
+    "useLogFirstStage",
+    "winsorize"
   )
 
   if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
