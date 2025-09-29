@@ -28,10 +28,9 @@ export default function AboutPage() {
                 {TEXT.maiveModal.title}
               </h1>
               <p className="text-lg text-secondary leading-relaxed">
-                Adjust your analyses for publication bias, p-hacking, and
-                spurious precision using MAIVE. Explore the methodology, see
-                where it shines, and access the resources that power the
-                estimator.
+                Adjust your meta-analysis for publication bias, p-hacking, and
+                spurious precision using MAIVE. Explore the methodology and
+                access the resources that power the estimator.
               </p>
             </header>
 
