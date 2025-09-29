@@ -218,7 +218,7 @@ const analyzeNormalizedRows = (
     FINITE_COLUMNS.forEach((columnKey) => {
       const value = row[columnKey];
 
-      if (value === null || value === undefined || value === "") {
+      if (value === null || value === undefined) {
         missingColumns.push(columnKey);
         invalidRowIndexes.add(index);
         return;
