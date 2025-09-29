@@ -1,23 +1,31 @@
 export const CITATION_TEXT = {
   short: "Irsova et al., Nature Communications, 2025",
-  full: "Irsova, Z., Bom, P. R. D., Havranek, T., & Rachinger, H. Spurious Precision in Meta-Analysis of Observational Research. Nature Communications 2025, DOI: 10.1038/s41467-025-63261-0.",
-  apa: "Irsova, Z., Bom, P. R. D., Havranek, T., & Rachinger, H. (2025). Spurious Precision in Meta-Analysis of Observational Research. Nature Communications, DOI: 10.1038/s41467-025-63261-0.",
+  full:
+    "Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious precision in meta-analysis of observational research. Nature Communications 16, 8454. https://doi.org/10.1038/s41467-025-63261-0",
+  apa:
+    "Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious precision in meta-analysis of observational research. Nature Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0",
   bibtex: `@article{irsova2025spurious,
-  title={Spurious Precision in Meta-Analysis of Observational Research},
+  title={Spurious precision in meta-analysis of observational research},
   author={Irsova, Zuzana and Bom, Pedro R. D. and Havranek, Tomas and Rachinger, Heiko},
   journal={Nature Communications},
+  volume={16},
+  pages={8454},
   year={2025},
-  doi={10.1038/s41467-025-63261-0}
+  doi={10.1038/s41467-025-63261-0},
+  url={https://doi.org/10.1038/s41467-025-63261-0}
 }`,
   ris: `TY  - JOUR
-TI  - Spurious Precision in Meta-Analysis of Observational Research
+TI  - Spurious precision in meta-analysis of observational research
 AU  - Irsova, Zuzana
 AU  - Bom, Pedro R. D.
 AU  - Havranek, Tomas
 AU  - Rachinger, Heiko
 PY  - 2025
 JO  - Nature Communications
+VL  - 16
+SP  - 8454
 DO  - 10.1038/s41467-025-63261-0
+UR  - https://doi.org/10.1038/s41467-025-63261-0
 ER  -`,
 };
 

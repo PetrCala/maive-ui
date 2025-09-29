@@ -8,7 +8,7 @@ const CONST = {
   LINKS: {
     MAIVE: {
       WEBSITE: "https://meta-analysis.cz/maive/",
-      PAPER: "https://meta-analysis.cz/maive/maive.pdf",
+      PAPER: "https://doi.org/10.1038/s41467-025-63261-0",
       GITHUB: "https://github.com/meta-analysis-es/maive",
     },
     APP_GITHUB: {

@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Link from "next/link";
 import PingButton from "@src/components/Buttons/PingButton";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { useState, useEffect } from "react";
@@ -29,7 +30,18 @@ export default function Home() {
             Adjust your data for publication bias, p-hacking, and spurious
             precision.
             <br />
-            Powered by the MAIVE estimator (<em>Nature Communications</em>).
+            Powered by the MAIVE estimator (
+            <em>
+              <Link
+                href="https://doi.org/10.1038/s41467-025-63261-0"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-current no-underline"
+              >
+                Nature Communications
+              </Link>
+            </em>
+            ).
           </p>
 
           <div className="flex flex-col gap-4 justify-center items-center mb-8 w-full max-w-md sm:max-w-lg mx-auto">
