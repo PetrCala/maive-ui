@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
 import type { AlertType } from "@src/types/alert";
 
 type AlertProps = {
-  message: string;
+  message: ReactNode;
   type?: AlertType;
   className?: string;
   onClick?: () => void;
