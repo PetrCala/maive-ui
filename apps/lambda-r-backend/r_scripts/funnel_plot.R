@@ -424,151 +424,43 @@ get_funnel_plot <- function(
 
   box()
 
-  clamp_value <- function(value, lower, upper) {
-    if (is.na(value) || !is.finite(value)) {
-      return(value)
-    }
-    if (!is.finite(lower) || !is.finite(upper)) {
-      return(value)
-    }
-    if (lower > upper) {
-      midpoint <- (lower + upper) / 2
-      return(midpoint)
-    }
-    max(min(value, upper), lower)
-  }
-
-  convert_width_to_user <- function(width_in_inches) {
-    pin <- par("pin")
-    if (length(pin) < 2 || pin[1] <= 0) {
-      return(0)
-    }
-    width_in_inches * x_span / pin[1]
-  }
-
-  convert_height_to_user <- function(height_in_inches) {
-    pin <- par("pin")
-    if (length(pin) < 2 || pin[2] <= 0) {
-      return(0)
-    }
-    height_in_inches * y_span / pin[2]
-  }
-
   par_usr <- par("usr")
-  x_span <- abs(par_usr[2] - par_usr[1])
-  if (!is.finite(x_span) || x_span == 0) {
-    x_span <- 1
-  }
   y_span <- abs(par_usr[4] - par_usr[3])
-  if (!is.finite(y_span) || y_span == 0) {
-    y_span <- 1
-  }
   top_offset <- y_span * 0.04
   label_y_simple <- par_usr[4] - top_offset
   label_y_maive <- label_y_simple
-
-  simple_label <- paste0("Simple mean = ", round(simple_mean, 2))
-  simple_label_width <- convert_width_to_user(strwidth(simple_label, cex = 0.9))
-  simple_label_height <- convert_height_to_user(strheight(simple_label, cex = 0.9))
-  horizontal_padding <- max(x_span * 0.01, simple_label_width * 0.05)
-  vertical_padding <- y_span * 0.01
 
   par_xpd_old <- par("xpd")
   on.exit(par(xpd = par_xpd_old), add = TRUE)
   par(xpd = NA)
 
-  top_limit_simple <- par_usr[4] - simple_label_height - vertical_padding
-  label_y_simple <- min(label_y_simple, top_limit_simple)
-  label_x_simple <- clamp_value(
+  text(
     simple_mean,
-    xlim[1] + simple_label_width / 2 + horizontal_padding,
-    xlim[2] - simple_label_width / 2 - horizontal_padding
+    label_y_simple,
+    labels = paste0("Simple mean = ", round(simple_mean, 2)),
+    cex = 0.9,
+    adj = c(0.5, 0)
   )
 
-  if (is.finite(label_x_simple)) {
+  if (!is.null(intercept) && !is.null(intercept_se)) {
+    x_range <- diff(range(xlim))
+    if (!is.finite(x_range) || x_range == 0) {
+      x_range <- 1
+    }
+    distance <- abs(simple_mean - intercept)
+    if (is.finite(distance) && distance < 0.2 * x_range) {
+      label_y_maive <- label_y_simple - y_span * 0.05
+    }
+
+    intercept_label <- if (instrument == 0) "Regression fit" else "MAIVE"
+
     text(
-      label_x_simple,
-      label_y_simple,
-      labels = simple_label,
+      intercept,
+      label_y_maive,
+      labels = paste0(intercept_label, " = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")"),
       cex = 0.9,
       adj = c(0.5, 0)
     )
-  }
-
-  if (!is.null(intercept) && !is.null(intercept_se) && is.finite(intercept)) {
-    intercept_label <- if (instrument == 0) "Regression fit" else "MAIVE"
-    intercept_label_text <- paste0(
-      intercept_label,
-      " = ",
-      round(intercept, 2),
-      " (SE = ",
-      round(intercept_se, 2),
-      ")"
-    )
-
-    intercept_label_width <- convert_width_to_user(strwidth(intercept_label_text, cex = 0.9))
-    intercept_label_height <- convert_height_to_user(strheight(intercept_label_text, cex = 0.9))
-    stack_gap <- max(
-      vertical_padding * 1.5,
-      simple_label_height * 0.35,
-      intercept_label_height * 0.35
-    )
-
-    total_horizontal_padding <- max(horizontal_padding, intercept_label_width * 0.05)
-    label_x_intercept <- clamp_value(
-      intercept,
-      xlim[1] + intercept_label_width / 2 + total_horizontal_padding,
-      xlim[2] - intercept_label_width / 2 - total_horizontal_padding
-    )
-
-    top_limit_intercept <- par_usr[4] - intercept_label_height - vertical_padding
-    label_y_maive <- min(label_y_maive, top_limit_intercept)
-
-    simple_bounds <- c(
-      label_x_simple - simple_label_width / 2,
-      label_x_simple + simple_label_width / 2
-    )
-    intercept_bounds <- c(
-      label_x_intercept - intercept_label_width / 2,
-      label_x_intercept + intercept_label_width / 2
-    )
-
-    ranges_overlap <- !(
-      !is.finite(simple_bounds[1]) ||
-        !is.finite(simple_bounds[2]) ||
-        !is.finite(intercept_bounds[1]) ||
-        !is.finite(intercept_bounds[2]) ||
-        intercept_bounds[1] > simple_bounds[2] ||
-        intercept_bounds[2] < simple_bounds[1]
-    )
-
-    if (ranges_overlap) {
-      desired_baseline <- label_y_simple - intercept_label_height - stack_gap
-      if (is.finite(desired_baseline)) {
-        label_y_maive <- min(label_y_maive, desired_baseline)
-      }
-    }
-
-    if (is.finite(label_x_simple) && is.finite(label_x_intercept)) {
-      distance <- abs(label_x_simple - label_x_intercept)
-      proximity_threshold <- max(simple_label_width, intercept_label_width) * 0.6
-      if (distance < proximity_threshold) {
-        desired_baseline <- label_y_simple - intercept_label_height - stack_gap
-        if (is.finite(desired_baseline)) {
-          label_y_maive <- min(label_y_maive, desired_baseline)
-        }
-      }
-    }
-
-    if (is.finite(label_x_intercept) && is.finite(label_y_maive)) {
-      text(
-        label_x_intercept,
-        label_y_maive,
-        labels = intercept_label_text,
-        cex = 0.9,
-        adj = c(0.5, 0)
-      )
-    }
   }
 
   par(xpd = par_xpd_old)
