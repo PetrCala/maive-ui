@@ -94,6 +94,26 @@ type ValidationMessage = {
   message: string;
 };
 
+type NormalizedRow = {
+  effect: number | null;
+  se: number | null;
+  n_obs: number | null;
+  study_id?: unknown;
+  [key: string]: unknown;
+};
+
+type ColumnKey = keyof Pick<NormalizedRow, "effect" | "se" | "n_obs">;
+
+type RowIssue = {
+  rowIndex: number;
+  columns: ColumnKey[];
+};
+
+type NormalizationIssues = {
+  rowsWithMissing: RowIssue[];
+  rowsWithInfinite: RowIssue[];
+};
+
 type ValidationResult = {
   isValid: boolean;
   messages: ValidationMessage[];
@@ -136,10 +156,12 @@ const formatNormalizedValue = (value: unknown): string => {
   return String(value);
 };
 
+const FINITE_COLUMNS: ColumnKey[] = ["effect", "se", "n_obs"];
+
 const convertToNormalizedRow = (
   row: Record<string, unknown>,
   mapping: MappingState,
-): Record<string, unknown> => {
+): NormalizedRow => {
   const getValue = (column: string | null) => {
     if (!column) {
       return null;
@@ -169,7 +191,7 @@ const convertToNormalizedRow = (
     return parsed ?? Number.NaN;
   };
 
-  const normalized: Record<string, unknown> = {
+  const normalized: NormalizedRow = {
     effect: normalizeNumericValue(mapping.effect),
     se: normalizeNumericValue(mapping.se),
     n_obs: normalizeNumericValue(mapping.nObs),
@@ -182,9 +204,87 @@ const convertToNormalizedRow = (
   return normalized;
 };
 
+const analyzeNormalizedRows = (
+  rows: NormalizedRow[],
+): { sanitizedRows: NormalizedRow[]; issues: NormalizationIssues } => {
+  const rowsWithMissing: RowIssue[] = [];
+  const rowsWithInfinite: RowIssue[] = [];
+  const invalidRowIndexes = new Set<number>();
+
+  rows.forEach((row, index) => {
+    const missingColumns: ColumnKey[] = [];
+    const infiniteColumns: ColumnKey[] = [];
+
+    FINITE_COLUMNS.forEach((columnKey) => {
+      const value = row[columnKey];
+
+      if (value === null || value === undefined || value === "") {
+        missingColumns.push(columnKey);
+        invalidRowIndexes.add(index);
+        return;
+      }
+
+      if (typeof value !== "number" || Number.isNaN(value)) {
+        invalidRowIndexes.add(index);
+        return;
+      }
+
+      if (!Number.isFinite(value)) {
+        infiniteColumns.push(columnKey);
+        invalidRowIndexes.add(index);
+      }
+    });
+
+    if (missingColumns.length > 0) {
+      rowsWithMissing.push({ rowIndex: index + 1, columns: missingColumns });
+    }
+
+    if (infiniteColumns.length > 0) {
+      rowsWithInfinite.push({ rowIndex: index + 1, columns: infiniteColumns });
+    }
+  });
+
+  const sanitizedRows = rows.filter((_, index) => !invalidRowIndexes.has(index));
+
+  return {
+    sanitizedRows,
+    issues: {
+      rowsWithMissing,
+      rowsWithInfinite,
+    },
+  };
+};
+
+const createEmptyNormalizationIssues = (): NormalizationIssues => ({
+  rowsWithMissing: [],
+  rowsWithInfinite: [],
+});
+
+const formatRowIssuesMessage = (
+  issues: RowIssue[],
+  columnDescriptions: Record<ColumnKey, string>,
+): string => {
+  const maxRowsToDisplay = 5;
+  const displayedRows = issues.slice(0, maxRowsToDisplay);
+  const formattedRows = displayedRows.map(({ rowIndex, columns }) => {
+    const columnList = columns
+      .map((column) => columnDescriptions[column])
+      .join(", ");
+    return `Row ${rowIndex} (${columnList})`;
+  });
+
+  const remainingCount = issues.length - displayedRows.length;
+  if (remainingCount > 0) {
+    formattedRows.push(`...and ${remainingCount} more row(s)`);
+  }
+
+  return formattedRows.join("; ");
+};
+
 const validateData = (
   fullData: DataArray,
   mapping: ColumnMapping,
+  issues?: NormalizationIssues,
 ): ValidationResult => {
   const messages: ValidationMessage[] = [];
 
@@ -206,6 +306,12 @@ const validateData = (
     TEXT.mapping.fieldLabels.studyId,
     mapping.studyId ?? undefined,
   );
+
+  const columnDescriptions: Record<ColumnKey, string> = {
+    effect: effectField,
+    se: seField,
+    n_obs: nObsField,
+  };
 
   const columnChecks = [
     {
@@ -300,18 +406,33 @@ const validateData = (
     });
   }
 
-  const hasMissingValues = fullData.some((row) => {
-    return ["effect", "se", "n_obs"].some((key) => {
-      const value = row[key];
-      return value === undefined || value === null || value === "";
-    });
-  });
-
-  if (hasMissingValues) {
+  if (issues?.rowsWithMissing.length) {
+    const formatted = formatRowIssuesMessage(
+      issues.rowsWithMissing,
+      columnDescriptions,
+    );
     messages.push({
       type: CONST.ALERT_TYPES.WARNING,
       message:
-        "The data contains missing values. These will be excluded from the analysis.",
+        formatted.length > 0
+          ? `The data contains missing values in ${formatted}. These rows will be removed from the analysis.`
+          :
+            "The data contains missing values. These rows will be removed from the analysis.",
+    });
+  }
+
+  if (issues?.rowsWithInfinite.length) {
+    const formatted = formatRowIssuesMessage(
+      issues.rowsWithInfinite,
+      columnDescriptions,
+    );
+    messages.push({
+      type: CONST.ALERT_TYPES.WARNING,
+      message:
+        formatted.length > 0
+          ? `Rows with infinite values (${formatted}) were removed before running the analysis. Please replace these values if you want them included.`
+          :
+            "Rows with infinite values were removed before running the analysis. Please replace these values if you want them included.",
     });
   }
 
@@ -365,6 +486,8 @@ export default function ValidationPage() {
   const [mapping, setMapping] = useState<MappingState>(INITIAL_MAPPING);
   const [autoMappingApplied, setAutoMappingApplied] = useState(false);
   const [normalizedData, setNormalizedData] = useState<DataArray>([]);
+  const [normalizationIssues, setNormalizationIssues] =
+    useState<NormalizationIssues>(createEmptyNormalizationIssues);
 
   useEffect(() => {
     if (!dataId) {
@@ -372,6 +495,7 @@ export default function ValidationPage() {
       setMapping(INITIAL_MAPPING);
       setAutoMappingApplied(false);
       setNormalizedData([]);
+      setNormalizationIssues(createEmptyNormalizationIssues());
       setLoading(false);
       return;
     }
@@ -395,6 +519,7 @@ export default function ValidationPage() {
         setMapping(INITIAL_MAPPING);
         setAutoMappingApplied(false);
         setNormalizedData([]);
+        setNormalizationIssues(createEmptyNormalizationIssues());
         return;
       }
 
@@ -424,6 +549,7 @@ export default function ValidationPage() {
       setMapping(INITIAL_MAPPING);
       setAutoMappingApplied(false);
       setNormalizedData([]);
+      setNormalizationIssues(createEmptyNormalizationIssues());
     } finally {
       setLoading(false);
     }
@@ -509,11 +635,13 @@ export default function ValidationPage() {
   useEffect(() => {
     if (!uploadedData || !dataId) {
       setNormalizedData([]);
+      setNormalizationIssues(createEmptyNormalizationIssues());
       return;
     }
 
     if (!mapping.effect || !mapping.se || !mapping.nObs) {
       setNormalizedData([]);
+      setNormalizationIssues(createEmptyNormalizationIssues());
       return;
     }
 
@@ -521,6 +649,8 @@ export default function ValidationPage() {
       const normalizedRows = uploadedData.rawData.map((row) =>
         convertToNormalizedRow(row, mapping),
       );
+
+      const { sanitizedRows, issues } = analyzeNormalizedRows(normalizedRows);
 
       const mappingConfig: ColumnMapping = {
         effect: mapping.effect,
@@ -532,16 +662,18 @@ export default function ValidationPage() {
       DataProcessingService.applyColumnMapping(
         dataId,
         mappingConfig,
-        normalizedRows,
+        sanitizedRows,
       );
 
-      setNormalizedData(normalizedRows);
+      setNormalizationIssues(issues);
+      setNormalizedData(sanitizedRows);
     } catch (error) {
       console.error("Failed to apply column mapping:", error);
       showAlert(
         "We couldn't apply the column mapping. Please try again.",
         "error",
       );
+      setNormalizationIssues(createEmptyNormalizationIssues());
     }
   }, [uploadedData, dataId, mapping, showAlert]);
 
@@ -557,7 +689,7 @@ export default function ValidationPage() {
       studyId: mapping.studyId ?? null,
     };
 
-    return validateData(normalizedData, mappingConfig);
+    return validateData(normalizedData, mappingConfig, normalizationIssues);
   }, [
     mappingComplete,
     mapping.effect,
@@ -565,6 +697,7 @@ export default function ValidationPage() {
     mapping.se,
     mapping.studyId,
     normalizedData,
+    normalizationIssues,
   ]);
 
   const handleMappingChange = (field: keyof MappingState, value: string) => {
