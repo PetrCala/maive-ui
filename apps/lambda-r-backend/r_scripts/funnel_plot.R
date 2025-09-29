@@ -477,7 +477,8 @@ get_funnel_plot <- function(
   on.exit(par(xpd = par_xpd_old), add = TRUE)
   par(xpd = NA)
 
-  label_y_simple <- min(label_y_simple, par_usr[4] - simple_label_height - vertical_padding)
+  top_limit_simple <- par_usr[4] - simple_label_height - vertical_padding
+  label_y_simple <- min(label_y_simple, top_limit_simple)
   label_x_simple <- clamp_value(
     simple_mean,
     xlim[1] + simple_label_width / 2 + horizontal_padding,
@@ -515,7 +516,8 @@ get_funnel_plot <- function(
       xlim[2] - intercept_label_width / 2 - total_horizontal_padding
     )
 
-    label_y_maive <- min(label_y_maive, par_usr[4] - intercept_label_height - vertical_padding)
+    top_limit_intercept <- par_usr[4] - intercept_label_height - vertical_padding
+    label_y_maive <- min(label_y_maive, top_limit_intercept)
 
     simple_bounds <- c(
       label_x_simple - simple_label_width / 2,
@@ -551,11 +553,6 @@ get_funnel_plot <- function(
           label_y_maive <- min(label_y_maive, desired_baseline)
         }
       }
-    }
-
-    min_baseline <- ylim[1] + vertical_padding
-    if (is.finite(min_baseline)) {
-      label_y_maive <- max(label_y_maive, min_baseline)
     }
 
     if (is.finite(label_x_intercept) && is.finite(label_y_maive)) {
