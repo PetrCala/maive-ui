@@ -280,17 +280,17 @@ const TEXT = {
     title: "What is MAIVE?",
     overview: {
       title: "Overview",
-      text: `MAIVE (Meta-Analysis Instrumental Variable Estimator) adjusts for publication bias and p-hacking while correcting for “spurious precision” — over-optimistic standard errors that arise when researchers choose methods or models that under-report uncertainty.
-      By using an instrumental-variables adjustment based on the inverse sample size, MAIVE **reduces biases due to p-hacking** while leaving publication-bias corrections (e.g. PET-PEESE) intact.
-      It is most useful for observational research, where standard errors are easiest to game and inverse-variance weights can back-fire.`,
+      text: `MAIVE (Meta-Analysis Instrumental Variable Estimator) adjusts for publication bias and p-hacking while correcting for “spurious precision” — over-optimistic standard errors that arise when researchers choose methods or models that under-report true uncertainty.
+      By using an instrumental-variable based on the inverse sample size, MAIVE **reduces biases due to p-hacking** while leaving publication-bias corrections (e.g. PET-PEESE) intact.
+      It is most useful for observational research, where standard errors are easiest to game and inverse-variance weights can back-fire. For experimental research, it presents a useful robustness check.`,
     },
 
     howItWorks: {
       title: "How MAIVE Works",
       text: [
-        `**Step 1 (First stage).** Regress the *reported* variances on the inverse sample size: SE² = ψ₀ + ψ₁(1/N) + ν. This isolates the share of variance that is not affected by p-hacking.`,
-        `**Step 2 (Second stage).** Replace each variance in your chosen funnel-plot model (PET, PEESE, PET-PEESE, EK) with the fitted value from Step 1 and **drop or adjust inverse-variance weights**. The resulting IV estimator is MAIVE.`,
-        `**Step 3 (Inference).** Report a heteroskedasticity-robust standard error, the Anderson-Rubin confidence interval (valid even when the first-stage F < 10), and the first-stage F statistic so users can judge instrument strength.`,
+        `**Step 1 (First stage).** Regress the *reported* variances on the inverse sample size: SE² = ψ₀ + ψ₁(1/N) + ν. This isolates the share of variance unlikely to be affected by p-hacking: artificially increasing sample size is harder than increasing precision.`,
+        `**Step 2 (Second stage).** Replace each variance in your chosen funnel-plot model (PET, PEESE, PET-PEESE, EK) with the fitted value from Step 1 and **drop or adjust inverse-variance weights**. The resulting instrumental variable estimator is MAIVE.`,
+        `**Step 3 (Inference).** Report a heteroskedasticity-robust standard error, the Anderson-Rubin confidence interval and the first-stage F statistic so users can judge instrument strength.`,
       ],
     },
 
@@ -315,7 +315,7 @@ const TEXT = {
         },
         {
           head: "Bias Reduction",
-          text: "Simulation and large-scale evidence show that MAIVE adjusts for most bias arising from publication bias, p-hacking, and spurious precision.",
+          text: "Simulation and large-scale empirical evidence show that MAIVE adjusts for most bias arising from publication bias, p-hacking, and spurious precision.",
         },
       ],
     },
@@ -324,20 +324,20 @@ const TEXT = {
       title: "Applications",
       text: [
         {
-          head: "Research Validation",
-          text: "Compare meta-analytic estimates with multi-lab replications and gauge over-statement.",
-        },
-        {
           head: "Observational Evidence",
-          text: "Economics, psychology, education, medical research - any field where sampling decisions are complex.",
+          text: "Economics, psychology, education, medical research — any field where research design can drive reported precision.",
         },
         {
           head: "Policy Analysis",
-          text: "Give decision-makers bias-corrected effect sizes when randomized evidence is scarce.",
+          text: "Give decision-makers bias-corrected effect sizes when evidence from randomized controlled experiments is scarce.",
         },
         {
           head: "Data-Quality Audits",
           text: "Flag clusters of spuriously precise results before they steer conclusions.",
+        },
+        {
+          head: "Research Validation",
+          text: "Compare meta-analytic estimates with multi-lab replications and gauge overstatement.",
         },
       ],
     },
@@ -364,7 +364,7 @@ const TEXT = {
     gettingStarted: {
       title: "Getting Started",
       text: `Ready to correct your data for spurious precision? Upload your
-    dataset and let MAIVE analyze it for you, or run a demo using a synthetic dataset. In any case, the process is simple
+    dataset and let MAIVE analyze it for you, or run a demo using a synthetic dataset. The process is simple
     and provides clear, actionable results.`,
     },
     uploadYourData: "Upload Your Data",
