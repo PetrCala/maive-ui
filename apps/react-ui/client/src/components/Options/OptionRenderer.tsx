@@ -7,6 +7,7 @@ import type { ModelParameters } from "@src/types/api";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
+import renderRichInfoMessage from "@src/lib/text/richText";
 
 type OptionRendererProps = {
   option: OptionConfig;
@@ -87,7 +88,11 @@ export default function OptionRenderer({
       .map((warning, index) => (
         <Alert
           key={index}
-          message={warning.message}
+          message={
+            warning.richText
+              ? renderRichInfoMessage(warning.richText)
+              : warning.message
+          }
           type={warning.type}
           className="mt-3"
         />
@@ -105,15 +110,7 @@ export default function OptionRenderer({
       {option.key === "shouldUseInstrumenting" &&
         !parameters.shouldUseInstrumenting && (
           <Alert
-            message={
-              <>
-                {noInstrumentingInfo.leading}
-                <em>{noInstrumentingInfo.citation}</em>
-                {noInstrumentingInfo.postCitation}
-                <strong>{noInstrumentingInfo.citeButtonLabel}</strong>
-                {noInstrumentingInfo.postCiteButton}
-              </>
-            }
+            message={renderRichInfoMessage(noInstrumentingInfo)}
             type={CONST.ALERT_TYPES.INFO}
             className="mt-3"
             role="status"

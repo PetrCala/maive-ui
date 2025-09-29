@@ -1,5 +1,6 @@
 import type { AlertType } from "./alert";
 import type { ModelParameters } from "./api";
+import type { RichInfoMessage } from "@src/lib/text";
 
 // Visibility control for options
 export type OptionVisibility = {
@@ -25,6 +26,7 @@ export type OptionWarning = {
   message: string;
   type: AlertType;
   condition: (parameters: ModelParameters) => boolean;
+  richText?: RichInfoMessage;
 };
 
 // Base option configuration that all options share
