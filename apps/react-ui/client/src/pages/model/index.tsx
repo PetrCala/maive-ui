@@ -151,6 +151,34 @@ export default function ModelPage() {
         };
       }
 
+      if (param === "weight" && typeof value === "string") {
+        const isEqualWeights =
+          value === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+
+        if (!isEqualWeights) {
+          previousComputeAndersonRubinRef.current =
+            prev.computeAndersonRubin;
+
+          return {
+            ...prev,
+            weight: value,
+            computeAndersonRubin: false,
+          };
+        }
+
+        const restoredValue =
+          previousComputeAndersonRubinRef.current ??
+          prev.computeAndersonRubin;
+
+        return {
+          ...prev,
+          weight: value,
+          computeAndersonRubin: prev.shouldUseInstrumenting
+            ? restoredValue
+            : false,
+        };
+      }
+
       if (param === "computeAndersonRubin" && typeof value === "boolean") {
         previousComputeAndersonRubinRef.current = value;
       }
@@ -171,7 +199,8 @@ export default function ModelPage() {
 
   useEffect(() => {
     if (
-      parameters.shouldUseInstrumenting ||
+      (parameters.shouldUseInstrumenting &&
+        parameters.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE) ||
       parameters.computeAndersonRubin === false
     ) {
       return;
@@ -181,7 +210,11 @@ export default function ModelPage() {
       ...prev,
       computeAndersonRubin: false,
     }));
-  }, [parameters.shouldUseInstrumenting, parameters.computeAndersonRubin]);
+  }, [
+    parameters.shouldUseInstrumenting,
+    parameters.computeAndersonRubin,
+    parameters.weight,
+  ]);
 
   const modelLoadingCopy = {
     title: "Running your analysis...",
