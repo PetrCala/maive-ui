@@ -22,6 +22,9 @@ import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 
+const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
+  Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
+
 export default function ModelPage() {
   const searchParams = useSearchParams();
   const dataId = searchParams?.get("dataId");
@@ -152,31 +155,37 @@ export default function ModelPage() {
       }
 
       if (param === "weight" && typeof value === "string") {
+        if (!isModelWeight(value)) {
+          return prev;
+        }
+
         const isEqualWeights =
           value === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
 
         if (!isEqualWeights) {
-          previousComputeAndersonRubinRef.current =
-            prev.computeAndersonRubin;
+          previousComputeAndersonRubinRef.current = prev.computeAndersonRubin;
 
-          return {
+          const next: ModelParameters = {
             ...prev,
             weight: value,
             computeAndersonRubin: false,
           };
+
+          return next;
         }
 
         const restoredValue =
-          previousComputeAndersonRubinRef.current ??
-          prev.computeAndersonRubin;
+          previousComputeAndersonRubinRef.current ?? prev.computeAndersonRubin;
 
-        return {
+        const next: ModelParameters = {
           ...prev,
           weight: value,
           computeAndersonRubin: prev.shouldUseInstrumenting
             ? restoredValue
             : false,
         };
+
+        return next;
       }
 
       if (param === "computeAndersonRubin" && typeof value === "boolean") {
