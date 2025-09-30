@@ -52,7 +52,9 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         tooltip: TEXT.model.computeAndersonRubin.tooltip,
         type: "yesno",
         visibility: {
-          hideIf: ({ parameters }) => !parameters.shouldUseInstrumenting,
+          hideIf: ({ parameters }) =>
+            !parameters.shouldUseInstrumenting ||
+            parameters.weight !== CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
         },
         warnings: [
           {
