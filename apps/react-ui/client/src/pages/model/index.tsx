@@ -289,6 +289,7 @@ export default function ModelPage() {
       parameters.standardErrorTreatment !==
         CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
     );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [parameters.standardErrorTreatment, uploadedData]);
 
   useEffect(() => {
