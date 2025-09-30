@@ -43,6 +43,8 @@ export const generateResultsData = (
   };
 
   const isInstrumented = parameters?.shouldUseInstrumenting ?? true;
+  const hasFixedIntercept = parameters?.includeStudyDummies ?? false;
+  const shouldShowHausman = isInstrumented && !hasFixedIntercept;
   const firstStageMode = results.firstStage?.mode ?? "levels";
   const firstStageDescription = results.firstStage?.description ?? null;
   const defaultSpecification =
@@ -135,7 +137,7 @@ export const generateResultsData = (
     {
       label: resultsText.diagnosticTests.metrics.hausmanTest.label,
       value: results.hausmanTest.statistic,
-      show: isInstrumented,
+      show: shouldShowHausman,
       highlightColor: results.hausmanTest.rejectsNull
         ? "text-green-600"
         : "text-red-600",
@@ -147,7 +149,7 @@ export const generateResultsData = (
     {
       label: resultsText.diagnosticTests.metrics.hausmanCriticalValue.label,
       value: results.hausmanTest.criticalValue,
-      show: isInstrumented,
+      show: shouldShowHausman,
       section: "tests",
     },
     {
