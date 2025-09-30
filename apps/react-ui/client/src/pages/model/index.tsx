@@ -34,7 +34,7 @@ export default function ModelPage() {
   const [parameters, setParameters] = useState<ModelParameters>({
     ...CONFIG.DEFAULT_MODEL_PARAMETERS,
   });
-  const previousComputeAndersonRubinRef = useRef<boolean>(
+  const andersonRubinUserChoiceRef = useRef<boolean>(
     CONFIG.DEFAULT_MODEL_PARAMETERS.computeAndersonRubin,
   );
   const router = useRouter();
@@ -125,32 +125,36 @@ export default function ModelPage() {
     }
   }, [searchParams, uploadedData]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const shouldShowAndersonRubinOption = useCallback(
+    (params: ModelParameters) =>
+      params.shouldUseInstrumenting &&
+      params.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
+    [],
+  );
+
   const handleParameterChange = (
     param: keyof ModelParameters,
     value: string | boolean,
   ) => {
     setParameters((prev) => {
+      const wasShowingAndersonRubin = shouldShowAndersonRubinOption(prev);
+
       if (param === "shouldUseInstrumenting" && typeof value === "boolean") {
-        if (!value) {
-          previousComputeAndersonRubinRef.current = prev.computeAndersonRubin;
+        const nextShouldUseInstrumenting = value;
+        const willShowAndersonRubin =
+          nextShouldUseInstrumenting &&
+          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
 
-          if (prev.computeAndersonRubin === false) {
-            return { ...prev, shouldUseInstrumenting: value };
-          }
-
-          return {
-            ...prev,
-            shouldUseInstrumenting: value,
-            computeAndersonRubin: false,
-          };
+        if (wasShowingAndersonRubin) {
+          andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
         }
 
-        const restoredValue =
-          previousComputeAndersonRubinRef.current ?? prev.computeAndersonRubin;
         return {
           ...prev,
-          shouldUseInstrumenting: value,
-          computeAndersonRubin: restoredValue,
+          shouldUseInstrumenting: nextShouldUseInstrumenting,
+          computeAndersonRubin: willShowAndersonRubin
+            ? andersonRubinUserChoiceRef.current
+            : false,
         };
       }
 
@@ -159,37 +163,25 @@ export default function ModelPage() {
           return prev;
         }
 
-        const isEqualWeights =
+        const willShowAndersonRubin =
+          prev.shouldUseInstrumenting &&
           value === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
 
-        if (!isEqualWeights) {
-          previousComputeAndersonRubinRef.current = prev.computeAndersonRubin;
-
-          const next: ModelParameters = {
-            ...prev,
-            weight: value,
-            computeAndersonRubin: false,
-          };
-
-          return next;
+        if (wasShowingAndersonRubin) {
+          andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
         }
 
-        const restoredValue =
-          previousComputeAndersonRubinRef.current ?? prev.computeAndersonRubin;
-
-        const next: ModelParameters = {
+        return {
           ...prev,
           weight: value,
-          computeAndersonRubin: prev.shouldUseInstrumenting
-            ? restoredValue
+          computeAndersonRubin: willShowAndersonRubin
+            ? andersonRubinUserChoiceRef.current
             : false,
         };
-
-        return next;
       }
 
       if (param === "computeAndersonRubin" && typeof value === "boolean") {
-        previousComputeAndersonRubinRef.current = value;
+        andersonRubinUserChoiceRef.current = value;
       }
 
       if (prev[param] === value) {
@@ -199,31 +191,6 @@ export default function ModelPage() {
       return { ...prev, [param]: value };
     });
   };
-
-  useEffect(() => {
-    if (parameters.shouldUseInstrumenting) {
-      previousComputeAndersonRubinRef.current = parameters.computeAndersonRubin;
-    }
-  }, [parameters.shouldUseInstrumenting, parameters.computeAndersonRubin]);
-
-  useEffect(() => {
-    if (
-      (parameters.shouldUseInstrumenting &&
-        parameters.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE) ||
-      parameters.computeAndersonRubin === false
-    ) {
-      return;
-    }
-    previousComputeAndersonRubinRef.current = parameters.computeAndersonRubin;
-    setParameters((prev) => ({
-      ...prev,
-      computeAndersonRubin: false,
-    }));
-  }, [
-    parameters.shouldUseInstrumenting,
-    parameters.computeAndersonRubin,
-    parameters.weight,
-  ]);
 
   const modelLoadingCopy = {
     title: "Running your analysis...",
