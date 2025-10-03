@@ -1,7 +1,9 @@
 // Mock CSV files for testing and development
 // Each file contains realistic data with effect size, standard error, sample size, and study ID
 
-export const mockCsvFiles = [
+const CSV_HEADER = "effect,se,n_obs,study_id";
+
+const rawMockCsvFiles = [
   {
     name: "Mock Data 1",
     content: `1.0,0.187317162,120,1
@@ -546,6 +548,13 @@ export const mockCsvFiles = [
     original_filename: "Rabelo.csv",
   },
 ];
+
+export const mockCsvFiles = rawMockCsvFiles.map((file) => ({
+  ...file,
+  content: file.content.startsWith(CSV_HEADER)
+    ? file.content
+    : `${CSV_HEADER}\n${file.content}`,
+}));
 
 export const getRandomMockCsvFile = () => {
   const randomIndex = Math.floor(Math.random() * mockCsvFiles.length);
