@@ -42,6 +42,18 @@ resource "aws_ecs_task_definition" "ui" {
     portMappings = [{ containerPort = local.ui_port, protocol = "tcp" }]
     environment = [
       { name = "NEXT_PUBLIC_R_API_URL", value = aws_lambda_function_url.r_backend.function_url },
+      {
+        name  = "STATUS_BANNER_ENABLED_PARAMETER_NAME"
+        value = aws_ssm_parameter.ui_unstable_banner_enabled.name
+      },
+      {
+        name  = "STATUS_BANNER_MESSAGE_PARAMETER_NAME"
+        value = aws_ssm_parameter.ui_unstable_banner_message.name
+      },
+      {
+        name  = "STATUS_BANNER_AWS_REGION"
+        value = var.region
+      },
     ]
     logConfiguration = {
       logDriver = "awslogs",
