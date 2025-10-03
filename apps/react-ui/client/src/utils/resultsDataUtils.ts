@@ -26,6 +26,43 @@ export type ResultsData = {
  */
 type ResultsTextContent = typeof TEXT.results;
 
+const isFiniteNumber = (value: unknown): value is number =>
+  typeof value === "number" && Number.isFinite(value);
+
+const formatValue = (value: unknown, decimals = 4): string => {
+  if (!isFiniteNumber(value)) {
+    return "NA";
+  }
+
+  return value.toFixed(decimals);
+};
+
+const formatCI = (ci: unknown, decimals = 4): string => {
+  if (!Array.isArray(ci) || ci.length !== 2) {
+    return "NA";
+  }
+
+  const [lower, upper] = ci as [unknown, unknown];
+
+  if (!isFiniteNumber(lower) || !isFiniteNumber(upper)) {
+    return "NA";
+  }
+
+  return `[${formatValue(lower, decimals)}, ${formatValue(upper, decimals)}]`;
+};
+
+const hasValidCI = (ci: unknown): ci is [number, number] =>
+  Array.isArray(ci) &&
+  ci.length === 2 &&
+  ci.every((value) => isFiniteNumber(value));
+
+const hasValidBootCI = (
+  ci: unknown,
+): ci is [[number, number], [number, number]] =>
+  Array.isArray(ci) &&
+  ci.length === 2 &&
+  ci.every((entry) => hasValidCI(entry));
+
 export const generateResultsData = (
   results: ModelResults,
   parameters?: ModelParameters,
@@ -34,13 +71,24 @@ export const generateResultsData = (
   dataInfo?: DataInfo,
   resultsText: ResultsTextContent = TEXT.results,
 ): ResultsData => {
-  const formatValue = (value: number, decimals = 4): string => {
-    return value.toFixed(decimals);
-  };
-
-  const formatCI = (ci: [number, number]): string => {
-    return `[${formatValue(ci[0])}, ${formatValue(ci[1])}]`;
-  };
+  const andersonRubinCI =
+    results.andersonRubinCI !== "NA" && hasValidCI(results.andersonRubinCI)
+      ? results.andersonRubinCI
+      : null;
+  const bootCI =
+    results.bootCI !== "NA" && hasValidBootCI(results.bootCI)
+      ? results.bootCI
+      : null;
+  const eggerBootCI =
+    results.publicationBias.eggerBootCI !== "NA" &&
+    hasValidCI(results.publicationBias.eggerBootCI)
+      ? results.publicationBias.eggerBootCI
+      : null;
+  const eggerAndersonRubinCI =
+    results.publicationBias.eggerAndersonRubinCI !== "NA" &&
+    hasValidCI(results.publicationBias.eggerAndersonRubinCI)
+      ? results.publicationBias.eggerAndersonRubinCI
+      : null;
 
   const isInstrumented = parameters?.shouldUseInstrumenting ?? true;
   const hasFixedIntercept = parameters?.includeStudyDummies ?? false;
@@ -82,17 +130,14 @@ export const generateResultsData = (
     },
     {
       label: resultsText.effectEstimate.metrics.bootCI.label,
-      value: results.bootCI !== "NA" ? formatCI(results.bootCI[0]) : "NA",
-      show: results.bootCI !== "NA",
+      value: bootCI ? formatCI(bootCI[0]) : "NA",
+      show: Boolean(bootCI),
       section: "effect",
     },
     {
       label: resultsText.effectEstimate.metrics.andersonRubinCI.label,
-      value:
-        results.andersonRubinCI !== "NA"
-          ? formatCI(results.andersonRubinCI)
-          : "NA",
-      show: results.andersonRubinCI !== "NA",
+      value: andersonRubinCI ? formatCI(andersonRubinCI) : "NA",
+      show: Boolean(andersonRubinCI),
       section: "effect",
     },
     {
@@ -118,20 +163,14 @@ export const generateResultsData = (
     },
     {
       label: resultsText.publicationBias.metrics.eggerBootCI.label,
-      value:
-        results.publicationBias.eggerBootCI !== "NA"
-          ? formatCI(results.publicationBias.eggerBootCI)
-          : "NA",
-      show: results.publicationBias.eggerBootCI !== "NA",
+      value: eggerBootCI ? formatCI(eggerBootCI) : "NA",
+      show: Boolean(eggerBootCI),
       section: "bias",
     },
     {
       label: resultsText.publicationBias.metrics.eggerAndersonRubinCI.label,
-      value:
-        results.publicationBias.eggerAndersonRubinCI !== "NA"
-          ? formatCI(results.publicationBias.eggerAndersonRubinCI)
-          : "NA",
-      show: results.publicationBias.eggerAndersonRubinCI !== "NA",
+      value: eggerAndersonRubinCI ? formatCI(eggerAndersonRubinCI) : "NA",
+      show: Boolean(eggerAndersonRubinCI),
       section: "bias",
     },
     {
