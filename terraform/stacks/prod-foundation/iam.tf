@@ -241,6 +241,14 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "acm:*"
         ],
         Resource: "*"
+      },
+      {
+        Sid: "SSM",
+        Effect: "Allow",
+        Action: [
+          "ssm:*"
+        ],
+        Resource: "*"
       }
     ]
   })
