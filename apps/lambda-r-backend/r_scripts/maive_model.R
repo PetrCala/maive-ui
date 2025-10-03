@@ -78,9 +78,10 @@ patch_maive_confidence_interval <- local({
           res <- c(lower = NA_real_, upper = NA_real_)
         } else {
           res <- rep(res, length.out = 2L)
-          names(res) <- c("lower", "upper")
         }
-      } else if (is.atomic(res) && length(res) == 2L && is.null(names(res))) {
+      }
+
+      if (is.atomic(res) && length(res) == 2L) {
         names(res) <- c("lower", "upper")
       }
 
