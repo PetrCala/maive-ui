@@ -41,108 +41,6 @@ winsorize_1pct <- function(x) {
   )
 }
 
-normalize_ci_bounds <- function(vals) {
-  if (is.null(vals)) {
-    return(vals)
-  }
-
-  if (!is.null(dim(vals))) {
-    vals <- as.vector(vals)
-  }
-
-  if (!is.atomic(vals)) {
-    return(vals)
-  }
-
-  len <- length(vals)
-  if (len <= 0L) {
-    return(vals)
-  }
-
-  if (len == 1L) {
-    if (all(is.na(vals))) {
-      vals <- rep(NA_real_, 2L)
-    } else {
-      vals <- rep(vals, length.out = 2L)
-    }
-    len <- length(vals)
-  }
-
-  if (len == 2L) {
-    names(vals) <- c("lower", "upper")
-  } else if (len == 1L) {
-    names(vals) <- c("lower", "upper")
-  } else {
-    names(vals) <- NULL
-  }
-
-  vals
-}
-
-patch_maive_confidence_interval <- local({
-  patched <- FALSE
-
-  function() {
-    if (patched) {
-      return(FALSE)
-    }
-
-    if (!requireNamespace("MAIVE", quietly = TRUE)) {
-      return(FALSE)
-    }
-
-    fn_name <- "maive_prepare_confidence_interval"
-    ns <- getNamespace("MAIVE")
-
-    if (!exists(fn_name, envir = ns, inherits = FALSE)) {
-      return(FALSE)
-    }
-
-    patched_fn <- function(model, coef_index, estimate, se, boot_result, alpha) {
-      if (!is.null(boot_result) && !is.null(boot_result$boot_ci)) {
-        boot_ci <- boot_result$boot_ci
-        coef_names <- names(stats::coef(model))
-
-        ci_row <- NULL
-        if (!is.null(coef_names) && length(coef_names) >= coef_index) {
-          coef_name <- coef_names[coef_index]
-          if (!is.null(rownames(boot_ci)) && coef_name %in% rownames(boot_ci)) {
-            ci_row <- boot_ci[coef_name, ]
-          }
-        }
-
-        if (is.null(ci_row)) {
-          if (!is.null(dim(boot_ci)) && nrow(boot_ci) >= coef_index) {
-            ci_row <- boot_ci[coef_index, ]
-          } else if (is.null(dim(boot_ci)) && length(boot_ci) >= 1L) {
-            ci_row <- boot_ci
-          }
-        }
-
-        if (is.null(ci_row)) {
-          return(normalize_ci_bounds(rep(NA_real_, 2L)))
-        }
-
-        return(normalize_ci_bounds(as.numeric(ci_row)))
-      }
-
-      crit <- stats::qnorm(1 - alpha / 2)
-      normalize_ci_bounds(c(estimate - crit * se, estimate + crit * se))
-    }
-
-    tryCatch(
-      {
-        assignInNamespace(fn_name, patched_fn, ns = "MAIVE")
-        patched <<- TRUE
-        TRUE
-      },
-      error = function(err) {
-        FALSE
-      }
-    )
-  }
-})
-
 # Main MAIVE model function
 run_maive_model <- function(data, parameters) {
   # Static config
@@ -367,7 +265,6 @@ run_maive_model <- function(data, parameters) {
 
   tryCatch(
     {
-      patch_maive_confidence_interval()
       maive_res <- do.call(MAIVE::maive, maive_args)
     },
     error = function(e) {
