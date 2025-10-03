@@ -2,18 +2,82 @@ import Head from "next/head";
 import Link from "next/link";
 import PingButton from "@src/components/Buttons/PingButton";
 import ActionButton from "@src/components/Buttons/ActionButton";
+import Alert from "@src/components/Alert";
 import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import DemoButton from "@src/components/Buttons/DemoButton";
 import { FaInfoCircle } from "react-icons/fa";
 
+type StatusBannerResponse = {
+  show: boolean;
+  message: string;
+};
+
+const DEFAULT_BANNER_MESSAGE =
+  "The current release may be unstable. Please proceed with caution.";
+
+const isStatusBannerResponse = (
+  payload: unknown,
+): payload is StatusBannerResponse => {
+  if (!payload || typeof payload !== "object") {
+    return false;
+  }
+
+  const data = payload as Partial<Record<keyof StatusBannerResponse, unknown>>;
+
+  return typeof data.show === "boolean" && typeof data.message === "string";
+};
+
 export default function Home() {
   const [isDevelopment, setIsDevelopment] = useState(false);
   const [isLoadingUploadPage, setIsLoadingUploadPage] = useState(false);
+  const [bannerMessage, setBannerMessage] = useState<string>("");
+  const [shouldShowBanner, setShouldShowBanner] = useState(false);
+  const [hasDismissedBanner, setHasDismissedBanner] = useState(false);
 
   useEffect(() => {
     setIsDevelopment(process.env.NODE_ENV === "development");
+  }, []);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const loadBannerState = async () => {
+      try {
+        const response = await fetch("/api/system-status", {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as unknown;
+
+        if (!isStatusBannerResponse(payload)) {
+          return;
+        }
+
+        if (payload.show) {
+          setBannerMessage(payload.message || DEFAULT_BANNER_MESSAGE);
+          setShouldShowBanner(true);
+          setHasDismissedBanner(false);
+        } else {
+          setShouldShowBanner(false);
+        }
+      } catch (error) {
+        if ((error as Error).name === "AbortError") {
+          return;
+        }
+      }
+    };
+
+    void loadBannerState();
+
+    return () => {
+      controller.abort();
+    };
   }, []);
 
   return (
@@ -77,6 +141,16 @@ export default function Home() {
 
         {isDevelopment && <PingButton />}
       </main>
+
+      {shouldShowBanner && !hasDismissedBanner && (
+        <Alert
+          message={bannerMessage}
+          type={CONST.ALERT_TYPES.WARNING}
+          standalone
+          role="status"
+          onClick={() => setHasDismissedBanner(true)}
+        />
+      )}
     </>
   );
 }
