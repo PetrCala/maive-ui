@@ -65,8 +65,12 @@ export default function ResultsPage() {
   const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
 
   const resultsText = useMemo(
-    () => getResultsText(shouldUseInstrumenting),
-    [shouldUseInstrumenting],
+    () =>
+      getResultsText(
+        shouldUseInstrumenting,
+        parsedParameters.standardErrorTreatment,
+      ),
+    [shouldUseInstrumenting, parsedParameters.standardErrorTreatment],
   );
 
   if (!results) {

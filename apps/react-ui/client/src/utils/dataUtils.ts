@@ -413,6 +413,7 @@ export const exportComprehensiveResults = (
 
   const resultsText = getResultsText(
     parameters?.shouldUseInstrumenting ?? true,
+    parameters?.standardErrorTreatment ?? "not_clustered",
   );
 
   // Sheet 1: Results Summary
