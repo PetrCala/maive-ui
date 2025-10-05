@@ -1,3 +1,7 @@
+import type { ModelParameters } from "@src/types";
+
+type StandardErrorTreatment = ModelParameters["standardErrorTreatment"];
+
 type MetricText = Readonly<{
   label: string;
   tooltip: string;
@@ -45,6 +49,17 @@ export type ResultsText = Readonly<{
   }>;
 }>;
 
+const STANDARD_ERROR_TREATMENT_TOOLTIPS: Record<
+  StandardErrorTreatment,
+  string
+> = {
+  not_clustered: "Heteroskedasticity-robust standard error",
+  clustered: "Cluster-robust standard error",
+  clustered_cr2:
+    "Cluster-robust standard error (CR2); robust to a small number of clusters",
+  bootstrap: "Wild bootstrap standard error; robust to a small number of clusters",
+};
+
 const RESULTS_TEXT: ResultsText = {
   effectEstimate: {
     title: "Corrected Mean Estimate",
@@ -56,7 +71,7 @@ const RESULTS_TEXT: ResultsText = {
       },
       standardError: {
         label: "Standard Error",
-        tooltip: "Heteroskedasticity-robust standard error.",
+        tooltip: STANDARD_ERROR_TREATMENT_TOOLTIPS.not_clustered,
       },
       significance: {
         label: "Significant at 5% level",
@@ -402,13 +417,7 @@ const TEXT = {
   },
 } as const;
 
-export const getResultsText = (
-  shouldUseInstrumenting: boolean,
-): ResultsText => {
-  if (shouldUseInstrumenting) {
-    return RESULTS_TEXT;
-  }
-
+const getNonInstrumentingResultsText = (): ResultsText => {
   const { effectEstimate, publicationBias, funnelPlot } = RESULTS_TEXT;
 
   return {
@@ -460,6 +469,33 @@ export const getResultsText = (
       title: "Funnel Plot",
       tooltip:
         "Scatter of effect sizes against their standard errors. The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing the regression fit. The estimate is the intercept of the line with the horizontal axis.",
+    },
+  };
+};
+
+export const getResultsText = (
+  shouldUseInstrumenting: boolean,
+  standardErrorTreatment: StandardErrorTreatment = "not_clustered",
+): ResultsText => {
+  const baseResultsText = shouldUseInstrumenting
+    ? RESULTS_TEXT
+    : getNonInstrumentingResultsText();
+
+  const standardErrorTooltip =
+    STANDARD_ERROR_TREATMENT_TOOLTIPS[standardErrorTreatment] ??
+    STANDARD_ERROR_TREATMENT_TOOLTIPS.not_clustered;
+
+  return {
+    ...baseResultsText,
+    effectEstimate: {
+      ...baseResultsText.effectEstimate,
+      metrics: {
+        ...baseResultsText.effectEstimate.metrics,
+        standardError: {
+          ...baseResultsText.effectEstimate.metrics.standardError,
+          tooltip: standardErrorTooltip,
+        },
+      },
     },
   };
 };
