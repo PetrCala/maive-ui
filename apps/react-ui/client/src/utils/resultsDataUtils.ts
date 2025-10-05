@@ -95,6 +95,9 @@ export const generateResultsData = (
   const shouldShowHausman = isInstrumented && !hasFixedIntercept;
   const firstStageMode = results.firstStage?.mode ?? "levels";
   const firstStageDescription = results.firstStage?.description ?? null;
+  const shouldShowBootstrapResults =
+    parameters?.standardErrorTreatment === undefined ||
+    parameters.standardErrorTreatment === "bootstrap";
   const defaultSpecification =
     firstStageMode === "log"
       ? "log(SE²) ~ log N; Duan smearing applied"
@@ -131,7 +134,7 @@ export const generateResultsData = (
     {
       label: resultsText.effectEstimate.metrics.bootCI.label,
       value: bootCI ? formatCI(bootCI[0]) : "NA",
-      show: Boolean(bootCI),
+      show: shouldShowBootstrapResults && Boolean(bootCI),
       section: "effect",
     },
     {
@@ -164,7 +167,7 @@ export const generateResultsData = (
     {
       label: resultsText.publicationBias.metrics.eggerBootCI.label,
       value: eggerBootCI ? formatCI(eggerBootCI) : "NA",
-      show: Boolean(eggerBootCI),
+      show: shouldShowBootstrapResults && Boolean(eggerBootCI),
       section: "bias",
     },
     {
