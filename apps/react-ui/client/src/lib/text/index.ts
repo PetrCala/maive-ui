@@ -57,7 +57,8 @@ const STANDARD_ERROR_TREATMENT_TOOLTIPS: Record<
   clustered: "Cluster-robust standard error",
   clustered_cr2:
     "Cluster-robust standard error (CR2); robust to a small number of clusters",
-  bootstrap: "Wild bootstrap standard error; robust to a small number of clusters",
+  bootstrap:
+    "Wild bootstrap standard error; robust to a small number of clusters",
 };
 
 const RESULTS_TEXT: ResultsText = {
