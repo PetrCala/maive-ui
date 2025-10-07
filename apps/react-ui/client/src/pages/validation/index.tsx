@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -18,6 +18,7 @@ import type { ColumnMapping, UploadedData } from "@store/dataStore";
 import type { AlertType, DataArray } from "@src/types";
 import { parseLocalizedNumber } from "@utils/dataUtils";
 import { DataProcessingService } from "@src/services/dataProcessingService";
+import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 
 const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
 
@@ -488,6 +489,15 @@ export default function ValidationPage() {
   const [normalizedData, setNormalizedData] = useState<DataArray>([]);
   const [normalizationIssues, setNormalizationIssues] =
     useState<NormalizationIssues>(createEmptyNormalizationIssues);
+  const continueButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEnterKeyAction(() => {
+    const button = continueButtonRef.current;
+
+    if (button && !button.disabled) {
+      button.click();
+    }
+  });
 
   useEffect(() => {
     if (!dataId) {
@@ -897,6 +907,7 @@ export default function ValidationPage() {
                 )}
 
                 <ActionButton
+                  ref={continueButtonRef}
                   onClick={handleContinue}
                   variant="primary"
                   className="w-full"
