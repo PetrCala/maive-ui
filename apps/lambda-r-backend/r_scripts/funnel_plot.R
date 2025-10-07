@@ -434,30 +434,45 @@ get_funnel_plot <- function(
   on.exit(par(xpd = par_xpd_old), add = TRUE)
   par(xpd = NA)
 
+  simple_mean_label <- paste0("Simple mean = ", round(simple_mean, 2))
+
   text(
     simple_mean,
     label_y_simple,
-    labels = paste0("Simple mean = ", round(simple_mean, 2)),
+    labels = simple_mean_label,
     cex = 0.9,
     adj = c(0.5, 0)
   )
 
   if (!is.null(intercept) && !is.null(intercept_se)) {
-    x_range <- diff(range(xlim))
-    if (!is.finite(x_range) || x_range == 0) {
-      x_range <- 1
-    }
-    distance <- abs(simple_mean - intercept)
-    if (is.finite(distance) && distance < 0.2 * x_range) {
+    intercept_label <- if (instrument == 0) "Regression fit" else "MAIVE"
+    maive_label <- paste0(intercept_label, " = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")")
+
+    # Clamp intercept position to plot bounds
+    intercept_clamped <- max(xlim[1], min(xlim[2], intercept))
+
+    # Calculate approximate label widths in user coordinates
+    # strwidth gives width in user coordinates for the current device
+    simple_width <- strwidth(simple_mean_label, cex = 0.9)
+    maive_width <- strwidth(maive_label, cex = 0.9)
+
+    # Calculate label boundaries (centered at their x positions)
+    simple_left <- simple_mean - simple_width / 2
+    simple_right <- simple_mean + simple_width / 2
+    maive_left <- intercept_clamped - maive_width / 2
+    maive_right <- intercept_clamped + maive_width / 2
+
+    # Check for overlap
+    labels_overlap <- !(simple_right < maive_left || maive_right < simple_left)
+
+    if (labels_overlap) {
       label_y_maive <- label_y_simple - y_span * 0.05
     }
 
-    intercept_label <- if (instrument == 0) "Regression fit" else "MAIVE"
-
     text(
-      intercept,
+      intercept_clamped,
       label_y_maive,
-      labels = paste0(intercept_label, " = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")"),
+      labels = maive_label,
       cex = 0.9,
       adj = c(0.5, 0)
     )
