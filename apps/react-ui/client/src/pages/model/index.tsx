@@ -77,13 +77,13 @@ export default function ModelPage() {
       if (!searchParams?.get("parameters")) {
         if (
           hasStudyIdColumn(data.data) &&
-          CONFIG.SHOULD_USE_BOOTSTRAP_SE_AS_DEFAULT
+          CONFIG.SHOULD_USE_CLUSTERED_CR2_SE_AS_DEFAULT
         ) {
           setParameters((prev) => ({
             ...prev,
             includeStudyClustering: true,
             standardErrorTreatment:
-              CONST.STANDARD_ERROR_TREATMENTS.BOOTSTRAP.VALUE,
+              CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED_CR2.VALUE,
           }));
         }
       }
