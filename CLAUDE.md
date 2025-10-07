@@ -69,6 +69,7 @@ Browser → Next.js API Routes → R-Plumber Service
 ```
 
 **Key Points:**
+
 - Client-side code cannot directly access R service (private subnet isolation)
 - All requests flow through Next.js API routes (`/api/*`)
 - API routes run server-side and communicate with R service via internal VPC network
@@ -163,11 +164,13 @@ Follow Conventional Commits format:
 **Allowed types**: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`
 
 **Rules**:
+
 - Header must not exceed 100 characters
 - Use lowercase for type
 - Include `BREAKING CHANGE:` footer for breaking changes
 
 **Examples**:
+
 - ✅ `feat: add publication bias bootstrap options`
 - ✅ `fix: resolve DNS resolution in VPC environment`
 - ❌ `added new feature`
@@ -208,6 +211,7 @@ NEXT_PUBLIC_R_API_URL=  # Not used in production (server-side routing)
 ### DNS Resolution in VPC
 
 If browser shows DNS errors for internal ALB addresses, verify:
+
 1. Requests go through `/api/*` routes (check Network tab)
 2. `R_API_URL` is set correctly in ECS task environment
 3. API routes properly call server-side services (not client-side)
@@ -222,6 +226,7 @@ If browser shows DNS errors for internal ALB addresses, verify:
 ### Path Aliases
 
 All imports use TypeScript path aliases defined in `tsconfig.json`:
+
 - `@src/*` → `./src/*`
 - `@components/*` → `./src/components/*`
 - `@api/*` → `./src/api/*`
