@@ -229,7 +229,7 @@ run_maive_model <- function(data, parameters) {
     "log first stage: {log_first_stage}"
   ))
 
-  # Debug: Check for NA values before calling MAIVE
+  # Debug: Check for NA values before calling maive
   cli::cli_h2("Checking for NA values:")
   cli::cli_bullets(c(
     paste("NA values in bs:", sum(is.na(df$bs))),
@@ -256,7 +256,7 @@ run_maive_model <- function(data, parameters) {
     AR = should_use_ar # 0 = no AR, 1 = AR (default)
   )
 
-  target_function <- if (is_waive) MAIVE::waive else MAIVE::maive
+  target_function <- if (is_waive) maive::waive else maive::maive
   maive_formals <- names(formals(target_function))
   if (instrument == 1) {
     if ("log_first_stage" %in% maive_formals) {
