@@ -1,5 +1,29 @@
 type DataArray = Array<Record<string, unknown>>;
 
+type SubsampleFilterOperator =
+  | "equals"
+  | "notEquals"
+  | "greaterThan"
+  | "greaterThanOrEqual"
+  | "lessThan"
+  | "lessThanOrEqual";
+
+type SubsampleFilterCondition = {
+  column: string;
+  operator: SubsampleFilterOperator;
+  value: string;
+};
+
+type SubsampleFilterJoiner = "AND" | "OR";
+
+type SubsampleFilterState = {
+  isEnabled: boolean;
+  conditions: SubsampleFilterCondition[];
+  joiner: SubsampleFilterJoiner;
+  matchedRowCount: number;
+  totalRowCount: number;
+};
+
 type DataInfo = {
   filename: string;
   rowCount: number;
@@ -9,4 +33,10 @@ type DataInfo = {
 };
 
 export default DataArray;
-export type { DataInfo };
+export type {
+  DataInfo,
+  SubsampleFilterCondition,
+  SubsampleFilterJoiner,
+  SubsampleFilterOperator,
+  SubsampleFilterState,
+};

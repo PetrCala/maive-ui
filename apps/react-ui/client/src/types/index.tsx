@@ -12,6 +12,12 @@ import type {
   ApiError,
 } from "./api";
 import type DataArray from "./data";
+import type {
+  SubsampleFilterCondition,
+  SubsampleFilterJoiner,
+  SubsampleFilterOperator,
+  SubsampleFilterState,
+} from "./data";
 
 /** A type of the results main estimate value. This is used to determine which model was used to produce the main estimate. */
 type EstimateType = DeepValueOf<typeof CONST.MODEL_TYPES> | "Unknown";
@@ -20,6 +26,10 @@ export type {
   ApiConfig,
   ApiError,
   DataArray,
+  SubsampleFilterCondition,
+  SubsampleFilterJoiner,
+  SubsampleFilterOperator,
+  SubsampleFilterState,
   DeepValueOf,
   EstimateType,
   ModelParameters,

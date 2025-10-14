@@ -4,6 +4,7 @@ import {
   type UploadedData,
   type ColumnMapping,
 } from "@store/dataStore";
+import type { SubsampleFilterState } from "@src/types";
 import { generateDataId, processUploadedFile } from "@utils/dataUtils";
 import { mockCsvFiles } from "@utils/mockCsvFiles";
 import { generateMockCSVFile } from "@utils/mockData";
@@ -42,6 +43,7 @@ export class DataProcessingService {
       hasHeaders,
       base64Data: base64Data,
       uploadedAt: new Date(),
+      subsampleFilter: null,
     };
 
     return uploadedData;
@@ -133,6 +135,7 @@ export class DataProcessingService {
     dataId: string,
     mapping: ColumnMapping,
     normalizedData: UploadedData["data"],
+    subsampleFilter?: SubsampleFilterState | null,
   ): void {
     const existingData = dataCache.get(dataId);
 
@@ -144,6 +147,7 @@ export class DataProcessingService {
       ...existingData,
       data: normalizedData,
       columnMapping: mapping,
+      subsampleFilter: subsampleFilter ?? null,
     };
 
     this.updateStoredData(updatedData);

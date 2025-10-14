@@ -8,6 +8,7 @@ import { GoBackButton } from "@src/components/Buttons";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import Alert from "@src/components/Alert";
 import RowInfoComponent from "@src/components/RowInfoComponent";
+import { SubsampleFilter } from "@src/components/SubsampleFilter";
 import { DataPreview } from "@src/components/DataPreview";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
@@ -15,10 +16,23 @@ import CONFIG from "@src/CONFIG";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import { dataCache, useDataStore } from "@store/dataStore";
 import type { ColumnMapping, UploadedData } from "@store/dataStore";
-import type { AlertType, DataArray } from "@src/types";
+import type {
+  AlertType,
+  DataArray,
+  SubsampleFilterCondition,
+  SubsampleFilterJoiner,
+  SubsampleFilterState,
+} from "@src/types";
 import { parseLocalizedNumber } from "@utils/dataUtils";
 import { DataProcessingService } from "@src/services/dataProcessingService";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
+import {
+  applySubsampleFilter,
+  buildFilterState,
+  createEmptyCondition as createEmptyFilterCondition,
+  DEFAULT_SUBSAMPLE_FILTER_JOINER,
+  isConditionComplete,
+} from "@src/utils/subsampleFilterUtils";
 
 const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
 
@@ -489,6 +503,15 @@ export default function ValidationPage() {
   const [normalizedData, setNormalizedData] = useState<DataArray>([]);
   const [normalizationIssues, setNormalizationIssues] =
     useState<NormalizationIssues>(createEmptyNormalizationIssues);
+  const [isFilterEnabled, setIsFilterEnabled] = useState(false);
+  const [primaryCondition, setPrimaryCondition] =
+    useState<SubsampleFilterCondition>(createEmptyFilterCondition());
+  const [secondaryCondition, setSecondaryCondition] =
+    useState<SubsampleFilterCondition>(createEmptyFilterCondition());
+  const [isSecondaryEnabled, setIsSecondaryEnabled] = useState(false);
+  const [filterJoiner, setFilterJoiner] = useState<SubsampleFilterJoiner>(
+    DEFAULT_SUBSAMPLE_FILTER_JOINER,
+  );
   const continueButtonRef = useRef<HTMLButtonElement>(null);
 
   useEnterKeyAction(() => {
@@ -549,6 +572,41 @@ export default function ValidationPage() {
         const { mapping: guessedMapping, applied } = autoMapColumns(columns);
         setMapping(guessedMapping);
         setAutoMappingApplied(applied);
+      }
+
+      if (data.subsampleFilter?.isEnabled && data.subsampleFilter.conditions) {
+        const [storedPrimary, storedSecondary] = data.subsampleFilter.conditions;
+
+        if (storedPrimary) {
+          setPrimaryCondition({
+            column: storedPrimary.column,
+            operator: storedPrimary.operator,
+            value: storedPrimary.value,
+          });
+        } else {
+          setPrimaryCondition(createEmptyFilterCondition());
+        }
+
+        if (storedSecondary) {
+          setSecondaryCondition({
+            column: storedSecondary.column,
+            operator: storedSecondary.operator,
+            value: storedSecondary.value,
+          });
+          setIsSecondaryEnabled(true);
+        } else {
+          setSecondaryCondition(createEmptyFilterCondition());
+          setIsSecondaryEnabled(false);
+        }
+
+        setIsFilterEnabled(true);
+        setFilterJoiner(data.subsampleFilter.joiner);
+      } else {
+        setIsFilterEnabled(false);
+        setPrimaryCondition(createEmptyFilterCondition());
+        setSecondaryCondition(createEmptyFilterCondition());
+        setIsSecondaryEnabled(false);
+        setFilterJoiner(DEFAULT_SUBSAMPLE_FILTER_JOINER);
       }
 
       setUploadedData(data);
@@ -642,6 +700,78 @@ export default function ValidationPage() {
     );
   }, [mapping]);
 
+  const filterEvaluation = useMemo(() => {
+    if (!uploadedData) {
+      return {
+        filteredRawRows: [] as DataArray,
+        filterState: null as SubsampleFilterState | null,
+        totalRowCount: 0,
+        displayMatchedRowCount: null as number | null,
+        hasActiveFilter: false,
+        hasNoMatches: false,
+        statusMessage: undefined as string | undefined,
+      };
+    }
+
+    const total = uploadedData.rawData.length;
+    const primaryComplete = isConditionComplete(primaryCondition);
+    const secondaryComplete =
+      isSecondaryEnabled && isConditionComplete(secondaryCondition);
+
+    const activeConditions: SubsampleFilterCondition[] = [];
+    if (primaryComplete) {
+      activeConditions.push(primaryCondition);
+    }
+    if (secondaryComplete) {
+      activeConditions.push(secondaryCondition);
+    }
+
+    const filterApplies = isFilterEnabled && activeConditions.length > 0;
+
+    const filteredRawRows = filterApplies
+      ? applySubsampleFilter(uploadedData.rawData, activeConditions, filterJoiner)
+      : uploadedData.rawData;
+
+    const matchedRowCount = filterApplies
+      ? filteredRawRows.length
+      : total;
+
+    const filterState = buildFilterState(
+      isFilterEnabled,
+      activeConditions,
+      filterJoiner,
+      matchedRowCount,
+      total,
+    );
+
+    let statusMessage: string | undefined;
+    if (isFilterEnabled && !primaryComplete) {
+      statusMessage = TEXT.validation.subsampleFilter.incompleteMessage;
+    } else if (filterApplies && matchedRowCount === 0) {
+      statusMessage = TEXT.validation.subsampleFilter.noMatchesMessage;
+    }
+
+    const displayMatchedRowCount =
+      filterApplies || !isFilterEnabled ? matchedRowCount : null;
+
+    return {
+      filteredRawRows,
+      filterState,
+      totalRowCount: total,
+      displayMatchedRowCount,
+      hasActiveFilter: filterApplies,
+      hasNoMatches: filterApplies && matchedRowCount === 0,
+      statusMessage,
+    };
+  }, [
+    uploadedData,
+    isFilterEnabled,
+    primaryCondition,
+    secondaryCondition,
+    isSecondaryEnabled,
+    filterJoiner,
+  ]);
+
   useEffect(() => {
     if (!uploadedData || !dataId) {
       setNormalizedData([]);
@@ -656,7 +786,7 @@ export default function ValidationPage() {
     }
 
     try {
-      const normalizedRows = uploadedData.rawData.map((row) =>
+      const normalizedRows = filterEvaluation.filteredRawRows.map((row) =>
         convertToNormalizedRow(row, mapping),
       );
 
@@ -673,6 +803,7 @@ export default function ValidationPage() {
         dataId,
         mappingConfig,
         sanitizedRows,
+        filterEvaluation.filterState,
       );
 
       setNormalizationIssues(issues);
@@ -685,7 +816,13 @@ export default function ValidationPage() {
       );
       setNormalizationIssues(createEmptyNormalizationIssues());
     }
-  }, [uploadedData, dataId, mapping, showAlert]);
+  }, [
+    uploadedData,
+    dataId,
+    mapping,
+    showAlert,
+    filterEvaluation,
+  ]);
 
   const validationResult = useMemo<ValidationResult | null>(() => {
     if (!mappingComplete || !mapping.effect || !mapping.se || !mapping.nObs) {
@@ -718,6 +855,18 @@ export default function ValidationPage() {
     setAutoMappingApplied(false);
   };
 
+  const handleFilterToggle = (enabled: boolean) => {
+    setIsFilterEnabled(enabled);
+    if (!enabled) {
+      setIsSecondaryEnabled(false);
+      setFilterJoiner(DEFAULT_SUBSAMPLE_FILTER_JOINER);
+    }
+  };
+
+  const handleSecondaryToggle = (enabled: boolean) => {
+    setIsSecondaryEnabled(enabled);
+  };
+
   const handleContinue = () => {
     if (!mappingComplete) {
       showAlert(TEXT.mapping.validationIncomplete, "error");
@@ -729,6 +878,11 @@ export default function ValidationPage() {
         "Please resolve the validation errors before continuing.",
         "error",
       );
+      return;
+    }
+
+    if (filterEvaluation.hasActiveFilter && filterEvaluation.hasNoMatches) {
+      showAlert(TEXT.validation.subsampleFilter.noMatchesMessage, "error");
       return;
     }
 
@@ -879,6 +1033,25 @@ export default function ValidationPage() {
                 </div>
               </div>
 
+              <div className="card p-6 sm:p-8 space-y-6">
+                <SubsampleFilter
+                  isEnabled={isFilterEnabled}
+                  onToggle={handleFilterToggle}
+                  columns={availableColumns}
+                  primaryCondition={primaryCondition}
+                  onPrimaryChange={setPrimaryCondition}
+                  secondaryCondition={secondaryCondition}
+                  onSecondaryChange={setSecondaryCondition}
+                  isSecondaryEnabled={isSecondaryEnabled}
+                  onSecondaryToggle={handleSecondaryToggle}
+                  joiner={filterJoiner}
+                  onJoinerChange={(nextJoiner) => setFilterJoiner(nextJoiner)}
+                  matchedRowCount={filterEvaluation.displayMatchedRowCount}
+                  totalRowCount={filterEvaluation.totalRowCount}
+                  statusMessage={filterEvaluation.statusMessage}
+                />
+              </div>
+
               <div className="card p-6 sm:p-8 space-y-4">
                 <div>
                   <h2 className="text-2xl font-bold text-primary mb-2">
@@ -911,7 +1084,11 @@ export default function ValidationPage() {
                   onClick={handleContinue}
                   variant="primary"
                   className="w-full"
-                  disabled={!validationResult?.isValid}
+                  disabled={
+                    !validationResult?.isValid ||
+                    (filterEvaluation.hasActiveFilter &&
+                      filterEvaluation.hasNoMatches)
+                  }
                 >
                   {TEXT.validation.continueButton}
                 </ActionButton>

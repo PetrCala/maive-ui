@@ -22,9 +22,11 @@ import ResultsSummary from "@src/components/ResultsSummary";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import Alert from "@src/components/Alert";
+import { formatFilterSummary } from "@src/utils/subsampleFilterUtils";
 import {
   FaInfoCircle,
   FaDownload,
+  FaFilter,
   FaUpload,
   FaRedo,
   FaChartLine,
@@ -62,6 +64,57 @@ export default function ResultsPage() {
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;
   const isWaiveModel = parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
+
+  const uploadedData = useMemo(() => {
+    if (!dataId) {
+      return null;
+    }
+
+    let data = dataCache.get(dataId);
+
+    if (!data) {
+      const storeData = useDataStore.getState().uploadedData;
+      if (storeData && storeData.id === dataId) {
+        data = storeData;
+        dataCache.set(dataId, data);
+      }
+    }
+
+    return data ?? null;
+  }, [dataId]);
+
+  const numberFormatter = useMemo(() => new Intl.NumberFormat(), []);
+
+  const activeFilterSummary = useMemo(() => {
+    if (!uploadedData?.subsampleFilter?.isEnabled) {
+      return null;
+    }
+
+    return formatFilterSummary(uploadedData.subsampleFilter);
+  }, [uploadedData]);
+
+  const activeFilterRowSummary = useMemo(() => {
+    if (!uploadedData?.subsampleFilter?.isEnabled) {
+      return null;
+    }
+
+    const { matchedRowCount, totalRowCount } = uploadedData.subsampleFilter;
+
+    if (
+      typeof matchedRowCount !== "number" ||
+      typeof totalRowCount !== "number"
+    ) {
+      return null;
+    }
+
+    if (totalRowCount === 0) {
+      return `${numberFormatter.format(0)} / ${numberFormatter.format(0)} (0.0%)`;
+    }
+
+    const percentage =
+      Math.round((matchedRowCount / totalRowCount) * 1000) / 10;
+    return `${numberFormatter.format(matchedRowCount)} / ${numberFormatter.format(totalRowCount)} (${percentage.toFixed(1)}%)`;
+  }, [uploadedData, numberFormatter]);
 
   // Memoize dataInfo to prevent expensive recalculations on every render
   const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
@@ -119,22 +172,23 @@ export default function ResultsPage() {
 
     try {
       // Get the original data from cache or store
-      let uploadedData = dataCache.get(dataId);
-      if (!uploadedData) {
+      let currentData = uploadedData ?? dataCache.get(dataId);
+      if (!currentData) {
         const storeData = useDataStore.getState().uploadedData;
         if (!storeData || storeData.id !== dataId) {
           alert("Original data not found. Please upload your data again.");
           return;
         }
-        uploadedData = storeData;
+        currentData = storeData;
+        dataCache.set(dataId, currentData);
       }
 
       exportComprehensiveResults(
-        uploadedData.data,
+        currentData.data,
         parsedResults,
         parsedParameters,
         parsedResults.seInstrumented,
-        uploadedData.filename,
+        currentData.filename,
         runDuration ? parseInt(runDuration, 10) : undefined,
         runTimestamp ? new Date(runTimestamp) : undefined,
         dataInfo,
@@ -179,6 +233,22 @@ export default function ResultsPage() {
                   className="mt-0"
                 />
               )}
+              {activeFilterSummary ? (
+                <div className="inline-flex flex-wrap items-center gap-2 self-start rounded-full bg-blue-50 dark:bg-blue-900/30 px-3 py-1 text-blue-800 dark:text-blue-200">
+                  <FaFilter className="w-3.5 h-3.5" />
+                  <span className="text-xs font-semibold uppercase tracking-wide">
+                    {resultsText.activeFilterLabel}:
+                  </span>
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    {activeFilterSummary}
+                  </span>
+                  {activeFilterRowSummary ? (
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-200">
+                      • {activeFilterRowSummary}
+                    </span>
+                  ) : null}
+                </div>
+              ) : null}
               {/* Results Summary */}
               <ResultsSummary
                 results={parsedResults}
