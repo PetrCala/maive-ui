@@ -61,8 +61,7 @@ export default function ResultsPage() {
 
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;
-  const isWaiveModel =
-    parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
+  const isWaiveModel = parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
 
   // Memoize dataInfo to prevent expensive recalculations on every render
   const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
@@ -172,14 +171,14 @@ export default function ResultsPage() {
               Model Results
             </h1>
 
-              <div className="space-y-6">
-                {isWaiveModel && (
-                  <Alert
-                    message={TEXT.waive.cautionNote}
-                    type={CONST.ALERT_TYPES.WARNING}
-                    className="mt-0"
-                  />
-                )}
+            <div className="space-y-6">
+              {isWaiveModel && (
+                <Alert
+                  message={TEXT.waive.cautionNote}
+                  type={CONST.ALERT_TYPES.WARNING}
+                  className="mt-0"
+                />
+              )}
               {/* Results Summary */}
               <ResultsSummary
                 results={parsedResults}

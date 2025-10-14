@@ -264,7 +264,7 @@ const TEXT = {
           "MAIVE: Meta-Analysis Instrumental Variable Estimator (Irsova et al., 2025, Nat Comms)",
         WAIVE:
           "WAIVE (Experimental): Weighted Adjustment Instrumental Variable Estimator (still under construction; corrects more aggressively for p-hacking)",
-      },
+      } satisfies Record<ModelParameters["modelType"], string>,
     },
     includeStudyDummies: {
       label: "Fixed-Intercept Multilevel",
