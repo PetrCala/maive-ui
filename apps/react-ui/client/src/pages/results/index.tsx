@@ -8,7 +8,7 @@ import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
 import ActionButton from "@components/Buttons/ActionButton";
 import { GoBackButton } from "@components/Buttons";
-import { getResultsText } from "@src/lib/text";
+import TEXT, { getResultsText } from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
   exportComprehensiveResults,
@@ -21,6 +21,7 @@ import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
+import Alert from "@src/components/Alert";
 import {
   FaInfoCircle,
   FaDownload,
@@ -60,6 +61,8 @@ export default function ResultsPage() {
 
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;
+  const isWaiveModel =
+    parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
 
   // Memoize dataInfo to prevent expensive recalculations on every render
   const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
@@ -67,10 +70,15 @@ export default function ResultsPage() {
   const resultsText = useMemo(
     () =>
       getResultsText(
+        parsedParameters.modelType,
         shouldUseInstrumenting,
         parsedParameters.standardErrorTreatment,
       ),
-    [shouldUseInstrumenting, parsedParameters.standardErrorTreatment],
+    [
+      parsedParameters.modelType,
+      shouldUseInstrumenting,
+      parsedParameters.standardErrorTreatment,
+    ],
   );
 
   if (!results) {
@@ -164,7 +172,14 @@ export default function ResultsPage() {
               Model Results
             </h1>
 
-            <div className="space-y-6">
+              <div className="space-y-6">
+                {isWaiveModel && (
+                  <Alert
+                    message={TEXT.waive.cautionNote}
+                    type={CONST.ALERT_TYPES.WARNING}
+                    className="mt-0"
+                  />
+                )}
               {/* Results Summary */}
               <ResultsSummary
                 results={parsedResults}
@@ -193,7 +208,11 @@ export default function ResultsPage() {
                 <div className="flex justify-center">
                   <Image
                     src={parsedResults.funnelPlot}
-                    alt="Funnel Plot"
+                    alt={
+                      isWaiveModel
+                        ? "WAIVE-adjusted funnel plot"
+                        : "MAIVE-adjusted funnel plot"
+                    }
                     width={Math.min(parsedResults.funnelPlotWidth, 800)}
                     height={Math.min(parsedResults.funnelPlotHeight, 800)}
                     className="max-w-full h-auto"

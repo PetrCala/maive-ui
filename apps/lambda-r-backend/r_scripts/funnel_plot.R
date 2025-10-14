@@ -110,6 +110,7 @@ format_axis_labels <- function(ticks, digits = 3) {
 #'        an optional `quadratic` flag. This mirrors the MAIVE package output introduced in commit
 #'        f6c76aa0643910f2ee2f13d8fc49a2d398c08f3d.
 #' @param instrument [numeric] Indicator for whether instrumenting is enabled (1) or disabled (0).
+#' @param model_type [character] Label for the instrumented estimator (e.g., "MAIVE", "WAIVE").
 #' @return A plot object
 #' @export
 get_funnel_plot <- function(
@@ -121,8 +122,10 @@ get_funnel_plot <- function(
     slope_coef = NULL,
     is_quadratic_fit = NULL,
     instrument = 1,
-    slope = NULL) {
+    slope = NULL,
+    model_type = "MAIVE") {
   funnel_opts <- get_funnel_plot_opts()
+  model_label <- toupper(model_type)
 
   first_non_null <- function(...) {
     vals <- list(...)
@@ -445,7 +448,7 @@ get_funnel_plot <- function(
   )
 
   if (!is.null(intercept) && !is.null(intercept_se)) {
-    intercept_label <- if (instrument == 0) "Regression fit" else "MAIVE"
+    intercept_label <- if (instrument == 0) "Regression fit" else model_label
     maive_label <- paste0(intercept_label, " = ", round(intercept, 2), " (SE = ", round(intercept_se, 2), ")")
 
     # Clamp intercept position to plot bounds
@@ -505,7 +508,7 @@ get_funnel_plot <- function(
     p_legend_fill <- c(p_legend_fill, outer_fill_col)
   }
 
-  fit_label <- if (instrument == 0) "Regression fit" else "MAIVE fit"
+  fit_label <- if (instrument == 0) "Regression fit" else paste(model_label, "fit")
 
   legend_labels <- c(funnel_opts$legend_texts[1])
   legend_pch <- c(funnel_opts$effect_pch[1])

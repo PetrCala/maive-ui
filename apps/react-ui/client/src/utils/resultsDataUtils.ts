@@ -3,6 +3,7 @@
 import type { ModelResults, ModelParameters } from "@src/types";
 import type { DataInfo } from "@src/types/data";
 import TEXT from "@src/lib/text";
+import CONST from "@src/CONST";
 
 export type ResultItem = {
   label: string;
@@ -92,7 +93,11 @@ export const generateResultsData = (
 
   const isInstrumented = parameters?.shouldUseInstrumenting ?? true;
   const hasFixedIntercept = parameters?.includeStudyDummies ?? false;
-  const shouldShowHausman = isInstrumented && !hasFixedIntercept;
+  const isWaiveModel =
+    (parameters?.modelType ?? CONST.MODEL_TYPES.MAIVE) ===
+    CONST.MODEL_TYPES.WAIVE;
+  const shouldShowHausman =
+    isInstrumented && !hasFixedIntercept && !isWaiveModel;
   const firstStageMode = results.firstStage?.mode ?? "levels";
   const firstStageDescription = results.firstStage?.description ?? null;
   const shouldShowBootstrapResults =
@@ -218,6 +223,15 @@ export const generateResultsData = (
 
   // Run information
   const runInfo: ResultItem[] = [];
+
+  if (isWaiveModel) {
+    runInfo.push({
+      label: TEXT.waive.runInfoLabel,
+      value: TEXT.waive.runInfoValue,
+      show: true,
+      section: "runInfo",
+    });
+  }
 
   if (runDuration !== undefined) {
     runInfo.push({

@@ -9,6 +9,7 @@ import {
 } from "@src/utils/optionVisibility";
 import TEXT from "@src/lib/text";
 import CONFIG from "@src/CONFIG";
+import CONST from "@src/CONST";
 
 type OptionSectionProps = {
   config: OptionSectionConfig;
@@ -68,6 +69,13 @@ export default function OptionSection({
     }
   };
 
+  const shouldShowBottomText =
+    Boolean(config.bottomText) &&
+    !(
+      config === modelOptionsConfig.basic &&
+      parameters.modelType === CONST.MODEL_TYPES.WAIVE
+    );
+
   const renderOptions = () => (
     <div className="flex flex-col gap-6">
       {visibleOptions.map((option) => (
@@ -80,7 +88,7 @@ export default function OptionSection({
           tooltipsEnabled={tooltipsEnabled}
         />
       ))}
-      {config.bottomText && (
+      {shouldShowBottomText && (
         <div className="text-sm text-gray-600 dark:text-gray-400 pt-4 border-t border-gray-200 dark:border-gray-700">
           {config.bottomText}
         </div>

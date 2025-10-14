@@ -28,13 +28,31 @@ export default function OptionRenderer({
     onChange(option.key, newValue);
   };
 
-  const optionLabel =
-    option.key === "maiveMethod" && !parameters.shouldUseInstrumenting
-      ? TEXT.model.maiveMethod.nonInstrumentingLabel
-      : option.label;
+  const optionLabel = (() => {
+    if (option.key === "maiveMethod") {
+      if (!parameters.shouldUseInstrumenting) {
+        return TEXT.model.maiveMethod.nonInstrumentingLabel;
+      }
+
+      if (parameters.modelType === CONST.MODEL_TYPES.WAIVE) {
+        return TEXT.model.maiveMethod.waiveLabel;
+      }
+    }
+
+    return option.label;
+  })();
 
   const noInstrumentingInfo =
     TEXT.model.shouldUseInstrumenting.noInstrumentingInfo;
+  const tooltipContent =
+    option.key === "modelType"
+      ? TEXT.model.modelType.tooltips[
+          parameters.modelType as keyof typeof TEXT.model.modelType.tooltips
+        ] ?? option.tooltip
+      : option.tooltip;
+  const isWaiveModel =
+    CONFIG.WAIVE_ENABLED &&
+    parameters.modelType === CONST.MODEL_TYPES.WAIVE;
 
   const renderOption = () => {
     switch (option.type) {
@@ -49,19 +67,28 @@ export default function OptionRenderer({
           />
         );
       case "dropdown": {
-        const dropdownOptions =
-          option.key === "weight"
-            ? option.options.filter((dropdownOption) => {
-                if (
-                  !parameters.shouldUseInstrumenting &&
-                  dropdownOption.value ===
-                    CONST.WEIGHT_OPTIONS.ADJUSTED_WEIGHTS.VALUE
-                ) {
-                  return false;
-                }
-                return true;
-              })
-            : option.options;
+        let dropdownOptions = option.options;
+
+        if (option.key === "weight") {
+          dropdownOptions = dropdownOptions.filter((dropdownOption) => {
+            if (
+              !parameters.shouldUseInstrumenting &&
+              dropdownOption.value ===
+                CONST.WEIGHT_OPTIONS.ADJUSTED_WEIGHTS.VALUE
+            ) {
+              return false;
+            }
+            return true;
+          });
+        }
+
+        if (option.key === "maiveMethod" && isWaiveModel) {
+          dropdownOptions = dropdownOptions.filter(
+            (dropdownOption) =>
+              dropdownOption.value === CONST.MAIVE_METHODS.PET_PEESE,
+          );
+        }
+
         return (
           <DropdownSelect
             label={optionLabel}
@@ -102,7 +129,7 @@ export default function OptionRenderer({
   return (
     <div className="flex-shrink-0">
       <Tooltip
-        content={option.tooltip}
+        content={tooltipContent}
         visible={tooltipsEnabled && CONFIG.TOOLTIPS_ENABLED.MODEL_PAGE}
       >
         {renderOption()}
@@ -116,6 +143,14 @@ export default function OptionRenderer({
             role="status"
           />
         )}
+      {option.key === "modelType" && isWaiveModel && (
+        <Alert
+          message={TEXT.waive.helpText}
+          type={CONST.ALERT_TYPES.INFO}
+          className="mt-3"
+          role="status"
+        />
+      )}
       {renderWarnings()}
     </div>
   );

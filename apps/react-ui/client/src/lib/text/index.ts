@@ -1,3 +1,4 @@
+import CONST from "@src/CONST";
 import type { ModelParameters } from "@src/types";
 
 type StandardErrorTreatment = ModelParameters["standardErrorTreatment"];
@@ -258,8 +259,12 @@ const TEXT = {
     },
     modelType: {
       label: "Model Type",
-      tooltip:
-        "The type of model to use for the analysis. By selecting standard weights and no instrumenting in advanced options you can use this UI to run classical PET, PEESE, PET-PEESE, and EK.",
+      tooltips: {
+        MAIVE:
+          "MAIVE: Meta-Analysis Instrumental Variable Estimator (Irsova et al., 2025, Nat Comms)",
+        WAIVE:
+          "WAIVE (Experimental): Weighted Adjustment Instrumental Variable Estimator (still under construction; corrects more aggressively for p-hacking)",
+      },
     },
     includeStudyDummies: {
       label: "Fixed-Intercept Multilevel",
@@ -288,6 +293,7 @@ const TEXT = {
     },
     maiveMethod: {
       label: "MAIVE Method",
+      waiveLabel: "WAIVE Method",
       nonInstrumentingLabel: "Method",
       tooltip: "The correction method to use. PET-PEESE is the default.",
     },
@@ -321,6 +327,14 @@ const TEXT = {
         "Estimate the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels.",
     },
     runModel: "Run Model",
+  },
+  waive: {
+    dropdownLabel: "WAIVE (Experimental)",
+    helpText:
+      "WAIVE downweights likely p-hacked estimates using smooth exponential-decay weights, extending MAIVE’s correction for spurious precision.",
+    cautionNote: "WAIVE is experimental. Interpretation should be cautious.",
+    runInfoLabel: "Experimental model (WAIVE)",
+    runInfoValue: "Active",
   },
   results: RESULTS_TEXT,
   maiveModal: {
@@ -475,6 +489,7 @@ const getNonInstrumentingResultsText = (): ResultsText => {
 };
 
 export const getResultsText = (
+  modelType: ModelParameters["modelType"],
   shouldUseInstrumenting: boolean,
   standardErrorTreatment: StandardErrorTreatment = "not_clustered",
 ): ResultsText => {
@@ -485,6 +500,14 @@ export const getResultsText = (
   const standardErrorTooltip =
     STANDARD_ERROR_TREATMENT_TOOLTIPS[standardErrorTreatment] ??
     STANDARD_ERROR_TREATMENT_TOOLTIPS.not_clustered;
+
+  const isWaive = modelType === CONST.MODEL_TYPES.WAIVE;
+  const funnelTitle = isWaive
+    ? baseResultsText.funnelPlot.title.replace(/MAIVE/g, "WAIVE")
+    : baseResultsText.funnelPlot.title;
+  const funnelTooltip = isWaive
+    ? baseResultsText.funnelPlot.tooltip.replace(/MAIVE/g, "WAIVE")
+    : baseResultsText.funnelPlot.tooltip;
 
   return {
     ...baseResultsText,
@@ -497,6 +520,11 @@ export const getResultsText = (
           tooltip: standardErrorTooltip,
         },
       },
+    },
+    funnelPlot: {
+      ...baseResultsText.funnelPlot,
+      title: funnelTitle,
+      tooltip: funnelTooltip,
     },
   };
 };

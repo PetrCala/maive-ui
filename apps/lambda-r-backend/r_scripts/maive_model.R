@@ -133,7 +133,7 @@ run_maive_model <- function(data, parameters) {
     ))
   }
 
-  cli::cli_h2("Final data frame for MAIVE:")
+  cli::cli_h2(sprintf("Final data frame for %s:", model_label))
   cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
   cli::cli_text("\n")
 
@@ -155,6 +155,8 @@ run_maive_model <- function(data, parameters) {
   }
 
   model_type <- params$modelType # MAIVE or WAIVE # nolint: object_usage_linter.
+  model_label <- toupper(model_type)
+  is_waive <- identical(model_type, "WAIVE")
 
   study_dummies <- if (isTRUE(params$includeStudyDummies)) 1 else 0
   study_clustering <- if (isTRUE(params$includeStudyClustering)) 1 else 0
@@ -211,12 +213,12 @@ run_maive_model <- function(data, parameters) {
   }
 
   cli::cli_alert_info(paste("maive_method result:", maive_method))
-  instrument <- if (isTRUE(params$shouldUseInstrumenting)) 1 else 0
+  instrument <- if (is_waive || isTRUE(params$shouldUseInstrumenting)) 1 else 0
   should_use_ar <- if (isTRUE(params$computeAndersonRubin)) 1 else 0
   log_first_stage <- isTRUE(params$useLogFirstStage)
 
-  # Debug: Print MAIVE parameters
-  cli::cli_h2("MAIVE parameters:")
+  # Debug: Print model parameters
+  cli::cli_h2(sprintf("%s parameters:", model_label))
   cli::cli_bullets(c(
     "method: {maive_method}",
     "weight: {weight}",
@@ -254,7 +256,8 @@ run_maive_model <- function(data, parameters) {
     AR = should_use_ar # 0 = no AR, 1 = AR (default)
   )
 
-  maive_formals <- names(formals(MAIVE::maive))
+  target_function <- if (is_waive) MAIVE::waive else MAIVE::maive
+  maive_formals <- names(formals(target_function))
   if (instrument == 1) {
     if ("log_first_stage" %in% maive_formals) {
       maive_args$log_first_stage <- log_first_stage
@@ -265,11 +268,11 @@ run_maive_model <- function(data, parameters) {
 
   tryCatch(
     {
-      maive_res <- do.call(MAIVE::maive, maive_args)
+      maive_res <- do.call(target_function, maive_args)
     },
     error = function(e) {
       err_message <- conditionMessage(e)
-      cli::cli_alert_danger(paste("MAIVE function error:", err_message))
+      cli::cli_alert_danger(paste(model_label, "function error:", err_message))
       cli::cli_alert_danger(paste("Error traceback:"))
       print(traceback()) # nolint: undesirable_function_linter.
       cli::cli_abort(err_message)
@@ -289,8 +292,8 @@ run_maive_model <- function(data, parameters) {
     }
   }
 
-  # Debug: Print MAIVE results
-  cli::cli_h2("MAIVE results structure:")
+  # Debug: Print model results
+  cli::cli_h2(sprintf("%s results structure:", model_label))
   cli::cli_code(capture.output(str(maive_res)))
 
   est <- maive_res$beta
@@ -397,7 +400,8 @@ run_maive_model <- function(data, parameters) {
     intercept = maive_res$beta,
     intercept_se = maive_res$SE,
     slope = slope_metadata,
-    instrument = instrument
+    instrument = instrument,
+    model_type = model_type
   )
 
   results <- list(
