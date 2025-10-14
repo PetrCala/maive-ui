@@ -1,5 +1,6 @@
 import TEXT, { getResultsText } from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
+import CONST from "@src/CONST";
 import type { DataInfo } from "@src/types/data";
 import {
   convertToExportFormat,
@@ -412,6 +413,7 @@ export const exportComprehensiveResults = (
   const workbook = XLSX.utils.book_new();
 
   const resultsText = getResultsText(
+    parameters?.modelType ?? CONST.MODEL_TYPES.MAIVE,
     parameters?.shouldUseInstrumenting ?? true,
     parameters?.standardErrorTreatment ?? "not_clustered",
   );
@@ -440,20 +442,28 @@ export const exportComprehensiveResults = (
   const settingsSheet = XLSX.utils.json_to_sheet(runSettings);
   XLSX.utils.book_append_sheet(workbook, settingsSheet, "Run Settings");
 
-  // Sheet 3: MAIVE Adjusted SEs
+  const isWaiveModel =
+    (parameters.modelType ?? CONST.MODEL_TYPES.MAIVE) ===
+    CONST.MODEL_TYPES.WAIVE;
+  const adjustedSeSheetName = isWaiveModel
+    ? "WAIVE Adjusted SEs"
+    : "MAIVE Adjusted SEs";
+
+  // Sheet 3: Adjusted SEs
   const exportData = originalData.map((row, index) => ({
     ...row,
     se_instrumented: seInstrumented[index] || null,
   }));
 
   const dataSheet = XLSX.utils.json_to_sheet(exportData);
-  XLSX.utils.book_append_sheet(workbook, dataSheet, "Data with Adjusted SEs");
+  XLSX.utils.book_append_sheet(workbook, dataSheet, adjustedSeSheetName);
 
   // Generate filename
   const baseName = filename.replace(/\.[^/.]+$/, ""); // Remove extension
   const now = new Date();
   const salt = `_${now.toISOString().replace(/[-:T]/g, "").slice(0, 13)}`; // e.g., "_20240611_1530"
-  const newFilename = `${baseName}_maive_results${salt}.xlsx`;
+  const modelSlug = isWaiveModel ? "waive" : "maive";
+  const newFilename = `${baseName}_${modelSlug}_results${salt}.xlsx`;
 
   XLSX.writeFile(workbook, newFilename);
 };

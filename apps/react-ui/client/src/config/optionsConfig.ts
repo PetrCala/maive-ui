@@ -13,13 +13,22 @@ export const modelOptionsConfig: ModelOptionsConfig = {
       {
         key: "modelType",
         label: TEXT.model.modelType.label,
-        tooltip: TEXT.model.modelType.tooltip,
+        tooltip: TEXT.model.modelType.tooltips.MAIVE,
         type: "dropdown",
-        options: Object.values(CONST.MODEL_TYPES).map((type) => ({
-          value: type,
-          label: type,
-        })),
-        disabled: !CONFIG.WAIVE_ENABLED,
+        options: [
+          {
+            value: CONST.MODEL_TYPES.MAIVE,
+            label: CONST.MODEL_TYPES.MAIVE,
+          },
+          ...(CONFIG.WAIVE_ENABLED
+            ? [
+                {
+                  value: CONST.MODEL_TYPES.WAIVE,
+                  label: TEXT.waive.dropdownLabel,
+                },
+              ]
+            : []),
+        ],
       },
       {
         key: "includeStudyClustering",
@@ -124,6 +133,10 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.shouldUseInstrumenting.label,
         tooltip: TEXT.model.shouldUseInstrumenting.tooltip,
         type: "yesno",
+        visibility: {
+          hideIf: ({ parameters }) =>
+            parameters.modelType === CONST.MODEL_TYPES.WAIVE,
+        },
       },
       {
         key: "useLogFirstStage",

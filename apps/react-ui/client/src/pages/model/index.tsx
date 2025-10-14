@@ -37,6 +37,9 @@ export default function ModelPage() {
   const andersonRubinUserChoiceRef = useRef<boolean>(
     CONFIG.DEFAULT_MODEL_PARAMETERS.computeAndersonRubin,
   );
+  const instrumentingUserChoiceRef = useRef<boolean>(
+    CONFIG.DEFAULT_MODEL_PARAMETERS.shouldUseInstrumenting,
+  );
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
@@ -139,7 +142,47 @@ export default function ModelPage() {
     setParameters((prev) => {
       const wasShowingAndersonRubin = shouldShowAndersonRubinOption(prev);
 
+      if (param === "modelType" && typeof value === "string") {
+        const nextModelType = value as ModelParameters["modelType"];
+
+        if (wasShowingAndersonRubin) {
+          andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
+        }
+
+        if (nextModelType === CONST.MODEL_TYPES.WAIVE) {
+          instrumentingUserChoiceRef.current = prev.shouldUseInstrumenting;
+
+          const willShowAndersonRubin =
+            prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+
+          return {
+            ...prev,
+            modelType: nextModelType,
+            shouldUseInstrumenting: true,
+            computeAndersonRubin: willShowAndersonRubin
+              ? andersonRubinUserChoiceRef.current
+              : false,
+            maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
+          };
+        }
+
+        const restoredInstrumenting = instrumentingUserChoiceRef.current;
+        const willShowAndersonRubin =
+          restoredInstrumenting &&
+          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+
+        return {
+          ...prev,
+          modelType: nextModelType,
+          shouldUseInstrumenting: restoredInstrumenting,
+          computeAndersonRubin: willShowAndersonRubin
+            ? andersonRubinUserChoiceRef.current
+            : false,
+        };
+      }
+
       if (param === "shouldUseInstrumenting" && typeof value === "boolean") {
+        instrumentingUserChoiceRef.current = value;
         const nextShouldUseInstrumenting = value;
         const willShowAndersonRubin =
           nextShouldUseInstrumenting &&
@@ -188,7 +231,22 @@ export default function ModelPage() {
         return prev;
       }
 
-      return { ...prev, [param]: value };
+      const nextState = { ...prev, [param]: value };
+
+      if (nextState.modelType === CONST.MODEL_TYPES.WAIVE) {
+        nextState.shouldUseInstrumenting = true;
+        if (nextState.maiveMethod !== CONST.MAIVE_METHODS.PET_PEESE) {
+          nextState.maiveMethod = CONST.MAIVE_METHODS.PET_PEESE;
+        }
+
+        const willShowAndersonRubin =
+          nextState.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+        nextState.computeAndersonRubin = willShowAndersonRubin
+          ? andersonRubinUserChoiceRef.current
+          : false;
+      }
+
+      return nextState;
     });
   };
 
@@ -196,6 +254,38 @@ export default function ModelPage() {
     title: "Running your analysis...",
     subtitle: "Hang tight while we process your model settings.",
   };
+
+  useEffect(() => {
+    if (parameters.modelType !== CONST.MODEL_TYPES.WAIVE) {
+      instrumentingUserChoiceRef.current = parameters.shouldUseInstrumenting;
+      return;
+    }
+
+    if (
+      parameters.shouldUseInstrumenting &&
+      parameters.maiveMethod === CONST.MAIVE_METHODS.PET_PEESE
+    ) {
+      return;
+    }
+
+    setParameters((prev) => {
+      if (prev.modelType !== CONST.MODEL_TYPES.WAIVE) {
+        return prev;
+      }
+
+      const willShowAndersonRubin =
+        prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+
+      return {
+        ...prev,
+        shouldUseInstrumenting: true,
+        maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
+        computeAndersonRubin: willShowAndersonRubin
+          ? andersonRubinUserChoiceRef.current
+          : false,
+      };
+    });
+  }, [parameters]);
 
   useEffect(() => {
     if (loading || hasRunModel) {
