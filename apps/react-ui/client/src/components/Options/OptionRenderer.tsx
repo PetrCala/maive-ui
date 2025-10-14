@@ -28,6 +28,14 @@ export default function OptionRenderer({
     onChange(option.key, newValue);
   };
 
+  const handleBooleanChange = (newValue: boolean) => {
+    handleChange(newValue);
+  };
+
+  const handleStringChange = (newValue: string) => {
+    handleChange(newValue);
+  };
+
   const optionLabel = (() => {
     if (option.key === "maiveMethod") {
       if (!parameters.shouldUseInstrumenting) {
@@ -46,27 +54,30 @@ export default function OptionRenderer({
     TEXT.model.shouldUseInstrumenting.noInstrumentingInfo;
   const tooltipContent =
     option.key === "modelType"
-      ? TEXT.model.modelType.tooltips[
-          parameters.modelType as keyof typeof TEXT.model.modelType.tooltips
-        ] ?? option.tooltip
+      ? (TEXT.model.modelType.tooltips[parameters.modelType] ?? option.tooltip)
       : option.tooltip;
   const isWaiveModel =
-    CONFIG.WAIVE_ENABLED &&
-    parameters.modelType === CONST.MODEL_TYPES.WAIVE;
+    CONFIG.WAIVE_ENABLED && parameters.modelType === CONST.MODEL_TYPES.WAIVE;
 
   const renderOption = () => {
     switch (option.type) {
       case "yesno":
+        if (typeof value !== "boolean") {
+          return null;
+        }
         return (
           <YesNoSelect
             label={optionLabel}
-            value={value as boolean}
-            onChange={handleChange as (value: boolean) => void}
+            value={value}
+            onChange={handleBooleanChange}
             className={option.className}
             disabled={option.disabled}
           />
         );
       case "dropdown": {
+        if (typeof value !== "string") {
+          return null;
+        }
         let dropdownOptions = option.options;
 
         if (option.key === "weight") {
@@ -92,8 +103,8 @@ export default function OptionRenderer({
         return (
           <DropdownSelect
             label={optionLabel}
-            value={value as string}
-            onChange={handleChange as (value: string) => void}
+            value={value}
+            onChange={handleStringChange}
             options={dropdownOptions}
             className={option.className}
             disabled={option.disabled}
