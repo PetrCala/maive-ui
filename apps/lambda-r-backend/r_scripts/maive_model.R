@@ -133,10 +133,6 @@ run_maive_model <- function(data, parameters) {
     ))
   }
 
-  cli::cli_h2(sprintf("Final data frame for %s:", model_label))
-  cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
-  cli::cli_text("\n")
-
   expected_parameters <- c(
     "modelType",
     "includeStudyDummies",
@@ -157,6 +153,10 @@ run_maive_model <- function(data, parameters) {
   model_type <- params$modelType # MAIVE or WAIVE # nolint: object_usage_linter.
   model_label <- toupper(model_type)
   is_waive <- identical(model_type, "WAIVE")
+
+  cli::cli_h2(sprintf("Final data frame for %s:", model_label))
+  cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
+  cli::cli_text("\n")
 
   study_dummies <- if (isTRUE(params$includeStudyDummies)) 1 else 0
   study_clustering <- if (isTRUE(params$includeStudyClustering)) 1 else 0
