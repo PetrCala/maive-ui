@@ -1,4 +1,4 @@
-import type { DataArray } from "@src/types";
+import type { DataArray, SubsampleFilter } from "@src/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -19,6 +19,7 @@ export type UploadedData = {
   base64Data: string;
   uploadedAt: Date;
   columnMapping?: ColumnMapping;
+  subsampleFilter?: SubsampleFilter | null;
 };
 
 type DataStore = {

@@ -19,6 +19,12 @@ import type { AlertType, DataArray } from "@src/types";
 import { parseLocalizedNumber } from "@utils/dataUtils";
 import { DataProcessingService } from "@src/services/dataProcessingService";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
+import type {
+  FilterJoiner,
+  FilterOperator,
+  SubsampleFilterCondition,
+} from "@src/types";
+import { FILTER_OPERATOR_OPTIONS } from "@src/utils/filterUtils";
 
 const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
 
@@ -159,6 +165,98 @@ const formatNormalizedValue = (value: unknown): string => {
 
 const FINITE_COLUMNS: ColumnKey[] = ["effect", "se", "n_obs"];
 
+type FilterConditionState = {
+  column: string;
+  operator: FilterOperator;
+  value: string;
+};
+
+const createEmptyCondition = (): FilterConditionState => ({
+  column: "",
+  operator: "equals",
+  value: "",
+});
+
+const toNumericValue = (value: unknown): number | null => {
+  if (typeof value === "number" && !Number.isNaN(value)) {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const parsed = Number(value.trim());
+    if (!Number.isNaN(parsed)) {
+      return parsed;
+    }
+  }
+
+  return null;
+};
+
+const toComparableString = (value: unknown): string | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  if (typeof value === "string") {
+    return value.trim().toLowerCase();
+  }
+
+  if (typeof value === "number" && !Number.isNaN(value)) {
+    return value.toString();
+  }
+
+  if (typeof value === "boolean") {
+    return value ? "true" : "false";
+  }
+
+  return String(value).trim().toLowerCase();
+};
+
+const evaluateFilterCondition = (
+  row: NormalizedRow,
+  condition: SubsampleFilterCondition,
+): boolean => {
+  const rowValue = row[condition.column];
+
+  if (rowValue === null || rowValue === undefined) {
+    return false;
+  }
+
+  const rowNumber = toNumericValue(rowValue);
+  const conditionNumber = toNumericValue(condition.value);
+  const hasNumericComparison =
+    rowNumber !== null && conditionNumber !== null;
+
+  switch (condition.operator) {
+    case "equals":
+      if (hasNumericComparison) {
+        return rowNumber === conditionNumber;
+      }
+      return (
+        toComparableString(rowValue) ===
+        toComparableString(condition.value)
+      );
+    case "notEquals":
+      if (hasNumericComparison) {
+        return rowNumber !== conditionNumber;
+      }
+      return (
+        toComparableString(rowValue) !==
+        toComparableString(condition.value)
+      );
+    case "greaterThan":
+      return hasNumericComparison ? rowNumber > conditionNumber : false;
+    case "greaterThanOrEqual":
+      return hasNumericComparison ? rowNumber >= conditionNumber : false;
+    case "lessThan":
+      return hasNumericComparison ? rowNumber < conditionNumber : false;
+    case "lessThanOrEqual":
+      return hasNumericComparison ? rowNumber <= conditionNumber : false;
+    default:
+      return false;
+  }
+};
+
 const convertToNormalizedRow = (
   row: Record<string, unknown>,
   mapping: MappingState,
@@ -193,6 +291,7 @@ const convertToNormalizedRow = (
   };
 
   const normalized: NormalizedRow = {
+    ...row,
     effect: normalizeNumericValue(mapping.effect),
     se: normalizeNumericValue(mapping.se),
     n_obs: normalizeNumericValue(mapping.nObs),
@@ -489,7 +588,13 @@ export default function ValidationPage() {
   const [normalizedData, setNormalizedData] = useState<DataArray>([]);
   const [normalizationIssues, setNormalizationIssues] =
     useState<NormalizationIssues>(createEmptyNormalizationIssues);
+  const [isFilterEnabled, setIsFilterEnabled] = useState(false);
+  const [filterConditions, setFilterConditions] = useState<
+    FilterConditionState[]
+  >([createEmptyCondition(), createEmptyCondition()]);
+  const [filterJoiner, setFilterJoiner] = useState<FilterJoiner>("AND");
   const continueButtonRef = useRef<HTMLButtonElement>(null);
+  const filterInitializedRef = useRef(false);
 
   useEnterKeyAction(() => {
     const button = continueButtonRef.current;
@@ -498,6 +603,10 @@ export default function ValidationPage() {
       button.click();
     }
   });
+
+  useEffect(() => {
+    filterInitializedRef.current = false;
+  }, [dataId]);
 
   useEffect(() => {
     if (!dataId) {
@@ -565,9 +674,63 @@ export default function ValidationPage() {
     }
   }, [dataId, showAlert]);
 
+  useEffect(() => {
+    if (!uploadedData) {
+      setIsFilterEnabled(false);
+      setFilterJoiner("AND");
+      setFilterConditions([createEmptyCondition(), createEmptyCondition()]);
+      return;
+    }
+
+    if (filterInitializedRef.current) {
+      return;
+    }
+
+    const savedFilter = uploadedData.subsampleFilter;
+
+    if (savedFilter?.enabled) {
+      setIsFilterEnabled(true);
+      setFilterJoiner(savedFilter.joiner);
+
+      const nextConditions: FilterConditionState[] = [
+        createEmptyCondition(),
+        createEmptyCondition(),
+      ];
+
+      savedFilter.conditions.slice(0, 2).forEach((condition, index) => {
+        nextConditions[index] = {
+          column: condition.column ?? "",
+          operator: condition.operator ?? "equals",
+          value: condition.value ?? "",
+        };
+      });
+
+      setFilterConditions(nextConditions);
+    } else {
+      setIsFilterEnabled(false);
+      setFilterJoiner("AND");
+      setFilterConditions([createEmptyCondition(), createEmptyCondition()]);
+    }
+
+    filterInitializedRef.current = true;
+  }, [uploadedData]);
+
   const mappingComplete = useMemo(() => {
     return REQUIRED_FIELDS.every((field) => Boolean(mapping[field]));
   }, [mapping]);
+
+  const mappingConfig = useMemo<ColumnMapping | null>(() => {
+    if (!mapping.effect || !mapping.se || !mapping.nObs) {
+      return null;
+    }
+
+    return {
+      effect: mapping.effect,
+      se: mapping.se,
+      nObs: mapping.nObs,
+      studyId: mapping.studyId ?? null,
+    };
+  }, [mapping.effect, mapping.nObs, mapping.se, mapping.studyId]);
 
   const availableColumns = useMemo(() => {
     if (!uploadedData) {
@@ -625,7 +788,7 @@ export default function ValidationPage() {
       return [] as string[][];
     }
 
-    return normalizedData.slice(0, 5).map((row) => {
+    return filteredNormalizedData.slice(0, 5).map((row) => {
       const values: unknown[] = [row.effect, row.se, row.n_obs];
 
       if (mapping.studyId) {
@@ -634,13 +797,84 @@ export default function ValidationPage() {
 
       return values.map((value) => formatNormalizedValue(value));
     });
-  }, [mapping.studyId, mappingComplete, normalizedData]);
+  }, [
+    filteredNormalizedData,
+    mapping.studyId,
+    mappingComplete,
+    normalizedData.length,
+  ]);
 
   const usedColumns = useMemo(() => {
     return new Set(
       Object.values(mapping).filter((value): value is string => Boolean(value)),
     );
   }, [mapping]);
+
+  const activeFilterConditions = useMemo<SubsampleFilterCondition[]>(() => {
+    if (!isFilterEnabled) {
+      return [];
+    }
+
+    return filterConditions
+      .map((condition) => ({
+        column: condition.column,
+        operator: condition.operator,
+        value: condition.value.trim(),
+      }))
+      .filter((condition) => condition.column && condition.value !== "");
+  }, [filterConditions, isFilterEnabled]);
+
+  const filteredNormalizedData = useMemo(() => {
+    if (!isFilterEnabled || !activeFilterConditions.length) {
+      return normalizedData;
+    }
+
+    return normalizedData.filter((row) => {
+      const evaluations = activeFilterConditions.map((condition) =>
+        evaluateFilterCondition(row, condition),
+      );
+
+      if (activeFilterConditions.length === 1) {
+        return evaluations[0] ?? false;
+      }
+
+      if (filterJoiner === "AND") {
+        return evaluations.every(Boolean);
+      }
+
+      return evaluations.some(Boolean);
+    });
+  }, [
+    activeFilterConditions,
+    filterJoiner,
+    isFilterEnabled,
+    normalizedData,
+  ]);
+
+  const totalRowCount = normalizedData.length;
+  const matchingRowCount = filteredNormalizedData.length;
+  const matchingPercentage = totalRowCount
+    ? (matchingRowCount / totalRowCount) * 100
+    : 0;
+  const formattedMatchingPercentage =
+    matchingPercentage % 1 === 0
+      ? matchingPercentage.toFixed(0)
+      : matchingPercentage.toFixed(1);
+
+  const rowsMatchingText = TEXT.validation.filter.rowsMatching
+    .replace("{matching}", matchingRowCount.toLocaleString())
+    .replace("{total}", totalRowCount.toLocaleString())
+    .replace("{percentage}", formattedMatchingPercentage);
+
+  const filterHasActiveConditions =
+    isFilterEnabled && activeFilterConditions.length > 0;
+
+  const filterProducesNoRows =
+    filterHasActiveConditions && totalRowCount > 0 && matchingRowCount === 0;
+
+  const previewEmptyMessage = filterHasActiveConditions
+    ? TEXT.validation.filter.previewEmpty
+    : TEXT.mapping.validationIncomplete;
 
   useEffect(() => {
     if (!uploadedData || !dataId) {
@@ -662,19 +896,6 @@ export default function ValidationPage() {
 
       const { sanitizedRows, issues } = analyzeNormalizedRows(normalizedRows);
 
-      const mappingConfig: ColumnMapping = {
-        effect: mapping.effect,
-        se: mapping.se,
-        nObs: mapping.nObs,
-        studyId: mapping.studyId ?? null,
-      };
-
-      DataProcessingService.applyColumnMapping(
-        dataId,
-        mappingConfig,
-        sanitizedRows,
-      );
-
       setNormalizationIssues(issues);
       setNormalizedData(sanitizedRows);
     } catch (error) {
@@ -688,27 +909,63 @@ export default function ValidationPage() {
   }, [uploadedData, dataId, mapping, showAlert]);
 
   const validationResult = useMemo<ValidationResult | null>(() => {
-    if (!mappingComplete || !mapping.effect || !mapping.se || !mapping.nObs) {
+    if (!mappingComplete || !mappingConfig) {
       return null;
     }
-
-    const mappingConfig: ColumnMapping = {
-      effect: mapping.effect,
-      se: mapping.se,
-      nObs: mapping.nObs,
-      studyId: mapping.studyId ?? null,
-    };
-
     return validateData(normalizedData, mappingConfig, normalizationIssues);
+  }, [mappingComplete, mappingConfig, normalizedData, normalizationIssues]);
+
+  useEffect(() => {
+    if (!dataId || !mappingComplete || !mappingConfig) {
+      return;
+    }
+
+    try {
+      const subsampleFilter = isFilterEnabled
+        ? {
+            enabled: true,
+            joiner: filterJoiner,
+            conditions: activeFilterConditions,
+            totalRowCount,
+            matchingRowCount,
+          }
+        : null;
+
+      DataProcessingService.applyColumnMapping(
+        dataId,
+        mappingConfig,
+        filteredNormalizedData,
+        {
+          subsampleFilter,
+        },
+      );
+    } catch (error) {
+      console.error("Failed to update processed data:", error);
+      showAlert(TEXT.validation.filter.updateError, "error");
+    }
   }, [
+    activeFilterConditions,
+    dataId,
+    filteredNormalizedData,
+    filterJoiner,
+    isFilterEnabled,
     mappingComplete,
-    mapping.effect,
-    mapping.nObs,
-    mapping.se,
-    mapping.studyId,
-    normalizedData,
-    normalizationIssues,
+    mappingConfig,
+    matchingRowCount,
+    showAlert,
+    totalRowCount,
   ]);
+
+  const updateFilterCondition = (
+    index: number,
+    updates: Partial<FilterConditionState>,
+  ) => {
+    setFilterConditions((prev) => {
+      const next = [...prev];
+      next[index] = { ...next[index], ...updates };
+      return next;
+    });
+  };
 
   const handleMappingChange = (field: keyof MappingState, value: string) => {
     setMapping((prev) => ({
@@ -717,6 +974,8 @@ export default function ValidationPage() {
     }));
     setAutoMappingApplied(false);
   };
+
+  const isContinueDisabled = !validationResult?.isValid || filterProducesNoRows;
 
   const handleContinue = () => {
     if (!mappingComplete) {
@@ -729,6 +988,11 @@ export default function ValidationPage() {
         "Please resolve the validation errors before continuing.",
         "error",
       );
+      return;
+    }
+
+    if (filterProducesNoRows) {
+      showAlert(TEXT.validation.filter.noMatches, "error");
       return;
     }
 
@@ -866,7 +1130,7 @@ export default function ValidationPage() {
                     description={TEXT.mapping.mappedPreviewDescription}
                     headers={mappedPreviewHeaders}
                     rows={mappedPreviewRows}
-                    emptyMessage={TEXT.mapping.validationIncomplete}
+                    emptyMessage={previewEmptyMessage}
                   />
                   {normalizedData.length > 0 &&
                     CONFIG.SHOULD_SHOW_DF_ROWS_INFO && (
@@ -877,6 +1141,154 @@ export default function ValidationPage() {
                       />
                     )}
                 </div>
+              </div>
+
+              <div className="card p-6 sm:p-8 space-y-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-primary mb-2">
+                    {TEXT.validation.filter.title}
+                  </h2>
+                  <p className="text-secondary">
+                    {TEXT.validation.filter.description}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-3">
+                  <p className="text-sm font-medium text-secondary">
+                    {TEXT.validation.filter.prompt}
+                  </p>
+                  <div className="inline-flex overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+                    <button
+                      type="button"
+                      className={`px-4 py-2 text-sm font-medium transition-colors focus:outline-none ${
+                        isFilterEnabled
+                          ? "bg-primary text-white"
+                          : "bg-white text-gray-700 dark:bg-gray-900/40 dark:text-gray-200"
+                      }`}
+                      onClick={() => setIsFilterEnabled(true)}
+                      aria-pressed={isFilterEnabled}
+                    >
+                      {TEXT.validation.filter.yes}
+                    </button>
+                    <button
+                      type="button"
+                      className={`px-4 py-2 text-sm font-medium transition-colors focus:outline-none ${
+                        !isFilterEnabled
+                          ? "bg-primary text-white"
+                          : "bg-white text-gray-700 dark:bg-gray-900/40 dark:text-gray-200"
+                      }`}
+                      onClick={() => setIsFilterEnabled(false)}
+                      aria-pressed={!isFilterEnabled}
+                    >
+                      {TEXT.validation.filter.no}
+                    </button>
+                  </div>
+                </div>
+
+                {isFilterEnabled ? (
+                  <div className="space-y-4">
+                    {filterConditions.map((condition, index) => (
+                      <div key={index} className="grid gap-4 sm:grid-cols-12">
+                        <div className="sm:col-span-5">
+                          <label className="mb-1 block text-sm font-medium text-secondary">
+                            {index === 0
+                              ? TEXT.validation.filter.conditionALabel
+                              : TEXT.validation.filter.conditionBLabel}
+                          </label>
+                          <select
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            value={condition.column}
+                            onChange={(event) =>
+                              updateFilterCondition(index, {
+                                column: event.target.value,
+                              })
+                            }
+                          >
+                            <option value="">
+                              {TEXT.validation.filter.selectColumn}
+                            </option>
+                            {availableColumns.map((column) => (
+                              <option key={column} value={column}>
+                                {column}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label className="mb-1 block text-sm font-medium text-secondary">
+                            {TEXT.validation.filter.operatorLabel}
+                          </label>
+                          <select
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            value={condition.operator}
+                            onChange={(event) =>
+                              updateFilterCondition(index, {
+                                operator: event.target.value as FilterOperator,
+                              })
+                            }
+                          >
+                            {FILTER_OPERATOR_OPTIONS.map((option) => (
+                              <option key={option.value} value={option.value}>
+                                {option.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div className="sm:col-span-4">
+                          <label className="mb-1 block text-sm font-medium text-secondary">
+                            {TEXT.validation.filter.valueLabel}
+                          </label>
+                          <input
+                            type="text"
+                            className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            value={condition.value}
+                            onChange={(event) =>
+                              updateFilterCondition(index, {
+                                value: event.target.value,
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="sm:w-48">
+                        <label className="mb-1 block text-sm font-medium text-secondary">
+                          {TEXT.validation.filter.joinerLabel}
+                        </label>
+                        <select
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                          value={filterJoiner}
+                          onChange={(event) =>
+                            setFilterJoiner(event.target.value as FilterJoiner)
+                          }
+                        >
+                          <option value="AND">
+                            {TEXT.validation.filter.joinerAnd}
+                          </option>
+                          <option value="OR">
+                            {TEXT.validation.filter.joinerOr}
+                          </option>
+                        </select>
+                      </div>
+                      {totalRowCount > 0 && (
+                        <p className="text-sm text-secondary">{rowsMatchingText}</p>
+                      )}
+                    </div>
+
+                    {filterProducesNoRows && (
+                      <Alert
+                        type={CONST.ALERT_TYPES.ERROR}
+                        message={TEXT.validation.filter.noMatches}
+                      />
+                    )}
+                  </div>
+                ) : (
+                  totalRowCount > 0 && (
+                    <p className="text-sm text-secondary">{rowsMatchingText}</p>
+                  )
+                )}
               </div>
 
               <div className="card p-6 sm:p-8 space-y-4">
@@ -911,7 +1323,7 @@ export default function ValidationPage() {
                   onClick={handleContinue}
                   variant="primary"
                   className="w-full"
-                  disabled={!validationResult?.isValid}
+                  disabled={isContinueDisabled}
                 >
                   {TEXT.validation.continueButton}
                 </ActionButton>

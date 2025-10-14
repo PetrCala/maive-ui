@@ -8,19 +8,20 @@ import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
 import ActionButton from "@components/Buttons/ActionButton";
 import { GoBackButton } from "@components/Buttons";
-import { getResultsText } from "@src/lib/text";
+import TEXT, { getResultsText } from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
   exportComprehensiveResults,
   downloadImageAsJpg,
 } from "@utils/dataUtils";
 import { generateDataInfo } from "@utils/dataInfoUtils";
-import type { ModelParameters, ModelResults } from "@src/types";
+import type { ModelParameters, ModelResults, SubsampleFilter } from "@src/types";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
+import { formatFilterSummary } from "@src/utils/filterUtils";
 import {
   FaInfoCircle,
   FaDownload,
@@ -63,6 +64,42 @@ export default function ResultsPage() {
 
   // Memoize dataInfo to prevent expensive recalculations on every render
   const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
+
+  const subsampleFilter = useMemo<SubsampleFilter | null>(() => {
+    if (!dataId) {
+      return null;
+    }
+
+    let data = dataCache.get(dataId);
+    if (!data) {
+      const storeData = useDataStore.getState().uploadedData;
+      if (storeData && storeData.id === dataId) {
+        data = storeData;
+      }
+    }
+
+    return data?.subsampleFilter ?? null;
+  }, [dataId]);
+
+  const filterBadgeInfo = useMemo(() => {
+    if (!subsampleFilter || !subsampleFilter.enabled) {
+      return null;
+    }
+
+    const summaryText =
+      subsampleFilter.conditions.length > 0
+        ? formatFilterSummary(
+            subsampleFilter.conditions,
+            subsampleFilter.joiner,
+          )
+        : TEXT.validation.filter.allRowsSummary;
+
+    return {
+      summary: summaryText.trim(),
+      matching: subsampleFilter.matchingRowCount,
+      total: subsampleFilter.totalRowCount,
+    };
+  }, [subsampleFilter]);
 
   const resultsText = useMemo(
     () =>
@@ -165,6 +202,17 @@ export default function ResultsPage() {
             </h1>
 
             <div className="space-y-6">
+              {filterBadgeInfo && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-sm font-medium text-primary">
+                    {`Filter: ${filterBadgeInfo.summary}`}
+                  </span>
+                  <span className="text-sm text-secondary">
+                    {`${filterBadgeInfo.matching.toLocaleString()} of ${filterBadgeInfo.total.toLocaleString()} rows`}
+                  </span>
+                </div>
+              )}
+
               {/* Results Summary */}
               <ResultsSummary
                 results={parsedResults}

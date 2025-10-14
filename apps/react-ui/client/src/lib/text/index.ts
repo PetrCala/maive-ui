@@ -250,6 +250,28 @@ const TEXT = {
     resultsTitle: "Validation results",
     resultsDescription:
       "Review the findings below. Fix any errors before proceeding to modeling.",
+    filter: {
+      title: "Use subsample filter?",
+      description:
+        "Rows that do not match the conditions will be excluded from all downstream analyses.",
+      prompt: "Would you like to include only a subset of your data in the analysis?",
+      yes: "Yes",
+      no: "No",
+      conditionALabel: "Condition A",
+      conditionBLabel: "Condition B (optional)",
+      selectColumn: "Select a column",
+      operatorLabel: "Operator",
+      valueLabel: "Value",
+      joinerLabel: "Joiner",
+      joinerAnd: "AND",
+      joinerOr: "OR",
+      rowsMatching: "Rows matching: {matching} of {total} ({percentage}%)",
+      noMatches: "The filter produced no matching rows.",
+      previewEmpty: "No rows match the current filter.",
+      updateError:
+        "We couldn't update your data with the current filter. Please try again.",
+      allRowsSummary: "All rows",
+    },
   },
   model: {
     basicOptions: {
