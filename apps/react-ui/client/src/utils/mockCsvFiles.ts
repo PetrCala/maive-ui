@@ -4,7 +4,8 @@
 export const mockCsvFiles = [
   {
     name: "Mock Data 1",
-    content: `1.0,0.187317162,120,1
+    content: `effect,se,n_obs,study_id
+1.0,0.187317162,120,1
 2.0,0.187317162,120,1
 3.0,0.206284249,100,2
 4.0,0.277555467,58,3
@@ -25,7 +26,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 2",
-    content: `2.31006267,0.06751074,1178,Hauser et al (2007)
+    content: `effect,se,n_obs,study_id
+2.31006267,0.06751074,1178,Hauser et al (2007)
 0.38592932,0.04641364,575,Hauser et al (2007)
 1.75873506,0.64838443,11,Pellizzoni et al (2010)
 -0.2095044,0.21659697,18,Moore et al (2008)
@@ -60,7 +62,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 3",
-    content: `0.42309383,0.17407766,36,Boelter & Reisberg (1999)
+    content: `effect,se,n_obs,study_id
+0.42309383,0.17407766,36,Boelter & Reisberg (1999)
 0.34164003,0.17407766,36,Boelter & Reisberg (1999)
 0.34164003,0.16439898,40,Dodson et al. (1997)
 0.26073295,0.11396058,80,Dodson et al. (1997)
@@ -94,7 +97,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 4",
-    content: `1.40956874,1.60389498,371,4
+    content: `effect,se,n_obs,study_id
+1.40956874,1.60389498,371,4
 0.934580279,2.728439649,315,20
 1.005538362,1.20559614,247,2
 1.607434135,1.374603181,378,8
@@ -172,7 +176,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 6",
-    content: `1.1952,0.314765685,54,1985ArkThe02A
+    content: `effect,se,n_obs,study_id
+1.1952,0.314765685,54,1985ArkThe02A
 1.84,0.230595043,108,1985ArkThe03A
 0.3126,0.160194423,158,1985ArkThe04A
 0.5693,0.170552848,145,1985ArkThe07A
@@ -277,7 +282,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 7",
-    content: `0.08,0.244948974,64,1
+    content: `effect,se,n_obs,study_id
+0.08,0.244948974,64,1
 0.27,0.2,91,1
 -0.05,0.1,567,2
 -0.08,0.223606798,86,2
@@ -373,7 +379,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 8",
-    content: `0.12,0.267892143,60,1
+    content: `effect,se,n_obs,study_id
+0.12,0.267892143,60,1
 0.1495,0.166825328,148,1
 0.3224,0.136486499,219,1
 0.0,0.36667576,34,2
@@ -423,7 +430,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 9",
-    content: `1.064954987,0.008,80322,Graham et al. (2011)
+    content: `effect,se,n_obs,study_id
+1.064954987,0.008,80322,Graham et al. (2011)
 0.723076997,0.036837306,4314,Graham et al. (2011)
 0.747264718,0.037273749,3766,Graham et al. (2011)
 0.92559525,0.041002729,2579,Graham et al. (2011)
@@ -460,7 +468,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 10",
-    content: `0.60399997,0.287,51,1
+    content: `effect,se,n_obs,study_id
+0.60399997,0.287,51,1
 -0.018999999,0.183,119,2
 0.14399999,0.169,142,2
 0.249,0.27000001,54,2
@@ -480,7 +489,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 11",
-    content: `0.34,0.244262799,68,1
+    content: `effect,se,n_obs,study_id
+0.34,0.244262799,68,1
 -0.16,0.190052817,112,1
 0.3,0.259806125,60,2
 0.36,0.26477603,58,2
@@ -517,7 +527,8 @@ export const mockCsvFiles = [
   },
   {
     name: "Mock Data 12",
-    content: `0.542,0.274,54,1
+    content: `effect,se,n_obs,study_id
+0.542,0.274,54,1
 0.559,0.306,43,1
 0.419,0.201,100,1
 0.651,0.262,60,2
