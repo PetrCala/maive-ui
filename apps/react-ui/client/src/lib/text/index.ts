@@ -48,6 +48,7 @@ export type ResultsText = Readonly<{
     title: string;
     tooltip: string;
   }>;
+  activeFilterLabel: string;
 }>;
 
 const STANDARD_ERROR_TREATMENT_TOOLTIPS: Record<
@@ -156,6 +157,7 @@ const RESULTS_TEXT: ResultsText = {
     tooltip:
       "Scatter of effect sizes MAIVE-adjusted fitted precision.The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing MAIVE fit. The MAIVE estimate is the intercept of the line with the horizontal axis.",
   },
+  activeFilterLabel: "Filter",
 };
 
 const TEXT = {
@@ -251,6 +253,28 @@ const TEXT = {
     resultsTitle: "Validation results",
     resultsDescription:
       "Review the findings below. Fix any errors before proceeding to modeling.",
+    subsampleFilter: {
+      title: "Use a subsample filter?",
+      description:
+        "Would you like to include only a subset of your data in the analysis?",
+      toggleLabel: "Filter setting",
+      enableLabel: "Yes",
+      disableLabel: "No",
+      conditionALabel: "Condition A",
+      conditionBLabel: "Condition B (optional)",
+      selectColumn: "Select a variable",
+      valuePlaceholder: "Enter a value",
+      joinerLabel: "Join conditions with",
+      joinerAnd: "AND",
+      joinerOr: "OR",
+      addCondition: "Add condition B",
+      removeCondition: "Remove condition B",
+      rowsMatchingLabel: "Rows matching",
+      unavailableMatches: "Select filter options to preview matches",
+      incompleteMessage:
+        "Select a variable, operator, and value to preview matches.",
+      noMatchesMessage: "The filter produced no matching rows.",
+    },
   },
   model: {
     basicOptions: {
