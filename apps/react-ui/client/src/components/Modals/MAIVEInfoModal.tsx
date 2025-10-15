@@ -28,7 +28,7 @@ export default function MAIVEInfoModal({
     >
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-primary">
-        <SectionHeading level="h2">{TEXT.maiveModal.title}</SectionHeading>
+        <SectionHeading level="h2" text={TEXT.maiveModal.title} />
       </div>
 
       <div className="p-6 flex flex-col h-full justify-between">

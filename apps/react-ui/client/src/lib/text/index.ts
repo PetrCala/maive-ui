@@ -363,6 +363,8 @@ const TEXT = {
   results: RESULTS_TEXT,
   maiveModal: {
     title: "What is MAIVE?",
+    description:
+      "Adjust your meta-analysis for publication bias, p-hacking, and spurious precision using MAIVE. Explore the methodology and access the resources that power the estimator.",
     overview: {
       title: "Overview",
       text: `MAIVE (Meta-Analysis Instrumental Variable Estimator) adjusts for publication bias and p-hacking while correcting for “spurious precision” — over-optimistic standard errors that arise when researchers choose methods or models that under-report true uncertainty.

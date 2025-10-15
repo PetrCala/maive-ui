@@ -7,6 +7,7 @@ import {
   MAIVEInfoGettingStarted,
 } from "@components/MAIVEInfo";
 import VersionInfo from "@components/VersionInfo";
+import SectionHeading from "@src/components/SectionHeading";
 
 export default function AboutPage() {
   const shouldShowDescription = false;
@@ -25,18 +26,16 @@ export default function AboutPage() {
 
           <div className="card p-6 sm:p-8 space-y-8">
             <header className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl font-bold text-primary">
-                {TEXT.maiveModal.title}
-              </h1>
-              {shouldShowDescription && (
-                <p className="text-lg text-secondary leading-relaxed">
-                  Adjust your meta-analysis for publication bias, p-hacking, and
-                  spurious precision using MAIVE. Explore the methodology and
-                  access the resources that power the estimator.
-                </p>
-              )}
+              <SectionHeading
+                level="h1"
+                text={TEXT.maiveModal.title}
+                description={
+                  shouldShowDescription
+                    ? TEXT.maiveModal.description
+                    : undefined
+                }
+              />
             </header>
-
             <MAIVEInfoContent />
             <MAIVEInfoGettingStarted className="pt-2" shouldShowIcon={false} />
           </div>
