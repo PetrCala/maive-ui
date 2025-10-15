@@ -156,9 +156,11 @@ export default function UploadPage() {
         <div className="max-w-4xl w-full px-2 sm:px-0">
           <GoBackButton href="/" text="Back to Home" />
           <div className="card p-6 sm:p-8">
-            <SectionHeading level="h1" className="mb-6">
-              {TEXT.upload.title}
-            </SectionHeading>
+            <SectionHeading
+              level="h1"
+              text={TEXT.upload.title}
+              className="mb-6"
+            />
             <div className="mb-6">
               <p className="text-secondary mb-2">{TEXT.upload.description}</p>
               <ul className="custom-bullet-list text-secondary">

@@ -81,7 +81,7 @@ export default function RunInfoModal({
     >
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-primary">
-        <SectionHeading level="h2">Run Information</SectionHeading>
+        <SectionHeading level="h2" text="Run Information" />
         <button
           onClick={onExportButtonClick}
           className={`text-muted hover:text-secondary transition-colors interactive text-blue-600 hover:text-blue-700`}
@@ -94,9 +94,7 @@ export default function RunInfoModal({
       <div className="p-6 space-y-6">
         {/* Run Details */}
         <section>
-          <SectionHeading level="h3" className="mb-3">
-            Run Details
-          </SectionHeading>
+          <SectionHeading level="h3" text="Run Details" className="mb-3" />
           <RunDetails
             runDuration={runDuration}
             runTimestamp={runTimestamp}
@@ -106,9 +104,7 @@ export default function RunInfoModal({
 
         {/* Model Parameters */}
         <section>
-          <SectionHeading level="h3" className="mb-3">
-            Run Settings
-          </SectionHeading>
+          <SectionHeading level="h3" text="Run Settings" className="mb-3" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-sm">
             {(() => {
               const parameterEntries = Object.entries(parameters);
@@ -169,9 +165,7 @@ export default function RunInfoModal({
 
         {/* Results Summary */}
         <section>
-          <SectionHeading level="h3" className="mb-3">
-            Results Summary
-          </SectionHeading>
+          <SectionHeading level="h3" text="Results Summary" className="mb-3" />
           <ResultsSummary
             results={results}
             parameters={parameters}

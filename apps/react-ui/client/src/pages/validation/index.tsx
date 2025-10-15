@@ -874,7 +874,7 @@ export default function ValidationPage() {
           <GoBackButton href={backLink} text="Back to Upload" />
 
           <div className="card p-6 sm:p-8 space-y-4">
-            <SectionHeading level="h1">{TEXT.validation.title}</SectionHeading>
+            <SectionHeading level="h1" text={TEXT.validation.title} />
             <p className="text-secondary">{TEXT.validation.description}</p>
             <p className="text-muted text-sm">{TEXT.validation.helperText}</p>
           </div>
@@ -885,9 +885,10 @@ export default function ValidationPage() {
             </div>
           ) : !uploadedData ? (
             <div className="card p-6 sm:p-8 mt-6 space-y-4 text-center">
-              <SectionHeading level="h2">
-                {TEXT.validation.missingDataTitle}
-              </SectionHeading>
+              <SectionHeading
+                level="h2"
+                text={TEXT.validation.missingDataTitle}
+              />
               <p className="text-secondary">
                 {TEXT.validation.missingDataMessage}
               </p>
@@ -907,11 +908,10 @@ export default function ValidationPage() {
                 <div>
                   <SectionHeading
                     level="h2"
+                    text={TEXT.mapping.title}
                     description={TEXT.mapping.description}
                     className="mb-2"
-                  >
-                    {TEXT.mapping.title}
-                  </SectionHeading>
+                  />
                   <p className="text-muted text-sm">
                     {TEXT.mapping.helperText}
                   </p>
@@ -1017,11 +1017,10 @@ export default function ValidationPage() {
                 <div>
                   <SectionHeading
                     level="h2"
+                    text={TEXT.validation.resultsTitle}
                     description={TEXT.validation.resultsDescription}
                     className="mb-2"
-                  >
-                    {TEXT.validation.resultsTitle}
-                  </SectionHeading>
+                  />
                 </div>
 
                 {!mappingComplete || !validationResult ? (

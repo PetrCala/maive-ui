@@ -14,9 +14,11 @@ export default function MAIVEInfoGettingStarted({
 }: MAIVEInfoGettingStartedProps) {
   return (
     <section className={className}>
-      <SectionHeading level="h3" className="mb-3">
-        {TEXT.maiveModal.gettingStarted.title}
-      </SectionHeading>
+      <SectionHeading
+        level="h3"
+        text={TEXT.maiveModal.gettingStarted.title}
+        className="mb-3"
+      />
       <p className="text-secondary leading-relaxed mb-4">
         {TEXT.maiveModal.gettingStarted.text}
       </p>

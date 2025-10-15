@@ -11,7 +11,7 @@ type SectionHeadingProps = {
   /**
    * The heading text content
    */
-  children: ReactNode;
+  text: string;
   /**
    * Optional icon to display to the left of the heading
    */
@@ -49,28 +49,27 @@ type SectionHeadingProps = {
  * @example
  * ```tsx
  * // Page title with icon
- * <SectionHeading level="h1" icon={<FaUpload />}>
- *   Upload Data
- * </SectionHeading>
+ * <SectionHeading level="h1" text="Upload Data" icon={<FaUpload />} />
  *
  * // Section heading with description
- * <SectionHeading level="h2" description="Configure your analysis settings">
- *   Model Parameters
- * </SectionHeading>
+ * <SectionHeading
+ *   level="h2"
+ *   text="Model Parameters"
+ *   description="Configure your analysis settings"
+ * />
  *
  * // Subsection with icon and description
  * <SectionHeading
  *   level="h3"
+ *   text="Subsample Filter"
  *   icon={<FaFilter />}
  *   description="Filter your dataset based on column values"
- * >
- *   Subsample Filter
- * </SectionHeading>
+ * />
  * ```
  */
 export default function SectionHeading({
   level = "h2",
-  children,
+  text,
   icon,
   description,
   className = "",
@@ -110,7 +109,7 @@ export default function SectionHeading({
           </div>
         )}
         <div className="flex-1 space-y-1">
-          <Component className={headingClasses}>{children}</Component>
+          <Component className={headingClasses}>{text}</Component>
           {description && <p className={descriptionClasses}>{description}</p>}
         </div>
       </div>

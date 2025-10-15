@@ -175,11 +175,10 @@ export default function SubsampleFilter({
     <div className="space-y-4">
       <SectionHeading
         level="h3"
+        text={TEXT.validation.subsampleFilter.title}
         icon={<FaFilter />}
         description={TEXT.validation.subsampleFilter.description}
-      >
-        {TEXT.validation.subsampleFilter.title}
-      </SectionHeading>
+      />
 
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-secondary">
