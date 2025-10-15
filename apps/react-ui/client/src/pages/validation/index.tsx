@@ -10,6 +10,7 @@ import Alert from "@src/components/Alert";
 import RowInfoComponent from "@src/components/RowInfoComponent";
 import { SubsampleFilterCard } from "@src/components/SubsampleFilter";
 import { DataPreview } from "@src/components/DataPreview";
+import SectionHeading from "@src/components/SectionHeading";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import CONFIG from "@src/CONFIG";
@@ -873,9 +874,7 @@ export default function ValidationPage() {
           <GoBackButton href={backLink} text="Back to Upload" />
 
           <div className="card p-6 sm:p-8 space-y-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-primary">
-              {TEXT.validation.title}
-            </h1>
+            <SectionHeading level="h1">{TEXT.validation.title}</SectionHeading>
             <p className="text-secondary">{TEXT.validation.description}</p>
             <p className="text-muted text-sm">{TEXT.validation.helperText}</p>
           </div>
@@ -886,9 +885,9 @@ export default function ValidationPage() {
             </div>
           ) : !uploadedData ? (
             <div className="card p-6 sm:p-8 mt-6 space-y-4 text-center">
-              <h2 className="text-xl font-semibold text-primary">
+              <SectionHeading level="h2">
                 {TEXT.validation.missingDataTitle}
-              </h2>
+              </SectionHeading>
               <p className="text-secondary">
                 {TEXT.validation.missingDataMessage}
               </p>
@@ -906,12 +905,13 @@ export default function ValidationPage() {
             <div className="space-y-6 mt-6">
               <div className="card p-6 sm:p-8 space-y-6">
                 <div>
-                  <h2 className="text-2xl font-bold text-primary mb-2">
+                  <SectionHeading
+                    level="h2"
+                    description={TEXT.mapping.description}
+                    className="mb-2"
+                  >
                     {TEXT.mapping.title}
-                  </h2>
-                  <p className="text-secondary mb-2">
-                    {TEXT.mapping.description}
-                  </p>
+                  </SectionHeading>
                   <p className="text-muted text-sm">
                     {TEXT.mapping.helperText}
                   </p>
@@ -1015,12 +1015,13 @@ export default function ValidationPage() {
 
               <div className="card p-6 sm:p-8 space-y-4">
                 <div>
-                  <h2 className="text-2xl font-bold text-primary mb-2">
+                  <SectionHeading
+                    level="h2"
+                    description={TEXT.validation.resultsDescription}
+                    className="mb-2"
+                  >
                     {TEXT.validation.resultsTitle}
-                  </h2>
-                  <p className="text-secondary">
-                    {TEXT.validation.resultsDescription}
-                  </p>
+                  </SectionHeading>
                 </div>
 
                 {!mappingComplete || !validationResult ? (

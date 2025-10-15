@@ -1,6 +1,7 @@
 import ActionButton from "@src/components/Buttons/ActionButton";
 import TEXT from "@lib/text";
 import BaseModal from "./BaseModal";
+import SectionHeading from "@src/components/SectionHeading";
 import VersionInfo from "@src/components/VersionInfo";
 import {
   MAIVEInfoContent,
@@ -27,9 +28,7 @@ export default function MAIVEInfoModal({
     >
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-primary">
-        <h2 className="text-2xl font-bold text-primary">
-          {TEXT.maiveModal.title}
-        </h2>
+        <SectionHeading level="h2">{TEXT.maiveModal.title}</SectionHeading>
       </div>
 
       <div className="p-6 flex flex-col h-full justify-between">

@@ -2,6 +2,7 @@ import MDXContent from "@context/MDXContent";
 import TEXT from "@lib/text";
 import CONST from "@src/CONST";
 import Link from "next/link";
+import SectionHeading from "@src/components/SectionHeading";
 
 type MAIVEInfoContentProps = {
   className?: string;
@@ -13,18 +14,18 @@ export default function MAIVEInfoContent({
   return (
     <div className={`space-y-8 ${className}`}>
       <section>
-        <h3 className="text-xl font-semibold text-primary mb-3">
+        <SectionHeading level="h3" className="mb-3">
           {TEXT.maiveModal.overview.title}
-        </h3>
+        </SectionHeading>
         <div className="text-secondary leading-relaxed">
           <MDXContent source={TEXT.maiveModal.overview.text} lineMargin={4} />
         </div>
       </section>
 
       <section>
-        <h3 className="text-xl font-semibold text-primary mb-3">
+        <SectionHeading level="h3" className="mb-3">
           {TEXT.maiveModal.howItWorks.title}
-        </h3>
+        </SectionHeading>
         <div className="space-y-3 text-secondary">
           {TEXT.maiveModal.howItWorks.text.map((step, index) => (
             <div key={index} className="leading-relaxed">
@@ -35,9 +36,9 @@ export default function MAIVEInfoContent({
       </section>
 
       <section>
-        <h3 className="text-xl font-semibold text-primary mb-3">
+        <SectionHeading level="h3" className="mb-3">
           {TEXT.maiveModal.keyFeatures.title}
-        </h3>
+        </SectionHeading>
         <ul className="list-disc list-inside space-y-2 text-secondary">
           {TEXT.maiveModal.keyFeatures.text.map((feature) => (
             <li key={feature.head}>
@@ -48,9 +49,9 @@ export default function MAIVEInfoContent({
       </section>
 
       <section>
-        <h3 className="text-xl font-semibold text-primary mb-3">
+        <SectionHeading level="h3" className="mb-3">
           {TEXT.maiveModal.applications.title}
-        </h3>
+        </SectionHeading>
         <div className="grid md:grid-cols-2 gap-4">
           {TEXT.maiveModal.applications.text.map((application) => (
             <div
@@ -67,9 +68,9 @@ export default function MAIVEInfoContent({
       </section>
 
       <section>
-        <h3 className="text-xl font-semibold text-primary mb-3">
+        <SectionHeading level="h3" className="mb-3">
           {TEXT.maiveModal.papersAndResources.title}
-        </h3>
+        </SectionHeading>
         <div className="space-y-3">
           <div className="border-l-4 border-primary-500 pl-4">
             <h4 className="font-semibold text-primary">

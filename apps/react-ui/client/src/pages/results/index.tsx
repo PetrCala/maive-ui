@@ -8,6 +8,7 @@ import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
 import ActionButton from "@components/Buttons/ActionButton";
 import { GoBackButton } from "@components/Buttons";
+import SectionHeading from "@src/components/SectionHeading";
 import TEXT, { getResultsText } from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
@@ -141,7 +142,9 @@ export default function ResultsPage() {
         </Head>
         <main className="content-page-container">
           <div className="text-center">
-            <h1 className="text-2xl font-bold mb-4">No results available</h1>
+            <SectionHeading level="h1" className="mb-4">
+              No results available
+            </SectionHeading>
             <GoBackButton
               href="/upload"
               text="Go back to upload"
@@ -221,9 +224,9 @@ export default function ResultsPage() {
       <main className="content-page-container">
         <div className="max-w-4xl w-full space-y-8 px-2 sm:px-0">
           <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+            <SectionHeading level="h1" className="mb-6">
               Model Results
-            </h1>
+            </SectionHeading>
 
             <div className="space-y-6">
               {isWaiveModel && (
@@ -270,9 +273,9 @@ export default function ResultsPage() {
                   content={resultsText.funnelPlot.tooltip}
                   visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
                 >
-                  <h2 className="text-xl font-semibold mb-4">
+                  <SectionHeading level="h2" className="mb-4">
                     {resultsText.funnelPlot.title}
-                  </h2>
+                  </SectionHeading>
                 </Tooltip>
                 <div className="flex justify-center">
                   <Image
