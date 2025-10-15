@@ -280,16 +280,16 @@ export default function SubsampleFilter({
 
       {isEnabled && (
         <div className="rounded-lg bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <span className="text-sm font-medium text-secondary">
               {TEXT.validation.subsampleFilter.rowsMatchingLabel}
             </span>
-            <span className="text-sm font-semibold text-primary">
+            <span className="flex min-h-[2.5rem] items-center text-sm font-semibold text-primary text-right">
               {matchedSummary}
             </span>
           </div>
           {statusMessage ? (
-            <p className="text-xs text-amber-600 dark:text-amber-400">
+            <p className="text-xs text-primary-600 dark:text-primary-300">
               {statusMessage}
             </p>
           ) : null}
