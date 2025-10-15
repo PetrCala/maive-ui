@@ -44,19 +44,35 @@ export const SUBSAMPLE_FILTER_OPERATORS: Array<{
   { value: "equals", label: "Equals (=)", symbol: "=" },
   { value: "notEquals", label: "Does not equal (≠)", symbol: "≠" },
   { value: "greaterThan", label: "Greater than (>)", symbol: ">" },
-  { value: "greaterThanOrEqual", label: "Greater than or equal (≥)", symbol: "≥" },
+  {
+    value: "greaterThanOrEqual",
+    label: "Greater than or equal (≥)",
+    symbol: "≥",
+  },
   { value: "lessThan", label: "Less than (<)", symbol: "<" },
   { value: "lessThanOrEqual", label: "Less than or equal (≤)", symbol: "≤" },
 ];
 
-export const DEFAULT_SUBSAMPLE_FILTER_OPERATOR: SubsampleFilterOperator = "equals";
+export const DEFAULT_SUBSAMPLE_FILTER_OPERATOR: SubsampleFilterOperator =
+  "equals";
 export const DEFAULT_SUBSAMPLE_FILTER_JOINER: SubsampleFilterJoiner = "AND";
 
+/**
+ * Creates an empty filter condition with default values
+ */
 export const createEmptyCondition = (): SubsampleFilterCondition => ({
   column: "",
   operator: DEFAULT_SUBSAMPLE_FILTER_OPERATOR,
   value: "",
 });
+
+/**
+ * Generates a unique ID for condition tracking in React keys
+ * Using timestamp + random for uniqueness
+ */
+export const generateConditionId = (): string => {
+  return `condition-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
 
 export const isConditionComplete = (
   condition?: SubsampleFilterCondition | null,
@@ -79,24 +95,19 @@ const evaluateCondition = (
 
   const rowNumber = parseNumeric(rowValue);
   const conditionNumber = parseNumeric(condition.value);
-  const canCompareNumerically =
-    rowNumber !== null && conditionNumber !== null;
+  const canCompareNumerically = rowNumber !== null && conditionNumber !== null;
 
   switch (condition.operator) {
     case "equals":
       if (canCompareNumerically) {
         return rowNumber === conditionNumber;
       }
-      return (
-        normalizeString(rowValue) === normalizeString(condition.value)
-      );
+      return normalizeString(rowValue) === normalizeString(condition.value);
     case "notEquals":
       if (canCompareNumerically) {
         return rowNumber !== conditionNumber;
       }
-      return (
-        normalizeString(rowValue) !== normalizeString(condition.value)
-      );
+      return normalizeString(rowValue) !== normalizeString(condition.value);
     case "greaterThan":
       if (!canCompareNumerically) {
         return false;
@@ -155,8 +166,8 @@ export const getOperatorSymbol = (
   operator: SubsampleFilterOperator,
 ): string => {
   return (
-    SUBSAMPLE_FILTER_OPERATORS.find((item) => item.value === operator)?.symbol ??
-    "="
+    SUBSAMPLE_FILTER_OPERATORS.find((item) => item.value === operator)
+      ?.symbol ?? "="
   );
 };
 
@@ -166,9 +177,7 @@ export const formatCondition = (
   return `${condition.column} ${getOperatorSymbol(condition.operator)} ${condition.value}`;
 };
 
-export const formatFilterSummary = (
-  filter: SubsampleFilterState,
-): string => {
+export const formatFilterSummary = (filter: SubsampleFilterState): string => {
   if (!filter.conditions.length) {
     return "";
   }
