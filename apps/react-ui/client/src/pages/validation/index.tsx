@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Head from "next/head";
 import { useRouter, useSearchParams } from "next/navigation";
+import { FaTable, FaCheckCircle } from "react-icons/fa";
 
 import { GoBackButton } from "@src/components/Buttons";
 import ActionButton from "@src/components/Buttons/ActionButton";
@@ -909,6 +910,7 @@ export default function ValidationPage() {
                   <SectionHeading
                     level="h2"
                     text={TEXT.mapping.title}
+                    icon={<FaTable />}
                     description={TEXT.mapping.description}
                     className="mb-2"
                   />
@@ -1018,6 +1020,7 @@ export default function ValidationPage() {
                   <SectionHeading
                     level="h2"
                     text={TEXT.validation.resultsTitle}
+                    icon={<FaCheckCircle />}
                     description={TEXT.validation.resultsDescription}
                     className="mb-2"
                   />

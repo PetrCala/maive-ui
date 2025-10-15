@@ -208,9 +208,9 @@ const TEXT = {
     },
   },
   mapping: {
-    title: "Prepare Your Dataset",
+    title: "Map Your Columns",
     description:
-      "Tell MAIVE which columns contain the required information. We'll ignore any columns you leave unmapped.",
+      "Tell MAIVE which columns contain your effect sizes, standard errors, and sample sizes.",
     fieldLabels: {
       effect: "Effect size",
       se: "Standard error",
@@ -218,7 +218,7 @@ const TEXT = {
       studyId: "Study ID (optional)",
     },
     helperText:
-      "Each column can only be used once. Leave the Study ID field empty if your dataset doesn't include it.",
+      "Each column can only be mapped once. The Study ID field is optional — leave it blank if you don't have study-level clustering.",
     continueButton: "Continue to validation",
     autoMappingNotice:
       "We've pre-selected columns where the headers looked familiar. Feel free to adjust before continuing.",
@@ -237,11 +237,11 @@ const TEXT = {
       "We couldn't find the uploaded data. Please upload your file again.",
   },
   validation: {
-    title: "Validate Your Data",
+    title: "Prepare Your Data",
     description:
-      "Map your columns, review the previews, and let MAIVE check for common issues before modeling.",
+      "Map your columns, optionally filter your dataset, and let MAIVE verify everything is ready for analysis.",
     helperText:
-      "If something looks off, adjust the column mapping below and the previews will update instantly.",
+      "Previews and validation update automatically as you adjust the settings below.",
     loading: "Preparing your validation results...",
     missingDataTitle: "No data selected",
     missingDataMessage:
@@ -250,9 +250,9 @@ const TEXT = {
     previewTitle: "Data preview",
     previewDescription:
       "Double-check that the normalized values look correct before continuing.",
-    resultsTitle: "Validation results",
+    resultsTitle: "Validation Results",
     resultsDescription:
-      "Review the findings below. Fix any errors before proceeding to modeling.",
+      "Review the checks below and fix any errors before continuing to model setup.",
     subsampleFilter: {
       title: "Use a subsample filter?",
       description:
