@@ -307,6 +307,20 @@ const validateData = (
 ): ValidationResult => {
   const messages: ValidationMessage[] = [];
 
+  // If there are no rows, skip all row-based validations
+  if (fullData.length === 0) {
+    messages.push({
+      type: CONST.ALERT_TYPES.INFO,
+      message:
+        "Your dataset is empty. This may be because your uploaded file had no data rows, or your filter excluded all rows. Please re-upload your data or adjust your filter settings.",
+    });
+    return {
+      isValid: false,
+      messages,
+      containsInfo: true,
+    };
+  }
+
   if (fullData.length < 4) {
     messages.push({
       type: CONST.ALERT_TYPES.ERROR,
