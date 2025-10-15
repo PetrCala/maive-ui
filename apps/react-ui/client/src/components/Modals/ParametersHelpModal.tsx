@@ -1,4 +1,5 @@
 import BaseModal from "./BaseModal";
+import SectionHeading from "@src/components/SectionHeading";
 
 export default function ParametersHelpModal({
   isOpen,
@@ -16,9 +17,9 @@ export default function ParametersHelpModal({
       className="bg-white dark:bg-gray-800 rounded-lg shadow-2xl"
     >
       <div className="flex justify-between items-center p-6 border-b border-gray-200 dark:border-gray-700">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <SectionHeading level="h2">
           Understanding the Model Parameters
-        </h2>
+        </SectionHeading>
       </div>
       <div className="p-6 space-y-4">
         <p className="text-gray-700 dark:text-gray-300">

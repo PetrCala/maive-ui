@@ -9,6 +9,7 @@ import { FaFileCsv, FaFileExcel, FaFileAlt } from "react-icons/fa";
 
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
+import SectionHeading from "@src/components/SectionHeading";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import MDXContent from "@src/context/MDXContent";
@@ -155,9 +156,9 @@ export default function UploadPage() {
         <div className="max-w-4xl w-full px-2 sm:px-0">
           <GoBackButton href="/" text="Back to Home" />
           <div className="card p-6 sm:p-8">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-6 text-primary">
+            <SectionHeading level="h1" className="mb-6">
               {TEXT.upload.title}
-            </h1>
+            </SectionHeading>
             <div className="mb-6">
               <p className="text-secondary mb-2">{TEXT.upload.description}</p>
               <ul className="custom-bullet-list text-secondary">

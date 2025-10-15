@@ -1,5 +1,6 @@
 import ActionButton from "@components/Buttons/ActionButton";
 import DemoButton from "@components/Buttons/DemoButton";
+import SectionHeading from "@src/components/SectionHeading";
 import TEXT from "@lib/text";
 
 type MAIVEInfoGettingStartedProps = {
@@ -13,9 +14,9 @@ export default function MAIVEInfoGettingStarted({
 }: MAIVEInfoGettingStartedProps) {
   return (
     <section className={className}>
-      <h3 className="text-xl font-semibold text-primary mb-3">
+      <SectionHeading level="h3" className="mb-3">
         {TEXT.maiveModal.gettingStarted.title}
-      </h3>
+      </SectionHeading>
       <p className="text-secondary leading-relaxed mb-4">
         {TEXT.maiveModal.gettingStarted.text}
       </p>

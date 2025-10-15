@@ -6,6 +6,7 @@ import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RunDetails from "@src/components/RunDetails";
+import SectionHeading from "@src/components/SectionHeading";
 import BaseModal from "./BaseModal";
 import { FaDownload } from "react-icons/fa";
 
@@ -80,7 +81,7 @@ export default function RunInfoModal({
     >
       {/* Header */}
       <div className="flex justify-between items-center p-6 border-b border-primary">
-        <h2 className="text-2xl font-bold text-primary">Run Information</h2>
+        <SectionHeading level="h2">Run Information</SectionHeading>
         <button
           onClick={onExportButtonClick}
           className={`text-muted hover:text-secondary transition-colors interactive text-blue-600 hover:text-blue-700`}
@@ -93,9 +94,9 @@ export default function RunInfoModal({
       <div className="p-6 space-y-6">
         {/* Run Details */}
         <section>
-          <h3 className="text-xl font-semibold text-primary mb-3">
+          <SectionHeading level="h3" className="mb-3">
             Run Details
-          </h3>
+          </SectionHeading>
           <RunDetails
             runDuration={runDuration}
             runTimestamp={runTimestamp}
@@ -105,9 +106,9 @@ export default function RunInfoModal({
 
         {/* Model Parameters */}
         <section>
-          <h3 className="text-xl font-semibold text-primary mb-3">
+          <SectionHeading level="h3" className="mb-3">
             Run Settings
-          </h3>
+          </SectionHeading>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-sm">
             {(() => {
               const parameterEntries = Object.entries(parameters);
@@ -168,9 +169,9 @@ export default function RunInfoModal({
 
         {/* Results Summary */}
         <section>
-          <h3 className="text-xl font-semibold text-primary mb-3">
+          <SectionHeading level="h3" className="mb-3">
             Results Summary
-          </h3>
+          </SectionHeading>
           <ResultsSummary
             results={results}
             parameters={parameters}

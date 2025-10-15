@@ -13,6 +13,7 @@ import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import LoadingCard from "@src/components/LoadingCard";
+import SectionHeading from "@src/components/SectionHeading";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
@@ -404,7 +405,9 @@ export default function ModelPage() {
       <main className="content-page-container">
         {!dataId ? (
           <div className="text-center min-h-[400px]">
-            <h1 className="text-2xl font-bold mb-4">No data selected</h1>
+            <SectionHeading level="h1" className="mb-4">
+              No data selected
+            </SectionHeading>
             <GoBackButton
               href="/upload"
               text="Go back to upload"
@@ -431,9 +434,11 @@ export default function ModelPage() {
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
                   <div className="flex flex-col gap-6">
                     <div className="flex items-center mb-2">
-                      <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex-grow">
-                        Model Parameters
-                      </h1>
+                      <div className="flex-grow">
+                        <SectionHeading level="h1">
+                          Model Parameters
+                        </SectionHeading>
+                      </div>
                       {CONFIG.SHOULD_SHOW_MODEL_PARAMS_HELP_MODAL && (
                         <HelpButton modalComponent={ParametersHelpModal} />
                       )}

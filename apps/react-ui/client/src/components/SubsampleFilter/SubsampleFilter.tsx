@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { FaFilter, FaTimes } from "react-icons/fa";
 
 import TEXT from "@src/lib/text";
+import SectionHeading from "@src/components/SectionHeading";
 import type {
   SubsampleFilterCondition,
   SubsampleFilterJoiner,
@@ -172,19 +173,13 @@ export default function SubsampleFilter({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-start gap-3">
-        <div className="p-2 rounded-full bg-primary/10 text-primary">
-          <FaFilter className="w-4 h-4" />
-        </div>
-        <div className="flex-1 space-y-1">
-          <h3 className="text-lg font-semibold text-primary">
-            {TEXT.validation.subsampleFilter.title}
-          </h3>
-          <p className="text-secondary text-sm">
-            {TEXT.validation.subsampleFilter.description}
-          </p>
-        </div>
-      </div>
+      <SectionHeading
+        level="h3"
+        icon={<FaFilter />}
+        description={TEXT.validation.subsampleFilter.description}
+      >
+        {TEXT.validation.subsampleFilter.title}
+      </SectionHeading>
 
       <div className="flex items-center gap-2">
         <span className="text-sm font-medium text-secondary">
