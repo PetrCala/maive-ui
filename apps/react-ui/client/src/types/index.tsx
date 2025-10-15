@@ -13,8 +13,12 @@ import type {
 } from "./api";
 import type DataArray from "./data";
 import type {
+  LegacySubsampleFilterState,
   SubsampleFilterCondition,
+  SubsampleFilterConditionNode,
+  SubsampleFilterGroupNode,
   SubsampleFilterJoiner,
+  SubsampleFilterNode,
   SubsampleFilterOperator,
   SubsampleFilterState,
 } from "./data";
@@ -27,9 +31,13 @@ export type {
   ApiError,
   DataArray,
   SubsampleFilterCondition,
+  SubsampleFilterConditionNode,
+  SubsampleFilterGroupNode,
   SubsampleFilterJoiner,
+  SubsampleFilterNode,
   SubsampleFilterOperator,
   SubsampleFilterState,
+  LegacySubsampleFilterState,
   DeepValueOf,
   EstimateType,
   ModelParameters,

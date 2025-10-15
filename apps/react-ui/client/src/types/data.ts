@@ -16,13 +16,30 @@ type SubsampleFilterCondition = {
 
 type SubsampleFilterJoiner = "AND" | "OR";
 
-/**
- * Represents the state of a subsample filter
- * Conditions are evaluated left-to-right with the specified joiner
- * Example: [A, B, C] with joiner "AND" means (A AND B AND C)
- * Example: [A, B, C] with joiner "OR" means (A OR B OR C)
- */
+type SubsampleFilterConditionNode = SubsampleFilterCondition & {
+  id: string;
+  type: "condition";
+};
+
+type SubsampleFilterGroupNode = {
+  id: string;
+  type: "group";
+  joiner: SubsampleFilterJoiner;
+  children: SubsampleFilterNode[];
+};
+
+type SubsampleFilterNode =
+  | SubsampleFilterConditionNode
+  | SubsampleFilterGroupNode;
+
 type SubsampleFilterState = {
+  isEnabled: boolean;
+  rootGroup: SubsampleFilterGroupNode;
+  matchedRowCount: number;
+  totalRowCount: number;
+};
+
+type LegacySubsampleFilterState = {
   isEnabled: boolean;
   conditions: SubsampleFilterCondition[];
   joiner: SubsampleFilterJoiner;
@@ -42,7 +59,11 @@ export default DataArray;
 export type {
   DataInfo,
   SubsampleFilterCondition,
+  SubsampleFilterConditionNode,
+  SubsampleFilterGroupNode,
   SubsampleFilterJoiner,
+  SubsampleFilterNode,
   SubsampleFilterOperator,
+  LegacySubsampleFilterState,
   SubsampleFilterState,
 };
