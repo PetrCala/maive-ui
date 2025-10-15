@@ -8,7 +8,7 @@
  * Matches the styling used in column mapping and other form elements
  */
 export const INPUT_FIELD_CLASSES =
-  "rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
+  "h-9 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 px-3 py-1.5 text-sm leading-5 text-primary placeholder:text-muted dark:placeholder:text-muted focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40";
 
 /**
  * Standard button size classes
@@ -38,7 +38,7 @@ export const getToggleButtonClasses = (
 ): string => {
   const sizeClass = BUTTON_SIZE_CLASSES[size];
   const stateClasses = active
-    ? "bg-blue-600 text-white hover:bg-blue-700"
+    ? "bg-blue-600 text-inverse dark:text-primary hover:bg-blue-700 dark:hover:bg-blue-500"
     : "bg-gray-100 dark:bg-gray-800 text-secondary hover:bg-gray-200 dark:hover:bg-gray-700";
 
   return `${TOGGLE_BUTTON_BASE_CLASSES} ${sizeClass} ${stateClasses}`;
