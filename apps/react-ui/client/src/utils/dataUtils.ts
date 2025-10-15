@@ -112,17 +112,42 @@ const detectHeaders = (rows: unknown[][]): boolean => {
   }
 
   const [firstRow, secondRow] = rows;
-  const firstRowNonNumericCount = firstRow.filter(
-    (cell) => cell !== undefined && cell !== null && !isLikelyNumeric(cell),
-  ).length;
-  const secondRowNumericCount = secondRow.filter((cell) =>
-    cell !== undefined && cell !== null ? isLikelyNumeric(cell) : false,
-  ).length;
 
-  return (
-    firstRowNonNumericCount > firstRow.length / 2 &&
-    secondRowNumericCount > secondRow.length / 2
+  // Count non-empty cells in each row
+  const firstRowNonEmptyCells = firstRow.filter(
+    (cell) => cell !== undefined && cell !== null && cell !== "",
   );
+  const secondRowNonEmptyCells = secondRow.filter(
+    (cell) => cell !== undefined && cell !== null && cell !== "",
+  );
+
+  // Count numeric vs non-numeric cells
+  const firstRowNumericCount =
+    firstRowNonEmptyCells.filter(isLikelyNumeric).length;
+  const firstRowNonNumericCount =
+    firstRowNonEmptyCells.length - firstRowNumericCount;
+  const secondRowNumericCount =
+    secondRowNonEmptyCells.filter(isLikelyNumeric).length;
+
+  // Strategy 1: Classic case - first row mostly non-numeric, second row mostly numeric
+  const classicHeaderPattern =
+    firstRowNonNumericCount > firstRow.length / 2 &&
+    secondRowNumericCount > secondRow.length / 2;
+
+  // Strategy 2: First row has NO numeric values but second row has SOME
+  // This handles cases where headers are all strings but data is mixed
+  const allStringHeaderPattern =
+    firstRowNumericCount === 0 &&
+    firstRowNonNumericCount > 0 &&
+    secondRowNumericCount > 0;
+
+  // Strategy 3: First row predominantly non-numeric (>60%) and second row has at least some numeric values (>20%)
+  // This handles mixed data rows (both numeric and string columns)
+  const mixedDataPattern =
+    firstRowNonNumericCount > firstRow.length * 0.6 &&
+    secondRowNumericCount > secondRow.length * 0.2;
+
+  return classicHeaderPattern || allStringHeaderPattern || mixedDataPattern;
 };
 
 const buildRecordsFromRows = (
