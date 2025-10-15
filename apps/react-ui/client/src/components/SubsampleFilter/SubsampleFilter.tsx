@@ -280,16 +280,30 @@ const GroupEditor = ({
 
           return (
             <div key={child.id} className="space-y-3">
-              <div className="rounded-lg border border-dashed border-gray-200 p-4 dark:border-gray-700">
+              <div
+                className={`rounded-lg border border-dashed border-gray-200 p-4 dark:border-gray-700 ${
+                  child.type === "condition" ? "relative pr-12" : ""
+                }`}
+              >
                 {child.type === "condition" ? (
-                  <ConditionFields
-                    label={conditionLabel}
-                    condition={child}
-                    columns={columns}
-                    onChange={(updatedCondition) =>
-                      handleChildChange(index, updatedCondition)
-                    }
-                  />
+                  <>
+                    <button
+                      type="button"
+                      className={`${iconButtonBaseClasses} absolute right-2 top-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300`}
+                      onClick={() => handleRemoveChild(index)}
+                      aria-label={TEXT.validation.subsampleFilter.removeCondition}
+                    >
+                      <FaTimes className="h-4 w-4" />
+                    </button>
+                    <ConditionFields
+                      label={conditionLabel}
+                      condition={child}
+                      columns={columns}
+                      onChange={(updatedCondition) =>
+                        handleChildChange(index, updatedCondition)
+                      }
+                    />
+                  </>
                 ) : (
                   <GroupEditor
                     group={child}
@@ -324,16 +338,6 @@ const GroupEditor = ({
                   </button>
                 </div>
 
-                {child.type === "condition" ? (
-                  <button
-                    type="button"
-                    className={`${iconButtonBaseClasses} text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300`}
-                    onClick={() => handleRemoveChild(index)}
-                    aria-label={TEXT.validation.subsampleFilter.removeCondition}
-                  >
-                    <FaTimes className="h-4 w-4" />
-                  </button>
-                ) : null}
               </div>
 
               {!isLast ? (
@@ -421,7 +425,6 @@ export default function SubsampleFilter({
             active={!isEnabled}
             onClick={() => {
               onToggle(false);
-              onRootGroupChange(createEmptyGroup());
             }}
             ariaLabel={TEXT.validation.subsampleFilter.disableLabel}
           >

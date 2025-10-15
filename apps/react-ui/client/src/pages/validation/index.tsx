@@ -850,9 +850,6 @@ export default function ValidationPage() {
 
   const handleFilterToggle = (enabled: boolean) => {
     setIsFilterEnabled(enabled);
-    if (!enabled) {
-      setFilterGroup(createEmptyGroup());
-    }
   };
 
   const handleContinue = () => {
