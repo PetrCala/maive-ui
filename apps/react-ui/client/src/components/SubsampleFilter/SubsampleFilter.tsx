@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { FaFilter } from "react-icons/fa";
+import { FaFilter, FaTimes } from "react-icons/fa";
 
 import TEXT from "@src/lib/text";
 import type {
@@ -10,17 +10,19 @@ import {
   SUBSAMPLE_FILTER_OPERATORS,
   createEmptyCondition,
 } from "@src/utils/subsampleFilterUtils";
+import {
+  INPUT_FIELD_CLASSES,
+  getToggleButtonClasses,
+  SECONDARY_BUTTON_CLASSES,
+  LABEL_CLASSES,
+} from "@src/styles/formStyles";
 
 type SubsampleFilterProps = {
   isEnabled: boolean;
   onToggle: (enabled: boolean) => void;
   columns: string[];
-  primaryCondition: SubsampleFilterCondition;
-  onPrimaryChange: (condition: SubsampleFilterCondition) => void;
-  secondaryCondition: SubsampleFilterCondition;
-  onSecondaryChange: (condition: SubsampleFilterCondition) => void;
-  isSecondaryEnabled: boolean;
-  onSecondaryToggle: (enabled: boolean) => void;
+  conditions: SubsampleFilterCondition[];
+  onConditionsChange: (conditions: SubsampleFilterCondition[]) => void;
   joiner: SubsampleFilterJoiner;
   onJoinerChange: (joiner: SubsampleFilterJoiner) => void;
   matchedRowCount: number | null;
@@ -53,14 +55,16 @@ const ConditionFields = ({
 
   return (
     <div className="space-y-2">
-      <span className="text-sm font-medium text-secondary">{label}</span>
+      <label className={LABEL_CLASSES}>{label}</label>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <select
-          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className={INPUT_FIELD_CLASSES}
           value={condition.column}
           onChange={(event) => handleFieldChange("column", event.target.value)}
         >
-          <option value="">{TEXT.validation.subsampleFilter.selectColumn}</option>
+          <option value="">
+            {TEXT.validation.subsampleFilter.selectColumn}
+          </option>
           {columns.map((column) => (
             <option key={column} value={column}>
               {column}
@@ -69,7 +73,7 @@ const ConditionFields = ({
         </select>
 
         <select
-          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className={INPUT_FIELD_CLASSES}
           value={condition.operator}
           onChange={(event) =>
             handleFieldChange("operator", event.target.value)
@@ -83,7 +87,7 @@ const ConditionFields = ({
         </select>
 
         <input
-          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+          className={INPUT_FIELD_CLASSES}
           value={condition.value}
           onChange={(event) => handleFieldChange("value", event.target.value)}
           placeholder={TEXT.validation.subsampleFilter.valuePlaceholder}
@@ -106,7 +110,7 @@ const ToggleButton = ({
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-2 text-sm font-medium transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-primary ${active ? "bg-primary text-white" : "bg-gray-100 dark:bg-gray-800 text-secondary hover:bg-gray-200 dark:hover:bg-gray-700"}`}
+      className={getToggleButtonClasses(active)}
     >
       {children}
     </button>
@@ -117,12 +121,8 @@ export default function SubsampleFilter({
   isEnabled,
   onToggle,
   columns,
-  primaryCondition,
-  onPrimaryChange,
-  secondaryCondition,
-  onSecondaryChange,
-  isSecondaryEnabled,
-  onSecondaryToggle,
+  conditions,
+  onConditionsChange,
   joiner,
   onJoinerChange,
   matchedRowCount,
@@ -145,6 +145,29 @@ export default function SubsampleFilter({
     return `${numberFormatter.format(matchedRowCount)} / ${numberFormatter.format(totalRowCount)} (${percentage.toFixed(1)}%)`;
   })();
 
+  const handleAddCondition = () => {
+    onConditionsChange([...conditions, createEmptyCondition()]);
+  };
+
+  const handleRemoveCondition = (index: number) => {
+    const newConditions = conditions.filter((_, i) => i !== index);
+    // Ensure at least one condition remains
+    if (newConditions.length === 0) {
+      onConditionsChange([createEmptyCondition()]);
+    } else {
+      onConditionsChange(newConditions);
+    }
+  };
+
+  const handleConditionChange = (
+    index: number,
+    condition: SubsampleFilterCondition,
+  ) => {
+    const newConditions = [...conditions];
+    newConditions[index] = condition;
+    onConditionsChange(newConditions);
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-3">
@@ -166,18 +189,15 @@ export default function SubsampleFilter({
           {TEXT.validation.subsampleFilter.toggleLabel}
         </span>
         <div className="inline-flex rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
-          <ToggleButton
-            active={isEnabled}
-            onClick={() => onToggle(true)}
-          >
+          <ToggleButton active={isEnabled} onClick={() => onToggle(true)}>
             {TEXT.validation.subsampleFilter.enableLabel}
           </ToggleButton>
           <ToggleButton
             active={!isEnabled}
             onClick={() => {
               onToggle(false);
-              onSecondaryToggle(false);
-              onSecondaryChange(createEmptyCondition());
+              // Reset to single empty condition when disabling
+              onConditionsChange([createEmptyCondition()]);
             }}
           >
             {TEXT.validation.subsampleFilter.disableLabel}
@@ -187,82 +207,98 @@ export default function SubsampleFilter({
 
       {isEnabled && (
         <div className="space-y-4">
-          <ConditionFields
-            label={TEXT.validation.subsampleFilter.conditionALabel}
-            condition={primaryCondition}
-            onChange={onPrimaryChange}
-            columns={columns}
-          />
-
-          <div className="space-y-3">
-            {isSecondaryEnabled ? (
-              <ConditionFields
-                label={TEXT.validation.subsampleFilter.conditionBLabel}
-                condition={secondaryCondition}
-                onChange={onSecondaryChange}
-                columns={columns}
-              />
-            ) : null}
-
-            <div className="flex flex-wrap items-center gap-3">
-              {isSecondaryEnabled ? (
-                <>
-                  <label className="text-sm font-medium text-secondary">
-                    {TEXT.validation.subsampleFilter.joinerLabel}
-                  </label>
-                  <select
-                    className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-                    value={joiner}
-                    onChange={(event) =>
-                      onJoinerChange(event.target.value as SubsampleFilterJoiner)
+          {conditions.map((condition, index) => (
+            <div key={`condition-${index}`} className="space-y-3">
+              <div className="flex items-start gap-2">
+                <div className="flex-1">
+                  <ConditionFields
+                    label={
+                      conditions.length === 1
+                        ? TEXT.validation.subsampleFilter.conditionALabel
+                        : `Condition ${index + 1}`
                     }
+                    condition={condition}
+                    onChange={(newCondition) =>
+                      handleConditionChange(index, newCondition)
+                    }
+                    columns={columns}
+                  />
+                </div>
+                {conditions.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveCondition(index)}
+                    className="mt-7 p-2 text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    title="Remove condition"
                   >
-                    <option value="AND">
-                      {TEXT.validation.subsampleFilter.joinerAnd}
-                    </option>
-                    <option value="OR">
-                      {TEXT.validation.subsampleFilter.joinerOr}
-                    </option>
-                  </select>
-                </>
-              ) : null}
+                    <FaTimes className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  if (isSecondaryEnabled) {
-                    onSecondaryToggle(false);
-                    onSecondaryChange(createEmptyCondition());
-                  } else {
-                    onSecondaryToggle(true);
-                  }
-                }}
-                className="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-secondary hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                {isSecondaryEnabled
-                  ? TEXT.validation.subsampleFilter.removeCondition
-                  : TEXT.validation.subsampleFilter.addCondition}
-              </button>
+              {index < conditions.length - 1 && (
+                <div className="flex items-center justify-center">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-gray-100 dark:bg-gray-800">
+                    <span className="text-xs font-semibold text-secondary">
+                      {joiner}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
+          ))}
+
+          <div className="flex flex-wrap items-center gap-3">
+            {conditions.length > 1 && (
+              <>
+                <label className={LABEL_CLASSES}>
+                  {TEXT.validation.subsampleFilter.joinerLabel}
+                </label>
+                <select
+                  className={INPUT_FIELD_CLASSES}
+                  value={joiner}
+                  onChange={(event) =>
+                    onJoinerChange(event.target.value as SubsampleFilterJoiner)
+                  }
+                >
+                  <option value="AND">
+                    {TEXT.validation.subsampleFilter.joinerAnd}
+                  </option>
+                  <option value="OR">
+                    {TEXT.validation.subsampleFilter.joinerOr}
+                  </option>
+                </select>
+              </>
+            )}
+
+            <button
+              type="button"
+              onClick={handleAddCondition}
+              className={SECONDARY_BUTTON_CLASSES}
+            >
+              {TEXT.validation.subsampleFilter.addCondition}
+            </button>
           </div>
         </div>
       )}
 
-      <div className="rounded-lg bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-secondary">
-            {TEXT.validation.subsampleFilter.rowsMatchingLabel}
-          </span>
-          <span className="text-sm font-semibold text-primary">
-            {matchedSummary}
-          </span>
+      {isEnabled && (
+        <div className="rounded-lg bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-secondary">
+              {TEXT.validation.subsampleFilter.rowsMatchingLabel}
+            </span>
+            <span className="text-sm font-semibold text-primary">
+              {matchedSummary}
+            </span>
+          </div>
+          {statusMessage ? (
+            <p className="text-xs text-amber-600 dark:text-amber-400">
+              {statusMessage}
+            </p>
+          ) : null}
         </div>
-        {statusMessage ? (
-          <p className="text-xs text-amber-600 dark:text-amber-400">
-            {statusMessage}
-          </p>
-        ) : null}
-      </div>
+      )}
     </div>
   );
 }

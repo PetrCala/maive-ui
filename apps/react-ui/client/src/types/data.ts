@@ -16,6 +16,12 @@ type SubsampleFilterCondition = {
 
 type SubsampleFilterJoiner = "AND" | "OR";
 
+/**
+ * Represents the state of a subsample filter
+ * Conditions are evaluated left-to-right with the specified joiner
+ * Example: [A, B, C] with joiner "AND" means (A AND B AND C)
+ * Example: [A, B, C] with joiner "OR" means (A OR B OR C)
+ */
 type SubsampleFilterState = {
   isEnabled: boolean;
   conditions: SubsampleFilterCondition[];
