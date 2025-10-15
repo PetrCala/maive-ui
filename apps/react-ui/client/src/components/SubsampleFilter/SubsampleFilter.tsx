@@ -58,7 +58,9 @@ const ConditionFields = ({
       <label className={LABEL_CLASSES}>{label}</label>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <select
-          className={INPUT_FIELD_CLASSES}
+          className={`${INPUT_FIELD_CLASSES} ${
+            condition.column ? "" : "text-secondary"
+          }`}
           value={condition.column}
           onChange={(event) => handleFieldChange("column", event.target.value)}
         >
@@ -280,11 +282,11 @@ export default function SubsampleFilter({
 
       {isEnabled && (
         <div className="rounded-lg bg-gray-50 dark:bg-gray-900/40 border border-gray-200 dark:border-gray-700 p-4 space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-4">
             <span className="text-sm font-medium text-secondary">
               {TEXT.validation.subsampleFilter.rowsMatchingLabel}
             </span>
-            <span className="text-sm font-semibold text-primary">
+            <span className="text-sm font-semibold text-primary text-right flex items-center justify-end">
               {matchedSummary}
             </span>
           </div>
