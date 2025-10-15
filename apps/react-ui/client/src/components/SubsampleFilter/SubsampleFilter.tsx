@@ -174,7 +174,7 @@ export default function SubsampleFilter({
   return (
     <div className="space-y-4">
       <SectionHeading
-        level="h3"
+        level="h2"
         text={TEXT.validation.subsampleFilter.title}
         icon={<FaFilter />}
         description={TEXT.validation.subsampleFilter.description}
