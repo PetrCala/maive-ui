@@ -291,7 +291,7 @@ export default function SubsampleFilter({
             </span>
           </div>
           {statusMessage ? (
-            <p className="text-xs text-amber-600 dark:text-amber-400">
+            <p className="text-xs text-primary-600 dark:text-primary-300">
               {statusMessage}
             </p>
           ) : null}
