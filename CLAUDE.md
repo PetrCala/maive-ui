@@ -128,6 +128,33 @@ docs/                         # Project documentation
 - **Imports**: Use path aliases (`@src/*`, `@components/*`, `@api/*`, etc.)
 - **Tests**: Colocate `.test.tsx` files or use `src/tests/`
 
+#### Shared Styling System
+
+The app uses a combination of Tailwind CSS and shared style utilities for consistency:
+
+**Global Styles** (`src/styles/globals.css`):
+
+- CSS custom properties for theme colors, spacing, and transitions
+- Utility classes: `.card`, `.btn-primary`, `.btn-secondary`, `.surface-elevated`, etc.
+- Dark mode support via `.dark` class prefix
+- Use these for page-level layouts and major UI elements
+
+**Form Styles** (`src/styles/formStyles.ts`):
+
+- Shared constants for form elements (inputs, selects, buttons)
+- Use `INPUT_FIELD_CLASSES` for all text inputs and select dropdowns
+- Use `getToggleButtonClasses()` for toggle buttons (Yes/No, AND/OR)
+- Use `SECONDARY_BUTTON_CLASSES` for secondary action buttons
+- Use `LABEL_CLASSES` for form field labels
+- **Always prefer these shared constants over inline Tailwind classes for form elements**
+
+**When to use each approach**:
+
+- **Global CSS classes**: Page containers, cards, primary/secondary buttons via ActionButton component
+- **Form style constants**: All form inputs, selects, labels, and form-specific buttons
+- **Inline Tailwind**: Layout utilities (flex, grid, spacing), one-off styling exceptions
+- **Component-specific styles**: Only when truly unique to that component
+
 ### R (Backend)
 
 - **Naming**: snake_case for functions and variables
