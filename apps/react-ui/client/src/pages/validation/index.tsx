@@ -521,9 +521,8 @@ export default function ValidationPage() {
   const [normalizationIssues, setNormalizationIssues] =
     useState<NormalizationIssues>(createEmptyNormalizationIssues);
   const [isFilterEnabled, setIsFilterEnabled] = useState(false);
-  const [filterGroup, setFilterGroup] = useState<SubsampleFilterGroupNode>(
-    createEmptyGroup(),
-  );
+  const [filterGroup, setFilterGroup] =
+    useState<SubsampleFilterGroupNode>(createEmptyGroup());
   const continueButtonRef = useRef<HTMLButtonElement>(null);
 
   useEnterKeyAction(() => {
@@ -601,9 +600,7 @@ export default function ValidationPage() {
         ) {
           const rootGroup = (storedFilter as { rootGroup?: unknown }).rootGroup;
           if (rootGroup && typeof rootGroup === "object") {
-            nextGroup = cloneFilterGroup(
-              rootGroup as SubsampleFilterGroupNode,
-            );
+            nextGroup = cloneFilterGroup(rootGroup as SubsampleFilterGroupNode);
           }
         } else if (
           typeof storedFilter === "object" &&

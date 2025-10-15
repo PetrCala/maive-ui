@@ -174,9 +174,7 @@ const evaluateNode = (
   return node.children.some((child) => evaluateNode(row, child));
 };
 
-const pruneNode = (
-  node: SubsampleFilterNode,
-): SubsampleFilterNode | null => {
+const pruneNode = (node: SubsampleFilterNode): SubsampleFilterNode | null => {
   if (node.type === "condition") {
     return isConditionComplete(node) ? { ...node } : null;
   }
@@ -260,7 +258,7 @@ const formatNode = (node: SubsampleFilterNode): string => {
 export const formatFilterSummary = (
   filter?: SubsampleFilterState | null,
 ): string => {
-  if (!filter || !filter.isEnabled) {
+  if (!filter?.isEnabled) {
     return "";
   }
 
@@ -326,4 +324,3 @@ export const convertLegacyFilterState = (
     totalRowCount: legacyState.totalRowCount,
   };
 };
-
