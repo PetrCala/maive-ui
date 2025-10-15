@@ -54,9 +54,30 @@ const INITIAL_MAPPING: MappingState = {
 };
 
 const NORMALIZATION_RULES: Record<keyof MappingState, RegExp[]> = {
-  effect: [/^effect$/, /^effect[_\s-]?size$/, /^estimate$/, /coef/, /beta/],
-  se: [/^se$/, /standard[_\s-]?error/, /^stderr$/, /^std[_\s-]?err/],
-  nObs: [/^n$/, /^n[_\s-]?obs$/, /^n[_\s-]?size$/, /sample/, /participants/],
+  effect: [
+    /^effect$/,
+    /^effect[_\s-]?size$/,
+    /^estimate$/,
+    /coef/,
+    /beta/,
+    /^d$/,
+  ],
+  se: [
+    /^se$/,
+    /standard[_\s-]?error/,
+    /^stderr$/,
+    /^std[_\s-]?err/,
+    /^v$/,
+    /^var$/,
+    /variance/,
+  ],
+  nObs: [
+    /^n$/,
+    /^n[_\s-]?obs$/,
+    /^n[_\s-]?size$/,
+    /sample[_\s-]?size/,
+    /participants/,
+  ],
   studyId: [/study/, /id$/],
 };
 
@@ -209,9 +230,33 @@ const convertToNormalizedRow = (
     return parsed ?? Number.NaN;
   };
 
+  // Check if the SE column is actually variance (v, var, or variance)
+  // and convert it to standard error by taking the square root
+  const normalizeSeValue = (column: string | null) => {
+    const value = normalizeNumericValue(column);
+    if (value === null || Number.isNaN(value)) {
+      return value;
+    }
+
+    // Check if column name suggests it's variance
+    if (column) {
+      const columnNameLower = column.toLowerCase().trim();
+      if (
+        columnNameLower === "v" ||
+        columnNameLower === "var" ||
+        columnNameLower.includes("variance")
+      ) {
+        // Convert variance to standard error: se = sqrt(variance)
+        return Math.sqrt(value);
+      }
+    }
+
+    return value;
+  };
+
   const normalized: NormalizedRow = {
     effect: normalizeNumericValue(mapping.effect),
-    se: normalizeNumericValue(mapping.se),
+    se: normalizeSeValue(mapping.se),
     n_obs: normalizeNumericValue(mapping.nObs),
   };
 

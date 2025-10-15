@@ -113,21 +113,28 @@ const detectHeaders = (rows: unknown[][]): boolean => {
 
   const [firstRow, secondRow] = rows;
 
-  // Count non-empty cells in each row
-  const firstRowNonEmptyCells = firstRow.filter(
-    (cell) => cell !== undefined && cell !== null && cell !== "",
-  );
-  const secondRowNonEmptyCells = secondRow.filter(
-    (cell) => cell !== undefined && cell !== null && cell !== "",
-  );
-
-  // Count numeric vs non-numeric cells
-  const firstRowNumericCount =
-    firstRowNonEmptyCells.filter(isLikelyNumeric).length;
-  const firstRowNonNumericCount =
-    firstRowNonEmptyCells.length - firstRowNumericCount;
-  const secondRowNumericCount =
-    secondRowNonEmptyCells.filter(isLikelyNumeric).length;
+  // Count numeric vs non-numeric values (excluding empty cells)
+  const firstRowNumericCount = firstRow.filter(
+    (cell) =>
+      cell !== undefined &&
+      cell !== null &&
+      cell !== "" &&
+      isLikelyNumeric(cell),
+  ).length;
+  const firstRowNonNumericCount = firstRow.filter(
+    (cell) =>
+      cell !== undefined &&
+      cell !== null &&
+      cell !== "" &&
+      !isLikelyNumeric(cell),
+  ).length;
+  const secondRowNumericCount = secondRow.filter(
+    (cell) =>
+      cell !== undefined &&
+      cell !== null &&
+      cell !== "" &&
+      isLikelyNumeric(cell),
+  ).length;
 
   // Strategy 1: Classic case - first row mostly non-numeric, second row mostly numeric
   const classicHeaderPattern =
