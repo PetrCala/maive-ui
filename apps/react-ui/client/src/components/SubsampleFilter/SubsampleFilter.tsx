@@ -171,8 +171,8 @@ const GroupEditor = ({
   };
 
   const handleRemoveChild = (index: number) => {
-    const nextChildren = group.children.filter((_, childIndex) =>
-      childIndex !== index
+    const nextChildren = group.children.filter(
+      (_, childIndex) => childIndex !== index,
     );
 
     if (nextChildren.length === 0) {
@@ -459,4 +459,3 @@ export default function SubsampleFilter({
     </div>
   );
 }
-
