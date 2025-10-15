@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useLayoutEffect, useRef } from "react";
 import {
   FaArrowDown,
   FaArrowUp,
@@ -148,6 +149,71 @@ const GroupEditor = ({
   onRemove,
   isRoot = false,
 }: GroupEditorProps) => {
+  const childRefs = useRef(new Map<string, HTMLDivElement>());
+  const positionsRef = useRef(new Map<string, DOMRect>());
+
+  const registerChild = (id: string) => (element: HTMLDivElement | null) => {
+    if (element) {
+      childRefs.current.set(id, element);
+      return;
+    }
+
+    childRefs.current.delete(id);
+    positionsRef.current.delete(id);
+  };
+
+  useLayoutEffect(() => {
+    const nextPositions = new Map<string, DOMRect>();
+
+    group.children.forEach((child) => {
+      const element = childRefs.current.get(child.id);
+      if (!element) {
+        return;
+      }
+
+      nextPositions.set(child.id, element.getBoundingClientRect());
+    });
+
+    nextPositions.forEach((rect, id) => {
+      const previous = positionsRef.current.get(id);
+      if (!previous) {
+        return;
+      }
+
+      const element = childRefs.current.get(id);
+      if (!element) {
+        return;
+      }
+
+      const deltaY = previous.top - rect.top;
+      if (Math.abs(deltaY) < 1) {
+        return;
+      }
+
+      element.style.transition = "none";
+      element.style.transform = `translateY(${deltaY}px)`;
+      element.style.willChange = "transform";
+      element.style.zIndex = deltaY > 0 ? "30" : "5";
+
+      requestAnimationFrame(() => {
+        element.style.transition = "transform 200ms cubic-bezier(0.4, 0, 0.2, 1)";
+        element.style.transform = "";
+      });
+
+      const handleTransitionEnd = () => {
+        element.style.transition = "";
+        element.style.transform = "";
+        element.style.willChange = "";
+        element.style.zIndex = "";
+        element.removeEventListener("transitionend", handleTransitionEnd);
+      };
+
+      element.addEventListener("transitionend", handleTransitionEnd);
+    });
+
+    positionsRef.current = nextPositions;
+  }, [group.children]);
+
   const handleJoinerChange = (joiner: SubsampleFilterJoiner) => {
     if (joiner === group.joiner) {
       return;
@@ -279,7 +345,11 @@ const GroupEditor = ({
           }`;
 
           return (
-            <div key={child.id} className="space-y-3">
+            <div
+              key={child.id}
+              ref={registerChild(child.id)}
+              className="space-y-3"
+            >
               <div
                 className={`rounded-lg border border-dashed border-gray-200 p-4 dark:border-gray-700 ${
                   child.type === "condition" ? "relative pr-12" : ""
