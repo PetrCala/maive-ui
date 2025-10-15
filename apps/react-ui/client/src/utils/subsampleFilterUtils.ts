@@ -1,7 +1,11 @@
 import type {
   DataArray,
+  LegacySubsampleFilterState,
   SubsampleFilterCondition,
+  SubsampleFilterConditionNode,
+  SubsampleFilterGroupNode,
   SubsampleFilterJoiner,
+  SubsampleFilterNode,
   SubsampleFilterOperator,
   SubsampleFilterState,
 } from "@src/types";
@@ -57,26 +61,48 @@ export const DEFAULT_SUBSAMPLE_FILTER_OPERATOR: SubsampleFilterOperator =
   "equals";
 export const DEFAULT_SUBSAMPLE_FILTER_JOINER: SubsampleFilterJoiner = "AND";
 
-/**
- * Creates an empty filter condition with default values
- */
-export const createEmptyCondition = (): SubsampleFilterCondition => ({
+export const generateFilterNodeId = (): string => {
+  return `filter-node-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+};
+
+export const createEmptyCondition = (): SubsampleFilterConditionNode => ({
+  id: generateFilterNodeId(),
+  type: "condition",
   column: "",
   operator: DEFAULT_SUBSAMPLE_FILTER_OPERATOR,
   value: "",
 });
 
-/**
- * Generates a unique ID for condition tracking in React keys
- * Using timestamp + random for uniqueness
- */
-export const generateConditionId = (): string => {
-  return `condition-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+export const createEmptyGroup = (
+  children: SubsampleFilterNode[] = [createEmptyCondition()],
+  joiner: SubsampleFilterJoiner = DEFAULT_SUBSAMPLE_FILTER_JOINER,
+): SubsampleFilterGroupNode => ({
+  id: generateFilterNodeId(),
+  type: "group",
+  joiner,
+  children,
+});
+
+const cloneFilterNode = (node: SubsampleFilterNode): SubsampleFilterNode => {
+  if (node.type === "condition") {
+    return { ...node };
+  }
+
+  return {
+    ...node,
+    children: node.children.map((child) => cloneFilterNode(child)),
+  };
+};
+
+export const cloneFilterGroup = (
+  group: SubsampleFilterGroupNode,
+): SubsampleFilterGroupNode => {
+  return cloneFilterNode(group) as SubsampleFilterGroupNode;
 };
 
 export const isConditionComplete = (
-  condition?: SubsampleFilterCondition | null,
-): condition is SubsampleFilterCondition => {
+  condition?: SubsampleFilterConditionNode | null,
+): condition is SubsampleFilterConditionNode => {
   if (!condition) {
     return false;
   }
@@ -133,33 +159,71 @@ const evaluateCondition = (
   }
 };
 
+const evaluateNode = (
+  row: Record<string, unknown>,
+  node: SubsampleFilterNode,
+): boolean => {
+  if (node.type === "condition") {
+    return evaluateCondition(row, node);
+  }
+
+  if (node.joiner === "AND") {
+    return node.children.every((child) => evaluateNode(row, child));
+  }
+
+  return node.children.some((child) => evaluateNode(row, child));
+};
+
+const pruneNode = (
+  node: SubsampleFilterNode,
+): SubsampleFilterNode | null => {
+  if (node.type === "condition") {
+    return isConditionComplete(node) ? { ...node } : null;
+  }
+
+  const prunedChildren = node.children
+    .map((child) => pruneNode(child))
+    .filter((child): child is SubsampleFilterNode => Boolean(child));
+
+  if (!prunedChildren.length) {
+    return null;
+  }
+
+  return {
+    ...node,
+    children: prunedChildren,
+  };
+};
+
+export const pruneFilterTree = (
+  rootGroup: SubsampleFilterGroupNode,
+): SubsampleFilterGroupNode | null => {
+  const pruned = pruneNode(rootGroup);
+
+  if (!pruned || pruned.type !== "group") {
+    return null;
+  }
+
+  return pruned;
+};
+
+export const hasCompletedConditions = (
+  rootGroup: SubsampleFilterGroupNode,
+): boolean => {
+  return Boolean(pruneFilterTree(rootGroup));
+};
+
 export const applySubsampleFilter = (
   rows: DataArray,
-  conditions: SubsampleFilterCondition[],
-  joiner: SubsampleFilterJoiner,
+  rootGroup: SubsampleFilterGroupNode,
 ): DataArray => {
-  const validConditions = conditions.filter((condition) =>
-    isConditionComplete(condition),
-  );
+  const prunedRoot = pruneFilterTree(rootGroup);
 
-  if (validConditions.length === 0) {
+  if (!prunedRoot) {
     return rows;
   }
 
-  if (validConditions.length === 1) {
-    const [condition] = validConditions;
-    return rows.filter((row) => evaluateCondition(row, condition));
-  }
-
-  if (joiner === "AND") {
-    return rows.filter((row) =>
-      validConditions.every((condition) => evaluateCondition(row, condition)),
-    );
-  }
-
-  return rows.filter((row) =>
-    validConditions.some((condition) => evaluateCondition(row, condition)),
-  );
+  return rows.filter((row) => evaluateNode(row, prunedRoot));
 };
 
 export const getOperatorSymbol = (
@@ -177,22 +241,41 @@ export const formatCondition = (
   return `${condition.column} ${getOperatorSymbol(condition.operator)} ${condition.value}`;
 };
 
-export const formatFilterSummary = (filter: SubsampleFilterState): string => {
-  if (!filter.conditions.length) {
+const formatNode = (node: SubsampleFilterNode): string => {
+  if (node.type === "condition") {
+    return formatCondition(node);
+  }
+
+  if (node.children.length === 1) {
+    return formatNode(node.children[0]);
+  }
+
+  const childrenSummary = node.children
+    .map((child) => formatNode(child))
+    .join(` ${node.joiner} `);
+
+  return `(${childrenSummary})`;
+};
+
+export const formatFilterSummary = (
+  filter?: SubsampleFilterState | null,
+): string => {
+  if (!filter || !filter.isEnabled) {
     return "";
   }
 
-  const formattedConditions = filter.conditions.map((condition) =>
-    formatCondition(condition),
-  );
+  const pruned = pruneFilterTree(filter.rootGroup);
 
-  return formattedConditions.join(` ${filter.joiner} `);
+  if (!pruned) {
+    return "";
+  }
+
+  return formatNode(pruned);
 };
 
 export const buildFilterState = (
   isEnabled: boolean,
-  conditions: SubsampleFilterCondition[],
-  joiner: SubsampleFilterJoiner,
+  rootGroup: SubsampleFilterGroupNode,
   matchedRowCount: number,
   totalRowCount: number,
 ): SubsampleFilterState | null => {
@@ -200,19 +283,47 @@ export const buildFilterState = (
     return null;
   }
 
-  const validConditions = conditions.filter((condition) =>
-    isConditionComplete(condition),
-  );
+  const prunedRoot = pruneFilterTree(rootGroup);
 
-  if (!validConditions.length) {
+  if (!prunedRoot) {
     return null;
   }
 
   return {
     isEnabled: true,
-    conditions: validConditions,
-    joiner,
+    rootGroup: prunedRoot,
     matchedRowCount,
     totalRowCount,
   };
 };
+
+export const convertLegacyFilterState = (
+  legacyState?: LegacySubsampleFilterState | null,
+): SubsampleFilterState | null => {
+  if (!legacyState) {
+    return null;
+  }
+
+  const legacyGroup = createEmptyGroup(
+    legacyState.conditions.map((condition) => ({
+      ...condition,
+      id: generateFilterNodeId(),
+      type: "condition",
+    })),
+    legacyState.joiner,
+  );
+
+  const prunedRoot = pruneFilterTree(legacyGroup);
+
+  if (!prunedRoot) {
+    return null;
+  }
+
+  return {
+    isEnabled: legacyState.isEnabled,
+    rootGroup: prunedRoot,
+    matchedRowCount: legacyState.matchedRowCount,
+    totalRowCount: legacyState.totalRowCount,
+  };
+};
+

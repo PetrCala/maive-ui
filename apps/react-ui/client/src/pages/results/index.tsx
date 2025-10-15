@@ -16,14 +16,22 @@ import {
   downloadImageAsJpg,
 } from "@utils/dataUtils";
 import { generateDataInfo } from "@utils/dataInfoUtils";
-import type { ModelParameters, ModelResults } from "@src/types";
+import type {
+  LegacySubsampleFilterState,
+  ModelParameters,
+  ModelResults,
+  SubsampleFilterState,
+} from "@src/types";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import Alert from "@src/components/Alert";
-import { formatFilterSummary } from "@src/utils/subsampleFilterUtils";
+import {
+  convertLegacyFilterState,
+  formatFilterSummary,
+} from "@src/utils/subsampleFilterUtils";
 import {
   FaInfoCircle,
   FaDownload,
@@ -33,6 +41,26 @@ import {
   FaChartLine,
   FaPlay,
 } from "react-icons/fa";
+
+const isLegacyFilterState = (
+  filter: unknown,
+): filter is LegacySubsampleFilterState => {
+  return (
+    Boolean(filter) &&
+    typeof filter === "object" &&
+    Array.isArray((filter as { conditions?: unknown }).conditions)
+  );
+};
+
+const isModernFilterState = (
+  filter: unknown,
+): filter is SubsampleFilterState => {
+  return (
+    Boolean(filter) &&
+    typeof filter === "object" &&
+    "rootGroup" in (filter as Record<string, unknown>)
+  );
+};
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -86,20 +114,38 @@ export default function ResultsPage() {
 
   const numberFormatter = useMemo(() => new Intl.NumberFormat(), []);
 
-  const activeFilterSummary = useMemo(() => {
-    if (!uploadedData?.subsampleFilter?.isEnabled) {
+  const normalizedFilterState = useMemo(() => {
+    const filterState = uploadedData?.subsampleFilter;
+
+    if (!filterState) {
       return null;
     }
 
-    return formatFilterSummary(uploadedData.subsampleFilter);
+    if (isModernFilterState(filterState)) {
+      return filterState;
+    }
+
+    if (isLegacyFilterState(filterState)) {
+      return convertLegacyFilterState(filterState);
+    }
+
+    return null;
   }, [uploadedData]);
 
-  const activeFilterRowSummary = useMemo(() => {
-    if (!uploadedData?.subsampleFilter?.isEnabled) {
+  const activeFilterSummary = useMemo(() => {
+    if (!normalizedFilterState?.isEnabled) {
       return null;
     }
 
-    const { matchedRowCount, totalRowCount } = uploadedData.subsampleFilter;
+    return formatFilterSummary(normalizedFilterState);
+  }, [normalizedFilterState]);
+
+  const activeFilterRowSummary = useMemo(() => {
+    if (!normalizedFilterState?.isEnabled) {
+      return null;
+    }
+
+    const { matchedRowCount, totalRowCount } = normalizedFilterState;
 
     if (
       typeof matchedRowCount !== "number" ||
@@ -115,7 +161,7 @@ export default function ResultsPage() {
     const percentage =
       Math.round((matchedRowCount / totalRowCount) * 1000) / 10;
     return `${numberFormatter.format(matchedRowCount)} / ${numberFormatter.format(totalRowCount)} (${percentage.toFixed(1)}%)`;
-  }, [uploadedData, numberFormatter]);
+  }, [normalizedFilterState, numberFormatter]);
 
   // Memoize dataInfo to prevent expensive recalculations on every render
   const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
