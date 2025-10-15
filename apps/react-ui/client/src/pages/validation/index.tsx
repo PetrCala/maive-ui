@@ -8,7 +8,7 @@ import { GoBackButton } from "@src/components/Buttons";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import Alert from "@src/components/Alert";
 import RowInfoComponent from "@src/components/RowInfoComponent";
-import { SubsampleFilter } from "@src/components/SubsampleFilter";
+import { SubsampleFilterCard } from "@src/components/SubsampleFilter";
 import { DataPreview } from "@src/components/DataPreview";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
@@ -504,11 +504,9 @@ export default function ValidationPage() {
   const [normalizationIssues, setNormalizationIssues] =
     useState<NormalizationIssues>(createEmptyNormalizationIssues);
   const [isFilterEnabled, setIsFilterEnabled] = useState(false);
-  const [primaryCondition, setPrimaryCondition] =
-    useState<SubsampleFilterCondition>(createEmptyFilterCondition());
-  const [secondaryCondition, setSecondaryCondition] =
-    useState<SubsampleFilterCondition>(createEmptyFilterCondition());
-  const [isSecondaryEnabled, setIsSecondaryEnabled] = useState(false);
+  const [filterConditions, setFilterConditions] = useState<
+    SubsampleFilterCondition[]
+  >([createEmptyFilterCondition()]);
   const [filterJoiner, setFilterJoiner] = useState<SubsampleFilterJoiner>(
     DEFAULT_SUBSAMPLE_FILTER_JOINER,
   );
@@ -529,6 +527,8 @@ export default function ValidationPage() {
       setAutoMappingApplied(false);
       setNormalizedData([]);
       setNormalizationIssues(createEmptyNormalizationIssues());
+      setIsFilterEnabled(false);
+      setFilterConditions([createEmptyFilterCondition()]);
       setLoading(false);
       return;
     }
@@ -553,6 +553,8 @@ export default function ValidationPage() {
         setAutoMappingApplied(false);
         setNormalizedData([]);
         setNormalizationIssues(createEmptyNormalizationIssues());
+        setIsFilterEnabled(false);
+        setFilterConditions([createEmptyFilterCondition()]);
         return;
       }
 
@@ -575,37 +577,19 @@ export default function ValidationPage() {
       }
 
       if (data.subsampleFilter?.isEnabled && data.subsampleFilter.conditions) {
-        const [storedPrimary, storedSecondary] = data.subsampleFilter.conditions;
+        const storedConditions = data.subsampleFilter.conditions;
 
-        if (storedPrimary) {
-          setPrimaryCondition({
-            column: storedPrimary.column,
-            operator: storedPrimary.operator,
-            value: storedPrimary.value,
-          });
+        if (storedConditions.length > 0) {
+          setFilterConditions(storedConditions);
         } else {
-          setPrimaryCondition(createEmptyFilterCondition());
-        }
-
-        if (storedSecondary) {
-          setSecondaryCondition({
-            column: storedSecondary.column,
-            operator: storedSecondary.operator,
-            value: storedSecondary.value,
-          });
-          setIsSecondaryEnabled(true);
-        } else {
-          setSecondaryCondition(createEmptyFilterCondition());
-          setIsSecondaryEnabled(false);
+          setFilterConditions([createEmptyFilterCondition()]);
         }
 
         setIsFilterEnabled(true);
         setFilterJoiner(data.subsampleFilter.joiner);
       } else {
         setIsFilterEnabled(false);
-        setPrimaryCondition(createEmptyFilterCondition());
-        setSecondaryCondition(createEmptyFilterCondition());
-        setIsSecondaryEnabled(false);
+        setFilterConditions([createEmptyFilterCondition()]);
         setFilterJoiner(DEFAULT_SUBSAMPLE_FILTER_JOINER);
       }
 
@@ -618,6 +602,8 @@ export default function ValidationPage() {
       setAutoMappingApplied(false);
       setNormalizedData([]);
       setNormalizationIssues(createEmptyNormalizationIssues());
+      setIsFilterEnabled(false);
+      setFilterConditions([createEmptyFilterCondition()]);
     } finally {
       setLoading(false);
     }
@@ -714,27 +700,23 @@ export default function ValidationPage() {
     }
 
     const total = uploadedData.rawData.length;
-    const primaryComplete = isConditionComplete(primaryCondition);
-    const secondaryComplete =
-      isSecondaryEnabled && isConditionComplete(secondaryCondition);
 
-    const activeConditions: SubsampleFilterCondition[] = [];
-    if (primaryComplete) {
-      activeConditions.push(primaryCondition);
-    }
-    if (secondaryComplete) {
-      activeConditions.push(secondaryCondition);
-    }
+    // Get only complete conditions
+    const activeConditions = filterConditions.filter((condition) =>
+      isConditionComplete(condition),
+    );
 
     const filterApplies = isFilterEnabled && activeConditions.length > 0;
 
     const filteredRawRows = filterApplies
-      ? applySubsampleFilter(uploadedData.rawData, activeConditions, filterJoiner)
+      ? applySubsampleFilter(
+          uploadedData.rawData,
+          activeConditions,
+          filterJoiner,
+        )
       : uploadedData.rawData;
 
-    const matchedRowCount = filterApplies
-      ? filteredRawRows.length
-      : total;
+    const matchedRowCount = filterApplies ? filteredRawRows.length : total;
 
     const filterState = buildFilterState(
       isFilterEnabled,
@@ -745,7 +727,8 @@ export default function ValidationPage() {
     );
 
     let statusMessage: string | undefined;
-    if (isFilterEnabled && !primaryComplete) {
+    // Check if filter is enabled but no conditions are complete
+    if (isFilterEnabled && activeConditions.length === 0) {
       statusMessage = TEXT.validation.subsampleFilter.incompleteMessage;
     } else if (filterApplies && matchedRowCount === 0) {
       statusMessage = TEXT.validation.subsampleFilter.noMatchesMessage;
@@ -763,14 +746,7 @@ export default function ValidationPage() {
       hasNoMatches: filterApplies && matchedRowCount === 0,
       statusMessage,
     };
-  }, [
-    uploadedData,
-    isFilterEnabled,
-    primaryCondition,
-    secondaryCondition,
-    isSecondaryEnabled,
-    filterJoiner,
-  ]);
+  }, [uploadedData, isFilterEnabled, filterConditions, filterJoiner]);
 
   useEffect(() => {
     if (!uploadedData || !dataId) {
@@ -816,13 +792,7 @@ export default function ValidationPage() {
       );
       setNormalizationIssues(createEmptyNormalizationIssues());
     }
-  }, [
-    uploadedData,
-    dataId,
-    mapping,
-    showAlert,
-    filterEvaluation,
-  ]);
+  }, [uploadedData, dataId, mapping, showAlert, filterEvaluation]);
 
   const validationResult = useMemo<ValidationResult | null>(() => {
     if (!mappingComplete || !mapping.effect || !mapping.se || !mapping.nObs) {
@@ -858,13 +828,10 @@ export default function ValidationPage() {
   const handleFilterToggle = (enabled: boolean) => {
     setIsFilterEnabled(enabled);
     if (!enabled) {
-      setIsSecondaryEnabled(false);
+      // Reset to single empty condition when disabling
+      setFilterConditions([createEmptyFilterCondition()]);
       setFilterJoiner(DEFAULT_SUBSAMPLE_FILTER_JOINER);
     }
-  };
-
-  const handleSecondaryToggle = (enabled: boolean) => {
-    setIsSecondaryEnabled(enabled);
   };
 
   const handleContinue = () => {
@@ -1033,24 +1000,18 @@ export default function ValidationPage() {
                 </div>
               </div>
 
-              <div className="card p-6 sm:p-8 space-y-6">
-                <SubsampleFilter
-                  isEnabled={isFilterEnabled}
-                  onToggle={handleFilterToggle}
-                  columns={availableColumns}
-                  primaryCondition={primaryCondition}
-                  onPrimaryChange={setPrimaryCondition}
-                  secondaryCondition={secondaryCondition}
-                  onSecondaryChange={setSecondaryCondition}
-                  isSecondaryEnabled={isSecondaryEnabled}
-                  onSecondaryToggle={handleSecondaryToggle}
-                  joiner={filterJoiner}
-                  onJoinerChange={(nextJoiner) => setFilterJoiner(nextJoiner)}
-                  matchedRowCount={filterEvaluation.displayMatchedRowCount}
-                  totalRowCount={filterEvaluation.totalRowCount}
-                  statusMessage={filterEvaluation.statusMessage}
-                />
-              </div>
+              <SubsampleFilterCard
+                isEnabled={isFilterEnabled}
+                onToggle={handleFilterToggle}
+                columns={availableColumns}
+                conditions={filterConditions}
+                onConditionsChange={setFilterConditions}
+                joiner={filterJoiner}
+                onJoinerChange={setFilterJoiner}
+                matchedRowCount={filterEvaluation.displayMatchedRowCount}
+                totalRowCount={filterEvaluation.totalRowCount}
+                statusMessage={filterEvaluation.statusMessage}
+              />
 
               <div className="card p-6 sm:p-8 space-y-4">
                 <div>

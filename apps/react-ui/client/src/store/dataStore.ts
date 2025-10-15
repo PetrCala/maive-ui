@@ -1,7 +1,4 @@
-import type {
-  DataArray,
-  SubsampleFilterState,
-} from "@src/types";
+import type { DataArray, SubsampleFilterState } from "@src/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
