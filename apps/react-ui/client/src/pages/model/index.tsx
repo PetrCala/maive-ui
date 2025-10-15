@@ -435,19 +435,17 @@ export default function ModelPage() {
                   <div className="flex flex-col gap-6">
                     <div className="flex items-center mb-2">
                       <div className="flex-grow">
-                        <SectionHeading level="h1">
+                        <SectionHeading
+                          description="Please select the model type and parameters you would like to use."
+                          headingClassName="mb-4"
+                          level="h1"
+                        >
                           Model Parameters
                         </SectionHeading>
                       </div>
                       {CONFIG.SHOULD_SHOW_MODEL_PARAMS_HELP_MODAL && (
                         <HelpButton modalComponent={ParametersHelpModal} />
                       )}
-                    </div>
-                    <div className="mb-2">
-                      <p className="text-gray-700 dark:text-gray-300">
-                        Please select the model type and parameters you would
-                        like to use.
-                      </p>
                     </div>
                     <div className="space-y-6">
                       <OptionSection
