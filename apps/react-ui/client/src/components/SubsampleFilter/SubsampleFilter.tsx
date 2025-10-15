@@ -160,8 +160,32 @@ const GroupEditor = ({
   isRoot = false,
 }: GroupEditorProps) => {
   const itemRefs = useRef(new Map<string, HTMLDivElement>());
-  const previousPositions = useRef(new Map<string, DOMRect>());
-  const animationFrameRef = useRef<number | null>(null);
+  const previousPositions = useRef(new Map<string, number>());
+  const animationCleanupMap = useRef(new Map<string, () => void>());
+  const pendingFrameMap = useRef(new Map<string, number>());
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const previousContainerTop = useRef<number | null>(null);
+
+  const stopAnimation = useCallback((id: string) => {
+    const pendingFrame = pendingFrameMap.current.get(id);
+    if (pendingFrame !== undefined) {
+      window.cancelAnimationFrame(pendingFrame);
+      pendingFrameMap.current.delete(id);
+    }
+
+    const cleanup = animationCleanupMap.current.get(id);
+    if (cleanup) {
+      cleanup();
+      animationCleanupMap.current.delete(id);
+    }
+  }, []);
+
+  const finalizeStyles = useCallback((element: HTMLDivElement) => {
+    element.style.transition = "";
+    element.style.transform = "";
+    element.style.zIndex = "";
+    element.style.willChange = "";
+  }, []);
 
   const registerItem = useCallback(
     (id: string, node: HTMLDivElement | null) => {
@@ -170,9 +194,10 @@ const GroupEditor = ({
         map.set(id, node);
       } else {
         map.delete(id);
+        stopAnimation(id);
       }
     },
-    [],
+    [stopAnimation],
   );
 
   useIsomorphicLayoutEffect(() => {
@@ -180,11 +205,19 @@ const GroupEditor = ({
       return undefined;
     }
 
-    const movingItems: Array<{
-      element: HTMLDivElement;
-      onTransitionEnd: (event: TransitionEvent) => void;
-    }> = [];
-    const nextPositions = new Map<string, DOMRect>();
+    if (isRoot && containerRef.current) {
+      const currentTop = containerRef.current.getBoundingClientRect().top;
+      if (previousContainerTop.current !== null) {
+        const deltaTop = previousContainerTop.current - currentTop;
+        if (Math.abs(deltaTop) > 0.5) {
+          window.scrollBy(0, deltaTop);
+        }
+      }
+      previousContainerTop.current = currentTop;
+    }
+
+    const previousPositionsSnapshot = previousPositions.current;
+    const nextPositions = new Map<string, number>();
 
     group.children.forEach((child) => {
       const element = itemRefs.current.get(child.id);
@@ -192,18 +225,24 @@ const GroupEditor = ({
         return;
       }
 
-      const rect = element.getBoundingClientRect();
-      nextPositions.set(child.id, rect);
+      const offsetTop = element.offsetTop;
+      nextPositions.set(child.id, offsetTop);
 
-      const previousRect = previousPositions.current.get(child.id);
-      if (!previousRect) {
+      const previousOffset = previousPositionsSnapshot.get(child.id);
+      if (previousOffset === undefined) {
+        stopAnimation(child.id);
+        finalizeStyles(element);
         return;
       }
 
-      const deltaY = previousRect.top - rect.top;
-      if (deltaY === 0) {
+      const deltaY = previousOffset - offsetTop;
+      if (Math.abs(deltaY) < 0.5) {
+        stopAnimation(child.id);
+        finalizeStyles(element);
         return;
       }
+
+      stopAnimation(child.id);
 
       element.style.transition = "none";
       element.style.transform = `translateY(${deltaY}px)`;
@@ -215,49 +254,59 @@ const GroupEditor = ({
           return;
         }
 
-        element.style.transition = "";
-        element.style.transform = "";
-        element.style.zIndex = "";
-        element.style.willChange = "";
+        finalizeStyles(element);
         element.removeEventListener("transitionend", handleTransitionEnd);
+        animationCleanupMap.current.delete(child.id);
       };
 
-      movingItems.push({
-        element,
-        onTransitionEnd: handleTransitionEnd,
+      animationCleanupMap.current.set(child.id, () => {
+        element.removeEventListener("transitionend", handleTransitionEnd);
+        finalizeStyles(element);
       });
+
+      const frameId = window.requestAnimationFrame(() => {
+        pendingFrameMap.current.delete(child.id);
+
+        if (!document.body.contains(element)) {
+          animationCleanupMap.current.delete(child.id);
+          finalizeStyles(element);
+          return;
+        }
+
+        element.addEventListener("transitionend", handleTransitionEnd);
+        element.style.transition = `transform ${SWAP_ANIMATION_DURATION_MS}ms ${SWAP_ANIMATION_EASING}`;
+        element.style.transform = "translateY(0)";
+      });
+
+      pendingFrameMap.current.set(child.id, frameId);
     });
 
     previousPositions.current = nextPositions;
 
-    if (movingItems.length === 0) {
-      return undefined;
-    }
-
-    animationFrameRef.current = window.requestAnimationFrame(() => {
-      animationFrameRef.current = null;
-      movingItems.forEach(({ element, onTransitionEnd }) => {
-        element.addEventListener("transitionend", onTransitionEnd);
-        element.style.transition = `transform ${SWAP_ANIMATION_DURATION_MS}ms ${SWAP_ANIMATION_EASING}`;
-        element.style.transform = "translateY(0)";
-      });
+    previousPositionsSnapshot.forEach((_, id) => {
+      if (!nextPositions.has(id)) {
+        stopAnimation(id);
+      }
     });
 
     return () => {
-      if (animationFrameRef.current !== null) {
-        window.cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-
-      movingItems.forEach(({ element, onTransitionEnd }) => {
-        element.removeEventListener("transitionend", onTransitionEnd);
-        element.style.transition = "";
-        element.style.transform = "";
-        element.style.zIndex = "";
-        element.style.willChange = "";
+      pendingFrameMap.current.forEach((frameId) => {
+        window.cancelAnimationFrame(frameId);
       });
+      pendingFrameMap.current.clear();
     };
-  }, [group.children]);
+  }, [finalizeStyles, group.children, isRoot, stopAnimation]);
+
+  useEffect(() => {
+    return () => {
+      pendingFrameMap.current.forEach((frameId) => {
+        window.cancelAnimationFrame(frameId);
+      });
+      pendingFrameMap.current.clear();
+      animationCleanupMap.current.forEach((cleanup) => cleanup());
+      animationCleanupMap.current.clear();
+    };
+  }, []);
 
   const handleJoinerChange = (joiner: SubsampleFilterJoiner) => {
     if (joiner === group.joiner) {
@@ -342,6 +391,9 @@ const GroupEditor = ({
 
   return (
     <div
+      ref={(node) => {
+        containerRef.current = node;
+      }}
       className={
         isRoot
           ? "space-y-4"
