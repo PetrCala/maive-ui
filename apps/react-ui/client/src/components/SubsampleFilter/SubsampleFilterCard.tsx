@@ -1,17 +1,12 @@
 import SubsampleFilter from "./SubsampleFilter";
-import type {
-  SubsampleFilterCondition,
-  SubsampleFilterJoiner,
-} from "@src/types";
+import type { SubsampleFilterGroupNode } from "@src/types";
 
 type SubsampleFilterCardProps = {
   isEnabled: boolean;
   onToggle: (enabled: boolean) => void;
   columns: string[];
-  conditions: SubsampleFilterCondition[];
-  onConditionsChange: (conditions: SubsampleFilterCondition[]) => void;
-  joiner: SubsampleFilterJoiner;
-  onJoinerChange: (joiner: SubsampleFilterJoiner) => void;
+  rootGroup: SubsampleFilterGroupNode;
+  onRootGroupChange: (group: SubsampleFilterGroupNode) => void;
   matchedRowCount: number | null;
   totalRowCount: number;
   statusMessage?: string;
@@ -30,10 +25,8 @@ type SubsampleFilterCardProps = {
  *   isEnabled={isFilterEnabled}
  *   onToggle={handleFilterToggle}
  *   columns={availableColumns}
- *   conditions={filterConditions}
- *   onConditionsChange={setFilterConditions}
- *   joiner={filterJoiner}
- *   onJoinerChange={setFilterJoiner}
+ *   rootGroup={filterTree}
+ *   onRootGroupChange={setFilterTree}
  *   matchedRowCount={matchedRowCount}
  *   totalRowCount={totalRowCount}
  * />

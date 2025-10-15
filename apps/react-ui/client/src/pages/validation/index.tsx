@@ -21,8 +21,8 @@ import type { ColumnMapping, UploadedData } from "@store/dataStore";
 import type {
   AlertType,
   DataArray,
-  SubsampleFilterCondition,
-  SubsampleFilterJoiner,
+  LegacySubsampleFilterState,
+  SubsampleFilterGroupNode,
   SubsampleFilterState,
 } from "@src/types";
 import { parseLocalizedNumber } from "@utils/dataUtils";
@@ -31,9 +31,10 @@ import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import {
   applySubsampleFilter,
   buildFilterState,
-  createEmptyCondition as createEmptyFilterCondition,
-  DEFAULT_SUBSAMPLE_FILTER_JOINER,
-  isConditionComplete,
+  cloneFilterGroup,
+  convertLegacyFilterState,
+  createEmptyGroup,
+  pruneFilterTree,
 } from "@src/utils/subsampleFilterUtils";
 
 const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
@@ -520,11 +521,8 @@ export default function ValidationPage() {
   const [normalizationIssues, setNormalizationIssues] =
     useState<NormalizationIssues>(createEmptyNormalizationIssues);
   const [isFilterEnabled, setIsFilterEnabled] = useState(false);
-  const [filterConditions, setFilterConditions] = useState<
-    SubsampleFilterCondition[]
-  >([createEmptyFilterCondition()]);
-  const [filterJoiner, setFilterJoiner] = useState<SubsampleFilterJoiner>(
-    DEFAULT_SUBSAMPLE_FILTER_JOINER,
+  const [filterGroup, setFilterGroup] = useState<SubsampleFilterGroupNode>(
+    createEmptyGroup(),
   );
   const continueButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -544,7 +542,7 @@ export default function ValidationPage() {
       setNormalizedData([]);
       setNormalizationIssues(createEmptyNormalizationIssues());
       setIsFilterEnabled(false);
-      setFilterConditions([createEmptyFilterCondition()]);
+      setFilterGroup(createEmptyGroup());
       setLoading(false);
       return;
     }
@@ -570,7 +568,7 @@ export default function ValidationPage() {
         setNormalizedData([]);
         setNormalizationIssues(createEmptyNormalizationIssues());
         setIsFilterEnabled(false);
-        setFilterConditions([createEmptyFilterCondition()]);
+        setFilterGroup(createEmptyGroup());
         return;
       }
 
@@ -592,21 +590,44 @@ export default function ValidationPage() {
         setAutoMappingApplied(applied);
       }
 
-      if (data.subsampleFilter?.isEnabled && data.subsampleFilter.conditions) {
-        const storedConditions = data.subsampleFilter.conditions;
+      if (data.subsampleFilter?.isEnabled) {
+        const storedFilter = data.subsampleFilter as unknown;
+        let nextGroup: SubsampleFilterGroupNode | null = null;
 
-        if (storedConditions.length > 0) {
-          setFilterConditions(storedConditions);
-        } else {
-          setFilterConditions([createEmptyFilterCondition()]);
+        if (
+          typeof storedFilter === "object" &&
+          storedFilter !== null &&
+          "rootGroup" in storedFilter
+        ) {
+          const rootGroup = (storedFilter as { rootGroup?: unknown }).rootGroup;
+          if (rootGroup && typeof rootGroup === "object") {
+            nextGroup = cloneFilterGroup(
+              rootGroup as SubsampleFilterGroupNode,
+            );
+          }
+        } else if (
+          typeof storedFilter === "object" &&
+          storedFilter !== null &&
+          "conditions" in storedFilter
+        ) {
+          const upgraded = convertLegacyFilterState(
+            storedFilter as LegacySubsampleFilterState,
+          );
+          if (upgraded?.rootGroup) {
+            nextGroup = cloneFilterGroup(upgraded.rootGroup);
+          }
         }
 
-        setIsFilterEnabled(true);
-        setFilterJoiner(data.subsampleFilter.joiner);
+        if (nextGroup) {
+          setFilterGroup(nextGroup);
+          setIsFilterEnabled(true);
+        } else {
+          setFilterGroup(createEmptyGroup());
+          setIsFilterEnabled(false);
+        }
       } else {
         setIsFilterEnabled(false);
-        setFilterConditions([createEmptyFilterCondition()]);
-        setFilterJoiner(DEFAULT_SUBSAMPLE_FILTER_JOINER);
+        setFilterGroup(createEmptyGroup());
       }
 
       setUploadedData(data);
@@ -619,7 +640,7 @@ export default function ValidationPage() {
       setNormalizedData([]);
       setNormalizationIssues(createEmptyNormalizationIssues());
       setIsFilterEnabled(false);
-      setFilterConditions([createEmptyFilterCondition()]);
+      setFilterGroup(createEmptyGroup());
     } finally {
       setLoading(false);
     }
@@ -716,35 +737,24 @@ export default function ValidationPage() {
     }
 
     const total = uploadedData.rawData.length;
-
-    // Get only complete conditions
-    const activeConditions = filterConditions.filter((condition) =>
-      isConditionComplete(condition),
-    );
-
-    const filterApplies = isFilterEnabled && activeConditions.length > 0;
+    const prunedGroup = pruneFilterTree(filterGroup);
+    const filterApplies = isFilterEnabled && Boolean(prunedGroup);
 
     const filteredRawRows = filterApplies
-      ? applySubsampleFilter(
-          uploadedData.rawData,
-          activeConditions,
-          filterJoiner,
-        )
+      ? applySubsampleFilter(uploadedData.rawData, filterGroup)
       : uploadedData.rawData;
 
     const matchedRowCount = filterApplies ? filteredRawRows.length : total;
 
     const filterState = buildFilterState(
       isFilterEnabled,
-      activeConditions,
-      filterJoiner,
+      filterGroup,
       matchedRowCount,
       total,
     );
 
     let statusMessage: string | undefined;
-    // Check if filter is enabled but no conditions are complete
-    if (isFilterEnabled && activeConditions.length === 0) {
+    if (isFilterEnabled && !prunedGroup) {
       statusMessage = TEXT.validation.subsampleFilter.incompleteMessage;
     } else if (filterApplies && matchedRowCount === 0) {
       statusMessage = TEXT.validation.subsampleFilter.noMatchesMessage;
@@ -762,7 +772,7 @@ export default function ValidationPage() {
       hasNoMatches: filterApplies && matchedRowCount === 0,
       statusMessage,
     };
-  }, [uploadedData, isFilterEnabled, filterConditions, filterJoiner]);
+  }, [uploadedData, isFilterEnabled, filterGroup]);
 
   useEffect(() => {
     if (!uploadedData || !dataId) {
@@ -844,9 +854,7 @@ export default function ValidationPage() {
   const handleFilterToggle = (enabled: boolean) => {
     setIsFilterEnabled(enabled);
     if (!enabled) {
-      // Reset to single empty condition when disabling
-      setFilterConditions([createEmptyFilterCondition()]);
-      setFilterJoiner(DEFAULT_SUBSAMPLE_FILTER_JOINER);
+      setFilterGroup(createEmptyGroup());
     }
   };
 
@@ -1020,10 +1028,8 @@ export default function ValidationPage() {
                 isEnabled={isFilterEnabled}
                 onToggle={handleFilterToggle}
                 columns={availableColumns}
-                conditions={filterConditions}
-                onConditionsChange={setFilterConditions}
-                joiner={filterJoiner}
-                onJoinerChange={setFilterJoiner}
+                rootGroup={filterGroup}
+                onRootGroupChange={setFilterGroup}
                 matchedRowCount={filterEvaluation.displayMatchedRowCount}
                 totalRowCount={filterEvaluation.totalRowCount}
                 statusMessage={filterEvaluation.statusMessage}
