@@ -1,4 +1,10 @@
-import type { ReactNode } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+} from "react";
 import {
   FaArrowDown,
   FaArrowUp,
@@ -39,6 +45,11 @@ type SubsampleFilterProps = {
 };
 
 const numberFormatter = new Intl.NumberFormat();
+
+const isBrowser = typeof window !== "undefined";
+const useIsomorphicLayoutEffect = isBrowser ? useLayoutEffect : useEffect;
+const SWAP_ANIMATION_DURATION_MS = 180;
+const SWAP_ANIMATION_EASING = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 const iconButtonBaseClasses =
   "inline-flex items-center justify-center rounded-md border border-transparent bg-transparent p-2 text-secondary transition-colors hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-40 disabled:hover:text-secondary";
@@ -148,6 +159,106 @@ const GroupEditor = ({
   onRemove,
   isRoot = false,
 }: GroupEditorProps) => {
+  const itemRefs = useRef(new Map<string, HTMLDivElement>());
+  const previousPositions = useRef(new Map<string, DOMRect>());
+  const animationFrameRef = useRef<number | null>(null);
+
+  const registerItem = useCallback(
+    (id: string, node: HTMLDivElement | null) => {
+      const map = itemRefs.current;
+      if (node) {
+        map.set(id, node);
+      } else {
+        map.delete(id);
+      }
+    },
+    [],
+  );
+
+  useIsomorphicLayoutEffect(() => {
+    if (!isBrowser) {
+      return undefined;
+    }
+
+    const movingItems: Array<{
+      element: HTMLDivElement;
+      onTransitionEnd: (event: TransitionEvent) => void;
+    }> = [];
+    const nextPositions = new Map<string, DOMRect>();
+
+    group.children.forEach((child) => {
+      const element = itemRefs.current.get(child.id);
+      if (!element) {
+        return;
+      }
+
+      const rect = element.getBoundingClientRect();
+      nextPositions.set(child.id, rect);
+
+      const previousRect = previousPositions.current.get(child.id);
+      if (!previousRect) {
+        return;
+      }
+
+      const deltaY = previousRect.top - rect.top;
+      if (deltaY === 0) {
+        return;
+      }
+
+      element.style.transition = "none";
+      element.style.transform = `translateY(${deltaY}px)`;
+      element.style.zIndex = deltaY > 0 ? "20" : "10";
+      element.style.willChange = "transform";
+
+      const handleTransitionEnd = (event: TransitionEvent) => {
+        if (event.propertyName !== "transform") {
+          return;
+        }
+
+        element.style.transition = "";
+        element.style.transform = "";
+        element.style.zIndex = "";
+        element.style.willChange = "";
+        element.removeEventListener("transitionend", handleTransitionEnd);
+      };
+
+      movingItems.push({
+        element,
+        onTransitionEnd: handleTransitionEnd,
+      });
+    });
+
+    previousPositions.current = nextPositions;
+
+    if (movingItems.length === 0) {
+      return undefined;
+    }
+
+    animationFrameRef.current = window.requestAnimationFrame(() => {
+      animationFrameRef.current = null;
+      movingItems.forEach(({ element, onTransitionEnd }) => {
+        element.addEventListener("transitionend", onTransitionEnd);
+        element.style.transition = `transform ${SWAP_ANIMATION_DURATION_MS}ms ${SWAP_ANIMATION_EASING}`;
+        element.style.transform = "translateY(0)";
+      });
+    });
+
+    return () => {
+      if (animationFrameRef.current !== null) {
+        window.cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+
+      movingItems.forEach(({ element, onTransitionEnd }) => {
+        element.removeEventListener("transitionend", onTransitionEnd);
+        element.style.transition = "";
+        element.style.transform = "";
+        element.style.zIndex = "";
+        element.style.willChange = "";
+      });
+    };
+  }, [group.children]);
+
   const handleJoinerChange = (joiner: SubsampleFilterJoiner) => {
     if (joiner === group.joiner) {
       return;
@@ -279,7 +390,11 @@ const GroupEditor = ({
           }`;
 
           return (
-            <div key={child.id} className="space-y-3">
+            <div
+              key={child.id}
+              ref={(node) => registerItem(child.id, node)}
+              className="relative space-y-3"
+            >
               <div
                 className={`rounded-lg border border-dashed border-gray-200 p-4 dark:border-gray-700 ${
                   child.type === "condition" ? "relative pr-12" : ""
