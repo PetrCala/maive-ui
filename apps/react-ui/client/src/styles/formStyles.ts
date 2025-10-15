@@ -38,7 +38,7 @@ export const getToggleButtonClasses = (
 ): string => {
   const sizeClass = BUTTON_SIZE_CLASSES[size];
   const stateClasses = active
-    ? "bg-primary text-white"
+    ? "bg-blue-600 text-white hover:bg-blue-700"
     : "bg-gray-100 dark:bg-gray-800 text-secondary hover:bg-gray-200 dark:hover:bg-gray-700";
 
   return `${TOGGLE_BUTTON_BASE_CLASSES} ${sizeClass} ${stateClasses}`;

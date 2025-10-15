@@ -212,11 +212,7 @@ export default function SubsampleFilter({
               <div className="flex items-start gap-2">
                 <div className="flex-1">
                   <ConditionFields
-                    label={
-                      conditions.length === 1
-                        ? TEXT.validation.subsampleFilter.conditionALabel
-                        : `Condition ${index + 1}`
-                    }
+                    label={`Condition ${index + 1}`}
                     condition={condition}
                     onChange={(newCondition) =>
                       handleConditionChange(index, newCondition)
@@ -276,7 +272,7 @@ export default function SubsampleFilter({
               onClick={handleAddCondition}
               className={SECONDARY_BUTTON_CLASSES}
             >
-              {TEXT.validation.subsampleFilter.addCondition}
+              Add Condition {conditions.length + 1}
             </button>
           </div>
         </div>
