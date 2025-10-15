@@ -291,7 +291,9 @@ const GroupEditor = ({
                       type="button"
                       className={`${iconButtonBaseClasses} absolute right-2 top-2 text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300`}
                       onClick={() => handleRemoveChild(index)}
-                      aria-label={TEXT.validation.subsampleFilter.removeCondition}
+                      aria-label={
+                        TEXT.validation.subsampleFilter.removeCondition
+                      }
                     >
                       <FaTimes className="h-4 w-4" />
                     </button>
@@ -337,7 +339,6 @@ const GroupEditor = ({
                     <FaArrowDown className="h-4 w-4" />
                   </button>
                 </div>
-
               </div>
 
               {!isLast ? (
