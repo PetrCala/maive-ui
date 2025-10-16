@@ -30,6 +30,8 @@ type ResultsTextContent = typeof TEXT.results;
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
+const isBoolean = (value: unknown): value is boolean => typeof value === "boolean";
+
 const formatValue = (value: unknown, decimals = 4): string => {
   if (!isFiniteNumber(value)) {
     return "NA";
@@ -114,6 +116,25 @@ export const generateResultsData = (
       : resultsText.diagnosticTests.metrics.firstStageFTest.label;
   const firstStageFStatisticLabel =
     results.firstStage?.fStatisticLabel ?? firstStageLabelDefault;
+  const hausmanStatisticValue = isFiniteNumber(results.hausmanTest.statistic)
+    ? results.hausmanTest.statistic
+    : "NA";
+  const hausmanCriticalValue = isFiniteNumber(results.hausmanTest.criticalValue)
+    ? results.hausmanTest.criticalValue
+    : "NA";
+  const hausmanRejectsNull =
+    hausmanStatisticValue !== "NA" && isBoolean(results.hausmanTest.rejectsNull)
+      ? results.hausmanTest.rejectsNull
+      : null;
+  const firstStageFTestValue =
+    results.firstStageFTest !== "NA" && isFiniteNumber(results.firstStageFTest)
+      ? results.firstStageFTest
+      : "NA";
+  const firstStageFTestNumericValue =
+    typeof firstStageFTestValue === "number" ? firstStageFTestValue : null;
+  const hasFirstStageFTestResult = firstStageFTestNumericValue !== null;
+  const isFirstStageFTestStrong =
+    firstStageFTestNumericValue !== null && firstStageFTestNumericValue >= 10;
 
   // Core results
   const coreResults: ResultItem[] = [
@@ -183,19 +204,25 @@ export const generateResultsData = (
     },
     {
       label: resultsText.diagnosticTests.metrics.hausmanTest.label,
-      value: results.hausmanTest.statistic,
+      value: hausmanStatisticValue,
       show: shouldShowHausman,
-      highlightColor: results.hausmanTest.rejectsNull
-        ? "text-green-600"
-        : "text-red-600",
-      extraText: results.hausmanTest.rejectsNull
-        ? " (Rejects Null)"
-        : " (Fails to Reject Null)",
+      highlightColor:
+        hausmanRejectsNull === null
+          ? undefined
+          : hausmanRejectsNull
+            ? "text-green-600"
+            : "text-red-600",
+      extraText:
+        hausmanRejectsNull === null
+          ? undefined
+          : hausmanRejectsNull
+            ? " (Rejects Null)"
+            : " (Fails to Reject Null)",
       section: "tests",
     },
     {
       label: resultsText.diagnosticTests.metrics.hausmanCriticalValue.label,
-      value: results.hausmanTest.criticalValue,
+      value: hausmanCriticalValue,
       show: shouldShowHausman,
       section: "tests",
     },
@@ -207,16 +234,20 @@ export const generateResultsData = (
     },
     {
       label: firstStageFStatisticLabel,
-      value: results.firstStageFTest !== "NA" ? results.firstStageFTest : "NA",
-      show: isInstrumented && results.firstStageFTest !== "NA",
+      value: firstStageFTestValue,
+      show: isInstrumented && hasFirstStageFTestResult,
       highlightColor:
-        results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
-          ? "text-green-600"
-          : "text-red-600",
+        hasFirstStageFTestResult
+          ? isFirstStageFTestStrong
+            ? "text-green-600"
+            : "text-red-600"
+          : undefined,
       extraText:
-        results.firstStageFTest !== "NA" && results.firstStageFTest >= 10
-          ? " (Strong)"
-          : " (Weak)",
+        hasFirstStageFTestResult
+          ? isFirstStageFTestStrong
+            ? " (Strong)"
+            : " (Weak)"
+          : undefined,
       section: "tests",
     },
   ];
