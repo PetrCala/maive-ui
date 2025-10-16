@@ -149,6 +149,7 @@ type GroupEditorProps = {
   columns: string[];
   onChange: (group: SubsampleFilterGroupNode) => void;
   onRemove?: () => void;
+  onRootEmpty?: () => void;
   isRoot?: boolean;
 };
 
@@ -157,6 +158,7 @@ const GroupEditor = ({
   columns,
   onChange,
   onRemove,
+  onRootEmpty,
   isRoot = false,
 }: GroupEditorProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -297,6 +299,7 @@ const GroupEditor = ({
 
     if (nextChildren.length === 0) {
       if (isRoot) {
+        onRootEmpty?.();
         onChange({
           ...group,
           children: [createEmptyCondition()],
@@ -564,6 +567,7 @@ export default function SubsampleFilter({
           group={rootGroup}
           columns={columns}
           onChange={onRootGroupChange}
+          onRootEmpty={() => onToggle(false)}
           isRoot
         />
       ) : null}
