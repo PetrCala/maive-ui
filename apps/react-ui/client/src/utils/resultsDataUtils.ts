@@ -30,7 +30,8 @@ type ResultsTextContent = typeof TEXT.results;
 const isFiniteNumber = (value: unknown): value is number =>
   typeof value === "number" && Number.isFinite(value);
 
-const isBoolean = (value: unknown): value is boolean => typeof value === "boolean";
+const isBoolean = (value: unknown): value is boolean =>
+  typeof value === "boolean";
 
 const formatValue = (value: unknown, decimals = 4): string => {
   if (!isFiniteNumber(value)) {
@@ -236,18 +237,16 @@ export const generateResultsData = (
       label: firstStageFStatisticLabel,
       value: firstStageFTestValue,
       show: isInstrumented && hasFirstStageFTestResult,
-      highlightColor:
-        hasFirstStageFTestResult
-          ? isFirstStageFTestStrong
-            ? "text-green-600"
-            : "text-red-600"
-          : undefined,
-      extraText:
-        hasFirstStageFTestResult
-          ? isFirstStageFTestStrong
-            ? " (Strong)"
-            : " (Weak)"
-          : undefined,
+      highlightColor: hasFirstStageFTestResult
+        ? isFirstStageFTestStrong
+          ? "text-green-600"
+          : "text-red-600"
+        : undefined,
+      extraText: hasFirstStageFTestResult
+        ? isFirstStageFTestStrong
+          ? " (Strong)"
+          : " (Weak)"
+        : undefined,
       section: "tests",
     },
   ];
