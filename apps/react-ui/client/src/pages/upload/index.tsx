@@ -178,6 +178,10 @@ export default function UploadPage() {
                   ),
                 )}
               </ul>
+              <p className="text-muted text-sm mt-4 italic">
+                Your data is processed locally in your browser and never stored
+                on our servers.
+              </p>
             </div>
 
             <form
