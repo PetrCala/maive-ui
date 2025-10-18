@@ -298,7 +298,7 @@ run_maive_model <- function(data, parameters) {
 
   est <- maive_res$beta
   se <- maive_res$SE
-  est_is_significant <- if (se > 0) est / se >= 1.96 else TRUE
+  est_is_significant <- if (se > 0) abs(est / se) >= 1.96 else TRUE
 
   pub_bias_p_value <- maive_res[["pub bias p-value"]]
   pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
