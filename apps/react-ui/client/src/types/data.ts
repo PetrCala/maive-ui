@@ -53,6 +53,12 @@ type DataInfo = {
   hasStudyId: boolean;
   studyCount?: number;
   medianObservationsPerStudy?: number;
+  subsampleFilter?: {
+    summary: string;
+    rowSummary?: string;
+    matchedRowCount?: number;
+    totalRowCount?: number;
+  };
 };
 
 export default DataArray;

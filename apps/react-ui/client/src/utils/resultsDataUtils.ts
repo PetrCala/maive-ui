@@ -320,6 +320,25 @@ export const generateResultsData = (
         section: "runInfo",
       });
     }
+
+    if (dataInfo.subsampleFilter?.summary) {
+      runInfo.push({
+        label: "Subsample Filter",
+        value: dataInfo.subsampleFilter.summary,
+        show: true,
+        section: "runInfo",
+      });
+    }
+
+    const filterRowSummary = dataInfo.subsampleFilter?.rowSummary;
+    if (filterRowSummary) {
+      runInfo.push({
+        label: "Rows Matching Filter",
+        value: filterRowSummary,
+        show: true,
+        section: "runInfo",
+      });
+    }
   }
 
   return {

@@ -3,6 +3,11 @@
 import { dataCache } from "@store/dataStore";
 import { hasStudyIdColumn } from "./dataUtils";
 import type { DataInfo } from "@src/types/data";
+import {
+  formatFilterRowSummary,
+  formatFilterSummary,
+  normalizeFilterState,
+} from "@src/utils/subsampleFilterUtils";
 
 /**
  * Generate data info from dataId
@@ -62,11 +67,28 @@ export const generateDataInfo = (
     }
   }
 
+  const normalizedFilter = normalizeFilterState(data.subsampleFilter);
+  const filterSummary = normalizedFilter?.isEnabled
+    ? formatFilterSummary(normalizedFilter)
+    : "";
+  const filterRowSummary = normalizedFilter?.isEnabled
+    ? formatFilterRowSummary(normalizedFilter)
+    : "";
+
   return {
     filename: data.filename ?? "Unknown",
     rowCount: data.data.length ?? 0,
     hasStudyId,
     studyCount,
     medianObservationsPerStudy,
+    subsampleFilter:
+      normalizedFilter?.isEnabled && filterSummary
+        ? {
+            summary: filterSummary,
+            rowSummary: filterRowSummary || undefined,
+            matchedRowCount: normalizedFilter.matchedRowCount,
+            totalRowCount: normalizedFilter.totalRowCount,
+          }
+        : undefined,
   };
 };

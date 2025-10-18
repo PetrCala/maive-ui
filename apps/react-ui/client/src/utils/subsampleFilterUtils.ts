@@ -324,3 +324,68 @@ export const convertLegacyFilterState = (
     totalRowCount: legacyState.totalRowCount,
   };
 };
+
+const isObject = (value: unknown): value is Record<string, unknown> => {
+  return Boolean(value) && typeof value === "object";
+};
+
+export const isLegacyFilterState = (
+  filter: unknown,
+): filter is LegacySubsampleFilterState => {
+  return (
+    isObject(filter) &&
+    Array.isArray((filter as { conditions?: unknown }).conditions)
+  );
+};
+
+export const isModernFilterState = (
+  filter: unknown,
+): filter is SubsampleFilterState => {
+  return isObject(filter) && "rootGroup" in filter;
+};
+
+export const normalizeFilterState = (
+  filter: unknown,
+): SubsampleFilterState | null => {
+  if (!filter) {
+    return null;
+  }
+
+  if (isModernFilterState(filter)) {
+    return filter;
+  }
+
+  if (isLegacyFilterState(filter)) {
+    return convertLegacyFilterState(filter);
+  }
+
+  return null;
+};
+
+const defaultNumberFormatter = new Intl.NumberFormat();
+
+export const formatFilterRowSummary = (
+  filter?: SubsampleFilterState | null,
+  formatter: Intl.NumberFormat = defaultNumberFormatter,
+): string => {
+  if (!filter?.isEnabled) {
+    return "";
+  }
+
+  const { matchedRowCount, totalRowCount } = filter;
+
+  if (
+    typeof matchedRowCount !== "number" ||
+    typeof totalRowCount !== "number" ||
+    totalRowCount < 0
+  ) {
+    return "";
+  }
+
+  if (totalRowCount === 0) {
+    return `${formatter.format(0)} / ${formatter.format(0)} (0.0%)`;
+  }
+
+  const percentage = Math.round((matchedRowCount / totalRowCount) * 1000) / 10;
+  return `${formatter.format(matchedRowCount)} / ${formatter.format(totalRowCount)} (${percentage.toFixed(1)}%)`;
+};
