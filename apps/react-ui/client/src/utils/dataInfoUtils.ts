@@ -10,9 +10,7 @@ import {
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 
-const buildDataInfoFromUploadedData = (
-  data: UploadedData,
-): DataInfo => {
+const buildDataInfoFromUploadedData = (data: UploadedData): DataInfo => {
   const hasStudyId = hasStudyIdColumn(data.data);
   let studyCount: number | undefined;
   let medianObservationsPerStudy: number | undefined;
