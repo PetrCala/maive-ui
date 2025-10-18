@@ -1,6 +1,7 @@
 "use client";
 
 import { dataCache } from "@store/dataStore";
+import type { UploadedData } from "@store/dataStore";
 import { hasStudyIdColumn } from "./dataUtils";
 import type { DataInfo } from "@src/types/data";
 import {
@@ -9,21 +10,9 @@ import {
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 
-/**
- * Generate data info from dataId
- */
-export const generateDataInfo = (
-  dataId: string | null,
-): DataInfo | undefined => {
-  if (!dataId) {
-    return undefined;
-  }
-
-  const data = dataCache.get(dataId);
-  if (!data) {
-    return undefined;
-  }
-
+const buildDataInfoFromUploadedData = (
+  data: UploadedData,
+): DataInfo => {
   const hasStudyId = hasStudyIdColumn(data.data);
   let studyCount: number | undefined;
   let medianObservationsPerStudy: number | undefined;
@@ -67,6 +56,9 @@ export const generateDataInfo = (
     }
   }
 
+  const filename = data.filename ?? "Unknown";
+  const rowCount = data.data.length ?? 0;
+
   const normalizedFilter = normalizeFilterState(data.subsampleFilter);
   const filterSummary = normalizedFilter?.isEnabled
     ? formatFilterSummary(normalizedFilter)
@@ -76,8 +68,8 @@ export const generateDataInfo = (
     : "";
 
   return {
-    filename: data.filename ?? "Unknown",
-    rowCount: data.data.length ?? 0,
+    filename,
+    rowCount,
     hasStudyId,
     studyCount,
     medianObservationsPerStudy,
@@ -91,4 +83,36 @@ export const generateDataInfo = (
           }
         : undefined,
   };
+};
+
+/**
+ * Generate data info from cached uploaded data by its identifier.
+ */
+export const generateDataInfo = (
+  dataId: string | null,
+): DataInfo | undefined => {
+  if (!dataId) {
+    return undefined;
+  }
+
+  const data = dataCache.get(dataId);
+  if (!data) {
+    return undefined;
+  }
+
+  return buildDataInfoFromUploadedData(data);
+};
+
+/**
+ * Generate data info from an uploaded data reference without relying on cache lookups.
+ * Useful when the caller already has the uploaded data (e.g., during export actions).
+ */
+export const deriveDataInfoFromUploadedData = (
+  data: UploadedData | null | undefined,
+): DataInfo | undefined => {
+  if (!data) {
+    return undefined;
+  }
+
+  return buildDataInfoFromUploadedData(data);
 };

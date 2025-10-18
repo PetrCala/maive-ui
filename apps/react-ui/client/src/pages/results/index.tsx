@@ -15,7 +15,10 @@ import {
   exportComprehensiveResults,
   downloadImageAsJpg,
 } from "@utils/dataUtils";
-import { generateDataInfo } from "@utils/dataInfoUtils";
+import {
+  deriveDataInfoFromUploadedData,
+  generateDataInfo,
+} from "@utils/dataInfoUtils";
 import type { ModelParameters, ModelResults } from "@src/types";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
@@ -117,7 +120,13 @@ export default function ResultsPage() {
   }, [normalizedFilterState, numberFormatter]);
 
   // Memoize dataInfo to prevent expensive recalculations on every render
-  const dataInfo = useMemo(() => generateDataInfo(dataId), [dataId]);
+  const dataInfo = useMemo(() => {
+    if (uploadedData) {
+      return deriveDataInfoFromUploadedData(uploadedData);
+    }
+
+    return generateDataInfo(dataId);
+  }, [uploadedData, dataId]);
 
   const resultsText = useMemo(
     () =>
