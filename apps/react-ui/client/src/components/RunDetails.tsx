@@ -84,6 +84,25 @@ export default function RunDetails({
             : "N/A",
           show: dataInfo.medianObservationsPerStudy !== undefined,
         },
+        ...(dataInfo.subsampleFilter?.summary
+          ? [
+              {
+                label: "Subsample Filter",
+                value: dataInfo.subsampleFilter.summary,
+                show: true,
+                tooltip: dataInfo.subsampleFilter.summary,
+              } satisfies DetailItem,
+            ]
+          : []),
+        ...(dataInfo.subsampleFilter?.rowSummary
+          ? [
+              {
+                label: "Rows Matching Filter",
+                value: dataInfo.subsampleFilter.rowSummary,
+                show: true,
+              } satisfies DetailItem,
+            ]
+          : []),
       ]
     : [];
 

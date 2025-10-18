@@ -16,12 +16,7 @@ import {
   downloadImageAsJpg,
 } from "@utils/dataUtils";
 import { generateDataInfo } from "@utils/dataInfoUtils";
-import type {
-  LegacySubsampleFilterState,
-  ModelParameters,
-  ModelResults,
-  SubsampleFilterState,
-} from "@src/types";
+import type { ModelParameters, ModelResults } from "@src/types";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
@@ -29,8 +24,9 @@ import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import Alert from "@src/components/Alert";
 import {
-  convertLegacyFilterState,
+  formatFilterRowSummary,
   formatFilterSummary,
+  normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 import {
   FaInfoCircle,
@@ -41,26 +37,6 @@ import {
   FaChartLine,
   FaPlay,
 } from "react-icons/fa";
-
-const isLegacyFilterState = (
-  filter: unknown,
-): filter is LegacySubsampleFilterState => {
-  return (
-    Boolean(filter) &&
-    typeof filter === "object" &&
-    Array.isArray((filter as { conditions?: unknown }).conditions)
-  );
-};
-
-const isModernFilterState = (
-  filter: unknown,
-): filter is SubsampleFilterState => {
-  return (
-    Boolean(filter) &&
-    typeof filter === "object" &&
-    "rootGroup" in (filter as Record<string, unknown>)
-  );
-};
 
 export default function ResultsPage() {
   const searchParams = useSearchParams();
@@ -115,21 +91,7 @@ export default function ResultsPage() {
   const numberFormatter = useMemo(() => new Intl.NumberFormat(), []);
 
   const normalizedFilterState = useMemo(() => {
-    const filterState = uploadedData?.subsampleFilter;
-
-    if (!filterState) {
-      return null;
-    }
-
-    if (isModernFilterState(filterState)) {
-      return filterState;
-    }
-
-    if (isLegacyFilterState(filterState)) {
-      return convertLegacyFilterState(filterState);
-    }
-
-    return null;
+    return normalizeFilterState(uploadedData?.subsampleFilter);
   }, [uploadedData]);
 
   const activeFilterSummary = useMemo(() => {
@@ -137,7 +99,8 @@ export default function ResultsPage() {
       return null;
     }
 
-    return formatFilterSummary(normalizedFilterState);
+    const summary = formatFilterSummary(normalizedFilterState);
+    return summary || null;
   }, [normalizedFilterState]);
 
   const activeFilterRowSummary = useMemo(() => {
@@ -145,22 +108,12 @@ export default function ResultsPage() {
       return null;
     }
 
-    const { matchedRowCount, totalRowCount } = normalizedFilterState;
+    const rowSummary = formatFilterRowSummary(
+      normalizedFilterState,
+      numberFormatter,
+    );
 
-    if (
-      typeof matchedRowCount !== "number" ||
-      typeof totalRowCount !== "number"
-    ) {
-      return null;
-    }
-
-    if (totalRowCount === 0) {
-      return `${numberFormatter.format(0)} / ${numberFormatter.format(0)} (0.0%)`;
-    }
-
-    const percentage =
-      Math.round((matchedRowCount / totalRowCount) * 1000) / 10;
-    return `${numberFormatter.format(matchedRowCount)} / ${numberFormatter.format(totalRowCount)} (${percentage.toFixed(1)}%)`;
+    return rowSummary || null;
   }, [normalizedFilterState, numberFormatter]);
 
   // Memoize dataInfo to prevent expensive recalculations on every render
