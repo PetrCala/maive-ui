@@ -163,6 +163,9 @@ export default function UploadPage() {
             />
             <div className="mb-6">
               <p className="text-secondary mb-2">{TEXT.upload.description}</p>
+              <p className="text-secondary mb-4">
+                We do not store your uploaded data and cannot access its contents.
+              </p>
               <ul className="custom-bullet-list text-secondary">
                 {Object.values(TEXT.upload.requirements).map(
                   (requirement, index) => (
