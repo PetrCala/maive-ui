@@ -1,3 +1,5 @@
+import { createElement } from "react";
+
 import CONST from "@src/CONST";
 import type { ModelParameters } from "@src/types";
 
@@ -357,8 +359,21 @@ const TEXT = {
   },
   waive: {
     dropdownLabel: "WAIVE (Experimental)",
-    helpText:
-      "WAIVE downweights likely p-hacked estimates using smooth exponential-decay weights, extending MAIVE’s correction for spurious precision.",
+    helpText: createElement(
+      "span",
+      null,
+      "WAIVE downweights potentially p-hacked estimates using smooth exponential-decay weights, extending MAIVE’s correction for spurious precision. ",
+      createElement(
+        "a",
+        {
+          href: "https://meta-analysis.cz/waive_ottawa.pdf",
+          target: "_blank",
+          rel: "noopener noreferrer",
+          className: "underline",
+        },
+        "Details on WAIVE are available here."
+      )
+    ),
     cautionNote: "WAIVE is experimental. Interpretation should be cautious.",
     runInfoLabel: "Experimental model (WAIVE)",
     runInfoValue: "Active",
