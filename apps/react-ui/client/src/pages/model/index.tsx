@@ -131,7 +131,8 @@ export default function ModelPage() {
         parsed.shouldUseInstrumenting === false &&
         parsed.modelType !== CONST.MODEL_TYPES.WAIVE
       ) {
-        params.modelType = CONST.MODEL_TYPES.WLS;
+        params.modelType = CONST.MODEL_TYPES
+          .WLS as ModelParameters["modelType"];
       }
 
       if (params.modelType === CONST.MODEL_TYPES.WLS) {
@@ -181,8 +182,7 @@ export default function ModelPage() {
           lastInstrumentedWeightRef.current = prev.weight;
         }
 
-        const isSwitchingFromWls =
-          prev.modelType === CONST.MODEL_TYPES.WLS;
+        const isSwitchingFromWls = prev.modelType === CONST.MODEL_TYPES.WLS;
 
         if (nextModelType === CONST.MODEL_TYPES.WAIVE) {
           const restoredWeight =
