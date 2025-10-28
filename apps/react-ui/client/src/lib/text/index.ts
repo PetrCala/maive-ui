@@ -333,6 +333,7 @@ const TEXT = {
       label: "Winsorization (%)",
       tooltip:
         "Limits the impact of extreme outliers by clipping values at symmetric percentile bounds. Choose the winsorization percentage (0–5%) to apply to effect sizes and standard errors.",
+      selectedLabel: "Selected winsorization",
     },
     shouldUseInstrumenting: {
       label: "Use Instrumenting",

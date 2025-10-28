@@ -127,6 +127,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         max: 5,
         step: 0.5,
         formatValue: formatWinsorizationValue,
+        valueLabel: TEXT.model.winsorize.selectedLabel,
       },
       {
         key: "includeStudyDummies",

@@ -10,6 +10,7 @@ type SliderProps = {
   formatValue?: (value: number) => string;
   showValueLabel?: boolean;
   showBounds?: boolean;
+  valueLabel?: string;
   className?: string;
   name?: string;
   id?: string;
@@ -29,6 +30,7 @@ export default function Slider({
   formatValue = defaultFormatValue,
   showValueLabel = true,
   showBounds = true,
+  valueLabel = "Selected value",
   className = "",
   name,
   id,
@@ -42,15 +44,10 @@ export default function Slider({
     }
   };
  
-  const labelRowShouldRender = showValueLabel || showBounds;
-  const labelRowClasses = `flex items-center ${
-    showBounds ? "justify-between" : "justify-center"
-  } text-xs text-gray-600 dark:text-gray-400 gap-2`;
- 
   const formattedValue = formatValue(value);
   const formattedMin = formatValue(min);
   const formattedMax = formatValue(max);
- 
+
   const sliderClasses = [
     "w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600",
     disabled ? "opacity-60 cursor-not-allowed" : "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
@@ -60,16 +57,11 @@ export default function Slider({
     .join(" ");
  
   return (
-    <div className="space-y-2">
-      {labelRowShouldRender && (
-        <div className={labelRowClasses}>
-          {showBounds && <span>{formattedMin}</span>}
-          {showValueLabel && (
-            <span className="font-medium text-gray-900 dark:text-gray-100">
-              {formattedValue}
-            </span>
-          )}
-          {showBounds && <span>{formattedMax}</span>}
+    <div className="space-y-3">
+      {showBounds && (
+        <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+          <span>{formattedMin}</span>
+          <span>{formattedMax}</span>
         </div>
       )}
       <input
@@ -87,8 +79,17 @@ export default function Slider({
         aria-valuemin={min}
         aria-valuemax={max}
         aria-valuenow={value}
+        aria-valuetext={formattedValue}
         className={sliderClasses}
       />
+      {showValueLabel && (
+        <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
+          <span>{valueLabel}</span>
+          <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-sm font-medium text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+            {formattedValue}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

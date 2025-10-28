@@ -14,6 +14,7 @@ type SliderControlProps = {
   formatValue?: (value: number) => string;
   showValueLabel?: boolean;
   showBounds?: boolean;
+  valueLabel?: string;
 };
 
 export default function SliderControl({
@@ -28,9 +29,10 @@ export default function SliderControl({
   formatValue,
   showValueLabel,
   showBounds,
+  valueLabel,
 }: SliderControlProps) {
   const formatter = formatValue ?? ((val: number) => val.toString());
- 
+
   return (
     <OptionWrapper label={label} className={className}>
       {disabled ? (
@@ -47,6 +49,7 @@ export default function SliderControl({
           formatValue={formatter}
           showValueLabel={showValueLabel}
           showBounds={showBounds}
+          valueLabel={valueLabel}
           ariaLabel={label}
         />
       )}
