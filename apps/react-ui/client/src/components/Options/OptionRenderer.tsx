@@ -1,5 +1,9 @@
 import React from "react";
-import { YesNoSelect, DropdownSelect } from "@src/components/Options";
+import {
+  YesNoSelect,
+  DropdownSelect,
+  SliderControl,
+} from "@src/components/Options";
 import Tooltip from "@src/components/Tooltip";
 import Alert from "@src/components/Alert";
 import type { OptionConfig } from "@src/types/options";
@@ -13,7 +17,10 @@ type OptionRendererProps = {
   option: OptionConfig;
   value: ModelParameters[keyof ModelParameters];
   parameters: ModelParameters;
-  onChange: (key: keyof ModelParameters, value: string | boolean) => void;
+  onChange: (
+    key: keyof ModelParameters,
+    value: string | boolean | number,
+  ) => void;
   tooltipsEnabled?: boolean;
 };
 
@@ -24,7 +31,7 @@ export default function OptionRenderer({
   onChange,
   tooltipsEnabled = true,
 }: OptionRendererProps) {
-  const handleChange = (newValue: string | boolean) => {
+  const handleChange = (newValue: string | boolean | number) => {
     onChange(option.key, newValue);
   };
 
@@ -33,6 +40,10 @@ export default function OptionRenderer({
   };
 
   const handleStringChange = (newValue: string) => {
+    handleChange(newValue);
+  };
+
+  const handleNumberChange = (newValue: number) => {
     handleChange(newValue);
   };
 
@@ -111,6 +122,25 @@ export default function OptionRenderer({
           />
         );
       }
+      case "slider":
+        if (typeof value !== "number") {
+          return null;
+        }
+        return (
+          <SliderControl
+            label={optionLabel}
+            value={value}
+            onChange={handleNumberChange}
+            min={option.min}
+            max={option.max}
+            step={option.step}
+            className={option.className}
+            disabled={option.disabled}
+            formatValue={option.formatValue}
+            showValueLabel={option.showValueLabel}
+            showBounds={option.showBounds}
+          />
+        );
       default:
         return null;
     }

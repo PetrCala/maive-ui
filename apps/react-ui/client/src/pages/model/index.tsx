@@ -166,7 +166,7 @@ export default function ModelPage() {
 
   const handleParameterChange = (
     param: keyof ModelParameters,
-    value: string | boolean,
+    value: string | boolean | number,
   ) => {
     setParameters((prev) => {
       const wasShowingAndersonRubin = shouldShowAndersonRubinOption(prev);

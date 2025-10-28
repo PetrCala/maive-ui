@@ -6,6 +6,14 @@ import type { ModelParameters } from "@src/types/api";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import type { DataArray } from "@src/types";
 
+const winsorizationFormatter = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
+const formatWinsorizationValue = (value: number) =>
+  `${winsorizationFormatter.format(value)}%`;
+
 export const modelOptionsConfig: ModelOptionsConfig = {
   basic: {
     bottomText: TEXT.model.basicOptions.bottomText,
@@ -118,7 +126,11 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         key: "winsorize",
         label: TEXT.model.winsorize.label,
         tooltip: TEXT.model.winsorize.tooltip,
-        type: "yesno",
+        type: "slider",
+        min: 0,
+        max: 5,
+        step: 0.5,
+        formatValue: formatWinsorizationValue,
       },
       {
         key: "includeStudyDummies",

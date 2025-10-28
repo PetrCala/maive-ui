@@ -34,7 +34,6 @@ export type BaseOptionConfig = {
   key: keyof ModelParameters;
   label: string;
   tooltip: string;
-  type: "yesno" | "dropdown";
   disabled?: boolean;
   className?: string;
   warnings?: OptionWarning[];
@@ -55,8 +54,21 @@ export type DropdownOptionConfig = {
   }>;
 } & BaseOptionConfig;
 
+export type SliderOptionConfig = {
+  type: "slider";
+  min: number;
+  max: number;
+  step?: number;
+  formatValue?: (value: number) => string;
+  showValueLabel?: boolean;
+  showBounds?: boolean;
+} & BaseOptionConfig;
+
 // Union type for all option configurations
-export type OptionConfig = YesNoOptionConfig | DropdownOptionConfig;
+export type OptionConfig =
+  | YesNoOptionConfig
+  | DropdownOptionConfig
+  | SliderOptionConfig;
 
 // Option section configuration
 export type OptionSectionConfig = {

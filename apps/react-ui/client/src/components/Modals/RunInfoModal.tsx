@@ -24,6 +24,11 @@ type RunInfoModalProps = {
   resultsText: ResultsTextContent;
 };
 
+const winsorizationFormatter = new Intl.NumberFormat(undefined, {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+});
+
 export default function RunInfoModal({
   isOpen,
   onClose,
@@ -51,8 +56,15 @@ export default function RunInfoModal({
       case "computeAndersonRubin":
       case "shouldUseInstrumenting":
       case "useLogFirstStage":
-      case "winsorize":
         return value ? "Yes" : "No";
+      case "winsorize": {
+        const numericValue =
+          typeof value === "number" ? value : Number(value ?? 0);
+        if (Number.isNaN(numericValue)) {
+          return String(value);
+        }
+        return `${winsorizationFormatter.format(numericValue)}%`;
+      }
       case "standardErrorTreatment":
         const seTreatment = value as string;
         const seOption = Object.values(CONST.STANDARD_ERROR_TREATMENTS).find(
