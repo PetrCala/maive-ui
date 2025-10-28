@@ -284,7 +284,7 @@ const TEXT = {
   model: {
     basicOptions: {
       bottomText:
-        "Note that selecting standard weights and no instrumenting in Advanced Options allows you to run classical PET, PEESE, PET-PEESE, and EK.",
+        "Note that selecting WLS in Model Type allows you to run classical PET, PEESE, PET-PEESE, and EK.",
     },
     modelType: {
       label: "Model Type",
@@ -293,6 +293,8 @@ const TEXT = {
           "MAIVE: Meta-Analysis Instrumental Variable Estimator (Irsova et al., 2025, Nat Comms)",
         WAIVE:
           "WAIVE (Experimental): Weighted Adjustment Instrumental Variable Estimator (still under construction; corrects more aggressively for p-hacking)",
+        WLS:
+          "Classical least squares meta-regression without istrumenting.",
       } satisfies Record<ModelParameters["modelType"], string>,
     },
     includeStudyDummies: {
@@ -339,7 +341,7 @@ const TEXT = {
     shouldUseInstrumenting: {
       label: "Use Instrumenting",
       tooltip:
-        "Whether to use instrumenting in the analysis. When “No” is chosen, you can estimate classical (non-MAIVE) versions of PET, PEESE, PET-PEESE, and EK.",
+        "Whether to use instrumenting in the analysis. Selecting the WLS model automatically turns instrumenting off so you can estimate classical (non-MAIVE) versions of PET, PEESE, PET-PEESE, and EK.",
       noInstrumentingInfo: {
         leading:
           "Without instrumenting, this run is not MAIVE. Please still cite ",

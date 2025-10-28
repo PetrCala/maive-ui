@@ -38,9 +38,11 @@ export default function ModelPage() {
   const andersonRubinUserChoiceRef = useRef<boolean>(
     CONFIG.DEFAULT_MODEL_PARAMETERS.computeAndersonRubin,
   );
-  const instrumentingUserChoiceRef = useRef<boolean>(
-    CONFIG.DEFAULT_MODEL_PARAMETERS.shouldUseInstrumenting,
+  const weightUserOverrideRef = useRef(false);
+  const lastInstrumentedWeightRef = useRef<ModelParameters["weight"]>(
+    CONFIG.DEFAULT_MODEL_PARAMETERS.weight,
   );
+  const autoSetWeightForWlsRef = useRef(false);
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
@@ -124,6 +126,31 @@ export default function ModelPage() {
         decodeURIComponent(searchParams.get("parameters") ?? "{}"),
       ) as Partial<ModelParameters>;
       const params = { ...parameters, ...parsed };
+
+      if (
+        parsed.shouldUseInstrumenting === false &&
+        parsed.modelType !== CONST.MODEL_TYPES.WAIVE
+      ) {
+        params.modelType = CONST.MODEL_TYPES.WLS;
+      }
+
+      if (params.modelType === CONST.MODEL_TYPES.WLS) {
+        params.shouldUseInstrumenting = false;
+      } else {
+        params.shouldUseInstrumenting = true;
+      }
+
+      if (
+        parsed.weight !== undefined &&
+        parsed.weight !== CONFIG.DEFAULT_MODEL_PARAMETERS.weight
+      ) {
+        weightUserOverrideRef.current = true;
+      }
+
+      if (params.shouldUseInstrumenting) {
+        lastInstrumentedWeightRef.current = params.weight;
+      }
+
       setParameters(params);
       searchParamsAppliedRef.current = true;
     }
@@ -150,16 +177,30 @@ export default function ModelPage() {
           andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
         }
 
+        if (prev.shouldUseInstrumenting) {
+          lastInstrumentedWeightRef.current = prev.weight;
+        }
+
+        const isSwitchingFromWls =
+          prev.modelType === CONST.MODEL_TYPES.WLS;
+
         if (nextModelType === CONST.MODEL_TYPES.WAIVE) {
-          instrumentingUserChoiceRef.current = prev.shouldUseInstrumenting;
+          const restoredWeight =
+            isSwitchingFromWls && autoSetWeightForWlsRef.current
+              ? lastInstrumentedWeightRef.current
+              : prev.weight;
+
+          autoSetWeightForWlsRef.current = false;
+          lastInstrumentedWeightRef.current = restoredWeight;
 
           const willShowAndersonRubin =
-            prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+            restoredWeight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
 
           return {
             ...prev,
             modelType: nextModelType,
             shouldUseInstrumenting: true,
+            weight: restoredWeight,
             computeAndersonRubin: willShowAndersonRubin
               ? andersonRubinUserChoiceRef.current
               : false,
@@ -167,35 +208,42 @@ export default function ModelPage() {
           };
         }
 
-        const restoredInstrumenting = instrumentingUserChoiceRef.current;
+        if (nextModelType === CONST.MODEL_TYPES.WLS) {
+          const shouldAutoSetWeight =
+            !weightUserOverrideRef.current ||
+            prev.weight === CONST.WEIGHT_OPTIONS.ADJUSTED_WEIGHTS.VALUE;
+
+          const nextWeight = shouldAutoSetWeight
+            ? CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE
+            : prev.weight;
+
+          autoSetWeightForWlsRef.current = shouldAutoSetWeight;
+
+          return {
+            ...prev,
+            modelType: nextModelType,
+            shouldUseInstrumenting: false,
+            weight: nextWeight,
+            computeAndersonRubin: false,
+          };
+        }
+
+        const restoredWeight =
+          isSwitchingFromWls && autoSetWeightForWlsRef.current
+            ? lastInstrumentedWeightRef.current
+            : prev.weight;
+
+        autoSetWeightForWlsRef.current = false;
+        lastInstrumentedWeightRef.current = restoredWeight;
+
         const willShowAndersonRubin =
-          restoredInstrumenting &&
-          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+          restoredWeight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
 
         return {
           ...prev,
           modelType: nextModelType,
-          shouldUseInstrumenting: restoredInstrumenting,
-          computeAndersonRubin: willShowAndersonRubin
-            ? andersonRubinUserChoiceRef.current
-            : false,
-        };
-      }
-
-      if (param === "shouldUseInstrumenting" && typeof value === "boolean") {
-        instrumentingUserChoiceRef.current = value;
-        const nextShouldUseInstrumenting = value;
-        const willShowAndersonRubin =
-          nextShouldUseInstrumenting &&
-          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
-
-        if (wasShowingAndersonRubin) {
-          andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
-        }
-
-        return {
-          ...prev,
-          shouldUseInstrumenting: nextShouldUseInstrumenting,
+          shouldUseInstrumenting: true,
+          weight: restoredWeight,
           computeAndersonRubin: willShowAndersonRubin
             ? andersonRubinUserChoiceRef.current
             : false,
@@ -207,12 +255,22 @@ export default function ModelPage() {
           return prev;
         }
 
+        if (!prev.shouldUseInstrumenting) {
+          autoSetWeightForWlsRef.current = false;
+        }
+
+        weightUserOverrideRef.current = true;
+
         const willShowAndersonRubin =
           prev.shouldUseInstrumenting &&
           value === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
 
         if (wasShowingAndersonRubin) {
           andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
+        }
+
+        if (prev.shouldUseInstrumenting) {
+          lastInstrumentedWeightRef.current = value;
         }
 
         return {
@@ -245,6 +303,9 @@ export default function ModelPage() {
         nextState.computeAndersonRubin = willShowAndersonRubin
           ? andersonRubinUserChoiceRef.current
           : false;
+      } else if (nextState.modelType === CONST.MODEL_TYPES.WLS) {
+        nextState.shouldUseInstrumenting = false;
+        nextState.computeAndersonRubin = false;
       }
 
       return nextState;
@@ -257,35 +318,79 @@ export default function ModelPage() {
   };
 
   useEffect(() => {
-    if (parameters.modelType !== CONST.MODEL_TYPES.WAIVE) {
-      instrumentingUserChoiceRef.current = parameters.shouldUseInstrumenting;
+    if (parameters.modelType === CONST.MODEL_TYPES.WAIVE) {
+      if (
+        parameters.shouldUseInstrumenting &&
+        parameters.maiveMethod === CONST.MAIVE_METHODS.PET_PEESE
+      ) {
+        return;
+      }
+
+      autoSetWeightForWlsRef.current = false;
+
+      setParameters((prev) => {
+        if (prev.modelType !== CONST.MODEL_TYPES.WAIVE) {
+          return prev;
+        }
+
+        const willShowAndersonRubin =
+          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+
+        return {
+          ...prev,
+          shouldUseInstrumenting: true,
+          maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
+          computeAndersonRubin: willShowAndersonRubin
+            ? andersonRubinUserChoiceRef.current
+            : false,
+        };
+      });
+
       return;
     }
 
     if (
-      parameters.shouldUseInstrumenting &&
-      parameters.maiveMethod === CONST.MAIVE_METHODS.PET_PEESE
+      parameters.modelType === CONST.MODEL_TYPES.WLS &&
+      parameters.shouldUseInstrumenting
     ) {
+      setParameters((prev) => {
+        if (prev.modelType !== CONST.MODEL_TYPES.WLS) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          shouldUseInstrumenting: false,
+          computeAndersonRubin: false,
+        };
+      });
+
       return;
     }
 
-    setParameters((prev) => {
-      if (prev.modelType !== CONST.MODEL_TYPES.WAIVE) {
-        return prev;
-      }
+    if (
+      parameters.modelType !== CONST.MODEL_TYPES.WLS &&
+      !parameters.shouldUseInstrumenting
+    ) {
+      autoSetWeightForWlsRef.current = false;
 
-      const willShowAndersonRubin =
-        prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+      setParameters((prev) => {
+        if (prev.modelType === CONST.MODEL_TYPES.WLS) {
+          return prev;
+        }
 
-      return {
-        ...prev,
-        shouldUseInstrumenting: true,
-        maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
-        computeAndersonRubin: willShowAndersonRubin
-          ? andersonRubinUserChoiceRef.current
-          : false,
-      };
-    });
+        const willShowAndersonRubin =
+          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+
+        return {
+          ...prev,
+          shouldUseInstrumenting: true,
+          computeAndersonRubin: willShowAndersonRubin
+            ? andersonRubinUserChoiceRef.current
+            : false,
+        };
+      });
+    }
   }, [parameters]);
 
   useEffect(() => {
@@ -391,10 +496,18 @@ export default function ModelPage() {
       return;
     }
 
+    autoSetWeightForWlsRef.current = true;
+
     setParameters((prev) => ({
       ...prev,
-      weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
+      weight: CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE,
     }));
+  }, [parameters.shouldUseInstrumenting, parameters.weight]);
+
+  useEffect(() => {
+    if (parameters.shouldUseInstrumenting) {
+      lastInstrumentedWeightRef.current = parameters.weight;
+    }
   }, [parameters.shouldUseInstrumenting, parameters.weight]);
 
   return (

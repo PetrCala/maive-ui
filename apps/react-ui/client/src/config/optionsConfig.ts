@@ -28,6 +28,10 @@ export const modelOptionsConfig: ModelOptionsConfig = {
                 },
               ]
             : []),
+          {
+            value: CONST.MODEL_TYPES.WLS,
+            label: CONST.MODEL_TYPES.WLS,
+          },
         ],
       },
       {
@@ -126,16 +130,6 @@ export const modelOptionsConfig: ModelOptionsConfig = {
             !hasStudyIdColumn(
               (context.uploadedData as { data: DataArray } | undefined)?.data,
             ),
-        },
-      },
-      {
-        key: "shouldUseInstrumenting",
-        label: TEXT.model.shouldUseInstrumenting.label,
-        tooltip: TEXT.model.shouldUseInstrumenting.tooltip,
-        type: "yesno",
-        visibility: {
-          hideIf: ({ parameters }) =>
-            parameters.modelType === CONST.MODEL_TYPES.WAIVE,
         },
       },
       {

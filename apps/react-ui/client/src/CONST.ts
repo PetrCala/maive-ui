@@ -24,6 +24,7 @@ const CONST = {
   MODEL_TYPES: {
     MAIVE: "MAIVE",
     WAIVE: "WAIVE",
+    WLS: "WLS",
   },
   MAIVE_METHODS: {
     PET: "PET",
