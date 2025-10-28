@@ -371,8 +371,8 @@ const TEXT = {
           rel: "noopener noreferrer",
           className: "underline",
         },
-        "Details on WAIVE are available here."
-      )
+        "Details on WAIVE are available here.",
+      ),
     ),
     cautionNote: "WAIVE is experimental. Interpretation should be cautious.",
     runInfoLabel: "Experimental model (WAIVE)",
