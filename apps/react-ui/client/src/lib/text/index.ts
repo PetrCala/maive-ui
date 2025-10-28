@@ -155,7 +155,7 @@ const RESULTS_TEXT: ResultsText = {
   funnelPlot: {
     title: "MAIVE-Adjusted Funnel Plot",
     tooltip:
-      "Scatter of effect sizes MAIVE-adjusted fitted precision.The plot includes 90%, 95%, and 99% confidence interval regions (shaded areas), with the solid line representing MAIVE fit. The MAIVE estimate is the intercept of the line with the horizontal axis.",
+      "Scatter of effect sizes against their MAIVE-adjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the MAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.",
   },
   activeFilterLabel: "Filter",
 };
