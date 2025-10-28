@@ -139,6 +139,7 @@ export default function OptionRenderer({
             formatValue={option.formatValue}
             showValueLabel={option.showValueLabel}
             showBounds={option.showBounds}
+            valueLabel={option.valueLabel}
           />
         );
       default:

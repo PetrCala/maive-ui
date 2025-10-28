@@ -62,6 +62,7 @@ export type SliderOptionConfig = {
   formatValue?: (value: number) => string;
   showValueLabel?: boolean;
   showBounds?: boolean;
+  valueLabel?: string;
 } & BaseOptionConfig;
 
 // Union type for all option configurations
