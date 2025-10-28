@@ -85,7 +85,7 @@ export default function Slider({
       {showValueLabel && (
         <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400">
           <span>{valueLabel}</span>
-          <span className="inline-flex items-center rounded-md bg-gray-100 px-2 py-1 text-sm font-medium text-gray-900 dark:bg-gray-800 dark:text-gray-100">
+          <span className="inline-flex items-center justify-center rounded-md bg-gray-100 px-2 py-1 text-sm font-medium text-gray-900 dark:bg-gray-800 dark:text-gray-100 min-w-[3.5rem]">
             {formattedValue}
           </span>
         </div>
