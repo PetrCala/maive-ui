@@ -43,19 +43,21 @@ export default function Slider({
       onChange(nextValue);
     }
   };
- 
+
   const formattedValue = formatValue(value);
   const formattedMin = formatValue(min);
   const formattedMax = formatValue(max);
 
   const sliderClasses = [
     "w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600",
-    disabled ? "opacity-60 cursor-not-allowed" : "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
+    disabled
+      ? "opacity-60 cursor-not-allowed"
+      : "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
     className,
   ]
     .filter(Boolean)
     .join(" ");
- 
+
   return (
     <div className="space-y-3">
       {showBounds && (
