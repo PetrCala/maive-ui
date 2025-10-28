@@ -8,9 +8,19 @@ library(metafor)
 source("funnel_plot.R")
 # nolint end: undesirable_function_linter.
 
-winsorize_1pct <- function(x) {
+winsorize_percent <- function(x, percent) {
   idx <- !is.na(x)
   n <- sum(idx)
+
+  if (
+    !is.numeric(percent) || length(percent) != 1 || is.na(percent) || percent <= 0
+  ) {
+    return(list(
+      values = x,
+      bounds = c(NA_real_, NA_real_),
+      clipped = c(0L, 0L)
+    ))
+  }
 
   if (n <= 1) {
     return(list(
@@ -20,7 +30,16 @@ winsorize_1pct <- function(x) {
     ))
   }
 
-  k <- max(1L, floor(0.01 * n))
+  k <- max(1L, floor((percent / 100) * n))
+
+  if (k >= n) {
+    return(list(
+      values = x,
+      bounds = c(NA_real_, NA_real_),
+      clipped = c(0L, 0L)
+    ))
+  }
+
   probs <- sort(c(k / n, 1 - k / n))
   qs <- as.numeric(stats::quantile(x[idx], probs = probs, type = 7, names = FALSE))
 
@@ -97,10 +116,22 @@ run_maive_model <- function(data, parameters) {
 
   df <- df[rowSums(is.na(df)) != ncol(df), ]
 
-  if (isTRUE(params$winsorize)) {
-    cli::cli_alert_info("Applying 1% winsorization to effect sizes and standard errors")
-    bs_winsor <- winsorize_1pct(df$bs)
-    se_winsor <- winsorize_1pct(df$sebs)
+  winsorize_pct <- suppressWarnings(as.numeric(params$winsorize))
+  if (length(winsorize_pct) == 1 && !is.na(winsorize_pct) && winsorize_pct > 0) {
+    winsorize_pct_text <- if (abs(winsorize_pct - round(winsorize_pct)) < .Machine$double.eps) {
+      sprintf("%.0f", winsorize_pct)
+    } else {
+      sprintf("%.1f", winsorize_pct)
+    }
+
+    cli::cli_alert_info(
+      sprintf(
+        "Applying %s%% winsorization to effect sizes and standard errors",
+        winsorize_pct_text
+      )
+    )
+    bs_winsor <- winsorize_percent(df$bs, winsorize_pct)
+    se_winsor <- winsorize_percent(df$sebs, winsorize_pct)
 
     df$bs <- bs_winsor$values
     df$sebs <- se_winsor$values

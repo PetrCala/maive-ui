@@ -330,9 +330,9 @@ const TEXT = {
         "The weighting scheme to use in the analysis. Equal Weights: default, limiting case of a random-effects model with huge heterogeneity. Standard Weights: inverse-variance weights. Instrumented weights: MAIVE-adjusted inverse-variance weights.",
     },
     winsorize: {
-      label: "Winsorize at 1%",
+      label: "Winsorization (%)",
       tooltip:
-        "Limits the impact of extreme outliers by replacing values below the 1st percentile with the 1st percentile and above the 99th percentile with the 99th. Applies only to effect sizes and standard errors.",
+        "Limits the impact of extreme outliers by clipping values at symmetric percentile bounds. Choose the winsorization percentage (0–5%) to apply to effect sizes and standard errors.",
     },
     shouldUseInstrumenting: {
       label: "Use Instrumenting",

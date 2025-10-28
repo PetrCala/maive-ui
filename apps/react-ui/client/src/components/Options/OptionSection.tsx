@@ -14,7 +14,10 @@ import CONST from "@src/CONST";
 type OptionSectionProps = {
   config: OptionSectionConfig;
   parameters: ModelParameters;
-  onChange: (key: keyof ModelParameters, value: string | boolean) => void;
+  onChange: (
+    key: keyof ModelParameters,
+    value: string | boolean | number,
+  ) => void;
   tooltipsEnabled?: boolean;
   context?: Partial<OptionContext>;
 };
