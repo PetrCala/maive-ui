@@ -145,15 +145,14 @@ export default function OptionRenderer({
       >
         {renderOption()}
       </Tooltip>
-      {option.key === "shouldUseInstrumenting" &&
-        !parameters.shouldUseInstrumenting && (
-          <Alert
-            message={renderRichInfoMessage(noInstrumentingInfo)}
-            type={CONST.ALERT_TYPES.INFO}
-            className="mt-3"
-            role="status"
-          />
-        )}
+      {option.key === "modelType" && !parameters.shouldUseInstrumenting && (
+        <Alert
+          message={renderRichInfoMessage(noInstrumentingInfo)}
+          type={CONST.ALERT_TYPES.INFO}
+          className="mt-3"
+          role="status"
+        />
+      )}
       {option.key === "modelType" && isWaiveModel && (
         <Alert
           message={TEXT.waive.helpText}

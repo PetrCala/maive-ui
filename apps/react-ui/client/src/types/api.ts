@@ -9,7 +9,7 @@ type ApiResponse<T = unknown> = {
 };
 
 type ModelParameters = {
-  modelType: "MAIVE" | "WAIVE";
+  modelType: "MAIVE" | "WAIVE" | "WLS";
   includeStudyDummies: boolean;
   includeStudyClustering: boolean;
   standardErrorTreatment:

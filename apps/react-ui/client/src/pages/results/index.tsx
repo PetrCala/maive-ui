@@ -69,6 +69,19 @@ export default function ResultsPage() {
     ...parsedParametersJson,
   };
 
+  if (
+    parsedParameters.shouldUseInstrumenting === false &&
+    parsedParameters.modelType !== CONST.MODEL_TYPES.WAIVE
+  ) {
+    parsedParameters.modelType = CONST.MODEL_TYPES.WLS;
+  }
+
+  if (parsedParameters.modelType === CONST.MODEL_TYPES.WLS) {
+    parsedParameters.shouldUseInstrumenting = false;
+  } else {
+    parsedParameters.shouldUseInstrumenting = true;
+  }
+
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;
   const isWaiveModel = parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
