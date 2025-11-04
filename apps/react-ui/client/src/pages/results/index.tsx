@@ -301,7 +301,7 @@ export default function ResultsPage() {
 
               {/* Funnel Plot */}
               <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                   <Tooltip
                     content={resultsText.funnelPlot.tooltip}
                     visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
