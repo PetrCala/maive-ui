@@ -79,6 +79,12 @@ export const generateResultsData = (
     results.andersonRubinCI !== "NA" && hasValidCI(results.andersonRubinCI)
       ? results.andersonRubinCI
       : null;
+  const andersonRubinCIWidth =
+    andersonRubinCI &&
+    isFiniteNumber(andersonRubinCI[0]) &&
+    isFiniteNumber(andersonRubinCI[1])
+      ? Math.abs(andersonRubinCI[1] - andersonRubinCI[0])
+      : null;
   const bootCI =
     results.bootCI !== "NA" && hasValidBootCI(results.bootCI)
       ? results.bootCI
@@ -92,6 +98,12 @@ export const generateResultsData = (
     results.publicationBias.eggerAndersonRubinCI !== "NA" &&
     hasValidCI(results.publicationBias.eggerAndersonRubinCI)
       ? results.publicationBias.eggerAndersonRubinCI
+      : null;
+  const eggerAndersonRubinCIWidth =
+    eggerAndersonRubinCI &&
+    isFiniteNumber(eggerAndersonRubinCI[0]) &&
+    isFiniteNumber(eggerAndersonRubinCI[1])
+      ? Math.abs(eggerAndersonRubinCI[1] - eggerAndersonRubinCI[0])
       : null;
 
   const isInstrumented = parameters?.shouldUseInstrumenting ?? true;
@@ -137,6 +149,32 @@ export const generateResultsData = (
   const isFirstStageFTestStrong =
     firstStageFTestNumericValue !== null && firstStageFTestNumericValue >= 10;
 
+  // AR CI feedback helpers
+  const getARCIExtraText = (
+    ciWidth: number | null,
+    isComputed: boolean,
+  ): string | undefined => {
+    if (!isComputed) {
+      return " (Not computed)";
+    }
+    if (ciWidth === null) {
+      return " (NA: disjoint acceptance region or extreme heterogeneity)";
+    }
+    if (ciWidth > 100) {
+      return " (Very wide: suggests weak identification)";
+    }
+    return undefined;
+  };
+
+  const arExtraText = getARCIExtraText(
+    andersonRubinCIWidth,
+    parameters?.computeAndersonRubin ?? false,
+  );
+  const eggerARExtraText = getARCIExtraText(
+    eggerAndersonRubinCIWidth,
+    parameters?.computeAndersonRubin ?? false,
+  );
+
   // Core results
   const coreResults: ResultItem[] = [
     {
@@ -167,8 +205,10 @@ export const generateResultsData = (
     {
       label: resultsText.effectEstimate.metrics.andersonRubinCI.label,
       value: andersonRubinCI ? formatCI(andersonRubinCI) : "NA",
-      show: Boolean(andersonRubinCI),
+      show:
+        Boolean(andersonRubinCI) || (parameters?.computeAndersonRubin ?? false),
       section: "effect",
+      extraText: arExtraText,
     },
     {
       label: resultsText.publicationBias.metrics.eggerCoef.label,
@@ -200,8 +240,11 @@ export const generateResultsData = (
     {
       label: resultsText.publicationBias.metrics.eggerAndersonRubinCI.label,
       value: eggerAndersonRubinCI ? formatCI(eggerAndersonRubinCI) : "NA",
-      show: Boolean(eggerAndersonRubinCI),
+      show:
+        Boolean(eggerAndersonRubinCI) ||
+        (parameters?.computeAndersonRubin ?? false),
       section: "bias",
+      extraText: eggerARExtraText,
     },
     {
       label: resultsText.diagnosticTests.metrics.hausmanTest.label,

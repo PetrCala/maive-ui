@@ -86,7 +86,7 @@ const RESULTS_TEXT: ResultsText = {
       andersonRubinCI: {
         label: "Anderson-Rubin 95% CI",
         tooltip:
-          "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the effect; remains valid even when the first-stage F statistic is low.",
+          "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the effect; remains valid even when the first-stage F statistic is low. Returns NA when: (1) AR computation is disabled, (2) the acceptance region is disjoint with extreme heterogeneity in standard errors, or (3) no valid acceptance region is found.",
       },
       bootCI: {
         label: "Bootstrap 95% CI",
@@ -120,7 +120,7 @@ const RESULTS_TEXT: ResultsText = {
       eggerAndersonRubinCI: {
         label: "Egger Coefficient Anderson-Rubin 95% CI",
         tooltip:
-          "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the Egger coefficient, matching the options used for the main estimate.",
+          "Weak-instrument-robust 95% Anderson-Rubin confidence interval for the Egger coefficient, matching the options used for the main estimate. Returns NA when: (1) AR computation is disabled, (2) the acceptance region is disjoint with extreme heterogeneity in standard errors, or (3) no valid acceptance region is found.",
       },
     },
   },
