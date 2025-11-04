@@ -35,6 +35,7 @@ import {
   FaInfoCircle,
   FaDownload,
   FaFilter,
+  FaChevronDown,
   FaUpload,
   FaRedo,
   FaChartLine,
@@ -51,6 +52,8 @@ export default function ResultsPage() {
   const runTimestamp = searchParams?.get("runTimestamp") ?? null;
 
   const [isRunInfoModalOpen, setIsRunInfoModalOpen] = useState(false);
+  const [isFunnelInterpretationOpen, setIsFunnelInterpretationOpen] =
+    useState(false);
 
   let parsedParametersJson: Partial<ModelParameters> = {};
   if (parameters) {
@@ -85,6 +88,9 @@ export default function ResultsPage() {
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;
   const isWaiveModel = parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
+  const funnelInterpretationText = shouldUseInstrumenting
+    ? "The figure is a scatter plot of effect sizes against their MAIVE-adjusted precision (black-filled dots). Hollow dots denote unadjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the MAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis."
+    : "The figure is a scatter plot of effect sizes against their precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the regression fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.";
 
   const uploadedData = useMemo(() => {
     if (!dataId) {
@@ -290,16 +296,43 @@ export default function ResultsPage() {
 
               {/* Funnel Plot */}
               <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
-                <Tooltip
-                  content={resultsText.funnelPlot.tooltip}
-                  visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                >
-                  <SectionHeading
-                    level="h2"
-                    text={resultsText.funnelPlot.title}
-                    className="mb-4"
-                  />
-                </Tooltip>
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <Tooltip
+                    content={resultsText.funnelPlot.tooltip}
+                    visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
+                  >
+                    <SectionHeading
+                      level="h2"
+                      text={resultsText.funnelPlot.title}
+                      className="mb-0"
+                    />
+                  </Tooltip>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setIsFunnelInterpretationOpen((previous) => !previous)
+                    }
+                    className="inline-flex items-center gap-2 self-start rounded-full border border-transparent bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700 shadow-sm transition hover:bg-white focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 dark:bg-gray-800/80 dark:text-blue-200"
+                    aria-expanded={isFunnelInterpretationOpen}
+                    aria-controls="funnel-interpretation"
+                  >
+                    Interpretation of the funnel plot
+                    <FaChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-200 ${
+                        isFunnelInterpretationOpen ? "rotate-180" : ""
+                      }`}
+                      aria-hidden="true"
+                    />
+                  </button>
+                </div>
+                {isFunnelInterpretationOpen ? (
+                  <div
+                    id="funnel-interpretation"
+                    className="mb-4 rounded-md border border-blue-100 bg-white/70 p-4 text-sm text-gray-700 shadow-sm dark:border-blue-900/40 dark:bg-gray-800/70 dark:text-gray-200"
+                  >
+                    {funnelInterpretationText}
+                  </div>
+                ) : null}
                 <div className="flex justify-center">
                   <Image
                     src={parsedResults.funnelPlot}
