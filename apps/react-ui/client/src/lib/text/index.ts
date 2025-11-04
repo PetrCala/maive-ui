@@ -314,9 +314,9 @@ const TEXT = {
     computeAndersonRubin: {
       label: "Compute Anderson-Rubin Confidence Interval",
       tooltip:
-        "Whether to compute the Anderson-Rubin Confidence Interval, which is robust to weak instruments.",
+        "Whether to compute the Anderson-Rubin Confidence Interval, which is robust to weak instruments. Available with equal weights or adjusted weights.",
       warning:
-        "This option enables heavy computation and may significantly increase processing time.",
+        "This option enables heavy computation and may significantly increase processing time. With extreme heterogeneity in standard errors, AR intervals may return NA.",
     },
     advancedOptions: {
       title: "Advanced Options",

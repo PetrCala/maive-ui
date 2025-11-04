@@ -75,7 +75,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         visibility: {
           hideIf: ({ parameters }) =>
             !parameters.shouldUseInstrumenting ||
-            parameters.weight !== CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
+            parameters.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE,
         },
         warnings: [
           {
