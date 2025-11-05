@@ -229,7 +229,7 @@ source("funnel_plot.R")
 - Try installing packages manually:
   \`\`\`r
   install.packages("remotes")
-  remotes::install_github("${CONST.REPRODUCIBILITY.GITHUB.OWNER}/${CONST.REPRODUCIBILITY.GITHUB.REPO_PACKAGE}@${versionInfo.maiveTag}")
+  remotes::install_github("${CONST.GITHUB.OWNER}/${CONST.GITHUB.REPO_PACKAGE}@${versionInfo.maiveTag}")
   \`\`\`
 - Check R version: \`R.version.string\`
 - Update R if using version < 4.0
@@ -352,7 +352,7 @@ GITHUB REFERENCES
 -----------------
 UI Repository:           ${CONST.LINKS.APP_GITHUB.HOMEPAGE}
 UI Commit:               ${CONST.LINKS.APP_GITHUB.HOMEPAGE}/commit/${versionInfo.gitCommitHash}
-MAIVE Package:           https://github.com/${CONST.REPRODUCIBILITY.GITHUB.OWNER}/${CONST.REPRODUCIBILITY.GITHUB.REPO_PACKAGE}/releases/tag/${versionInfo.maiveTag}
+MAIVE Package:           https://github.com/${CONST.GITHUB.OWNER}/${CONST.GITHUB.REPO_PACKAGE}/releases/tag/${versionInfo.maiveTag}
 
 R SOURCE FILES
 --------------
