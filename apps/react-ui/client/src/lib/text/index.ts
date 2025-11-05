@@ -316,7 +316,7 @@ const TEXT = {
       tooltip:
         "Whether to compute the Anderson-Rubin Confidence Interval, which is robust to weak instruments. Available with equal weights or adjusted weights.",
       warning:
-        "This option enables heavy computation and may significantly increase processing time. With extreme heterogeneity in standard errors, AR intervals may return NA.",
+        "May increase processing time. For the corrected mean (intercept), intervals can be wide because the instrument identifies the slope, not the intercept. In some cases (e.g. high heterogeneity in standard errors), AR intervals may return NA.",
     },
     advancedOptions: {
       title: "Advanced Options",
