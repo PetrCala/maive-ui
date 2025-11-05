@@ -73,6 +73,10 @@ const CONST = {
       VALUE: "adjusted_weights",
       TEXT: "Adjusted Weights",
     },
+    STUDY_WEIGHTS: {
+      VALUE: "study_weights",
+      TEXT: "Study Weights",
+    },
   },
   STANDARD_ERROR_TREATMENTS: {
     NOT_CLUSTERED: {
