@@ -89,6 +89,7 @@ export default function OptionSection({
           parameters={parameters}
           onChange={onChange}
           tooltipsEnabled={tooltipsEnabled}
+          context={fullContext}
         />
       ))}
       {shouldShowBottomText && (

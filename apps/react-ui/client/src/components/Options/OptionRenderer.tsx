@@ -6,12 +6,14 @@ import {
 } from "@src/components/Options";
 import Tooltip from "@src/components/Tooltip";
 import Alert from "@src/components/Alert";
-import type { OptionConfig } from "@src/types/options";
+import type { OptionConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import renderRichInfoMessage from "@src/lib/text/richText";
+import { hasStudyIdColumn } from "@src/utils/dataUtils";
+import type { DataArray } from "@src/types";
 
 type OptionRendererProps = {
   option: OptionConfig;
@@ -22,6 +24,7 @@ type OptionRendererProps = {
     value: string | boolean | number,
   ) => void;
   tooltipsEnabled?: boolean;
+  context?: Partial<OptionContext>;
 };
 
 export default function OptionRenderer({
@@ -30,6 +33,7 @@ export default function OptionRenderer({
   parameters,
   onChange,
   tooltipsEnabled = true,
+  context = {},
 }: OptionRendererProps) {
   const handleChange = (newValue: string | boolean | number) => {
     onChange(option.key, newValue);
@@ -92,11 +96,22 @@ export default function OptionRenderer({
         let dropdownOptions = option.options;
 
         if (option.key === "weight") {
+          const hasStudyId = hasStudyIdColumn(
+            (context.uploadedData as { data: DataArray } | undefined)?.data,
+          );
           dropdownOptions = dropdownOptions.filter((dropdownOption) => {
+            // Filter out adjusted weights when instrumenting is disabled
             if (
               !parameters.shouldUseInstrumenting &&
               dropdownOption.value ===
                 CONST.WEIGHT_OPTIONS.ADJUSTED_WEIGHTS.VALUE
+            ) {
+              return false;
+            }
+            // Filter out study weights when study_id is not available
+            if (
+              !hasStudyId &&
+              dropdownOption.value === CONST.WEIGHT_OPTIONS.STUDY_WEIGHTS.VALUE
             ) {
               return false;
             }
