@@ -117,6 +117,64 @@ docs/                         # Project documentation
 - **React Context**: App-wide providers in `src/providers/`
 - State includes uploaded data, analysis parameters, and results
 
+### Reproducibility Package System
+
+The app generates downloadable reproducibility packages (ZIP files) that allow users to re-run analyses locally using R. This system is critical for scientific reproducibility and must stay synchronized with the R backend.
+
+**Location**: `apps/react-ui/client/src/lib/reproducibility/`
+
+**Key Files**:
+
+- `generators/wrapperScript.ts` - Generates the main `run_analysis.R` script
+- `githubFetcher.ts` - Fetches R source code from the backend repository
+- `csvConverter.ts` - Converts user data to CSV format
+- `index.ts` - Main package generation orchestration
+
+**Critical Coupling with R Backend**:
+
+The generated `run_analysis.R` script calls `run_maive_model()` from `apps/lambda-r-backend/r_scripts/maive_model.R`. This function expects **JSON strings** (not R objects) because it's designed for the Plumber API:
+
+```r
+# ✅ Correct - from wrapperScript.ts
+results <- run_maive_model(
+  jsonlite::toJSON(data, dataframe = "rows"),
+  jsonlite::toJSON(parameters, auto_unbox = TRUE)
+)
+
+# ❌ Incorrect - will fail with "Argument 'txt' must be a JSON string"
+results <- run_maive_model(data, parameters)
+```
+
+**When to Update**:
+
+Update the reproducibility package generators when:
+
+1. R backend function signatures change (`run_maive_model`, `get_funnel_plot_data`)
+2. New analysis parameters are added to `ModelParameters` type
+3. Result structure changes in `ModelResults` type
+4. New R dependencies are required
+
+**Testing Reproducibility Packages**:
+
+Always test changes by running a complete export cycle:
+
+```bash
+# 1. Generate a package through the UI (or programmatically)
+# 2. Extract the ZIP to lib/analysis/
+# 3. Run the analysis script
+cd lib/analysis/maive-analysis-YYYY-MM-DDTHH-MM-SS/
+Rscript run_analysis.R
+
+# 4. Verify it completes successfully and matches expected results
+```
+
+**Common Pitfalls**:
+
+- **Type mismatches**: R backend expects JSON strings, not native R objects
+- **Conditional checks**: Use `!identical(x, "NA") && !is.null(x)` for optional fields that may be strings or vectors
+- **Version synchronization**: Ensure `versionInfo.maiveTag` matches the actual R package version
+- **Missing dependencies**: Update required R packages list when backend adds new imports
+
 ## Code Style
 
 ### TypeScript (Frontend)
