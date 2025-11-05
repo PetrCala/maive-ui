@@ -417,6 +417,51 @@ run_maive_model <- function(data, parameters) {
 
   se_adjusted_for_plot <- if (instrument == 0) NULL else maive_res$SE_instrumented
 
+  waive_point_weights <- NULL
+  if (is_waive && instrument == 1) {
+    target_length <- nrow(df)
+
+    extract_weight_vector <- function(container, desired_length) {
+      if (is.null(container)) {
+        return(NULL)
+      }
+
+      if (is.numeric(container) && length(container) == desired_length) {
+        numeric_values <- as.numeric(container)
+        if (any(is.finite(numeric_values)) && any(numeric_values > 0, na.rm = TRUE)) {
+          return(numeric_values)
+        }
+      }
+
+      if (!is.list(container)) {
+        return(NULL)
+      }
+
+      container_names <- names(container)
+      if (!is.null(container_names)) {
+        weight_indices <- which(grepl("weight", container_names, ignore.case = TRUE))
+        for (idx in weight_indices) {
+          candidate <- extract_weight_vector(container[[idx]], desired_length)
+          if (!is.null(candidate)) {
+            return(candidate)
+          }
+        }
+
+        waive_like_indices <- which(grepl("waive", container_names, ignore.case = TRUE))
+        for (idx in waive_like_indices) {
+          candidate <- extract_weight_vector(container[[idx]], desired_length)
+          if (!is.null(candidate)) {
+            return(candidate)
+          }
+        }
+      }
+
+      NULL
+    }
+
+    waive_point_weights <- extract_weight_vector(maive_res, target_length)
+  }
+
   first_stage_mode <- if (instrument == 1 && isTRUE(log_first_stage)) "log" else "levels"
   first_stage_description <- if (first_stage_mode == "log") {
     "log(SE^2) ~ log N; Duan smearing applied"
@@ -437,7 +482,8 @@ run_maive_model <- function(data, parameters) {
     intercept_se = maive_res$SE,
     slope = slope_metadata,
     instrument = instrument,
-    model_type = model_type
+    model_type = model_type,
+    adjusted_weights = waive_point_weights
   )
 
   results <- list(

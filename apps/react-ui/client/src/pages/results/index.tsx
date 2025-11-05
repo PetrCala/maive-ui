@@ -104,13 +104,17 @@ export default function ResultsPage() {
     parsedParameters?.shouldUseInstrumenting ?? true;
   const isWaiveModel = parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
 
-  const funnelInterpretationText = useMemo(
-    () =>
-      shouldUseInstrumenting
-        ? "The figure is a scatter plot of effect sizes against their MAIVE-adjusted precision (black-filled dots). Hollow dots denote unadjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the MAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis."
-        : "The figure is a scatter plot of effect sizes against their precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the regression fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.",
-    [shouldUseInstrumenting],
-  );
+  const funnelInterpretationText = useMemo(() => {
+    if (!shouldUseInstrumenting) {
+      return "The figure is a scatter plot of effect sizes against their precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the regression fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.";
+    }
+
+    if (isWaiveModel) {
+      return "The figure is a scatter plot of effect sizes against their MAIVE-adjusted precision (black-filled dots). The size of each dot indicates its weight in WAIVE; spuriously precise estimates are downweighted. Hollow dots denote unadjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the WAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.";
+    }
+
+    return "The figure is a scatter plot of effect sizes against their MAIVE-adjusted precision (black-filled dots). Hollow dots denote unadjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the MAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.";
+  }, [isWaiveModel, shouldUseInstrumenting]);
 
   const uploadedData = useMemo(() => {
     if (!dataId) {

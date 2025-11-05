@@ -100,6 +100,8 @@ format_axis_labels <- function(ticks, digits = 3) {
 #' @param effect [numeric] The effect size
 #' @param se [numeric] The standard error
 #' @param se_adjusted [numeric] The adjusted standard error (optional)
+#' @param adjusted_weights [numeric] Optional weights associated with the adjusted
+#'        standard errors (used for WAIVE to scale point sizes in the plot).
 #' @param intercept [numeric] The intercept of the funnel plot. If NULL, no intercept is plotted.
 #' @param intercept_se [numeric] The standard error of the intercept. Must be provided only if intercept is provided.
 #' @param slope_coef [numeric|list] Legacy slope coefficient of the funnel plot. If NULL, slope construction
@@ -117,6 +119,7 @@ get_funnel_plot <- function(
     effect,
     se,
     se_adjusted = NULL,
+    adjusted_weights = NULL,
     intercept = NULL,
     intercept_se = NULL,
     slope_coef = NULL,
@@ -194,12 +197,16 @@ get_funnel_plot <- function(
 
   plot_pch <- rep(funnel_opts$effect_pch[1], n_points)
   point_bg <- rep(funnel_opts$effect_shades[1], n_points)
+  point_map <- seq_len(n_points)
+  point_is_adjusted <- rep(FALSE, n_points)
 
   if (use_adjusted) {
     x_values <- c(x_values, effect)
     y_values <- c(y_values, se_adjusted)
     plot_pch <- c(plot_pch, rep(funnel_opts$effect_pch[2], n_points))
     point_bg <- c(point_bg, rep(funnel_opts$effect_shades[2], n_points))
+    point_map <- c(point_map, seq_len(n_points))
+    point_is_adjusted <- c(point_is_adjusted, rep(TRUE, n_points))
   }
 
   finite_points <- is.finite(x_values) & is.finite(y_values)
@@ -207,7 +214,46 @@ get_funnel_plot <- function(
   y_values <- y_values[finite_points]
   plot_pch <- plot_pch[finite_points]
   point_bg <- point_bg[finite_points]
-  point_cex <- max(0.1, funnel_opts$pt_cex * 0.6)
+  point_map <- point_map[finite_points]
+  point_is_adjusted <- point_is_adjusted[finite_points]
+
+  base_point_cex <- max(0.1, funnel_opts$pt_cex * 0.6)
+  point_cex <- rep(base_point_cex, length(x_values))
+
+  adjusted_cex <- NULL
+  if (
+    use_adjusted &&
+      !is.null(adjusted_weights) &&
+      length(adjusted_weights) == n_points
+  ) {
+    weights_numeric <- suppressWarnings(as.numeric(adjusted_weights))
+    weights_numeric[!is.finite(weights_numeric) | weights_numeric < 0] <- 0
+
+    if (any(weights_numeric > 0)) {
+      positive_max <- max(weights_numeric, na.rm = TRUE)
+      if (is.finite(positive_max) && positive_max > 0) {
+        adjusted_indices <- which(point_is_adjusted)
+        if (length(adjusted_indices) > 0) {
+          point_weights <- weights_numeric[point_map[adjusted_indices]]
+          point_weights[!is.finite(point_weights) | point_weights <= 0] <- 0
+
+          if (any(point_weights > 0)) {
+            weight_scale <- rep(0, length(point_weights))
+            weight_scale <- ifelse(
+              point_weights > 0,
+              sqrt(point_weights / positive_max),
+              0
+            )
+
+            min_cex <- base_point_cex * 0.6
+            max_cex <- base_point_cex * 1.6
+            adjusted_cex <- min_cex + (max_cex - min_cex) * weight_scale
+            point_cex[adjusted_indices] <- adjusted_cex
+          }
+        }
+      }
+    }
+  }
 
   simple_mean <- mean(effect, na.rm = TRUE)
 
@@ -514,7 +560,7 @@ get_funnel_plot <- function(
   legend_pch <- c(funnel_opts$effect_pch[1])
   legend_col <- c(funnel_opts$text_color)
   legend_pt_bg <- c(funnel_opts$effect_shades[1])
-  legend_pt_cex <- c(point_cex)
+  legend_pt_cex <- c(base_point_cex)
   legend_lty <- c(NA)
   legend_lwd <- c(NA)
 
@@ -523,7 +569,12 @@ get_funnel_plot <- function(
     legend_pch <- c(legend_pch, funnel_opts$effect_pch[2])
     legend_col <- c(legend_col, funnel_opts$text_color)
     legend_pt_bg <- c(legend_pt_bg, funnel_opts$effect_shades[2])
-    legend_pt_cex <- c(legend_pt_cex, point_cex)
+    adjusted_legend_cex <- if (!is.null(adjusted_cex) && any(is.finite(adjusted_cex))) {
+      stats::median(adjusted_cex[is.finite(adjusted_cex)])
+    } else {
+      base_point_cex
+    }
+    legend_pt_cex <- c(legend_pt_cex, adjusted_legend_cex)
     legend_lty <- c(legend_lty, NA)
     legend_lwd <- c(legend_lwd, NA)
   }
