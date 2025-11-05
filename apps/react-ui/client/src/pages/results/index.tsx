@@ -34,10 +34,10 @@ import {
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 import {
-  generateReproducibleBundle,
+  generateReproducibilityPackage,
   getReproducibilityPackageFilename,
   validateExportData,
-} from "@utils/exportReproducibleBundle";
+} from "@src/lib/reproducibility";
 import { saveAs } from "file-saver";
 import {
   FaChevronDown,
@@ -305,12 +305,12 @@ export default function ResultsPage() {
       }
       const versionInfo = (await versionResponse.json()) as VersionInfo;
 
-      // 4. Generate reproducibility bundle
+      // 4. Generate reproducibility package
       console.log("Generating reproducibility package...");
       if (!originalData) {
         throw new Error("Data validation passed but data is still null");
       }
-      const blob = await generateReproducibleBundle(
+      const blob = await generateReproducibilityPackage(
         originalData,
         parsedParameters,
         parsedResults,
