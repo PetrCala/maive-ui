@@ -435,6 +435,18 @@ export default function ModelPage() {
         const endTime = Date.now();
         const runDuration = endTime - startTime;
 
+        // Store data in sessionStorage for reproducibility export
+        // This ensures the results page has access to the original data
+        try {
+          sessionStorage.setItem(
+            `maive-data-${dataId}`,
+            JSON.stringify(uploadedData?.data ?? []),
+          );
+        } catch (storageError) {
+          console.warn("Failed to store data in sessionStorage:", storageError);
+          // Continue anyway - results page can still try to get from dataStore
+        }
+
         // Redirect to results page with the model output
         const results = result.data;
         const urlSearchParams = new URLSearchParams({
