@@ -10,7 +10,7 @@
 import JSZip from "jszip";
 import type { ModelParameters, ModelResults } from "@src/types/api";
 import type { VersionInfo, WinsorizeInfo } from "@src/types/reproducibility";
-import type { DataArray } from "@src/types/data";
+import type { DataArray } from "@src/types";
 
 import { fetchRCodeBundle } from "./githubFetcher";
 import { generateWrapperScript } from "./generators/wrapperScript";
@@ -63,13 +63,16 @@ export async function generateReproducibilityPackage(
   console.log("Fetching R source code from GitHub...");
   const rCodeBundle = await fetchRCodeBundle(versionInfo.gitCommitHash);
 
+  // Get data length with explicit type
+  const dataLength: number = data.length;
+
   // 2. Generate wrapper script
   console.log("Generating wrapper R script...");
   const wrapperScript = generateWrapperScript(
     versionInfo,
     parameters,
     results,
-    data.length,
+    dataLength,
     winsorizeInfo,
   );
 
@@ -79,7 +82,7 @@ export async function generateReproducibilityPackage(
 
   // 4. Generate README
   console.log("Generating README...");
-  const readme = generateReadme(versionInfo, parameters, data.length);
+  const readme = generateReadme(versionInfo, parameters, dataLength);
 
   // 5. Generate version manifest
   console.log("Generating version manifest...");

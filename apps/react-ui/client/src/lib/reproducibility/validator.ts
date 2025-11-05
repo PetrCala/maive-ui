@@ -3,7 +3,7 @@
  */
 
 import type { ModelParameters, ModelResults } from "@src/types/api";
-import type { DataArray } from "@src/types/data";
+import type { DataArray } from "@src/types";
 
 /**
  * Validates that required data is available for export
@@ -14,9 +14,9 @@ import type { DataArray } from "@src/types/data";
  * @throws Error if data is invalid or missing
  */
 export function validateExportData(
-  data: DataArray | null | undefined,
-  parameters: ModelParameters | null | undefined,
-  results: ModelResults | null | undefined,
+  data: DataArray | null,
+  parameters: ModelParameters | null,
+  results: ModelResults | null,
 ): void {
   if (!data || !Array.isArray(data) || data.length === 0) {
     throw new Error(
@@ -37,13 +37,13 @@ export function validateExportData(
   }
 
   // Validate data structure
-  const firstRow = data[0];
+  const firstRow: Record<string, unknown> | undefined = data[0];
   if (!firstRow || typeof firstRow !== "object") {
     throw new Error("Invalid data structure. Each row must be an object.");
   }
 
   // Validate minimum number of columns (at least bs, sebs, Ns)
-  const columns = Object.keys(firstRow);
+  const columns: string[] = Object.keys(firstRow);
   if (columns.length < 3) {
     throw new Error(
       "Data must have at least 3 columns (effect sizes, standard errors, sample sizes).",

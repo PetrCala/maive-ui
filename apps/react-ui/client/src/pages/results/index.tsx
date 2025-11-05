@@ -266,13 +266,14 @@ export default function ResultsPage() {
 
     try {
       // 1. Get the original data from sessionStorage, cache, or store
-      let originalData: DataArray | null = null;
+      let originalData: Array<Record<string, unknown>> | null = null;
 
       // Try sessionStorage first (most reliable for export)
       try {
         const storedData = sessionStorage.getItem(`maive-data-${dataId}`);
         if (storedData) {
-          originalData = JSON.parse(storedData) as DataArray;
+          const parsedData: unknown = JSON.parse(storedData);
+          originalData = parsedData as DataArray;
           console.log("Retrieved data from sessionStorage");
         }
       } catch (sessionError: unknown) {
