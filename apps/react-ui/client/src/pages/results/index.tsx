@@ -20,6 +20,8 @@ import {
   generateDataInfo,
 } from "@utils/dataInfoUtils";
 import type { ModelParameters, ModelResults } from "@src/types";
+import type { DataArray } from "@src/types/data";
+import type { VersionInfo } from "@src/types/reproducibility";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
@@ -32,6 +34,12 @@ import {
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 import {
+  generateReproducibleBundle,
+  getReproducibilityPackageFilename,
+  validateExportData,
+} from "@utils/exportReproducibleBundle";
+import { saveAs } from "file-saver";
+import {
   FaChevronDown,
   FaInfoCircle,
   FaDownload,
@@ -40,6 +48,7 @@ import {
   FaRedo,
   FaChartLine,
   FaPlay,
+  FaCode,
 } from "react-icons/fa";
 
 export default function ResultsPage() {
@@ -53,6 +62,8 @@ export default function ResultsPage() {
 
   const [isRunInfoModalOpen, setIsRunInfoModalOpen] = useState(false);
   const [isFunnelInterpretationOpen, setIsFunnelInterpretationOpen] =
+    useState(false);
+  const [isExportingReproducibility, setIsExportingReproducibility] =
     useState(false);
 
   let parsedParametersJson: Partial<ModelParameters> = {};
@@ -250,6 +261,83 @@ export default function ResultsPage() {
     }
   };
 
+  const handleExportReproducibility = async () => {
+    setIsExportingReproducibility(true);
+
+    try {
+      // 1. Get the original data from sessionStorage, cache, or store
+      let originalData: DataArray | null = null;
+
+      // Try sessionStorage first (most reliable for export)
+      try {
+        const storedData = sessionStorage.getItem(`maive-data-${dataId}`);
+        if (storedData) {
+          originalData = JSON.parse(storedData) as DataArray;
+          console.log("Retrieved data from sessionStorage");
+        }
+      } catch (sessionError: unknown) {
+        console.warn("Failed to retrieve from sessionStorage:", sessionError);
+      }
+
+      // Fallback to dataCache or store
+      if (!originalData) {
+        const currentData = uploadedData ?? dataCache.get(dataId);
+        if (currentData) {
+          originalData = currentData.data;
+          console.log("Retrieved data from cache/store");
+        } else {
+          const storeData = useDataStore.getState().uploadedData;
+          if (storeData?.id === dataId) {
+            originalData = storeData.data;
+            console.log("Retrieved data from Zustand store");
+          }
+        }
+      }
+
+      // 2. Validate we have all required data
+      validateExportData(originalData, parsedParameters, parsedResults);
+
+      // 3. Fetch version information
+      console.log("Fetching version information...");
+      const versionResponse = await fetch("/api/get-version-info");
+      if (!versionResponse.ok) {
+        throw new Error("Failed to fetch version information");
+      }
+      const versionInfo = (await versionResponse.json()) as VersionInfo;
+
+      // 4. Generate reproducibility bundle
+      console.log("Generating reproducibility package...");
+      if (!originalData) {
+        throw new Error("Data validation passed but data is still null");
+      }
+      const blob = await generateReproducibleBundle(
+        originalData,
+        parsedParameters,
+        parsedResults,
+        versionInfo,
+        undefined, // TODO: Add winsorization info if available
+      );
+
+      // 5. Trigger download
+      const filename = getReproducibilityPackageFilename();
+      saveAs(blob, filename);
+
+      console.log(`Successfully generated and downloaded: ${filename}`);
+      alert(
+        "Reproducibility package downloaded! Extract the ZIP file and run 'run_analysis.R' in R to reproduce these results.",
+      );
+    } catch (error) {
+      console.error("Error exporting reproducibility package:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error occurred";
+      alert(
+        `Failed to export reproducibility package: ${errorMessage}\n\nPlease try again or contact support if the issue persists.`,
+      );
+    } finally {
+      setIsExportingReproducibility(false);
+    }
+  };
+
   return (
     <>
       <Head>
@@ -387,6 +475,27 @@ export default function ResultsPage() {
               >
                 <FaDownload className="w-4 h-4" />
                 Export Results and Adjusted SEs
+              </ActionButton>
+              <ActionButton
+                onClick={() => {
+                  void handleExportReproducibility();
+                }}
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2 w-full"
+                disabled={isExportingReproducibility}
+              >
+                {isExportingReproducibility ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                    Generating Package...
+                  </>
+                ) : (
+                  <>
+                    <FaCode className="w-4 h-4" />
+                    Export R Code
+                  </>
+                )}
               </ActionButton>
             </div>
 
