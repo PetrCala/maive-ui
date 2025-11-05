@@ -20,7 +20,6 @@ import {
   generateDataInfo,
 } from "@utils/dataInfoUtils";
 import type { ModelParameters, ModelResults } from "@src/types";
-import type { DataArray } from "@src/types/data";
 import type { VersionInfo } from "@src/types/reproducibility";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
@@ -273,7 +272,7 @@ export default function ResultsPage() {
         const storedData = sessionStorage.getItem(`maive-data-${dataId}`);
         if (storedData) {
           const parsedData: unknown = JSON.parse(storedData);
-          originalData = parsedData as DataArray;
+          originalData = parsedData as Array<Record<string, unknown>>;
           console.log("Retrieved data from sessionStorage");
         }
       } catch (sessionError: unknown) {
@@ -282,7 +281,7 @@ export default function ResultsPage() {
 
       // Fallback to dataCache or store
       if (!originalData) {
-        const currentData = uploadedData ?? dataCache.get(dataId);
+        const currentData = uploadedData ?? dataCache.get(dataId ?? "");
         if (currentData) {
           originalData = currentData.data;
           console.log("Retrieved data from cache/store");
