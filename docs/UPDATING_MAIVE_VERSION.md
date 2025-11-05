@@ -23,7 +23,7 @@ This updates all the relevant files and creates a commit with the newly bumped M
 For local development and debugging, use the **remotes package** for installation instead of the tagged version:
 
 ```r
-remotes::install_github("PetrCala/maive@your-branch-name")
+remotes::install_github("PetrCala/MAIVE@your-branch-name")
 ```
 
 This approach allows you to:

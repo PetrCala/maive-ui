@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
 source "$SCRIPTS_DIR/shellUtils.sh"
 
-OWNER_REPO="PetrCala/maive"
+OWNER_REPO="PetrCala/MAIVE"
 
 usage() {
     cat <<EOF
@@ -40,7 +40,7 @@ if ! gh api repos/$OWNER_REPO/git/refs/tags/$MAIVE_TAG | jq -r '.ref' | grep -Fx
     exit 1
 fi
 
-Rscript -e "pak::pkg_install('PetrCala/maive@${MAIVE_TAG}')"
+Rscript -e "pak::pkg_install('PetrCala/MAIVE@${MAIVE_TAG}')"
 
 success "MAIVE tag $MAIVE_TAG installation complete."
 
