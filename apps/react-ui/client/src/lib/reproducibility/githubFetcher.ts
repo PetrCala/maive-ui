@@ -1,7 +1,7 @@
 /**
- * Utility functions for fetching R source code from GitHub repository
+ * GitHub repository fetcher for R source code
  *
- * This module fetches the actual backend R code from the GitHub repository
+ * Fetches the actual backend R code from the GitHub repository
  * to ensure the reproducibility package contains the exact code that was deployed.
  */
 
@@ -15,11 +15,11 @@ const R_SCRIPTS_BASE_PATH = "apps/lambda-r-backend/r_scripts";
 /**
  * Fetches a file from GitHub using the raw content URL
  *
- * @param filePath - Path to the file in the repository (e.g., "apps/lambda-r-backend/r_scripts/maive_model.R")
+ * @param filePath - Path to the file in the repository
  * @param commitHash - Git commit hash or "latest" for master branch
  * @returns File content as string
  */
-export async function fetchRFileFromGitHub(
+async function fetchRFileFromGitHub(
   filePath: string,
   commitHash = "latest",
 ): Promise<string> {
@@ -78,7 +78,7 @@ export async function fetchRFileFromGitHub(
  * @param commitHash - Git commit hash or "latest" for master branch
  * @returns Bundle containing all R source code files
  */
-export async function fetchReproducibilityBundle(
+async function fetchReproducibilityBundle(
   commitHash = "latest",
 ): Promise<RCodeBundle> {
   const files = [
@@ -117,17 +117,6 @@ export async function fetchReproducibilityBundle(
 }
 
 /**
- * Gets the full GitHub URL for a file at a specific commit
- *
- * @param filePath - Path to the file in the repository
- * @param commitHash - Git commit hash
- * @returns GitHub URL for viewing the file
- */
-export function getGitHubFileUrl(filePath: string, commitHash: string): string {
-  return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/${commitHash}/${filePath}`;
-}
-
-/**
  * Cache for fetched code bundles (in-memory, per session)
  * Key: commit hash, Value: code bundle
  */
@@ -139,7 +128,7 @@ const bundleCache = new Map<string, RCodeBundle>();
  * @param commitHash - Git commit hash or "latest"
  * @returns Cached or freshly fetched code bundle
  */
-export async function getCachedReproducibilityBundle(
+export async function fetchRCodeBundle(
   commitHash = "latest",
 ): Promise<RCodeBundle> {
   // Check cache first
@@ -154,4 +143,15 @@ export async function getCachedReproducibilityBundle(
   bundleCache.set(commitHash, bundle);
 
   return bundle;
+}
+
+/**
+ * Gets the full GitHub URL for a file at a specific commit
+ *
+ * @param filePath - Path to the file in the repository
+ * @param commitHash - Git commit hash
+ * @returns GitHub URL for viewing the file
+ */
+export function getGitHubFileUrl(filePath: string, commitHash: string): string {
+  return `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/blob/${commitHash}/${filePath}`;
 }

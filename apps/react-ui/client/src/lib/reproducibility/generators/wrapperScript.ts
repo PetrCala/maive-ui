@@ -78,6 +78,7 @@ cat("  Winsorize:", parameters$winsorize, "%\\n")
 /**
  * Generates the results display section
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function generateResultsDisplaySection(_results: ModelResults): string {
   // Note: arCI and eggerBootCI could be used for validation in the future
   // const arCI =
