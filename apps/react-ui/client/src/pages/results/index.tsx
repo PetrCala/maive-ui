@@ -48,6 +48,7 @@ import {
   FaChartLine,
   FaPlay,
   FaCode,
+  FaArrowLeft,
 } from "react-icons/fa";
 
 export default function ResultsPage() {
@@ -209,6 +210,10 @@ export default function ResultsPage() {
 
   const handleNewUpload = () => {
     router.push("/upload");
+  };
+
+  const handleBackToValidation = () => {
+    router.push(`/validation?dataId=${dataId}`);
   };
 
   const handleExportData = () => {
@@ -459,24 +464,6 @@ export default function ResultsPage() {
                 </span>
               </div>
               <ActionButton
-                onClick={() => setIsRunInfoModalOpen(true)}
-                variant="secondary"
-                size="md"
-                className="inline-flex items-center gap-2 w-full"
-              >
-                <FaInfoCircle className="w-4 h-4" />
-                Show Run Info
-              </ActionButton>
-              <ActionButton
-                onClick={handleExportData}
-                variant="purple"
-                size="md"
-                className="inline-flex items-center gap-2 w-full"
-              >
-                <FaDownload className="w-4 h-4" />
-                Export Results and Adjusted SEs
-              </ActionButton>
-              <ActionButton
                 onClick={() => {
                   void handleExportReproducibility();
                 }}
@@ -497,11 +484,29 @@ export default function ResultsPage() {
                   </>
                 )}
               </ActionButton>
+              <ActionButton
+                onClick={() => setIsRunInfoModalOpen(true)}
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2 w-full"
+              >
+                <FaInfoCircle className="w-4 h-4" />
+                Show Run Info
+              </ActionButton>
+              <ActionButton
+                onClick={handleExportData}
+                variant="purple"
+                size="md"
+                className="inline-flex items-center gap-2 w-full"
+              >
+                <FaDownload className="w-4 h-4" />
+                Export Results and Adjusted SEs
+              </ActionButton>
             </div>
 
             {/* Separator */}
             <div className="hidden lg:flex justify-center w-px">
-              <div className="w-px h-32 bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
+              <div className="w-px self-stretch bg-gradient-to-b from-transparent via-gray-300 dark:via-gray-600 to-transparent"></div>
             </div>
 
             {/* Right Column - New Run Actions */}
@@ -520,6 +525,15 @@ export default function ResultsPage() {
               >
                 <FaUpload className="w-4 h-4" />
                 Upload New Data
+              </ActionButton>
+              <ActionButton
+                onClick={handleBackToValidation}
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2 w-full"
+              >
+                <FaArrowLeft className="w-4 h-4" />
+                Back to Validation
               </ActionButton>
               <ActionButton
                 onClick={handleRerunModel}
