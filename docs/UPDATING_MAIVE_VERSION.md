@@ -57,7 +57,7 @@ git merge upstream/main || {
 ### 3. Add Upstream Remote (if not exists)
 
 ```bash
-git remote add upstream https://github.com/PetrCala/maive.git
+git remote add upstream https://github.com/PetrCala/MAIVE.git
 ```
 
 ### 4. Make Your Changes
