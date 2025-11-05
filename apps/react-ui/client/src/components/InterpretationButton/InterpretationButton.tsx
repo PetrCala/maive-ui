@@ -88,7 +88,7 @@ export default function InterpretationButton({
         onClick={handleToggle}
         aria-expanded={isOpen}
         aria-label={`${isOpen ? "Hide" : "Show"} interpretation for ${section}`}
-        className="inline-flex items-center justify-center rounded-full p-2 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:text-blue-400 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
+        className="inline-flex items-center justify-center rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-400 focus-visible:ring-offset-1 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-200"
         title={`${isOpen ? "Hide" : "Show"} interpretation`}
       >
         {variant === "icon" ? (
