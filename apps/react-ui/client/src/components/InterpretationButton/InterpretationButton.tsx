@@ -1,12 +1,12 @@
 /**
  * InterpretationButton Component
  *
- * A reusable button component that displays interpretation text in a collapsible panel.
+ * A reusable button component that displays interpretation text in an overlay panel.
  * Designed to be placed at the top-right of section headers.
  */
 
-import { useState } from "react";
-import { FaChevronDown, FaCommentDots } from "react-icons/fa";
+import { useState, useRef, useEffect } from "react";
+import { FaCommentDots } from "react-icons/fa";
 
 export type InterpretationButtonProps = {
   /** The interpretation text to display */
@@ -32,46 +32,76 @@ export default function InterpretationButton({
   section = "section",
 }: InterpretationButtonProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const handleToggle = () => {
     setIsOpen((prev) => !prev);
   };
 
+  // Close on click outside
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        panelRef.current &&
+        buttonRef.current &&
+        !panelRef.current.contains(event.target as Node) &&
+        !buttonRef.current.contains(event.target as Node)
+      ) {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isOpen]);
+
+  // Close on Escape key
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsOpen(false);
+      }
+    };
+
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [isOpen]);
+
   return (
-    <div className={`interpretation-button-container ${className}`}>
+    <div className={`interpretation-button-container relative ${className}`}>
       <button
+        ref={buttonRef}
         type="button"
         onClick={handleToggle}
         aria-expanded={isOpen}
         aria-label={`${isOpen ? "Hide" : "Show"} interpretation for ${section}`}
-        className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:text-blue-400 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
+        className="inline-flex items-center justify-center rounded-full p-2 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:text-blue-400 dark:hover:bg-blue-950/30 dark:hover:text-blue-300"
+        title={`${isOpen ? "Hide" : "Show"} interpretation`}
       >
         {variant === "icon" ? (
-          <>
-            <FaCommentDots className="h-3.5 w-3.5" aria-hidden="true" />
-            <FaChevronDown
-              className={`h-3 w-3 transition-transform duration-200 ${
-                isOpen ? "rotate-180" : ""
-              }`}
-              aria-hidden="true"
-            />
-          </>
+          <FaCommentDots className="h-4 w-4" aria-hidden="true" />
         ) : (
-          <>
-            <span>{label}</span>
-            <FaChevronDown
-              className={`h-3 w-3 transition-transform duration-200 ${
-                isOpen ? "rotate-180" : ""
-              }`}
-              aria-hidden="true"
-            />
-          </>
+          <span className="text-sm font-medium">{label}</span>
         )}
       </button>
 
       {isOpen && (
         <div
-          className="mt-3 rounded-lg border border-blue-100 bg-blue-50/50 p-4 text-sm leading-relaxed text-gray-700 shadow-sm dark:border-blue-900/30 dark:bg-blue-950/20 dark:text-gray-200"
+          ref={panelRef}
+          className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-lg border border-blue-200 bg-white p-4 text-sm leading-relaxed text-gray-700 shadow-lg dark:border-blue-800 dark:bg-gray-800 dark:text-gray-200"
           role="region"
           aria-label={`Interpretation for ${section}`}
         >
