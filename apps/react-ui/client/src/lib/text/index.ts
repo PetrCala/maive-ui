@@ -330,7 +330,7 @@ const TEXT = {
     weight: {
       label: "Weighting",
       tooltip:
-        "The weighting scheme to use in the analysis. Equal Weights: default, limiting case of a random-effects model with huge heterogeneity. Standard Weights: inverse-variance weights. Instrumented weights: MAIVE-adjusted inverse-variance weights.",
+        "The weighting scheme to use in the analysis. Equal Weights: limiting case of a random-effects model with large heterogeneity. Standard Weights: inverse-variance weights. Adjusted Weights: MAIVE-adjusted inverse-variance weights. Study Weights: each study contributes equally, regardless of the number of estimates it reports.",
     },
     winsorize: {
       label: "Winsorization (%)",
