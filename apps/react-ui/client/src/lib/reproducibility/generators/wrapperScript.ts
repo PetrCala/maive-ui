@@ -10,6 +10,7 @@
  * 6. Displaying and saving results
  */
 
+import CONST from "@src/CONST";
 import type { ModelParameters, ModelResults } from "@src/types/api";
 import type { VersionInfo, WinsorizeInfo } from "@src/types/reproducibility";
 
@@ -177,12 +178,12 @@ export function generateWrapperScript(
 # R Version:       ${versionInfo.rVersion}
 #
 # This script reproduces the exact analysis performed in the
-# MAIVE web application (https://meta-analysis.cz/maive/).
+# MAIVE web application (${CONST.LINKS.MAIVE.WEBSITE}).
 #
 # For more information about MAIVE, see:
-# - Paper: https://doi.org/10.1038/s41467-025-63261-0
-# - GitHub: https://github.com/PetrCala/maive-ui
-# - Package: https://github.com/meta-analysis-es/maive
+# - Paper: ${CONST.LINKS.MAIVE.PAPER}
+# - GitHub: ${CONST.LINKS.APP_GITHUB.HOMEPAGE}
+# - Package: ${CONST.LINKS.MAIVE.GITHUB}
 #
 # ============================================================
 
@@ -231,7 +232,7 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 }
 
 # Install specific version of MAIVE
-remotes::install_github("PetrCala/MAIVE@${versionInfo.maiveTag}", quiet = TRUE, upgrade = "never")
+remotes::install_github("${CONST.REPRODUCIBILITY.GITHUB.OWNER}/${CONST.REPRODUCIBILITY.GITHUB.REPO_PACKAGE}@${versionInfo.maiveTag}", quiet = TRUE, upgrade = "never")
 library(MAIVE)
 
 cat("✓ Environment setup complete\\n")
@@ -345,8 +346,8 @@ cat("\\nTo load results in another R session:\\n")
 cat("  results <- readRDS('maive_results.rds')\\n")
 
 cat("\\nFor support and questions:\\n")
-cat("  GitHub: https://github.com/PetrCala/maive-ui/issues\\n")
-cat("  Docs:   https://meta-analysis.cz/maive/\\n")
+cat("  GitHub: ${CONST.LINKS.APP_GITHUB.ISSUES}\\n")
+cat("  Docs:   ${CONST.LINKS.MAIVE.WEBSITE}\\n")
 
 cat("\\n")
 `;

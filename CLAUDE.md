@@ -155,6 +155,39 @@ The app uses a combination of Tailwind CSS and shared style utilities for consis
 - **Inline Tailwind**: Layout utilities (flex, grid, spacing), one-off styling exceptions
 - **Component-specific styles**: Only when truly unique to that component
 
+#### Constants and Configuration
+
+The app uses centralized constants for all static values:
+
+**`CONST.ts`** - Immutable application constants:
+- App metadata (name, creator, institution)
+- External links (MAIVE website, GitHub, documentation)
+- GitHub repository configuration for reproducibility
+- Enum-like values (model types, methods, alert types)
+- **Never hardcode URLs, owner names, or static text** - always use `CONST`
+
+**`CONFIG.ts`** - Mutable configuration settings:
+- Feature flags (bootstrap enabled, WAIVE enabled)
+- UI behavior toggles (tooltips, modals)
+- Default model parameters
+
+**Usage pattern:**
+```typescript
+// ✅ Good - using constants
+import CONST from "@src/CONST";
+const repoUrl = CONST.LINKS.APP_GITHUB.HOMEPAGE;
+const owner = CONST.REPRODUCIBILITY.GITHUB.OWNER;
+
+// ❌ Bad - hardcoding values
+const repoUrl = "https://github.com/PetrCala/maive-ui";
+const owner = "PetrCala";
+```
+
+**When to use each:**
+- `CONST.ts`: URLs, GitHub references, display names, external links, repository paths
+- `CONFIG.ts`: Feature toggles, default settings, behavior flags
+- Inline: True one-offs that will never change (e.g., magic numbers with clear context)
+
 ### R (Backend)
 
 - **Naming**: snake_case for functions and variables

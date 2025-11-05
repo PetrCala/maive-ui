@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { readFileSync } from "fs";
 import { join } from "path";
+import CONST from "@src/CONST";
 import type { VersionInfo } from "@src/types/reproducibility";
 
 /**
@@ -33,8 +34,9 @@ function getVersionInfo(): VersionInfo {
     typeof packageJson.version === "string" ? packageJson.version : "unknown";
 
   // Get MAIVE tag from environment variable (set during build/deployment)
-  // Falls back to reading from release workflow file if not set
-  const maiveTag = process.env.MAIVE_TAG ?? "0.0.3.4"; // Default to current version
+  // Falls back to default from constants
+  const maiveTag =
+    process.env.MAIVE_TAG ?? CONST.REPRODUCIBILITY.DEFAULTS.MAIVE_TAG;
 
   // Get git commit hash from environment variable (set during build)
   // Falls back to "latest" if not available
@@ -44,7 +46,9 @@ function getVersionInfo(): VersionInfo {
     "latest";
 
   // Get R version from environment variable (set during build)
-  const rVersion = process.env.R_VERSION ?? "4.4.1"; // Default to current version
+  // Falls back to default from constants
+  const rVersion =
+    process.env.R_VERSION ?? CONST.REPRODUCIBILITY.DEFAULTS.R_VERSION;
 
   cachedVersionInfo = {
     uiVersion,
