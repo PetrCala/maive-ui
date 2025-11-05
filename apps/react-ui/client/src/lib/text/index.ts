@@ -355,7 +355,7 @@ const TEXT = {
     useLogFirstStage: {
       label: "Use log first stage",
       tooltip:
-        "Estimate the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels.",
+        "Estimate the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels. Using logs typically increases instrument strength.",
     },
     runModel: "Run Model",
   },
