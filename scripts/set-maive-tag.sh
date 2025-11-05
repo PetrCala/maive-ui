@@ -5,7 +5,7 @@ set -euo pipefail
 SCRIPTS_DIR=$(dirname "${BASH_SOURCE[0]}")
 source "$SCRIPTS_DIR/shellUtils.sh"
 
-OWNER_REPO="PetrCala/maive"
+OWNER_REPO="PetrCala/MAIVE"
 WORKFLOW_FILE=".github/workflows/release.yml"
 
 if [[ ! -f "$WORKFLOW_FILE" ]]; then
