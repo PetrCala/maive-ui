@@ -101,10 +101,15 @@ export default function InterpretationButton({
       {isOpen && (
         <div
           ref={panelRef}
-          className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-lg border border-primary surface-elevated px-3 py-2 text-sm leading-relaxed shadow-lg"
+          className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-lg border border-primary surface-elevated px-3 py-3 text-sm leading-relaxed shadow-lg"
           role="region"
           aria-label={`Interpretation for ${section}`}
         >
+          {label && (
+            <div className="mb-2 text-[0.6875rem] font-medium text-gray-500 dark:text-gray-400">
+              {label}
+            </div>
+          )}
           {interpretationText}
         </div>
       )}
