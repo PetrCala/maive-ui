@@ -9,6 +9,7 @@ import DownloadButton from "@components/Buttons/DownloadButton";
 import ActionButton from "@components/Buttons/ActionButton";
 import { GoBackButton } from "@components/Buttons";
 import SectionHeading from "@src/components/SectionHeading";
+import InterpretationButton from "@components/InterpretationButton";
 import TEXT, { getResultsText } from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
@@ -39,7 +40,6 @@ import {
 } from "@src/lib/reproducibility";
 import { saveAs } from "file-saver";
 import {
-  FaChevronDown,
   FaInfoCircle,
   FaDownload,
   FaFilter,
@@ -61,8 +61,6 @@ export default function ResultsPage() {
   const runTimestamp = searchParams?.get("runTimestamp") ?? null;
 
   const [isRunInfoModalOpen, setIsRunInfoModalOpen] = useState(false);
-  const [isFunnelInterpretationOpen, setIsFunnelInterpretationOpen] =
-    useState(false);
   const [isExportingReproducibility, setIsExportingReproducibility] =
     useState(false);
   const [exportSuccessMessage, setExportSuccessMessage] = useState<
@@ -131,6 +129,33 @@ export default function ResultsPage() {
 
     return data ?? null;
   }, [dataId]);
+
+  // Calculate simple mean of effect estimates from uploaded data
+  const simpleMean = useMemo(() => {
+    if (!uploadedData?.data || uploadedData.data.length === 0) {
+      return undefined;
+    }
+
+    try {
+      // The first column is the effect estimate (bs)
+      const effectEstimates = uploadedData.data
+        .map((row) => {
+          const value = row[0];
+          return typeof value === "number" ? value : parseFloat(String(value));
+        })
+        .filter((value) => !Number.isNaN(value) && Number.isFinite(value));
+
+      if (effectEstimates.length === 0) {
+        return undefined;
+      }
+
+      const sum = effectEstimates.reduce((acc, val) => acc + val, 0);
+      return sum / effectEstimates.length;
+    } catch (error) {
+      console.error("Error calculating simple mean:", error);
+      return undefined;
+    }
+  }, [uploadedData]);
 
   const numberFormatter = useMemo(() => new Intl.NumberFormat(), []);
 
@@ -414,11 +439,13 @@ export default function ResultsPage() {
                 dataInfo={dataInfo}
                 showTooltips={true}
                 resultsText={resultsText}
+                simpleMean={simpleMean}
+                showInterpretation={true}
               />
 
               {/* Funnel Plot */}
               <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                <div className="mb-4 flex items-start justify-between">
                   <Tooltip
                     content={resultsText.funnelPlot.tooltip}
                     visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
@@ -429,30 +456,12 @@ export default function ResultsPage() {
                       className="leading-tight"
                     />
                   </Tooltip>
-                  <div className="flex items-start">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setIsFunnelInterpretationOpen((prevState) => !prevState)
-                      }
-                      aria-expanded={isFunnelInterpretationOpen}
-                      className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 transition hover:text-blue-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 dark:text-blue-200 dark:hover:text-blue-100 dark:focus-visible:ring-offset-gray-700"
-                    >
-                      <span>Interpretation of the funnel plot</span>
-                      <FaChevronDown
-                        className={`h-3 w-3 transition-transform ${
-                          isFunnelInterpretationOpen ? "rotate-180" : ""
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </button>
-                  </div>
+                  <InterpretationButton
+                    interpretationText={funnelInterpretationText}
+                    section={resultsText.funnelPlot.title}
+                    variant="icon"
+                  />
                 </div>
-                {isFunnelInterpretationOpen ? (
-                  <div className="mb-4 rounded-lg border border-gray-200 bg-white/80 p-3 text-sm text-gray-700 shadow-sm dark:border-gray-600 dark:bg-gray-800/80 dark:text-gray-200">
-                    {funnelInterpretationText}
-                  </div>
-                ) : null}
                 <div className="flex justify-center">
                   <Image
                     src={parsedResults.funnelPlot}
