@@ -105,7 +105,7 @@ cat("=== EFFECT ESTIMATE ===\\n")
 cat("Estimate:         ", sprintf("%.6f", results$effectEstimate), "\\n")
 cat("Standard Error:   ", sprintf("%.6f", results$standardError), "\\n")
 cat("Significant:      ", results$isSignificant, "\\n")
-if (results$andersonRubinCI != "NA") {
+if (!identical(results$andersonRubinCI, "NA") && !is.null(results$andersonRubinCI)) {
   cat("Anderson-Rubin CI:", sprintf("[%.6f, %.6f]", results$andersonRubinCI[1], results$andersonRubinCI[2]), "\\n")
 }
 
@@ -114,12 +114,12 @@ cat("Egger Coefficient:", sprintf("%.6f", results$publicationBias$eggerCoef), "\
 cat("Egger SE:         ", sprintf("%.6f", results$publicationBias$eggerSE), "\\n")
 cat("P-value:          ", sprintf("%.6f", results$publicationBias$pValue), "\\n")
 cat("Significant:      ", results$publicationBias$isSignificant, "\\n")
-if (results$publicationBias$eggerBootCI != "NA") {
+if (!identical(results$publicationBias$eggerBootCI, "NA") && !is.null(results$publicationBias$eggerBootCI)) {
   cat("Bootstrap CI:     ", sprintf("[%.6f, %.6f]", results$publicationBias$eggerBootCI[1], results$publicationBias$eggerBootCI[2]), "\\n")
 }
 
 cat("\\n=== MODEL DIAGNOSTICS ===\\n")
-if (results$firstStageFTest != "NA") {
+if (!identical(results$firstStageFTest, "NA") && !is.null(results$firstStageFTest)) {
   cat("First-Stage F-test:", sprintf("%.6f", results$firstStageFTest), "\\n")
 }
 cat("Hausman Statistic: ", sprintf("%.6f", results$hausmanTest$statistic), "\\n")
@@ -293,7 +293,11 @@ cat("Running MAIVE analysis...\\n")
 cat("========================================\\n\\n")
 
 # Run the analysis using the same function as the web backend
-results <- run_maive_model(data, parameters)
+# Note: run_maive_model expects JSON strings (designed for Lambda/Plumber backend)
+results <- run_maive_model(
+  jsonlite::toJSON(data, dataframe = "rows"),
+  jsonlite::toJSON(parameters, auto_unbox = TRUE)
+)
 
 cat("✓ Analysis complete\\n")
 ${generateResultsDisplaySection(results)}
