@@ -287,7 +287,7 @@ run_maive_model <- function(data, parameters) {
     AR = should_use_ar # 0 = no AR, 1 = AR (default)
   )
 
-  target_function <- if (is_waive) maive::waive else maive::maive
+  target_function <- if (is_waive) MAIVE::waive else MAIVE::maive
   maive_formals <- names(formals(target_function))
   if (instrument == 1) {
     if ("log_first_stage" %in% maive_formals) {
@@ -414,12 +414,12 @@ run_maive_model <- function(data, parameters) {
 
   first_stage_mode <- if (instrument == 1 && isTRUE(log_first_stage)) "log" else "levels"
   first_stage_description <- if (first_stage_mode == "log") {
-    "log(SE²) ~ log N; Duan smearing applied"
+    "log(SE^2) ~ log N; Duan smearing applied"
   } else {
-    "SE² ~ 1/N"
+    "SE^2 ~ 1/N"
   }
   first_stage_label <- if (first_stage_mode == "log") {
-    "First-Stage F-Test (γ₁)"
+    "First-Stage F-Test (<U+03B3><U+2081>)"
   } else {
     "First-Stage F-Test"
   }
