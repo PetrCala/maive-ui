@@ -7,6 +7,12 @@ import {
   type ResultItem,
 } from "@src/utils/resultsDataUtils";
 import Tooltip from "@components/Tooltip";
+import InterpretationButton from "@components/InterpretationButton";
+import {
+  generateEffectInterpretation,
+  generateBiasInterpretation,
+  generateTestsInterpretation,
+} from "@utils/interpretationTextGenerator";
 import TEXT from "@src/lib/text";
 import CONFIG from "@src/CONFIG";
 
@@ -22,6 +28,8 @@ type ResultsSummaryProps = {
   dataInfo?: DataInfo;
   showTooltips?: boolean;
   resultsText?: ResultsTextContent;
+  simpleMean?: number;
+  showInterpretation?: boolean;
 };
 
 export default function ResultsSummary({
@@ -34,6 +42,8 @@ export default function ResultsSummary({
   dataInfo,
   showTooltips = false,
   resultsText = TEXT.results,
+  simpleMean,
+  showInterpretation = true,
 }: ResultsSummaryProps) {
   const formatIntervalString = (value: string): string => {
     const trimmed = value.trim();
@@ -245,6 +255,24 @@ export default function ResultsSummary({
   // Horizontal layout (default) - render sections dynamically
   const sectionOrder = ["effect", "bias", "tests"];
 
+  // Generate interpretation text for each section
+  const getInterpretationText = (sectionKey: string): string => {
+    if (!parameters) {
+      return "";
+    }
+
+    switch (sectionKey) {
+      case "effect":
+        return generateEffectInterpretation(results, parameters, simpleMean);
+      case "bias":
+        return generateBiasInterpretation(results, parameters);
+      case "tests":
+        return generateTestsInterpretation(results, parameters);
+      default:
+        return "";
+    }
+  };
+
   return (
     <div className="space-y-6">
       {sectionOrder.map((sectionKey) => {
@@ -255,13 +283,23 @@ export default function ResultsSummary({
 
         const { left, right } = splitIntoColumns(sectionResults, "horizontal");
         const sectionTitle = getSectionTitle(sectionKey);
+        const interpretationText = getInterpretationText(sectionKey);
 
         return (
           <div
             key={sectionKey}
             className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg"
           >
-            <h2 className="text-xl font-semibold mb-4">{sectionTitle}</h2>
+            <div className="mb-4 flex items-start justify-between">
+              <h2 className="text-xl font-semibold">{sectionTitle}</h2>
+              {showInterpretation && interpretationText && (
+                <InterpretationButton
+                  interpretationText={interpretationText}
+                  section={sectionTitle}
+                  variant="icon"
+                />
+              )}
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className={"space-y-4"}>
                 {left.map((item, index) => (
