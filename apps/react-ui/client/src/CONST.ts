@@ -1,9 +1,24 @@
+const GH_OWNER = "PetrCala";
+const GH_REPO_UI = "maive-ui";
+
+const GH_REPO_PACKAGE = "MAIVE";
+const GH_REPO_PACKAGE_ORG = "meta-analysis-es/maive";
+const GH_R_SCRIPTS_PATH = "apps/lambda-r-backend/r_scripts";
+
 const CONST = {
   APP_DISPLAY_NAME: "MAIVE UI",
 
   CREATOR: "Petr Čala",
   CREATOR_EMAIL: "61505008@fsv.cuni.cz",
   INSTITUTION_NAME: "Charles University",
+
+  GITHUB: {
+    OWNER: GH_OWNER,
+    REPO_UI: GH_REPO_UI,
+    REPO_PACKAGE: GH_REPO_PACKAGE,
+    REPO_PACKAGE_ORG: GH_REPO_PACKAGE_ORG,
+    R_SCRIPTS_PATH: GH_R_SCRIPTS_PATH,
+  },
 
   LINKS: {
     MAIVE: {
@@ -12,13 +27,20 @@ const CONST = {
       GITHUB: "https://github.com/meta-analysis-es/maive",
     },
     APP_GITHUB: {
-      HOMEPAGE: "https://github.com/PetrCala/maive-ui",
-      ISSUES: "https://github.com/PetrCala/maive-ui/issues",
+      HOMEPAGE: `https://github.com/${GH_OWNER}/${GH_REPO_UI}`,
+      ISSUES: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/issues`,
     },
     APPLICATIONS_URL: "https://meta-analysis.cz/",
-    CREATOR_URL: "https://github.com/PetrCala",
+    CREATOR_URL: `https://github.com/${GH_OWNER}`,
     CONTACT_WEBSITE_URL: "https://irsova.com/",
     INSTITUTION_URL: "https://ies.fsv.cuni.cz/en",
+  },
+
+  REPRODUCIBILITY: {
+    DEFAULTS: {
+      R_VERSION: "4.4.1",
+      MAIVE_TAG: "0.0.3.4",
+    },
   },
 
   MODEL_TYPES: {

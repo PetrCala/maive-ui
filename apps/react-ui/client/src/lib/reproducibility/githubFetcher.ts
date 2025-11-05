@@ -5,12 +5,16 @@
  * to ensure the reproducibility package contains the exact code that was deployed.
  */
 
+import CONST from "@src/CONST";
 import type { RCodeBundle } from "@src/types/reproducibility";
 
-// GitHub repository configuration
-const GITHUB_OWNER = "PetrCala";
-const GITHUB_REPO = "maive-ui";
-const R_SCRIPTS_BASE_PATH = "apps/lambda-r-backend/r_scripts";
+const {
+  GITHUB: {
+    OWNER: GITHUB_OWNER,
+    REPO_UI: GITHUB_REPO,
+    R_SCRIPTS_PATH: R_SCRIPTS_BASE_PATH,
+  },
+} = CONST;
 
 /**
  * Fetches a file from GitHub using the raw content URL
