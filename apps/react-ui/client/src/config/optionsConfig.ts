@@ -75,7 +75,8 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         visibility: {
           hideIf: ({ parameters }) =>
             !parameters.shouldUseInstrumenting ||
-            parameters.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE,
+            parameters.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE ||
+            parameters.weight === CONST.WEIGHT_OPTIONS.STUDY_WEIGHTS.VALUE,
         },
         warnings: [
           {
@@ -117,10 +118,18 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         label: TEXT.model.weight.label,
         tooltip: TEXT.model.weight.tooltip,
         type: "dropdown",
-        options: Object.values(CONST.WEIGHT_OPTIONS).map((option) => ({
-          value: option.VALUE,
-          label: option.TEXT,
-        })),
+        options: Object.values(CONST.WEIGHT_OPTIONS)
+          .filter(
+            (option) =>
+              option.VALUE !== CONST.WEIGHT_OPTIONS.STUDY_WEIGHTS.VALUE ||
+              hasStudyIdColumn(
+                (context.uploadedData as { data: DataArray } | undefined)?.data,
+              ),
+          )
+          .map((option) => ({
+            value: option.VALUE,
+            label: option.TEXT,
+          })),
       },
       {
         key: "winsorize",

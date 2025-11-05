@@ -232,15 +232,48 @@ run_maive_model <- function(data, parameters) {
     "PET-PEESE" = 3,
     "EK" = 4
   )
-  weight <- switch(params$weight,
-    "equal_weights" = 0,
-    "standard_weights" = 1,
-    "adjusted_weights" = 2
-  )
+  
+  # Handle study weights: calculate w_ij = 1/n_j and apply via SE adjustment
+  is_study_weights <- identical(params$weight, "study_weights")
+  if (is_study_weights) {
+    if (!"study_id" %in% names(df)) {
+      cli::cli_abort("Study weights require a study_id column in the data.")
+    }
+    
+    # Calculate n_j (number of estimates per study)
+    study_counts <- table(df$study_id)
+    n_j <- as.numeric(study_counts[as.character(df$study_id)])
+    
+    # Apply study weights: w_ij = 1/n_j
+    # To achieve weight w = 1/n_j using standard weights (which use 1/SE^2),
+    # we need: 1/SE'^2 = 1/n_j
+    # Therefore: SE'^2 = n_j, so SE' = sqrt(n_j)
+    df$sebs_original <- df$sebs  # Store original SE for reference
+    df$sebs <- sqrt(n_j)
+    
+    cli::cli_alert_info(sprintf(
+      "Applied study weights: w_ij = 1/n_j (n_j ranges from %d to %d estimates per study)",
+      min(study_counts),
+      max(study_counts)
+    ))
+    
+    # Use standard weights (1) since we've already applied study weights via SE adjustment
+    weight <- 1
+  } else {
+    weight <- switch(params$weight,
+      "equal_weights" = 0,
+      "standard_weights" = 1,
+      "adjusted_weights" = 2
+    )
+  }
 
   # Check if switch returned NULL (no match found)
   if (is.null(maive_method)) {
     cli::cli_abort(paste("Invalid maiveMethod value:", params$maiveMethod))
+  }
+  
+  if (is.null(weight) && !is_study_weights) {
+    cli::cli_abort(paste("Invalid weight value:", params$weight))
   }
 
   cli::cli_alert_info(paste("maive_method result:", maive_method))
