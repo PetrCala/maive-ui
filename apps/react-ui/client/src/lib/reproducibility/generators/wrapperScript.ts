@@ -232,7 +232,7 @@ if (!requireNamespace("remotes", quietly = TRUE)) {
 }
 
 # Install specific version of MAIVE
-remotes::install_github("${CONST.REPRODUCIBILITY.GITHUB.OWNER}/${CONST.REPRODUCIBILITY.GITHUB.REPO_PACKAGE}@${versionInfo.maiveTag}", quiet = TRUE, upgrade = "never")
+remotes::install_github("${CONST.GITHUB.OWNER}/${CONST.GITHUB.REPO_PACKAGE}@${versionInfo.maiveTag}", quiet = TRUE, upgrade = "never")
 library(MAIVE)
 
 cat("✓ Environment setup complete\\n")
