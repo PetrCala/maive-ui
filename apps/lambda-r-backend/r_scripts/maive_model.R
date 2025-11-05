@@ -388,6 +388,48 @@ run_maive_model <- function(data, parameters) {
 
   slope_metadata <- parse_slope_metadata(maive_res)
 
+  extract_waive_weights <- function(res, n_expected) {
+    if (!is.list(res) || n_expected <= 0) {
+      return(NULL)
+    }
+
+    candidate_names <- c("waive_weights", "weights_waive", "waive_wts", "waive_weight")
+
+    coerce_numeric <- function(x) {
+      if (is.null(x)) {
+        return(NULL)
+      }
+
+      if (is.list(x) && !is.data.frame(x) && length(x) == 1) {
+        x <- x[[1]]
+      }
+
+      if (is.data.frame(x)) {
+        x <- unlist(x, use.names = FALSE)
+      }
+
+      vec <- suppressWarnings(as.numeric(x))
+      if (length(vec) == n_expected && any(is.finite(vec))) {
+        return(vec)
+      }
+
+      NULL
+    }
+
+    for (field in candidate_names) {
+      if (field %in% names(res)) {
+        candidate_vec <- coerce_numeric(res[[field]])
+        if (!is.null(candidate_vec)) {
+          return(candidate_vec)
+        }
+      }
+    }
+
+    NULL
+  }
+
+  waive_plot_weights <- if (is_waive) extract_waive_weights(maive_res, nrow(df)) else NULL
+
   parse_boot_result <- function(boot_result, field) if (is.null(boot_result)) "NA" else boot_result[[field]]
   format_ci_field <- function(ci_field) {
     if (is.null(ci_field)) {
@@ -437,7 +479,8 @@ run_maive_model <- function(data, parameters) {
     intercept_se = maive_res$SE,
     slope = slope_metadata,
     instrument = instrument,
-    model_type = model_type
+    model_type = model_type,
+    adjusted_point_weights = waive_plot_weights
   )
 
   results <- list(

@@ -123,7 +123,8 @@ get_funnel_plot <- function(
     is_quadratic_fit = NULL,
     instrument = 1,
     slope = NULL,
-    model_type = "MAIVE") {
+    model_type = "MAIVE",
+    adjusted_point_weights = NULL) {
   funnel_opts <- get_funnel_plot_opts()
   model_label <- toupper(model_type)
 
@@ -194,12 +195,43 @@ get_funnel_plot <- function(
 
   plot_pch <- rep(funnel_opts$effect_pch[1], n_points)
   point_bg <- rep(funnel_opts$effect_shades[1], n_points)
+  point_cex_base <- max(0.1, funnel_opts$pt_cex * 0.6)
+  point_cex_values <- rep(point_cex_base, n_points)
+  adjusted_indices <- integer(0)
 
   if (use_adjusted) {
     x_values <- c(x_values, effect)
     y_values <- c(y_values, se_adjusted)
     plot_pch <- c(plot_pch, rep(funnel_opts$effect_pch[2], n_points))
     point_bg <- c(point_bg, rep(funnel_opts$effect_shades[2], n_points))
+    point_cex_values <- c(point_cex_values, rep(point_cex_base, n_points))
+    adjusted_indices <- seq.int(from = n_points + 1, length.out = n_points)
+
+    if (!is.null(adjusted_point_weights) && length(adjusted_point_weights) == n_points) {
+      weights_numeric <- suppressWarnings(as.numeric(adjusted_point_weights))
+      finite_weights <- is.finite(weights_numeric) & weights_numeric >= 0
+
+      if (any(finite_weights)) {
+        fallback_weight <- min(weights_numeric[finite_weights])
+        weights_numeric[!finite_weights] <- fallback_weight
+        min_weight <- min(weights_numeric[finite_weights])
+        max_weight <- max(weights_numeric[finite_weights])
+        min_scale <- 0.6
+        max_scale <- 1.4
+
+        if (max_weight > min_weight) {
+          scaled_weights <- min_scale +
+            ((weights_numeric - min_weight) / (max_weight - min_weight)) *
+              (max_scale - min_scale)
+        } else {
+          mid_scale <- (min_scale + max_scale) / 2
+          scaled_weights <- rep(mid_scale, length(weights_numeric))
+        }
+
+        scaled_weights <- pmax(min_scale, pmin(max_scale, scaled_weights))
+        point_cex_values[adjusted_indices] <- point_cex_base * scaled_weights
+      }
+    }
   }
 
   finite_points <- is.finite(x_values) & is.finite(y_values)
@@ -207,7 +239,7 @@ get_funnel_plot <- function(
   y_values <- y_values[finite_points]
   plot_pch <- plot_pch[finite_points]
   point_bg <- point_bg[finite_points]
-  point_cex <- max(0.1, funnel_opts$pt_cex * 0.6)
+  point_cex_values <- point_cex_values[finite_points]
 
   simple_mean <- mean(effect, na.rm = TRUE)
 
@@ -401,7 +433,7 @@ get_funnel_plot <- function(
       pch = plot_pch,
       col = funnel_opts$col,
       bg = point_bg,
-      cex = point_cex
+      cex = point_cex_values
     )
   }
 
@@ -510,20 +542,29 @@ get_funnel_plot <- function(
 
   fit_label <- if (instrument == 0) "Regression fit" else paste(model_label, "fit")
 
+  base_cex_for_legend <- point_cex_base
+  if (any(plot_pch == funnel_opts$effect_pch[1])) {
+    base_cex_for_legend <- mean(point_cex_values[plot_pch == funnel_opts$effect_pch[1]])
+  }
+
   legend_labels <- c(funnel_opts$legend_texts[1])
   legend_pch <- c(funnel_opts$effect_pch[1])
   legend_col <- c(funnel_opts$text_color)
   legend_pt_bg <- c(funnel_opts$effect_shades[1])
-  legend_pt_cex <- c(point_cex)
+  legend_pt_cex <- c(base_cex_for_legend)
   legend_lty <- c(NA)
   legend_lwd <- c(NA)
 
   if (use_adjusted) {
+    adjusted_cex_for_legend <- point_cex_base
+    if (any(plot_pch == funnel_opts$effect_pch[2])) {
+      adjusted_cex_for_legend <- mean(point_cex_values[plot_pch == funnel_opts$effect_pch[2]])
+    }
     legend_labels <- c(legend_labels, funnel_opts$legend_texts[2])
     legend_pch <- c(legend_pch, funnel_opts$effect_pch[2])
     legend_col <- c(legend_col, funnel_opts$text_color)
     legend_pt_bg <- c(legend_pt_bg, funnel_opts$effect_shades[2])
-    legend_pt_cex <- c(legend_pt_cex, point_cex)
+    legend_pt_cex <- c(legend_pt_cex, adjusted_cex_for_legend)
     legend_lty <- c(legend_lty, NA)
     legend_lwd <- c(legend_lwd, NA)
   }
