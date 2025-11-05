@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Tooltip from "@components/Tooltip";
@@ -65,6 +65,12 @@ export default function ResultsPage() {
     useState(false);
   const [isExportingReproducibility, setIsExportingReproducibility] =
     useState(false);
+  const [exportSuccessMessage, setExportSuccessMessage] = useState<
+    string | null
+  >(null);
+  const [exportErrorMessage, setExportErrorMessage] = useState<string | null>(
+    null,
+  );
 
   let parsedParametersJson: Partial<ModelParameters> = {};
   if (parameters) {
@@ -176,6 +182,26 @@ export default function ResultsPage() {
       parsedParameters.standardErrorTreatment,
     ],
   );
+
+  // Auto-dismiss success alert after 8 seconds
+  useEffect(() => {
+    if (exportSuccessMessage) {
+      const timer = setTimeout(() => {
+        setExportSuccessMessage(null);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [exportSuccessMessage]);
+
+  // Auto-dismiss error alert after 12 seconds
+  useEffect(() => {
+    if (exportErrorMessage) {
+      const timer = setTimeout(() => {
+        setExportErrorMessage(null);
+      }, 12000);
+      return () => clearTimeout(timer);
+    }
+  }, [exportErrorMessage]);
 
   if (!results) {
     return (
@@ -328,15 +354,13 @@ export default function ResultsPage() {
       saveAs(blob, filename);
 
       console.log(`Successfully generated and downloaded: ${filename}`);
-      alert(
-        "Reproducibility package downloaded! Extract the ZIP file and run 'run_analysis.R' in R to reproduce these results.",
-      );
+      setExportSuccessMessage("Reproducibility package downloaded!");
     } catch (error) {
       console.error("Error exporting reproducibility package:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error occurred";
-      alert(
-        `Failed to export reproducibility package: ${errorMessage}\n\nPlease try again or contact support if the issue persists.`,
+      setExportErrorMessage(
+        `Failed to export reproducibility package: ${errorMessage}. Please try again or contact support if the issue persists.`,
       );
     } finally {
       setIsExportingReproducibility(false);
@@ -453,6 +477,24 @@ export default function ResultsPage() {
               <CitationBox variant="compact" useBlueStyling />
             </div>
           </div>
+
+          {/* Export Success/Error Alerts */}
+          {exportSuccessMessage && (
+            <Alert
+              message={exportSuccessMessage}
+              type={CONST.ALERT_TYPES.SUCCESS}
+              onClick={() => setExportSuccessMessage(null)}
+              standalone={true}
+            />
+          )}
+          {exportErrorMessage && (
+            <Alert
+              message={exportErrorMessage}
+              type={CONST.ALERT_TYPES.ERROR}
+              onClick={() => setExportErrorMessage(null)}
+              standalone={true}
+            />
+          )}
 
           <div className="flex flex-col gap-6 mt-8 lg:flex-row">
             {/* Left Column - Current Run Actions */}
