@@ -1,5 +1,6 @@
 # Repository Guidelines
 
+
 ## Project Structure & Module Organization
 
 The interface lives in `apps/react-ui/client`, a Next 14 + TypeScript app using Tailwind. Lambda-ready R code sits in `apps/lambda-r-backend/r_scripts` with reusable models in `maive_model.R` and E2E suites under `tests/e2e`. Shared documentation and assets stay in `docs/` and `lib/`, while developer tooling and automation scripts reside in `scripts/`; cloud definitions are stored under `terraform/` for reference.
