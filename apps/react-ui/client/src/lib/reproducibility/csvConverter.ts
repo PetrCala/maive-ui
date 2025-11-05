@@ -2,7 +2,7 @@
  * CSV conversion utilities for reproducibility packages
  */
 
-import type { DataArray } from "@src/types/data";
+import type { DataArray } from "@src/types";
 
 /**
  * Converts data array to CSV format
@@ -17,21 +17,22 @@ export function convertDataToCSV(data: DataArray): string {
   }
 
   // Get column names from first row
-  const firstRow = data[0];
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const firstRow: Record<string, unknown> | undefined = data[0];
   if (!firstRow || typeof firstRow !== "object") {
     throw new Error("Invalid data format: first row is not an object");
   }
 
-  const columns = Object.keys(firstRow);
+  const columns: string[] = Object.keys(firstRow);
 
   // Create CSV header
   const header = columns.join(",");
 
   // Create CSV rows
-  const rows = data.map((row) => {
+  const rows = data.map((row: Record<string, unknown>) => {
     return columns
-      .map((col) => {
-        const value = row[col];
+      .map((col: string) => {
+        const value: unknown = row[col];
         // Handle different value types
         if (value === null || value === undefined) {
           return "";
