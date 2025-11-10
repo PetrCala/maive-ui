@@ -288,18 +288,13 @@ const TEXT = {
     },
     modelType: {
       label: "Model Type",
-      tooltips: {
-        MAIVE:
-          "MAIVE: Meta-Analysis Instrumental Variable Estimator (Irsova et al., 2025, Nat Comms)",
-        WAIVE:
-          "WAIVE (Experimental): Weighted Adjustment Instrumental Variable Estimator (still under construction; corrects more aggressively for p-hacking)",
-        WLS: "Classical least squares meta-regression without istrumenting.",
-      } satisfies Record<ModelParameters["modelType"], string>,
+      tooltip:
+        "MAIVE: Meta-Analysis Instrumental Variable Estimator (Irsova et al., 2025, Nat Comms).\nWAIVE (Experimental): Weighted Adjustment Instrumental Variable Estimator (corrects more aggressively for p-hacking).\nWLS: Meta-regression corrections without instrumenting.",
     },
     includeStudyDummies: {
       label: "Fixed-Intercept Multilevel",
       tooltip:
-        "Controls for within-study dependence by giving each study its own intercept. Accounts for unobserved study-level factors without requiring random-effects modeling.",
+        "Controls for within-study dependence by assigning each study its own intercept (effect). Accounts for unobserved study-level factors without relying on the assumptions required for random-effects modeling (e.g., random effects uncorrelated with publication bias).",
     },
     includeStudyClustering: {
       label: "Include Study Level Clustering",
@@ -309,12 +304,12 @@ const TEXT = {
     standardErrorTreatment: {
       label: "Standard Error Treatment",
       tooltip:
-        "The method to use for standard error treatment. Recommended options are bootstrap or CR2, which are robust to a small number of clusters.",
+        "Adjusts meta-analytic standard errors to account for correlations among estimates reported within the same study. The bootstrap and CR2 (Pustejovsky & Tipton, 2018, JBES) options provide valid inference even with a small number of studies.",
     },
     computeAndersonRubin: {
       label: "Compute Anderson-Rubin Confidence Interval",
       tooltip:
-        "Whether to compute the Anderson-Rubin Confidence Interval, which is robust to weak instruments. Available with equal weights or adjusted weights.",
+        "The Anderson–Rubin confidence interval is robust to weak instruments (when sample size poorly predicts precision). It should be reported when the first-stage F-statistic is below 10.",
       warning:
         "May increase processing time. For the corrected mean (intercept), intervals can be wide because the instrument identifies the slope, not the intercept. In some cases (e.g. high heterogeneity in standard errors), AR intervals may return NA.",
     },
@@ -325,17 +320,18 @@ const TEXT = {
       label: "MAIVE Method",
       waiveLabel: "WAIVE Method",
       nonInstrumentingLabel: "Method",
-      tooltip: "The correction method to use. PET-PEESE is the default.",
+      tooltip:
+        "PET: Precision Effect Test. PEESE: Precision Effect Estimate with Standard Errors. PET-PEESE: Two-step combination of PET and PEESE (Stanley & Doucouliagos, 2014, RSM). EK: Endogenous Kink model (Bom & Rachinger, 2019, RSM).",
     },
     weight: {
       label: "Weighting",
       tooltip:
-        "The weighting scheme to use in the analysis. Equal Weights: limiting case of a random-effects model with large heterogeneity. Standard Weights: inverse-variance weights. Adjusted Weights: MAIVE-adjusted inverse-variance weights. Study Weights: each study contributes equally, regardless of the number of estimates it reports.",
+        "Equal Weights: Limiting case of a random-effects model with large heterogeneity. Standard Weights: Inverse-variance weights. Adjusted Weights: MAIVE-adjusted inverse-variance weights. Study Weights: Each study contributes equally, regardless of how many estimates it reports.",
     },
     winsorize: {
       label: "Winsorization (%)",
       tooltip:
-        "Limits the impact of extreme outliers by clipping values at symmetric percentile bounds. Choose the winsorization percentage (0–5%) to apply to effect sizes and standard errors.",
+        "Reduces the influence of extreme outliers by replacing values beyond symmetric percentile bounds with the corresponding boundary values. Select the winsorization percentage (0–5%) to apply to effect sizes and standard errors.",
       selectedLabel: "Selected winsorization",
     },
     shouldUseInstrumenting: {
@@ -355,7 +351,7 @@ const TEXT = {
     useLogFirstStage: {
       label: "Use log first stage",
       tooltip:
-        "Estimate the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels. Using logs typically increases instrument strength.",
+        "Estimates the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels. Using logs typically strengthens the instrument and often performs better in practical applications.",
     },
     runModel: "Run Model",
   },
