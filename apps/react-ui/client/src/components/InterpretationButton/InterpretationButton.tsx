@@ -101,7 +101,7 @@ export default function InterpretationButton({
       {isOpen && (
         <div
           ref={panelRef}
-          className="absolute right-0 top-full z-50 mt-2 w-96 max-w-[calc(100vw-2rem)] rounded-lg border border-primary surface-elevated px-3 py-3 text-sm leading-relaxed shadow-lg"
+          className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] sm:w-96 rounded-lg border border-primary surface-elevated px-3 py-3 text-sm leading-relaxed shadow-lg"
           role="region"
           aria-label={`Interpretation for ${section}`}
         >
