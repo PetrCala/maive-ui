@@ -81,7 +81,9 @@ export default function InterpretationButton({
   }, [isOpen]);
 
   return (
-    <div className={`interpretation-button-container relative ${className}`}>
+    <div
+      className={`interpretation-button-container relative inline-block ${className}`}
+    >
       <button
         ref={buttonRef}
         type="button"
@@ -101,7 +103,16 @@ export default function InterpretationButton({
       {isOpen && (
         <div
           ref={panelRef}
-          className="absolute right-0 top-full z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] sm:w-96 rounded-lg border border-primary surface-elevated px-3 py-3 text-sm leading-relaxed shadow-lg"
+          className="fixed sm:absolute left-4 right-4 sm:left-auto sm:right-0 sm:top-full z-50 mt-2 w-auto sm:w-96 rounded-lg border border-primary surface-elevated px-3 py-3 text-sm leading-relaxed shadow-lg"
+          style={
+            typeof window !== "undefined" && window.innerWidth < 640
+              ? {
+                  top: buttonRef.current
+                    ? `${buttonRef.current.getBoundingClientRect().bottom + 8}px`
+                    : undefined,
+                }
+              : {}
+          }
           role="region"
           aria-label={`Interpretation for ${section}`}
         >
