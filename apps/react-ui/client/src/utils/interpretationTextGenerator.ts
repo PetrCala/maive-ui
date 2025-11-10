@@ -5,6 +5,7 @@
  * model parameters and statistical results.
  */
 
+import CONST from "@src/CONST";
 import type { ModelParameters, ModelResults } from "@src/types";
 
 /**
@@ -138,7 +139,12 @@ export function generateTestsInterpretation(
   parameters: ModelParameters,
 ): string {
   const { firstStageFStatistic, hausmanTest } = results;
-  const { shouldUseInstrumenting, useLogFirstStage } = parameters;
+  const {
+    shouldUseInstrumenting,
+    useLogFirstStage,
+    modelType,
+    includeStudyDummies,
+  } = parameters;
 
   // Only generate if instrumenting is used
   if (!shouldUseInstrumenting) {
@@ -159,20 +165,26 @@ export function generateTestsInterpretation(
     );
   }
 
-  // Hausman test sentence
-  const hausmanNA = isHausmanTestNA(hausmanTest);
-  if (hausmanNA) {
-    sentences.push(
-      "The Hausman test is undefined because IV variance < OLS variance — estimators are nearly identical, so this test is not informative.",
-    );
-  } else {
-    const { rejectsNull } = hausmanTest;
-    const rejectText = rejectsNull ? "rejects" : "does not reject";
-    const evidenceStrength = getSpuriousPrecisionEvidence(rejectsNull);
+  // Hausman test sentence - only show for MAIVE (not WAIVE) and when not using fixed intercepts
+  const isWaive = modelType === CONST.MODEL_TYPES.WAIVE;
+  const hasFixedIntercept = includeStudyDummies ?? false;
+  const shouldShowHausman = !isWaive && !hasFixedIntercept;
 
-    sentences.push(
-      `The Hausman test ${rejectText} equality of OLS and IV, indicating that evidence of spurious precision is ${evidenceStrength}.`,
-    );
+  if (shouldShowHausman) {
+    const hausmanNA = isHausmanTestNA(hausmanTest);
+    if (hausmanNA) {
+      sentences.push(
+        "The Hausman test is undefined because IV variance < OLS variance — estimators are nearly identical, so this test is not informative.",
+      );
+    } else {
+      const { rejectsNull } = hausmanTest;
+      const rejectText = rejectsNull ? "rejects" : "does not reject";
+      const evidenceStrength = getSpuriousPrecisionEvidence(rejectsNull);
+
+      sentences.push(
+        `The Hausman test ${rejectText} equality of OLS and IV, indicating that evidence of spurious precision is ${evidenceStrength}.`,
+      );
+    }
   }
 
   // Logs recommendation sentence (only if F < 30 AND not using logs)
