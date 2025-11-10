@@ -21,7 +21,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
       {
         key: "modelType",
         label: TEXT.model.modelType.label,
-        tooltip: TEXT.model.modelType.tooltips.MAIVE,
+        tooltip: TEXT.model.modelType.tooltip,
         type: "dropdown",
         options: [
           {
