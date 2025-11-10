@@ -33,7 +33,7 @@ export type OptionWarning = {
 export type BaseOptionConfig = {
   key: keyof ModelParameters;
   label: string;
-  tooltip: string;
+  tooltip: string | React.ReactNode;
   disabled?: boolean;
   className?: string;
   warnings?: OptionWarning[];
