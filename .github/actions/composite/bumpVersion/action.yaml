@@ -18,11 +18,8 @@ outputs:
 
 runs:
   using: "composite"
-  
-  steps:
-    - name: Check out repository
-      uses: actions/checkout@v4
 
+  steps:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -39,8 +36,8 @@ runs:
       run: bun install
       shell: bash
 
-    - name: Reset lockfile changes
-      run: git checkout -- bun.lockb || true
+    - name: Reset all git changes from dependency install
+      run: git reset --hard HEAD
       shell: bash
 
     - name: Set up SSH
