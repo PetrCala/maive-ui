@@ -321,12 +321,12 @@ const TEXT = {
       waiveLabel: "WAIVE Method",
       nonInstrumentingLabel: "Method",
       tooltip:
-        "PET: Precision Effect Test. PEESE: Precision Effect Estimate with Standard Errors. PET-PEESE: Two-step combination of PET and PEESE (Stanley & Doucouliagos, 2014, RSM). EK: Endogenous Kink model (Bom & Rachinger, 2019, RSM).",
+        "PET: Precision Effect Test.\nPEESE: Precision Effect Estimate with Standard Errors.\nPET-PEESE: Two-step combination of PET and PEESE (Stanley & Doucouliagos, 2014, RSM).\nEK: Endogenous Kink model (Bom & Rachinger, 2019, RSM).",
     },
     weight: {
       label: "Weighting",
       tooltip:
-        "Equal Weights: Limiting case of a random-effects model with large heterogeneity. Standard Weights: Inverse-variance weights. Adjusted Weights: MAIVE-adjusted inverse-variance weights. Study Weights: Each study contributes equally, regardless of how many estimates it reports.",
+        "Equal Weights: Limiting case of a random-effects model with large heterogeneity.\nStandard Weights: Inverse-variance weights.\nAdjusted Weights: MAIVE-adjusted inverse-variance weights.\nStudy Weights: Each study contributes equally, regardless of how many estimates it reports.",
     },
     winsorize: {
       label: "Winsorization (%)",
