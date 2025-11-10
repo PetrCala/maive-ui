@@ -42,8 +42,8 @@ export type ResultsText = Readonly<{
   diagnosticTests: SectionWithMetrics<{
     hausmanTest: MetricText;
     hausmanCriticalValue: MetricText;
-    firstStageFTest: MetricText;
-    firstStageFTestLog: MetricText;
+    firstStageFStatistic: MetricText;
+    firstStageFStatisticLog: MetricText;
     firstStageSpecification: MetricText;
   }>;
   funnelPlot: Readonly<{
@@ -137,13 +137,13 @@ const RESULTS_TEXT: ResultsText = {
         tooltip:
           "5% critical value for the Hausman test. Reject exogeneity if the test statistic exceeds this value.",
       },
-      firstStageFTest: {
-        label: "First-Stage F-Test",
+      firstStageFStatistic: {
+        label: "First-Stage F-Statistic",
         tooltip:
           "Heteroskedasticity-robust F statistic for the strength of the instrument (inverse sample size) in the levels first-stage regression of reported variances. Values above 10 denote a strong instrument.",
       },
-      firstStageFTestLog: {
-        label: "First-Stage F-Test (γ₁)",
+      firstStageFStatisticLog: {
+        label: "First-Stage F-Statistic (γ₁)",
         tooltip:
           "Heteroskedasticity-robust F statistic for the log-scale slope coefficient (γ₁) in the first-stage regression log(SE²) ~ log N. Values above 10 denote a strong instrument.",
       },

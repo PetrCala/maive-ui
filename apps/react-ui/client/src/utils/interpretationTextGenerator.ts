@@ -137,7 +137,7 @@ export function generateTestsInterpretation(
   results: ModelResults,
   parameters: ModelParameters,
 ): string {
-  const { firstStageFTest, hausmanTest } = results;
+  const { firstStageFStatistic, hausmanTest } = results;
   const { shouldUseInstrumenting, useLogFirstStage } = parameters;
 
   // Only generate if instrumenting is used
@@ -147,15 +147,15 @@ export function generateTestsInterpretation(
 
   const sentences: string[] = [];
 
-  // First-stage F-test sentence
-  if (firstStageFTest !== "NA") {
-    const strength = getInstrumentStrength(firstStageFTest);
+  // First-stage F-statistic sentence
+  if (firstStageFStatistic !== "NA") {
+    const strength = getInstrumentStrength(firstStageFStatistic);
     const strengthText = strength === "weak" ? "weak" : "strong";
     const ciRequirement =
       strength === "weak" ? "required" : "optional but recommended";
 
     sentences.push(
-      `The instrument is ${strengthText} (first-stage F = ${formatNumber(firstStageFTest)}), implying that the Anderson–Rubin confidence interval is ${ciRequirement}.`,
+      `The instrument is ${strengthText} (first-stage F-statistic = ${formatNumber(firstStageFStatistic)}), implying that the Anderson–Rubin confidence interval is ${ciRequirement}.`,
     );
   }
 
@@ -176,9 +176,13 @@ export function generateTestsInterpretation(
   }
 
   // Logs recommendation sentence (only if F < 30 AND not using logs)
-  if (firstStageFTest !== "NA" && firstStageFTest < 30 && !useLogFirstStage) {
+  if (
+    firstStageFStatistic !== "NA" &&
+    firstStageFStatistic < 30 &&
+    !useLogFirstStage
+  ) {
     sentences.push(
-      "Because first-stage F < 30, running the first stage in logs is recommended.",
+      "Because the first-stage F-statistic < 30, running the first stage in logs is recommended.",
     );
   }
 

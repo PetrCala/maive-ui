@@ -164,7 +164,7 @@ Each successful API call should return:
    "pValue": 0.023,
    "isSignificant": true
   },
-  "firstStageFTest": 15.67,
+  "firstStageFStatistic": 15.67,
   "hausmanTest": {
    "statistic": 8.45,
    "criticalValue": 3.84,
