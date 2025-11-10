@@ -54,20 +54,32 @@ function Tooltip({
       {children}
       {isVisible && (visible ?? true) && (
         <div
-          className="absolute z-50 px-3 py-2 text-sm surface-elevated rounded-lg shadow-xl pointer-events-none transition-opacity duration-200 border border-primary"
-          style={{
-            left: "100%",
-            top: "0",
-            marginLeft: "10px",
-            transform: "translateY(-50%)",
-            maxWidth: "min(280px, 90vw)",
-            minWidth: "min(200px, 80vw)",
-            wordWrap: "break-word",
-            overflowWrap: "break-word",
-            hyphens: "auto",
-            lineHeight: "1.4",
-            whiteSpace: "pre-line",
-          }}
+          className="fixed sm:absolute left-4 right-4 sm:left-full sm:right-auto sm:top-0 z-50 px-3 py-2 text-sm surface-elevated rounded-lg shadow-xl pointer-events-none transition-opacity duration-200 border border-primary w-auto sm:w-auto"
+          style={
+            typeof window !== "undefined" && window.innerWidth < 640
+              ? {
+                  top: triggerRef.current
+                    ? `${triggerRef.current.getBoundingClientRect().bottom + 8}px`
+                    : undefined,
+                  maxWidth: "calc(100vw - 2rem)",
+                  wordWrap: "break-word",
+                  overflowWrap: "break-word",
+                  hyphens: "auto",
+                  lineHeight: "1.4",
+                  whiteSpace: "pre-line",
+                }
+              : {
+                  marginLeft: "10px",
+                  transform: "translateY(-50%)",
+                  maxWidth: "min(280px, 90vw)",
+                  minWidth: "min(200px, 80vw)",
+                  wordWrap: "break-word",
+                  overflowWrap: "break-word",
+                  hyphens: "auto",
+                  lineHeight: "1.4",
+                  whiteSpace: "pre-line",
+                }
+          }
         >
           {content}
           {shouldShowArrow && (
