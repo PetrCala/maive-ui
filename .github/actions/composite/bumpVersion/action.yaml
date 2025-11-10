@@ -39,6 +39,10 @@ runs:
       run: bun install
       shell: bash
 
+    - name: Reset lockfile changes
+      run: git checkout -- bun.lockb || true
+      shell: bash
+
     - name: Set up SSH
       shell: bash
       run: |
