@@ -238,16 +238,13 @@ get_funnel_plot <- function(
           point_weights[!is.finite(point_weights) | point_weights <= 0] <- 0
 
           if (any(point_weights > 0)) {
-            weight_scale <- rep(0, length(point_weights))
-            weight_scale <- ifelse(
-              point_weights > 0,
-              sqrt(point_weights / positive_max),
-              0
-            )
+            # Normalize weights to [0, 1] range
+            normalized_weights <- point_weights / positive_max
 
-            min_cex <- base_point_cex * 0.6
-            max_cex <- base_point_cex * 1.6
-            adjusted_cex <- min_cex + (max_cex - min_cex) * weight_scale
+            # Scale point sizes from 0.5 to 1.0 times the base size
+            # Formula: size = base_cex * (0.5 + 0.5 * normalized_weight)
+            # This ensures weight=0 gives 50% size, weight=max gives 100% size
+            adjusted_cex <- base_point_cex * (0.5 + 0.5 * normalized_weights)
             point_cex[adjusted_indices] <- adjusted_cex
           }
         }
