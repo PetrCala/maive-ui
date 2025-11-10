@@ -110,7 +110,7 @@ export default function ResultsPage() {
     }
 
     if (isWaiveModel) {
-      return "The figure is a scatter plot of effect sizes against their MAIVE-adjusted precision (black-filled dots). The size of each dot indicates its weight in WAIVE; spuriously precise estimates are downweighted. Hollow dots denote unadjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the WAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.";
+      return "The figure is a scatter plot of effect sizes against their WAIVE-adjusted precision (black-filled dots). The size of each dot indicates its weight in WAIVE; spuriously precise estimates are downweighted. To preserve visibility, the scaling ranges from 0.5 to 1.0 of the default point size, with size downweighting occurring smoothly within these limits. Hollow dots denote unadjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the WAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.";
     }
 
     return "The figure is a scatter plot of effect sizes against their MAIVE-adjusted precision (black-filled dots). Hollow dots denote unadjusted precision. Shaded regions represent levels of statistical significance of the reported estimates. The solid line shows the MAIVE fit, and the corrected meta-analytic estimate is given by the intercept of this line with the upper horizontal axis.";
