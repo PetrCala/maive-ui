@@ -79,7 +79,7 @@ export function generateEffectInterpretation(
   simpleMean?: number,
 ): string {
   const { effectEstimate, standardError } = results;
-  const { shouldUseInstrumenting } = parameters;
+  const { modelType } = parameters;
 
   const [ciLower, ciUpper] = computeConfidenceInterval(
     effectEstimate,
@@ -87,7 +87,7 @@ export function generateEffectInterpretation(
   );
   const significant = isSignificant(effectEstimate, standardError);
 
-  const prefix = shouldUseInstrumenting ? "Using MAIVE, the" : "The";
+  const prefix = `Using ${modelType}, the`;
   const significanceText = significant
     ? "statistically different from zero"
     : "not different from zero";
