@@ -64,9 +64,7 @@ export default function OptionRenderer({
   const noInstrumentingInfo =
     TEXT.model.shouldUseInstrumenting.noInstrumentingInfo;
   const tooltipContent =
-    option.key === "modelType"
-      ? TEXT.model.modelType.tooltip
-      : option.tooltip;
+    option.key === "modelType" ? TEXT.model.modelType.tooltip : option.tooltip;
   const isWaiveModel =
     CONFIG.WAIVE_ENABLED && parameters.modelType === CONST.MODEL_TYPES.WAIVE;
 
