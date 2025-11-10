@@ -22,7 +22,7 @@ services:
     build:
       context: ./apps/lambda-r-backend
       dockerfile: Dockerfile
-    working_dir: /r_scripts # matches WORKDIR in Dockerfile
+    working_dir: /r_scripts
     command: Rscript host.R
     ports:
       - "8787:8787"
