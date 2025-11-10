@@ -424,9 +424,9 @@ run_maive_model <- function(data, parameters) {
     "SE^2 ~ 1/N"
   }
   first_stage_label <- if (first_stage_mode == "log") {
-    "First-Stage F-Test (<U+03B3><U+2081>)"
+    "First-Stage F-Statistic (\u03b3\u2081)"
   } else {
-    "First-Stage F-Test"
+    "First-Stage F-Statistic"
   }
 
   funnel_plot_data <- get_funnel_plot_data( # nolint: object_usage_linter.
@@ -453,7 +453,7 @@ run_maive_model <- function(data, parameters) {
       eggerBootCI = egger_boot_ci,
       eggerAndersonRubinCI = egger_ar_ci
     ),
-    firstStageFTest = maive_res[["F-test"]],
+    firstStageFStatistic = maive_res[["F-test"]],
     hausmanTest = list(
       statistic = maive_res$Hausman,
       criticalValue = maive_res$Chi2,

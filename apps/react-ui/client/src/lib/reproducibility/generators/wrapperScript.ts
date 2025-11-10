@@ -119,8 +119,8 @@ if (!identical(results$publicationBias$eggerBootCI, "NA") && !is.null(results$pu
 }
 
 cat("\\n=== MODEL DIAGNOSTICS ===\\n")
-if (!identical(results$firstStageFTest, "NA") && !is.null(results$firstStageFTest)) {
-  cat("First-Stage F-test:", sprintf("%.6f", results$firstStageFTest), "\\n")
+if (!identical(results$firstStageFStatistic, "NA") && !is.null(results$firstStageFStatistic)) {
+  cat("First-Stage F-statistic:", sprintf("%.6f", results$firstStageFStatistic), "\\n")
 }
 cat("Hausman Statistic: ", sprintf("%.6f", results$hausmanTest$statistic), "\\n")
 cat("Chi-Squared CV:    ", sprintf("%.6f", results$hausmanTest$criticalValue), "\\n")

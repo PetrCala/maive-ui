@@ -118,7 +118,7 @@ assert_response_structure <- function(response, expected_fields = NULL) {
   if ("data" %in% names(response)) {
     data_fields <- c(
       "effectEstimate", "standardError", "isSignificant",
-      "andersonRubinCI", "publicationBias", "firstStageFTest",
+      "andersonRubinCI", "publicationBias", "firstStageFStatistic",
       "firstStage",
       "hausmanTest", "seInstrumented", "funnelPlot"
     )

@@ -62,8 +62,8 @@ const generateMockResults = (nrow: number, useLogFirstStage = false) => {
     ? "log(SE²) ~ log N; Duan smearing applied"
     : "SE² ~ 1/N.";
   const firstStageLabel = useLogFirstStage
-    ? "First-Stage F-Test (γ₁)"
-    : "First-Stage F-Test";
+    ? "First-Stage F-Statistic (γ₁)"
+    : "First-Stage F-Statistic";
 
   return {
     effectEstimate: faker.number.float({ min: 0, max: 1, multipleOf: 0.0001 }),
@@ -100,7 +100,7 @@ const generateMockResults = (nrow: number, useLogFirstStage = false) => {
             ]
           : "NA",
     },
-    firstStageFTest:
+    firstStageFStatistic:
       Math.random() > 0.5
         ? "NA"
         : faker.number.float({

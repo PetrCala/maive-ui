@@ -52,7 +52,7 @@ type ModelResults = {
     eggerAndersonRubinCI: [number, number] | "NA";
     pValue?: number;
   };
-  firstStageFTest: number | "NA";
+  firstStageFStatistic: number | "NA";
   hausmanTest: {
     statistic: number;
     criticalValue: number;

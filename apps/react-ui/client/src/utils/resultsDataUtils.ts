@@ -125,8 +125,8 @@ export const generateResultsData = (
   const specificationValue = firstStageDescription ?? defaultSpecification;
   const firstStageLabelDefault =
     firstStageMode === "log"
-      ? resultsText.diagnosticTests.metrics.firstStageFTestLog.label
-      : resultsText.diagnosticTests.metrics.firstStageFTest.label;
+      ? resultsText.diagnosticTests.metrics.firstStageFStatisticLog.label
+      : resultsText.diagnosticTests.metrics.firstStageFStatistic.label;
   const firstStageFStatisticLabel =
     results.firstStage?.fStatisticLabel ?? firstStageLabelDefault;
   const hausmanStatisticValue = isFiniteNumber(results.hausmanTest.statistic)
@@ -139,15 +139,20 @@ export const generateResultsData = (
     hausmanStatisticValue !== "NA" && isBoolean(results.hausmanTest.rejectsNull)
       ? results.hausmanTest.rejectsNull
       : null;
-  const firstStageFTestValue =
-    results.firstStageFTest !== "NA" && isFiniteNumber(results.firstStageFTest)
-      ? results.firstStageFTest
+  const firstStageFStatisticValue =
+    results.firstStageFStatistic !== "NA" &&
+    isFiniteNumber(results.firstStageFStatistic)
+      ? results.firstStageFStatistic
       : "NA";
-  const firstStageFTestNumericValue =
-    typeof firstStageFTestValue === "number" ? firstStageFTestValue : null;
-  const hasFirstStageFTestResult = firstStageFTestNumericValue !== null;
-  const isFirstStageFTestStrong =
-    firstStageFTestNumericValue !== null && firstStageFTestNumericValue >= 10;
+  const firstStageFStatisticNumericValue =
+    typeof firstStageFStatisticValue === "number"
+      ? firstStageFStatisticValue
+      : null;
+  const hasFirstStageFStatisticResult =
+    firstStageFStatisticNumericValue !== null;
+  const isFirstStageFStatisticStrong =
+    firstStageFStatisticNumericValue !== null &&
+    firstStageFStatisticNumericValue >= 10;
 
   // AR CI feedback helpers
   const getARCIExtraText = (
@@ -278,15 +283,15 @@ export const generateResultsData = (
     },
     {
       label: firstStageFStatisticLabel,
-      value: firstStageFTestValue,
-      show: isInstrumented && hasFirstStageFTestResult,
-      highlightColor: hasFirstStageFTestResult
-        ? isFirstStageFTestStrong
+      value: firstStageFStatisticValue,
+      show: isInstrumented && hasFirstStageFStatisticResult,
+      highlightColor: hasFirstStageFStatisticResult
+        ? isFirstStageFStatisticStrong
           ? "text-green-600"
           : "text-red-600"
         : undefined,
-      extraText: hasFirstStageFTestResult
-        ? isFirstStageFTestStrong
+      extraText: hasFirstStageFStatisticResult
+        ? isFirstStageFStatisticStrong
           ? " (Strong)"
           : " (Weak)"
         : undefined,
