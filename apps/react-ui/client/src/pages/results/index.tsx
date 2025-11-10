@@ -519,6 +519,24 @@ export default function ResultsPage() {
                 </span>
               </div>
               <ActionButton
+                onClick={handleExportData}
+                variant="purple"
+                size="md"
+                className="inline-flex items-center gap-2 w-full"
+              >
+                <FaDownload className="w-4 h-4" />
+                Export Results and Adjusted SEs
+              </ActionButton>
+              <ActionButton
+                onClick={() => setIsRunInfoModalOpen(true)}
+                variant="secondary"
+                size="md"
+                className="inline-flex items-center gap-2 w-full"
+              >
+                <FaInfoCircle className="w-4 h-4" />
+                Show Run Info
+              </ActionButton>
+              <ActionButton
                 onClick={() => {
                   void handleExportReproducibility();
                 }}
@@ -539,24 +557,6 @@ export default function ResultsPage() {
                   </>
                 )}
               </ActionButton>
-              <ActionButton
-                onClick={() => setIsRunInfoModalOpen(true)}
-                variant="secondary"
-                size="md"
-                className="inline-flex items-center gap-2 w-full"
-              >
-                <FaInfoCircle className="w-4 h-4" />
-                Show Run Info
-              </ActionButton>
-              <ActionButton
-                onClick={handleExportData}
-                variant="purple"
-                size="md"
-                className="inline-flex items-center gap-2 w-full"
-              >
-                <FaDownload className="w-4 h-4" />
-                Export Results and Adjusted SEs
-              </ActionButton>
             </div>
 
             {/* Separator */}
@@ -573,13 +573,13 @@ export default function ResultsPage() {
                 </span>
               </div>
               <ActionButton
-                onClick={handleNewUpload}
-                variant="secondary"
+                onClick={handleRerunModel}
+                variant="primary"
                 size="md"
                 className="inline-flex items-center gap-2 w-full"
               >
-                <FaUpload className="w-4 h-4" />
-                Upload New Data
+                <FaRedo className="w-4 h-4" />
+                Rerun Model
               </ActionButton>
               <ActionButton
                 onClick={handleBackToValidation}
@@ -591,13 +591,13 @@ export default function ResultsPage() {
                 Back to Validation
               </ActionButton>
               <ActionButton
-                onClick={handleRerunModel}
-                variant="primary"
+                onClick={handleNewUpload}
+                variant="secondary"
                 size="md"
                 className="inline-flex items-center gap-2 w-full"
               >
-                <FaRedo className="w-4 h-4" />
-                Rerun Model
+                <FaUpload className="w-4 h-4" />
+                Upload New Data
               </ActionButton>
             </div>
           </div>
