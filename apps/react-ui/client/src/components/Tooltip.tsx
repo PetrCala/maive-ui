@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 
 type TooltipProps = {
   children: React.ReactNode;
-  content: string;
+  content: string | React.ReactNode;
   position?: "top" | "bottom" | "left" | "right";
   className?: string;
   shouldShowArrow?: boolean;
