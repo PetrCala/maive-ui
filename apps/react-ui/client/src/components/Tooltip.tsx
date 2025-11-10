@@ -66,6 +66,7 @@ function Tooltip({
             overflowWrap: "break-word",
             hyphens: "auto",
             lineHeight: "1.4",
+            whiteSpace: "pre-line",
           }}
         >
           {content}
