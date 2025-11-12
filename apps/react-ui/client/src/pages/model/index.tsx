@@ -39,10 +39,7 @@ export default function ModelPage() {
     ...CONFIG.DEFAULT_MODEL_PARAMETERS,
   });
   const advancedOptionKeys = useMemo(
-    () =>
-      modelOptionsConfig.advanced.options.map(
-        (option) => option.key as keyof ModelParameters,
-      ),
+    () => modelOptionsConfig.advanced.options.map((option) => option.key),
     [],
   );
   const andersonRubinUserChoiceRef = useRef<boolean>(
@@ -71,9 +68,7 @@ export default function ModelPage() {
     prevParams: ModelParameters,
     nextParams: ModelParameters,
   ) => {
-    if (
-      advancedOptionKeys.some((key) => prevParams[key] !== nextParams[key])
-    ) {
+    if (advancedOptionKeys.some((key) => prevParams[key] !== nextParams[key])) {
       setShouldSuppressAdvancedAutoOpen(true);
     }
   };
