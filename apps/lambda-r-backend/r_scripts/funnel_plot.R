@@ -2,6 +2,10 @@
 
 PLOT_RES <- 120 # Changes the resolution of the plot in pixels per inch; also changes the plot size
 
+# Minimum relative scale used when downweighting WAIVE-adjusted funnel points.
+# NOTE: Update the descriptive copy in apps/react-ui/client/src/lib/text/index.ts when this value changes.
+ADJUSTED_POINT_MIN_SCALE <- 0.1
+
 #' Get the default options for the funnel plot
 #'
 #' @return A list of options
@@ -240,11 +244,13 @@ get_funnel_plot <- function(
           if (any(point_weights > 0)) {
             # Normalize weights to [0, 1] range
             normalized_weights <- point_weights / positive_max
+            normalized_weights <- pmin(pmax(normalized_weights, 0), 1)
 
-            # Scale point sizes from 0.5 to 1.0 times the base size
-            # Formula: size = base_cex * (0.5 + 0.5 * normalized_weight)
-            # This ensures weight=0 gives 50% size, weight=max gives 100% size
-            adjusted_cex <- base_point_cex * (0.5 + 0.5 * normalized_weights)
+            # Scale point sizes from ADJUSTED_POINT_MIN_SCALE to 1.0 times the base size
+            point_scale <- ADJUSTED_POINT_MIN_SCALE +
+              (1 - ADJUSTED_POINT_MIN_SCALE) * normalized_weights
+
+            adjusted_cex <- base_point_cex * point_scale
             point_cex[adjusted_indices] <- adjusted_cex
           }
         }
