@@ -3,7 +3,7 @@
 PLOT_RES <- 120 # Changes the resolution of the plot in pixels per inch; also changes the plot size
 
 # Minimum relative scale used when downweighting WAIVE-adjusted funnel points.
-# NOTE: Update the descriptive copy in apps/react-ui/client/src/lib/text/index.ts when this value changes.
+# NOTE: Update the descriptive copy in apps/react-ui/client/src/CONST.ts (ADJUSTED_POINT_MIN_SCALE) when this value changes.
 ADJUSTED_POINT_MIN_SCALE <- 0.1
 
 #' Get the default options for the funnel plot
