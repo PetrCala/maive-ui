@@ -286,8 +286,7 @@ export default function ModelPage() {
           weight: restoredWeight,
           computeAndersonRubin: prev.computeAndersonRubin,
         };
-        const willShowAndersonRubin =
-          shouldShowAndersonRubinOption(nextState);
+        const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
         nextState.computeAndersonRubin = willShowAndersonRubin
           ? andersonRubinUserChoiceRef.current
           : false;
@@ -372,8 +371,9 @@ export default function ModelPage() {
           nextState.useLogFirstStage = true;
         }
 
-        const willShowAndersonRubin =
-          shouldShowAndersonRubinOption(nextState as ModelParameters);
+        const willShowAndersonRubin = shouldShowAndersonRubinOption(
+          nextState as ModelParameters,
+        );
         nextState.computeAndersonRubin = willShowAndersonRubin
           ? andersonRubinUserChoiceRef.current
           : false;
