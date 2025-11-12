@@ -6,7 +6,7 @@ import {
 } from "@src/components/Options";
 import Tooltip from "@src/components/Tooltip";
 import Alert from "@src/components/Alert";
-import type { OptionConfig } from "@src/types/options";
+import type { OptionConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
@@ -22,6 +22,7 @@ type OptionRendererProps = {
     value: string | boolean | number,
   ) => void;
   tooltipsEnabled?: boolean;
+  context?: OptionContext;
 };
 
 export default function OptionRenderer({
@@ -30,6 +31,7 @@ export default function OptionRenderer({
   parameters,
   onChange,
   tooltipsEnabled = true,
+  context,
 }: OptionRendererProps) {
   const handleChange = (newValue: string | boolean | number) => {
     onChange(option.key, newValue);
@@ -150,8 +152,11 @@ export default function OptionRenderer({
       return null;
     }
 
+    const warningContext: OptionContext =
+      context ?? ({ parameters } as OptionContext);
+
     return option.warnings
-      .filter((warning) => warning.condition(parameters))
+      .filter((warning) => warning.condition(parameters, warningContext))
       .map((warning, index) => (
         <Alert
           key={index}

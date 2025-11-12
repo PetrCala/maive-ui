@@ -25,7 +25,10 @@ export type OptionContext = {
 export type OptionWarning = {
   message: string;
   type: AlertType;
-  condition: (parameters: ModelParameters) => boolean;
+  condition: (
+    parameters: ModelParameters,
+    context: OptionContext,
+  ) => boolean;
   richText?: RichInfoMessage;
 };
 

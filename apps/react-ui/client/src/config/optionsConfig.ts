@@ -66,6 +66,27 @@ export const modelOptionsConfig: ModelOptionsConfig = {
               (context.uploadedData as { data: DataArray } | undefined)?.data,
             ),
         },
+        warnings: [
+          {
+            message:
+              TEXT.model.standardErrorTreatment.bootstrapLargeDatasetWarning,
+            type: CONST.ALERT_TYPES.WARNING,
+            condition: (parameters, context) => {
+              if (
+                parameters.standardErrorTreatment !==
+                CONST.STANDARD_ERROR_TREATMENTS.BOOTSTRAP.VALUE
+              ) {
+                return false;
+              }
+
+              const dataLength =
+                ((context.uploadedData as { data?: DataArray } | undefined)?.
+                  data?.length ?? 0);
+
+              return dataLength >= CONST.LARGE_DATASET_ROW_THRESHOLD;
+            },
+          },
+        ],
       },
       {
         key: "computeAndersonRubin",
@@ -81,7 +102,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           {
             message: TEXT.model.computeAndersonRubin.warning,
             type: CONST.ALERT_TYPES.WARNING,
-            condition: (parameters: ModelParameters) =>
+            condition: (parameters: ModelParameters, _context) =>
               parameters.computeAndersonRubin === true,
           },
         ],
@@ -106,7 +127,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           {
             message: TEXT.citation.reminder.text,
             type: CONST.ALERT_TYPES.INFO,
-            condition: (parameters: ModelParameters) =>
+            condition: (parameters: ModelParameters, _context) =>
               parameters.maiveMethod !== CONST.MAIVE_METHODS.PET_PEESE,
             richText: TEXT.citation.reminder.richText,
           },
