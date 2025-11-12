@@ -42,6 +42,11 @@ export const ParameterAlertProvider: React.FC<{
   const timerRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const showParameterAlert = useCallback((message: string) => {
+    // Check if parameter alerts are enabled
+    if (!CONFIG.PARAMETER_ALERTS.ENABLED) {
+      return;
+    }
+
     const id = `param-alert-${idCounterRef.current++}`;
     const newAlert: ParameterAlert = {
       id,
