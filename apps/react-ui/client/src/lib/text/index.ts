@@ -2,6 +2,7 @@ import { createElement } from "react";
 
 import CONST from "@src/CONST";
 import type { ModelParameters } from "@src/types";
+import { formatNumberWithSeparator } from "@src/utils/numberFormat";
 
 type StandardErrorTreatment = ModelParameters["standardErrorTreatment"];
 
@@ -317,8 +318,7 @@ const TEXT = {
       label: "Standard Error Treatment",
       tooltip:
         "Adjusts meta-analytic standard errors to account for correlations among estimates reported within the same study. The bootstrap and CR2 (Pustejovsky & Tipton, 2018, JBES) options provide valid inference even with a small number of studies.",
-      bootstrapLargeDatasetWarning:
-        "Bootstrap standard errors can significantly increase processing time for large datasets (2,000+ rows).",
+      bootstrapLargeDatasetWarning: `Bootstrap standard errors can significantly increase processing time for large datasets (${formatNumberWithSeparator(CONST.LARGE_DATASET_ROW_THRESHOLD)}+ rows).`,
     },
     computeAndersonRubin: {
       label: "Compute Anderson-Rubin Confidence Interval",
