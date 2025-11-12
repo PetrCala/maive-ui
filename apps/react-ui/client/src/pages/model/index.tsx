@@ -26,6 +26,10 @@ import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
 
+const weightSupportsAndersonRubin = (
+  weight: ModelParameters["weight"],
+) => weight !== CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE;
+
 export default function ModelPage() {
   const searchParams = useSearchParams();
   const dataId = searchParams?.get("dataId");
@@ -160,7 +164,7 @@ export default function ModelPage() {
   const shouldShowAndersonRubinOption = useCallback(
     (params: ModelParameters) =>
       params.shouldUseInstrumenting &&
-      params.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
+      weightSupportsAndersonRubin(params.weight),
     [],
   );
 
@@ -194,7 +198,7 @@ export default function ModelPage() {
           lastInstrumentedWeightRef.current = restoredWeight;
 
           const willShowAndersonRubin =
-            restoredWeight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+            weightSupportsAndersonRubin(restoredWeight);
 
           return {
             ...prev,
@@ -237,7 +241,7 @@ export default function ModelPage() {
         lastInstrumentedWeightRef.current = restoredWeight;
 
         const willShowAndersonRubin =
-          restoredWeight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+          weightSupportsAndersonRubin(restoredWeight);
 
         return {
           ...prev,
@@ -262,8 +266,7 @@ export default function ModelPage() {
         weightUserOverrideRef.current = true;
 
         const willShowAndersonRubin =
-          prev.shouldUseInstrumenting &&
-          value === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+          prev.shouldUseInstrumenting && weightSupportsAndersonRubin(value);
 
         if (wasShowingAndersonRubin) {
           andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
@@ -298,8 +301,9 @@ export default function ModelPage() {
           nextState.maiveMethod = CONST.MAIVE_METHODS.PET_PEESE;
         }
 
-        const willShowAndersonRubin =
-          nextState.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+        const willShowAndersonRubin = weightSupportsAndersonRubin(
+          nextState.weight,
+        );
         nextState.computeAndersonRubin = willShowAndersonRubin
           ? andersonRubinUserChoiceRef.current
           : false;
@@ -333,8 +337,7 @@ export default function ModelPage() {
           return prev;
         }
 
-        const willShowAndersonRubin =
-          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+        const willShowAndersonRubin = weightSupportsAndersonRubin(prev.weight);
 
         return {
           ...prev,
@@ -379,8 +382,7 @@ export default function ModelPage() {
           return prev;
         }
 
-        const willShowAndersonRubin =
-          prev.weight === CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE;
+        const willShowAndersonRubin = weightSupportsAndersonRubin(prev.weight);
 
         return {
           ...prev,
