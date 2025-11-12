@@ -55,7 +55,7 @@ const ParameterAlertStack = ({
       });
 
       // Mark dismissed alerts for removal
-      for (const [id, state] of newMap.entries()) {
+      Array.from(newMap.entries()).forEach(([id, state]) => {
         if (!currentAlertIds.has(id) && !state.removing) {
           newMap.set(id, { ...state, show: false, removing: true });
           // Remove after fade-out
@@ -67,7 +67,7 @@ const ParameterAlertStack = ({
             });
           }, FADE_OUT_DURATION);
         }
-      }
+      });
 
       return newMap;
     });
@@ -86,46 +86,52 @@ const ParameterAlertStack = ({
   }
 
   return (
-    <div className="fixed left-6 bottom-6 z-50 flex flex-col-reverse gap-4 pointer-events-none">
-      {/* Hidden alerts (behind) */}
-      {hiddenAlerts.map(({ alert }) => (
-        <div
-          key={alert.id}
-          className="pointer-events-auto opacity-30"
-          style={{ zIndex: 40 }}
-        >
-          <Alert
-            message={alert.message}
-            type={CONST.ALERT_TYPES.INFO}
-            standalone
-            onClick={() => onDismiss(alert.id)}
-          />
-        </div>
-      ))}
+    <div className="fixed left-6 bottom-6 z-50 pointer-events-none">
+      <div className="relative">
+        {/* Hidden alerts behind - shown as subtle stacked shadows */}
+        {hiddenAlerts.length > 0 && (
+          <>
+            {hiddenAlerts.slice(0, 2).map((_, index) => (
+              <div
+                key={`shadow-${index}`}
+                className="absolute left-0 right-0 bottom-0 bg-blue-100/30 dark:bg-blue-900/20 border border-blue-200/30 dark:border-blue-800/30 rounded-lg"
+                style={{
+                  height: "60px",
+                  transform: `translateY(-${(index + 1) * 4}px) scale(${1 - (index + 1) * 0.02})`,
+                  zIndex: 45 - index,
+                  pointerEvents: "none",
+                }}
+              />
+            ))}
+          </>
+        )}
 
-      {/* Visible alerts */}
-      {visibleAlerts.map(({ alert, show }, index) => (
-        <div
-          key={alert.id}
-          className="pointer-events-auto"
-          style={{
-            zIndex: 50 - index,
-            transition: `opacity ${FADE_IN_DURATION}ms ease-in-out, transform ${FADE_IN_DURATION}ms ease-in-out`,
-            opacity: show ? 1 : 0,
-            transform: show ? "translateY(0)" : "translateY(10px)",
-          }}
-        >
-          <Alert
-            message={alert.message}
-            type={CONST.ALERT_TYPES.INFO}
-            standalone
-            onClick={() => onDismiss(alert.id)}
-          />
+        {/* Visible alerts stack */}
+        <div className="relative flex flex-col-reverse gap-4">
+          {visibleAlerts.map(({ alert, show }, index) => (
+            <div
+              key={alert.id}
+              className="pointer-events-auto"
+              style={{
+                zIndex: 50 - index,
+                transition: `opacity ${FADE_IN_DURATION}ms ease-in-out, transform ${FADE_IN_DURATION}ms ease-in-out`,
+                opacity: show ? 1 : 0,
+                transform: show ? "translateY(0)" : "translateY(10px)",
+              }}
+            >
+              <Alert
+                message={alert.message}
+                type={CONST.ALERT_TYPES.INFO}
+                standalone
+                onClick={() => onDismiss(alert.id)}
+                showCloseButton
+              />
+            </div>
+          ))}
         </div>
-      ))}
+      </div>
     </div>
   );
 };
 
 export default ParameterAlertStack;
-

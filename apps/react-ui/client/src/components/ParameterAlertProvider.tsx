@@ -5,9 +5,10 @@ import React, {
   useCallback,
   useMemo,
   useRef,
+  useEffect,
 } from "react";
 import ParameterAlertStack from "./ParameterAlertStack";
-import CONST from "@src/CONST";
+import CONFIG from "@src/CONFIG";
 
 export type ParameterAlert = {
   id: string;
@@ -38,6 +39,7 @@ export const ParameterAlertProvider: React.FC<{
 }> = ({ children }) => {
   const [alerts, setAlerts] = useState<ParameterAlert[]>([]);
   const idCounterRef = useRef(0);
+  const timerRefs = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
   const showParameterAlert = useCallback((message: string) => {
     const id = `param-alert-${idCounterRef.current++}`;
@@ -48,10 +50,33 @@ export const ParameterAlertProvider: React.FC<{
     };
 
     setAlerts((prev) => [...prev, newAlert]);
+
+    // Set up auto-dismiss if configured
+    if (CONFIG.PARAMETER_ALERTS.AUTO_DISMISS) {
+      const timer = setTimeout(() => {
+        setAlerts((prev) => prev.filter((alert) => alert.id !== id));
+        timerRefs.current.delete(id);
+      }, CONFIG.PARAMETER_ALERTS.AUTO_DISMISS_DURATION);
+      timerRefs.current.set(id, timer);
+    }
   }, []);
 
   const dismissAlert = useCallback((id: string) => {
+    // Clear timer if exists
+    const timer = timerRefs.current.get(id);
+    if (timer) {
+      clearTimeout(timer);
+      timerRefs.current.delete(id);
+    }
     setAlerts((prev) => prev.filter((alert) => alert.id !== id));
+  }, []);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      timerRefs.current.forEach((timer) => clearTimeout(timer));
+      timerRefs.current.clear(); // eslint-disable-line react-hooks/exhaustive-deps
+    };
   }, []);
 
   const contextValue = useMemo(

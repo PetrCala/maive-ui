@@ -1,7 +1,6 @@
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import type { ModelParameters } from "@src/types";
-import { formatParameterValue } from "./parameterValueFormatter";
 
 export type ParameterChange = {
   param: keyof ModelParameters;
@@ -166,7 +165,7 @@ export function trackParameterChanges(
 
   // Also check for any other automatic changes that might have occurred
   // (e.g., from useEffect hooks)
-  const allParams: (keyof ModelParameters)[] = [
+  const allParams: Array<keyof ModelParameters> = [
     "modelType",
     "includeStudyDummies",
     "includeStudyClustering",
@@ -191,4 +190,3 @@ export function trackParameterChanges(
 
   return changes;
 }
-

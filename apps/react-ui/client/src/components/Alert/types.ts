@@ -8,6 +8,7 @@ type AlertProps = {
   onClick?: () => void;
   standalone?: boolean;
   role?: "alert" | "status";
+  showCloseButton?: boolean;
 };
 
 export type { AlertType, AlertProps };
