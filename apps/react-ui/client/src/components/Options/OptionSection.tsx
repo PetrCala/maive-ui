@@ -20,6 +20,8 @@ type OptionSectionProps = {
   ) => void;
   tooltipsEnabled?: boolean;
   context?: Partial<OptionContext>;
+  suppressAutoOpen?: boolean;
+  onAutoOpenHandled?: () => void;
 };
 
 export default function OptionSection({
@@ -28,6 +30,8 @@ export default function OptionSection({
   onChange,
   tooltipsEnabled = true,
   context = {},
+  suppressAutoOpen = false,
+  onAutoOpenHandled,
 }: OptionSectionProps) {
   const [isOpen, setIsOpen] = useState(config.defaultOpen ?? true);
   const advancedOptionKeys = modelOptionsConfig.advanced.options.map(
@@ -45,10 +49,22 @@ export default function OptionSection({
       );
       // Only open if advanced options are changed, never close automatically
       if (hasAdvancedOptionsChanged && !isOpen) {
+        if (suppressAutoOpen) {
+          onAutoOpenHandled?.();
+          return;
+        }
+
         setIsOpen(true);
       }
     }
-  }, [config.title, parameters, isOpen, advancedOptionKeys]);
+  }, [
+    config.title,
+    parameters,
+    isOpen,
+    advancedOptionKeys,
+    suppressAutoOpen,
+    onAutoOpenHandled,
+  ]);
 
   const fullContext: OptionContext = {
     parameters,
