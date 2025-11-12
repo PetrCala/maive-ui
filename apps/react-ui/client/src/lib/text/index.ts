@@ -317,6 +317,8 @@ const TEXT = {
       label: "Standard Error Treatment",
       tooltip:
         "Adjusts meta-analytic standard errors to account for correlations among estimates reported within the same study. The bootstrap and CR2 (Pustejovsky & Tipton, 2018, JBES) options provide valid inference even with a small number of studies.",
+      bootstrapLargeDatasetWarning:
+        "Bootstrap standard errors can significantly increase processing time for large datasets (2,000+ rows).",
     },
     computeAndersonRubin: {
       label: "Compute Anderson-Rubin Confidence Interval",
