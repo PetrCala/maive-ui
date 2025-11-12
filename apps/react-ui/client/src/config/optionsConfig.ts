@@ -1,7 +1,7 @@
 import TEXT from "@src/lib/text";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
-import type { ModelOptionsConfig } from "@src/types/options";
+import type { ModelOptionsConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import type { DataArray } from "@src/types";
@@ -80,8 +80,8 @@ export const modelOptionsConfig: ModelOptionsConfig = {
               }
 
               const dataLength =
-                ((context.uploadedData as { data?: DataArray } | undefined)?.
-                  data?.length ?? 0);
+                (context.uploadedData as { data?: DataArray } | undefined)?.data
+                  ?.length ?? 0;
 
               return dataLength >= CONST.LARGE_DATASET_ROW_THRESHOLD;
             },
@@ -102,7 +102,8 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           {
             message: TEXT.model.computeAndersonRubin.warning,
             type: CONST.ALERT_TYPES.WARNING,
-            condition: (parameters: ModelParameters, _context) =>
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            condition: (parameters: ModelParameters, _context: OptionContext) =>
               parameters.computeAndersonRubin === true,
           },
         ],
@@ -127,7 +128,8 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           {
             message: TEXT.citation.reminder.text,
             type: CONST.ALERT_TYPES.INFO,
-            condition: (parameters: ModelParameters, _context) =>
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            condition: (parameters: ModelParameters, _context: OptionContext) =>
               parameters.maiveMethod !== CONST.MAIVE_METHODS.PET_PEESE,
             richText: TEXT.citation.reminder.richText,
           },

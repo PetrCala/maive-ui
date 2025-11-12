@@ -96,7 +96,7 @@ const CONST = {
       TEXT: "Bootstrap",
     },
   },
-  LARGE_DATASET_ROW_THRESHOLD: 2000,
+  LARGE_DATASET_ROW_THRESHOLD: 1000,
   MOCK_DATA_ROWS_MIN: 9, // At least 3 studies with 3 observations each
   MOCK_DATA_ROWS_MAX: 200,
   DEMO_MOCK_DATA_NAME: "Mock Data 4",
