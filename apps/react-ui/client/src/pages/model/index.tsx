@@ -67,14 +67,16 @@ export default function ModelPage() {
     setShouldSuppressAdvancedAutoOpen(false);
   }, []);
 
-  const markAdvancedChangeFromBasic = (
-    prevParams: ModelParameters,
-    nextParams: ModelParameters,
-  ) => {
-    if (advancedOptionKeys.some((key) => prevParams[key] !== nextParams[key])) {
-      setShouldSuppressAdvancedAutoOpen(true);
-    }
-  };
+  const markAdvancedChangeFromBasic = useCallback(
+    (prevParams: ModelParameters, nextParams: ModelParameters) => {
+      if (
+        advancedOptionKeys.some((key) => prevParams[key] !== nextParams[key])
+      ) {
+        setShouldSuppressAdvancedAutoOpen(true);
+      }
+    },
+    [advancedOptionKeys],
+  );
 
   useEnterKeyAction(() => {
     const button = runModelButtonRef.current;
@@ -514,7 +516,12 @@ export default function ModelPage() {
         return finalState;
       });
     }
-  }, [parameters, showParameterAlert]);
+  }, [
+    parameters,
+    showParameterAlert,
+    markAdvancedChangeFromBasic,
+    shouldShowAndersonRubinOption,
+  ]);
 
   useEffect(() => {
     if (loading || hasRunModel) {
