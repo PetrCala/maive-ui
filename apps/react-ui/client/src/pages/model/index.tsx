@@ -12,6 +12,7 @@ import { OptionSection } from "@src/components/Options";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
+import { useParameterAlert } from "@src/components/ParameterAlertProvider";
 import LoadingCard from "@src/components/LoadingCard";
 import SectionHeading from "@src/components/SectionHeading";
 import CONFIG from "@src/CONFIG";
@@ -22,6 +23,7 @@ import type { ModelParameters } from "@src/types";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
+import { trackParameterChanges } from "@src/utils/parameterChangeTracking";
 
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
@@ -59,6 +61,7 @@ export default function ModelPage() {
   const searchParamsAppliedRef = useRef(false);
   const runModelButtonRef = useRef<HTMLButtonElement>(null);
   const { showAlert } = useGlobalAlert();
+  const { showParameterAlert } = useParameterAlert();
 
   const handleAdvancedAutoOpenHandled = useCallback(() => {
     setShouldSuppressAdvancedAutoOpen(false);
@@ -200,7 +203,9 @@ export default function ModelPage() {
     param: keyof ModelParameters,
     value: string | boolean | number,
   ) => {
+    let prevState: ModelParameters;
     setParameters((prev) => {
+      prevState = { ...prev };
       const wasShowingAndersonRubin = shouldShowAndersonRubinOption(prev);
 
       if (param === "modelType" && typeof value === "string") {
@@ -382,6 +387,15 @@ export default function ModelPage() {
         nextState.computeAndersonRubin = false;
       }
 
+      const changes = trackParameterChanges(prevState, nextState, param);
+      
+      // Show alerts for automatic changes (use setTimeout to avoid state update during render)
+      setTimeout(() => {
+        changes.forEach((change) => {
+          showParameterAlert(change.message);
+        });
+      }, 0);
+
       return nextState;
     });
   };
@@ -424,6 +438,13 @@ export default function ModelPage() {
           : false;
         markAdvancedChangeFromBasic(prev, nextState);
 
+        const changes = trackParameterChanges(prev, nextState, "modelType");
+        setTimeout(() => {
+          changes.forEach((change) => {
+            showParameterAlert(change.message);
+          });
+        }, 0);
+
         return nextState;
       });
 
@@ -439,11 +460,20 @@ export default function ModelPage() {
           return prev;
         }
 
-        return {
+        const nextState = {
           ...prev,
           shouldUseInstrumenting: false,
           computeAndersonRubin: false,
         };
+
+        const changes = trackParameterChanges(prev, nextState, "modelType");
+        setTimeout(() => {
+          changes.forEach((change) => {
+            showParameterAlert(change.message);
+          });
+        }, 0);
+
+        return nextState;
       });
 
       return;
@@ -467,15 +497,24 @@ export default function ModelPage() {
         };
         const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
 
-        return {
+        const finalState = {
           ...nextState,
           computeAndersonRubin: willShowAndersonRubin
             ? andersonRubinUserChoiceRef.current
             : false,
         };
+
+        const changes = trackParameterChanges(prev, finalState, "modelType");
+        setTimeout(() => {
+          changes.forEach((change) => {
+            showParameterAlert(change.message);
+          });
+        }, 0);
+
+        return finalState;
       });
     }
-  }, [parameters]);
+  }, [parameters, showParameterAlert]);
 
   useEffect(() => {
     if (loading || hasRunModel) {
@@ -576,13 +615,33 @@ export default function ModelPage() {
     }
 
     // When the user sets the SE treatment value to 'not clustered', we want to match the value of the 'include study clustering' option for backend compatibility
-    handleParameterChange(
-      "includeStudyClustering",
+    const newClusteringValue =
       parameters.standardErrorTreatment !==
-        CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE,
-    );
+      CONST.STANDARD_ERROR_TREATMENTS.NOT_CLUSTERED.VALUE;
+
+    if (parameters.includeStudyClustering !== newClusteringValue) {
+      setParameters((prev) => {
+        const nextState = {
+          ...prev,
+          includeStudyClustering: newClusteringValue,
+        };
+
+        const changes = trackParameterChanges(
+          prev,
+          nextState,
+          "standardErrorTreatment",
+        );
+        setTimeout(() => {
+          changes.forEach((change) => {
+            showParameterAlert(change.message);
+          });
+        }, 0);
+
+        return nextState;
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parameters.standardErrorTreatment, uploadedData]);
+  }, [parameters.standardErrorTreatment, uploadedData, showParameterAlert]);
 
   useEffect(() => {
     if (
@@ -594,11 +653,26 @@ export default function ModelPage() {
 
     autoSetWeightForWlsRef.current = true;
 
-    setParameters((prev) => ({
-      ...prev,
-      weight: CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE,
-    }));
-  }, [parameters.shouldUseInstrumenting, parameters.weight]);
+    setParameters((prev) => {
+      const nextState = {
+        ...prev,
+        weight: CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE,
+      };
+
+      const changes = trackParameterChanges(
+        prev,
+        nextState,
+        "shouldUseInstrumenting",
+      );
+      setTimeout(() => {
+        changes.forEach((change) => {
+          showParameterAlert(change.message);
+        });
+      }, 0);
+
+      return nextState;
+    });
+  }, [parameters.shouldUseInstrumenting, parameters.weight, showParameterAlert]);
 
   useEffect(() => {
     if (parameters.shouldUseInstrumenting) {
