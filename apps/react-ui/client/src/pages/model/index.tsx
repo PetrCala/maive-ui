@@ -26,9 +26,8 @@ import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
 
-const weightSupportsAndersonRubin = (
-  weight: ModelParameters["weight"],
-) => weight !== CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE;
+const weightSupportsAndersonRubin = (weight: ModelParameters["weight"]) =>
+  weight !== CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE;
 
 export default function ModelPage() {
   const searchParams = useSearchParams();
