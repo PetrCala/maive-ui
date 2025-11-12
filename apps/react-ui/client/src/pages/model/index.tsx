@@ -191,7 +191,8 @@ export default function ModelPage() {
   const shouldShowAndersonRubinOption = useCallback(
     (params: ModelParameters) =>
       params.shouldUseInstrumenting &&
-      weightSupportsAndersonRubin(params.weight),
+      weightSupportsAndersonRubin(params.weight) &&
+      !params.includeStudyDummies,
     [],
   );
 
@@ -224,23 +225,24 @@ export default function ModelPage() {
           autoSetWeightForWlsRef.current = false;
           lastInstrumentedWeightRef.current = restoredWeight;
 
-          const willShowAndersonRubin =
-            weightSupportsAndersonRubin(restoredWeight);
           const nextUseLogFirstStage = useLogFirstStageUserOverrideRef.current
             ? prev.useLogFirstStage
             : true;
 
-          const nextState = {
+          const nextState: ModelParameters = {
             ...prev,
             modelType: nextModelType,
             shouldUseInstrumenting: true,
             weight: restoredWeight,
-            computeAndersonRubin: willShowAndersonRubin
-              ? andersonRubinUserChoiceRef.current
-              : false,
+            computeAndersonRubin: prev.computeAndersonRubin,
             maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
             useLogFirstStage: nextUseLogFirstStage,
           };
+          const willShowAndersonRubin =
+            shouldShowAndersonRubinOption(nextState);
+          nextState.computeAndersonRubin = willShowAndersonRubin
+            ? andersonRubinUserChoiceRef.current
+            : false;
           markAdvancedChangeFromBasic(prev, nextState);
 
           return nextState;
@@ -277,18 +279,18 @@ export default function ModelPage() {
         autoSetWeightForWlsRef.current = false;
         lastInstrumentedWeightRef.current = restoredWeight;
 
-        const willShowAndersonRubin =
-          weightSupportsAndersonRubin(restoredWeight);
-
-        const nextState = {
+        const nextState: ModelParameters = {
           ...prev,
           modelType: nextModelType,
           shouldUseInstrumenting: true,
           weight: restoredWeight,
-          computeAndersonRubin: willShowAndersonRubin
-            ? andersonRubinUserChoiceRef.current
-            : false,
+          computeAndersonRubin: prev.computeAndersonRubin,
         };
+        const willShowAndersonRubin =
+          shouldShowAndersonRubinOption(nextState);
+        nextState.computeAndersonRubin = willShowAndersonRubin
+          ? andersonRubinUserChoiceRef.current
+          : false;
         markAdvancedChangeFromBasic(prev, nextState);
 
         return nextState;
@@ -305,9 +307,6 @@ export default function ModelPage() {
 
         weightUserOverrideRef.current = true;
 
-        const willShowAndersonRubin =
-          prev.shouldUseInstrumenting && weightSupportsAndersonRubin(value);
-
         if (wasShowingAndersonRubin) {
           andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
         }
@@ -316,13 +315,35 @@ export default function ModelPage() {
           lastInstrumentedWeightRef.current = value;
         }
 
-        return {
+        const nextState: ModelParameters = {
           ...prev,
           weight: value,
-          computeAndersonRubin: willShowAndersonRubin
-            ? andersonRubinUserChoiceRef.current
-            : false,
+          computeAndersonRubin: prev.computeAndersonRubin,
         };
+        const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
+        nextState.computeAndersonRubin = willShowAndersonRubin
+          ? andersonRubinUserChoiceRef.current
+          : false;
+
+        return nextState;
+      }
+
+      if (param === "includeStudyDummies" && typeof value === "boolean") {
+        if (wasShowingAndersonRubin) {
+          andersonRubinUserChoiceRef.current = prev.computeAndersonRubin;
+        }
+
+        const nextState: ModelParameters = {
+          ...prev,
+          includeStudyDummies: value,
+          computeAndersonRubin: prev.computeAndersonRubin,
+        };
+        const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
+        nextState.computeAndersonRubin = willShowAndersonRubin
+          ? andersonRubinUserChoiceRef.current
+          : false;
+
+        return nextState;
       }
 
       if (param === "computeAndersonRubin" && typeof value === "boolean") {
@@ -351,9 +372,8 @@ export default function ModelPage() {
           nextState.useLogFirstStage = true;
         }
 
-        const willShowAndersonRubin = weightSupportsAndersonRubin(
-          nextState.weight,
-        );
+        const willShowAndersonRubin =
+          shouldShowAndersonRubinOption(nextState as ModelParameters);
         nextState.computeAndersonRubin = willShowAndersonRubin
           ? andersonRubinUserChoiceRef.current
           : false;
@@ -387,20 +407,21 @@ export default function ModelPage() {
           return prev;
         }
 
-        const willShowAndersonRubin = weightSupportsAndersonRubin(prev.weight);
         const nextUseLogFirstStage = useLogFirstStageUserOverrideRef.current
           ? prev.useLogFirstStage
           : true;
 
-        const nextState = {
+        const nextState: ModelParameters = {
           ...prev,
           shouldUseInstrumenting: true,
           maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
-          computeAndersonRubin: willShowAndersonRubin
-            ? andersonRubinUserChoiceRef.current
-            : false,
+          computeAndersonRubin: prev.computeAndersonRubin,
           useLogFirstStage: nextUseLogFirstStage,
         };
+        const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
+        nextState.computeAndersonRubin = willShowAndersonRubin
+          ? andersonRubinUserChoiceRef.current
+          : false;
         markAdvancedChangeFromBasic(prev, nextState);
 
         return nextState;
@@ -439,11 +460,15 @@ export default function ModelPage() {
           return prev;
         }
 
-        const willShowAndersonRubin = weightSupportsAndersonRubin(prev.weight);
-
-        return {
+        const nextState: ModelParameters = {
           ...prev,
           shouldUseInstrumenting: true,
+          computeAndersonRubin: prev.computeAndersonRubin,
+        };
+        const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
+
+        return {
+          ...nextState,
           computeAndersonRubin: willShowAndersonRubin
             ? andersonRubinUserChoiceRef.current
             : false,
