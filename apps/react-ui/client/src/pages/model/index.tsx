@@ -45,6 +45,7 @@ export default function ModelPage() {
   const lastInstrumentedWeightRef = useRef<ModelParameters["weight"]>(
     CONFIG.DEFAULT_MODEL_PARAMETERS.weight,
   );
+  const useLogFirstStageUserOverrideRef = useRef(false);
   const autoSetWeightForWlsRef = useRef(false);
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -151,6 +152,14 @@ export default function ModelPage() {
         weightUserOverrideRef.current = true;
       }
 
+      if (
+        parsed.useLogFirstStage !== undefined &&
+        parsed.useLogFirstStage !==
+          CONFIG.DEFAULT_MODEL_PARAMETERS.useLogFirstStage
+      ) {
+        useLogFirstStageUserOverrideRef.current = true;
+      }
+
       if (params.shouldUseInstrumenting) {
         lastInstrumentedWeightRef.current = params.weight;
       }
@@ -198,6 +207,9 @@ export default function ModelPage() {
 
           const willShowAndersonRubin =
             weightSupportsAndersonRubin(restoredWeight);
+          const nextUseLogFirstStage = useLogFirstStageUserOverrideRef.current
+            ? prev.useLogFirstStage
+            : true;
 
           return {
             ...prev,
@@ -208,6 +220,7 @@ export default function ModelPage() {
               ? andersonRubinUserChoiceRef.current
               : false,
             maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
+            useLogFirstStage: nextUseLogFirstStage,
           };
         }
 
@@ -288,6 +301,12 @@ export default function ModelPage() {
         andersonRubinUserChoiceRef.current = value;
       }
 
+      if (param === "useLogFirstStage" && typeof value === "boolean") {
+        if (prev.useLogFirstStage !== value) {
+          useLogFirstStageUserOverrideRef.current = true;
+        }
+      }
+
       if (prev[param] === value) {
         return prev;
       }
@@ -298,6 +317,10 @@ export default function ModelPage() {
         nextState.shouldUseInstrumenting = true;
         if (nextState.maiveMethod !== CONST.MAIVE_METHODS.PET_PEESE) {
           nextState.maiveMethod = CONST.MAIVE_METHODS.PET_PEESE;
+        }
+
+        if (!useLogFirstStageUserOverrideRef.current) {
+          nextState.useLogFirstStage = true;
         }
 
         const willShowAndersonRubin = weightSupportsAndersonRubin(
@@ -337,6 +360,9 @@ export default function ModelPage() {
         }
 
         const willShowAndersonRubin = weightSupportsAndersonRubin(prev.weight);
+        const nextUseLogFirstStage = useLogFirstStageUserOverrideRef.current
+          ? prev.useLogFirstStage
+          : true;
 
         return {
           ...prev,
@@ -345,6 +371,7 @@ export default function ModelPage() {
           computeAndersonRubin: willShowAndersonRubin
             ? andersonRubinUserChoiceRef.current
             : false,
+          useLogFirstStage: nextUseLogFirstStage,
         };
       });
 
