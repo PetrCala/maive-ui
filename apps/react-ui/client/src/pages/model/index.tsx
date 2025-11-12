@@ -388,7 +388,7 @@ export default function ModelPage() {
       }
 
       const changes = trackParameterChanges(prevState, nextState, param);
-      
+
       // Show alerts for automatic changes (use setTimeout to avoid state update during render)
       setTimeout(() => {
         changes.forEach((change) => {
@@ -672,7 +672,11 @@ export default function ModelPage() {
 
       return nextState;
     });
-  }, [parameters.shouldUseInstrumenting, parameters.weight, showParameterAlert]);
+  }, [
+    parameters.shouldUseInstrumenting,
+    parameters.weight,
+    showParameterAlert,
+  ]);
 
   useEffect(() => {
     if (parameters.shouldUseInstrumenting) {

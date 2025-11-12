@@ -47,10 +47,9 @@ export function formatParameterValue(
       return value ? "Yes" : "No";
 
     case "winsorize":
-      return `${value}%`;
+      return `${value as number}%`;
 
     default:
       return String(value);
   }
 }
-

@@ -27,6 +27,11 @@ const CONFIG = {
     useLogFirstStage: false,
     winsorize: 0,
   },
+
+  PARAMETER_ALERTS: {
+    AUTO_DISMISS: false,
+    AUTO_DISMISS_DURATION: 5000,
+  },
 } as const;
 
 export default CONFIG;
