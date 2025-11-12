@@ -38,6 +38,13 @@ export default function ModelPage() {
   const [parameters, setParameters] = useState<ModelParameters>({
     ...CONFIG.DEFAULT_MODEL_PARAMETERS,
   });
+  const advancedOptionKeys = useMemo(
+    () =>
+      modelOptionsConfig.advanced.options.map(
+        (option) => option.key as keyof ModelParameters,
+      ),
+    [],
+  );
   const andersonRubinUserChoiceRef = useRef<boolean>(
     CONFIG.DEFAULT_MODEL_PARAMETERS.computeAndersonRubin,
   );
@@ -47,12 +54,29 @@ export default function ModelPage() {
   );
   const useLogFirstStageUserOverrideRef = useRef(false);
   const autoSetWeightForWlsRef = useRef(false);
+  const [shouldSuppressAdvancedAutoOpen, setShouldSuppressAdvancedAutoOpen] =
+    useState(false);
   const router = useRouter();
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   const searchParamsAppliedRef = useRef(false);
   const runModelButtonRef = useRef<HTMLButtonElement>(null);
   const { showAlert } = useGlobalAlert();
+
+  const handleAdvancedAutoOpenHandled = useCallback(() => {
+    setShouldSuppressAdvancedAutoOpen(false);
+  }, []);
+
+  const markAdvancedChangeFromBasic = (
+    prevParams: ModelParameters,
+    nextParams: ModelParameters,
+  ) => {
+    if (
+      advancedOptionKeys.some((key) => prevParams[key] !== nextParams[key])
+    ) {
+      setShouldSuppressAdvancedAutoOpen(true);
+    }
+  };
 
   useEnterKeyAction(() => {
     const button = runModelButtonRef.current;
@@ -211,7 +235,7 @@ export default function ModelPage() {
             ? prev.useLogFirstStage
             : true;
 
-          return {
+          const nextState = {
             ...prev,
             modelType: nextModelType,
             shouldUseInstrumenting: true,
@@ -222,6 +246,9 @@ export default function ModelPage() {
             maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
             useLogFirstStage: nextUseLogFirstStage,
           };
+          markAdvancedChangeFromBasic(prev, nextState);
+
+          return nextState;
         }
 
         if (nextModelType === CONST.MODEL_TYPES.WLS) {
@@ -235,13 +262,16 @@ export default function ModelPage() {
 
           autoSetWeightForWlsRef.current = shouldAutoSetWeight;
 
-          return {
+          const nextState = {
             ...prev,
             modelType: nextModelType,
             shouldUseInstrumenting: false,
             weight: nextWeight,
             computeAndersonRubin: false,
           };
+          markAdvancedChangeFromBasic(prev, nextState);
+
+          return nextState;
         }
 
         const restoredWeight =
@@ -255,7 +285,7 @@ export default function ModelPage() {
         const willShowAndersonRubin =
           weightSupportsAndersonRubin(restoredWeight);
 
-        return {
+        const nextState = {
           ...prev,
           modelType: nextModelType,
           shouldUseInstrumenting: true,
@@ -264,6 +294,9 @@ export default function ModelPage() {
             ? andersonRubinUserChoiceRef.current
             : false,
         };
+        markAdvancedChangeFromBasic(prev, nextState);
+
+        return nextState;
       }
 
       if (param === "weight" && typeof value === "string") {
@@ -364,7 +397,7 @@ export default function ModelPage() {
           ? prev.useLogFirstStage
           : true;
 
-        return {
+        const nextState = {
           ...prev,
           shouldUseInstrumenting: true,
           maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
@@ -373,6 +406,9 @@ export default function ModelPage() {
             : false,
           useLogFirstStage: nextUseLogFirstStage,
         };
+        markAdvancedChangeFromBasic(prev, nextState);
+
+        return nextState;
       });
 
       return;
@@ -615,6 +651,8 @@ export default function ModelPage() {
                         parameters={parameters}
                         onChange={handleParameterChange}
                         context={{ uploadedData }}
+                        suppressAutoOpen={shouldSuppressAdvancedAutoOpen}
+                        onAutoOpenHandled={handleAdvancedAutoOpenHandled}
                       />
 
                       <ActionButton
