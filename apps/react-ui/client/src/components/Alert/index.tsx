@@ -1,5 +1,34 @@
+import type React from "react";
 import type { AlertProps } from "./types";
 import CONST from "@src/CONST";
+
+/**
+ * Parses a message string and renders **emphasized** text with distinct styling.
+ * Example: "**Weight** set to **No**" renders Weight and No with emphasis.
+ * If message is not a string (e.g., ReactNode), it's returned as-is.
+ */
+const renderMessage = (message: React.ReactNode): React.ReactNode => {
+  if (typeof message !== "string") {
+    return message;
+  }
+
+  const parts = message.split(/(\*\*[^*]+\*\*)/g);
+
+  return parts.map((part, index) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const text = part.slice(2, -2);
+      return (
+        <span
+          key={index}
+          className="font-semibold bg-black/10 dark:bg-white/15 px-1 py-0.5 rounded text-inherit"
+        >
+          {text}
+        </span>
+      );
+    }
+    return part;
+  });
+};
 
 const Alert = ({
   message,
@@ -97,7 +126,7 @@ const Alert = ({
     >
       <div className="flex-shrink-0 mr-3 mt-0.5">{getIcon()}</div>
       <div className="flex-1">
-        <p className="text-sm font-medium">{message}</p>
+        <p className="text-sm font-medium">{renderMessage(message)}</p>
       </div>
       {showCloseButton && (
         <button
