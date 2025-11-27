@@ -163,7 +163,7 @@ export const generateResultsData = (
       return " (Not computed)";
     }
     if (ciWidth === null) {
-      return " (NA: disjoint acceptance region or extreme heterogeneity)";
+      return " (disjoint acceptance region or extreme heterogeneity)";
     }
     if (ciWidth > 100) {
       return " (Very wide: suggests weak identification)";
