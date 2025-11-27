@@ -20,7 +20,7 @@ const renderMessage = (message: React.ReactNode): React.ReactNode => {
       return (
         <span
           key={index}
-          className="font-semibold bg-black/10 dark:bg-white/15 px-1 py-0.5 rounded text-inherit"
+          className="font-semibold bg-black/5 dark:bg-white/10 px-1 py-0.5 rounded text-inherit"
         >
           {text}
         </span>
