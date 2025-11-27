@@ -117,6 +117,77 @@ docs/                         # Project documentation
 - **React Context**: App-wide providers in `src/providers/`
 - State includes uploaded data, analysis parameters, and results
 
+### Parameter Change Tracking & Alerts
+
+The app tracks indirect parameter changes and shows alerts to users when changing one option automatically affects others.
+
+**Location**: `apps/react-ui/client/src/utils/parameterChangeTracking.ts`
+
+**Key Functions**:
+
+- `detectIndirectChanges(prev, next, changedByUser)` - Compares states and finds all parameters that changed indirectly
+- `detectAndDispatchAlerts(prev, next, changedByUser, showAlert)` - Detects changes and shows alerts
+- `getParameterChangeMessage(param, oldValue, newValue, context)` - Generates human-readable alert messages
+
+**Explanation Rules System**:
+
+The system uses a rules-based approach to provide context-specific explanations for why parameters changed. Rules are defined in `EXPLANATION_RULES` array:
+
+```typescript
+// Each rule returns an explanation string or null
+type ExplanationRule = (context: ChangeContext) => string | null;
+
+const EXPLANATION_RULES: ExplanationRule[] = [
+  ({ param, next, changedByUser }) => {
+    if (param !== "shouldUseInstrumenting") return null;
+    if (changedByUser !== "modelType") return null;
+    if (next.modelType === "WLS") {
+      return "**WLS** doesn't use instrumenting";
+    }
+    return null;
+  },
+  // ... more rules
+];
+```
+
+**Adding New Explanation Rules**:
+
+When adding new parameter dependencies or cascading logic:
+
+1. Add a new rule function to `EXPLANATION_RULES` array
+2. Check the `param` being changed (the indirect change)
+3. Check `changedByUser` (what the user directly modified)
+4. Check relevant values in `next` state
+5. Return explanation string with `**emphasis**` on key terms, or `null` if rule doesn't apply
+
+```typescript
+// Example: New rule for hypothetical feature
+({ param, next, changedByUser }) => {
+  if (param !== "newParam") return null;
+  if (changedByUser === "triggerParam" && next.someCondition) {
+    return "**NewParam** requires **TriggerParam** to be enabled";
+  }
+  return null;
+},
+```
+
+**Message Format**:
+
+- Base: `**Parameter** set to **Value**`
+- With explanation: `**Parameter** set to **Value** because **reason**`
+- Use `**text**` for emphasis (rendered with distinct styling in alerts)
+
+**Current Rules Cover**:
+
+| Changed Param | Trigger | Explanation |
+|---------------|---------|-------------|
+| `shouldUseInstrumenting` | `modelType` | Model-specific instrumenting requirements |
+| `computeAndersonRubin` | `modelType`, `weight`, `includeStudyDummies` | AR CI availability constraints |
+| `weight` | `shouldUseInstrumenting`, `modelType` | Adjusted weights requires instrumenting |
+| `maiveMethod` | `modelType → WAIVE` | WAIVE only supports PET-PEESE |
+| `useLogFirstStage` | `modelType → WAIVE` | Log first stage recommended for WAIVE |
+| `includeStudyClustering` | `standardErrorTreatment` | Match SE treatment setting |
+
 ### Reproducibility Package System
 
 The app generates downloadable reproducibility packages (ZIP files) that allow users to re-run analyses locally using R. This system is critical for scientific reproducibility and must stay synchronized with the R backend.
@@ -218,6 +289,7 @@ The app uses a combination of Tailwind CSS and shared style utilities for consis
 The app uses centralized constants for all static values:
 
 **`CONST.ts`** - Immutable application constants:
+
 - App metadata (name, creator, institution)
 - External links (MAIVE website, GitHub, documentation)
 - GitHub repository configuration for reproducibility
@@ -225,11 +297,13 @@ The app uses centralized constants for all static values:
 - **Never hardcode URLs, owner names, or static text** - always use `CONST`
 
 **`CONFIG.ts`** - Mutable configuration settings:
+
 - Feature flags (bootstrap enabled, WAIVE enabled)
 - UI behavior toggles (tooltips, modals)
 - Default model parameters
 
 **Usage pattern:**
+
 ```typescript
 // ✅ Good - using constants
 import CONST from "@src/CONST";
@@ -242,6 +316,7 @@ const owner = "PetrCala";
 ```
 
 **When to use each:**
+
 - `CONST.ts`: URLs, GitHub references, display names, external links, repository paths
 - `CONFIG.ts`: Feature toggles, default settings, behavior flags
 - Inline: True one-offs that will never change (e.g., magic numbers with clear context)
