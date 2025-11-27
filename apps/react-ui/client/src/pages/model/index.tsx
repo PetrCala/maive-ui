@@ -23,7 +23,7 @@ import type { ModelParameters } from "@src/types";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
-import { trackParameterChanges } from "@src/utils/parameterChangeTracking";
+import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
 
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
@@ -252,12 +252,12 @@ export default function ModelPage() {
             : false;
           markAdvancedChangeFromBasic(prev, nextState);
 
-          const changes = trackParameterChanges(prevState, nextState, param);
-          setTimeout(() => {
-            changes.forEach((change) => {
-              showParameterAlert(change.message);
-            });
-          }, 0);
+          detectAndDispatchAlerts(
+            prevState,
+            nextState,
+            param,
+            showParameterAlert,
+          );
 
           return nextState;
         }
@@ -282,12 +282,12 @@ export default function ModelPage() {
           };
           markAdvancedChangeFromBasic(prev, nextState);
 
-          const changes = trackParameterChanges(prevState, nextState, param);
-          setTimeout(() => {
-            changes.forEach((change) => {
-              showParameterAlert(change.message);
-            });
-          }, 0);
+          detectAndDispatchAlerts(
+            prevState,
+            nextState,
+            param,
+            showParameterAlert,
+          );
 
           return nextState;
         }
@@ -313,12 +313,12 @@ export default function ModelPage() {
           : false;
         markAdvancedChangeFromBasic(prev, nextState);
 
-        const changes = trackParameterChanges(prevState, nextState, param);
-        setTimeout(() => {
-          changes.forEach((change) => {
-            showParameterAlert(change.message);
-          });
-        }, 0);
+        detectAndDispatchAlerts(
+          prevState,
+          nextState,
+          param,
+          showParameterAlert,
+        );
 
         return nextState;
       }
@@ -352,12 +352,12 @@ export default function ModelPage() {
           ? andersonRubinUserChoiceRef.current
           : false;
 
-        const changes = trackParameterChanges(prevState, nextState, param);
-        setTimeout(() => {
-          changes.forEach((change) => {
-            showParameterAlert(change.message);
-          });
-        }, 0);
+        detectAndDispatchAlerts(
+          prevState,
+          nextState,
+          param,
+          showParameterAlert,
+        );
 
         return nextState;
       }
@@ -377,12 +377,12 @@ export default function ModelPage() {
           ? andersonRubinUserChoiceRef.current
           : false;
 
-        const changes = trackParameterChanges(prevState, nextState, param);
-        setTimeout(() => {
-          changes.forEach((change) => {
-            showParameterAlert(change.message);
-          });
-        }, 0);
+        detectAndDispatchAlerts(
+          prevState,
+          nextState,
+          param,
+          showParameterAlert,
+        );
 
         return nextState;
       }
@@ -424,14 +424,7 @@ export default function ModelPage() {
         nextState.computeAndersonRubin = false;
       }
 
-      const changes = trackParameterChanges(prevState, nextState, param);
-
-      // Show alerts for automatic changes (use setTimeout to avoid state update during render)
-      setTimeout(() => {
-        changes.forEach((change) => {
-          showParameterAlert(change.message);
-        });
-      }, 0);
+      detectAndDispatchAlerts(prevState, nextState, param, showParameterAlert);
 
       return nextState;
     });
@@ -475,12 +468,12 @@ export default function ModelPage() {
           : false;
         markAdvancedChangeFromBasic(prev, nextState);
 
-        const changes = trackParameterChanges(prev, nextState, "modelType");
-        setTimeout(() => {
-          changes.forEach((change) => {
-            showParameterAlert(change.message);
-          });
-        }, 0);
+        detectAndDispatchAlerts(
+          prev,
+          nextState,
+          "modelType",
+          showParameterAlert,
+        );
 
         return nextState;
       });
@@ -503,12 +496,12 @@ export default function ModelPage() {
           computeAndersonRubin: false,
         };
 
-        const changes = trackParameterChanges(prev, nextState, "modelType");
-        setTimeout(() => {
-          changes.forEach((change) => {
-            showParameterAlert(change.message);
-          });
-        }, 0);
+        detectAndDispatchAlerts(
+          prev,
+          nextState,
+          "modelType",
+          showParameterAlert,
+        );
 
         return nextState;
       });
@@ -541,12 +534,12 @@ export default function ModelPage() {
             : false,
         };
 
-        const changes = trackParameterChanges(prev, finalState, "modelType");
-        setTimeout(() => {
-          changes.forEach((change) => {
-            showParameterAlert(change.message);
-          });
-        }, 0);
+        detectAndDispatchAlerts(
+          prev,
+          finalState,
+          "modelType",
+          showParameterAlert,
+        );
 
         return finalState;
       });
@@ -668,16 +661,12 @@ export default function ModelPage() {
           includeStudyClustering: newClusteringValue,
         };
 
-        const changes = trackParameterChanges(
+        detectAndDispatchAlerts(
           prev,
           nextState,
           "standardErrorTreatment",
+          showParameterAlert,
         );
-        setTimeout(() => {
-          changes.forEach((change) => {
-            showParameterAlert(change.message);
-          });
-        }, 0);
 
         return nextState;
       });
@@ -701,16 +690,12 @@ export default function ModelPage() {
         weight: CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE,
       };
 
-      const changes = trackParameterChanges(
+      detectAndDispatchAlerts(
         prev,
         nextState,
         "shouldUseInstrumenting",
+        showParameterAlert,
       );
-      setTimeout(() => {
-        changes.forEach((change) => {
-          showParameterAlert(change.message);
-        });
-      }, 0);
 
       return nextState;
     });
