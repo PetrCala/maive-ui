@@ -177,16 +177,20 @@ When adding new parameter dependencies or cascading logic:
 - With explanation: `**Parameter** set to **Value** because **reason**`
 - Use `**text**` for emphasis (rendered with distinct styling in alerts)
 
+**Internal Parameters (excluded from alerts)**:
+
+Some parameters are internal/hidden from the user and excluded from alerts:
+- `shouldUseInstrumenting`: Controlled by model type, not shown in UI
+- `includeStudyClustering`: Always hidden, auto-set based on data
+
 **Current Rules Cover**:
 
 | Changed Param | Trigger | Explanation |
 |---------------|---------|-------------|
-| `shouldUseInstrumenting` | `modelType` | Model-specific instrumenting requirements |
 | `computeAndersonRubin` | `modelType`, `weight`, `includeStudyDummies` | AR CI availability constraints |
-| `weight` | `shouldUseInstrumenting`, `modelType` | Adjusted weights requires instrumenting |
+| `weight` | `modelType` | Adjusted weights requires instrumenting |
 | `maiveMethod` | `modelType → WAIVE` | WAIVE only supports PET-PEESE |
 | `useLogFirstStage` | `modelType → WAIVE` | Log first stage recommended for WAIVE |
-| `includeStudyClustering` | `standardErrorTreatment` | Match SE treatment setting |
 
 ### Reproducibility Package System
 
