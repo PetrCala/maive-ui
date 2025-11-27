@@ -29,7 +29,7 @@ const CONFIG = {
   },
 
   PARAMETER_ALERTS: {
-    ENABLED: false,
+    ENABLED: true,
     AUTO_DISMISS: false,
     AUTO_DISMISS_DURATION: 5000,
   },
