@@ -74,27 +74,6 @@ type ChangeContext = {
 type ExplanationRule = (context: ChangeContext) => string | null;
 
 const EXPLANATION_RULES: ExplanationRule[] = [
-  // shouldUseInstrumenting changes
-  ({ param, next, changedByUser }) => {
-    if (param !== "shouldUseInstrumenting") {
-      return null;
-    }
-    if (changedByUser !== "modelType") {
-      return null;
-    }
-
-    if (next.modelType === CONST.MODEL_TYPES.WLS) {
-      return "**WLS** doesn't use instrumenting";
-    }
-    if (next.modelType === CONST.MODEL_TYPES.WAIVE) {
-      return "**WAIVE** requires instrumenting";
-    }
-    if (next.modelType === CONST.MODEL_TYPES.MAIVE) {
-      return "**MAIVE** requires instrumenting";
-    }
-    return null;
-  },
-
   // computeAndersonRubin disabled due to model type
   ({ param, next, changedByUser }) => {
     if (param !== "computeAndersonRubin") {
@@ -134,13 +113,10 @@ const EXPLANATION_RULES: ExplanationRule[] = [
     return null;
   },
 
-  // weight changed due to instrumenting being disabled
+  // weight changed due to model type (instrumenting being disabled)
   ({ param, changedByUser }) => {
     if (param !== "weight") {
       return null;
-    }
-    if (changedByUser === "shouldUseInstrumenting") {
-      return "**Adjusted Weights** requires instrumenting";
     }
     if (changedByUser === "modelType") {
       return "**Adjusted Weights** requires instrumenting";
@@ -172,17 +148,6 @@ const EXPLANATION_RULES: ExplanationRule[] = [
       next.modelType === CONST.MODEL_TYPES.WAIVE
     ) {
       return "log first stage is recommended for **WAIVE**";
-    }
-    return null;
-  },
-
-  // includeStudyClustering changed due to standard error treatment
-  ({ param, changedByUser }) => {
-    if (param !== "includeStudyClustering") {
-      return null;
-    }
-    if (changedByUser === "standardErrorTreatment") {
-      return "to match **Standard Error Treatment**";
     }
     return null;
   },
@@ -258,17 +223,19 @@ export function getParameterChangeMessage(
 }
 
 /**
- * All model parameters that should be tracked for changes.
+ * All model parameters that should be tracked for changes and shown in alerts.
+ *
+ * Excluded (internal/hidden from user):
+ * - shouldUseInstrumenting: Not shown in UI, controlled by model type
+ * - includeStudyClustering: Always hidden, auto-set based on data
  */
 const TRACKED_PARAMETERS: Array<keyof ModelParameters> = [
   "modelType",
   "includeStudyDummies",
-  "includeStudyClustering",
   "standardErrorTreatment",
   "computeAndersonRubin",
   "maiveMethod",
   "weight",
-  "shouldUseInstrumenting",
   "useLogFirstStage",
   "winsorize",
 ];
