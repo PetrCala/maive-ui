@@ -86,7 +86,7 @@ const ParameterAlertStack = ({
   }
 
   return (
-    <div className="fixed left-6 bottom-6 z-50 pointer-events-none">
+    <div className="fixed right-6 bottom-6 z-50 pointer-events-none">
       <div className="relative">
         {/* Hidden alerts behind - shown as subtle stacked shadows */}
         {hiddenAlerts.length > 0 && (

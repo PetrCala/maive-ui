@@ -65,7 +65,7 @@ const AlertPopup = ({
         pointerEvents: "auto",
         transition: `opacity ${show ? FADE_IN_DURATION : FADE_OUT_DURATION}ms`,
       }}
-      className={show ? `opacity-100` : `opacity-0`}
+      className={`fixed right-6 bottom-6 z-50 ${show ? "opacity-100" : "opacity-0"}`}
     >
       <Alert message={message} type={type} standalone onClick={onClose} />
     </div>
