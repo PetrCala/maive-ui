@@ -252,6 +252,13 @@ export default function ModelPage() {
             : false;
           markAdvancedChangeFromBasic(prev, nextState);
 
+          const changes = trackParameterChanges(prevState, nextState, param);
+          setTimeout(() => {
+            changes.forEach((change) => {
+              showParameterAlert(change.message);
+            });
+          }, 0);
+
           return nextState;
         }
 
@@ -274,6 +281,13 @@ export default function ModelPage() {
             computeAndersonRubin: false,
           };
           markAdvancedChangeFromBasic(prev, nextState);
+
+          const changes = trackParameterChanges(prevState, nextState, param);
+          setTimeout(() => {
+            changes.forEach((change) => {
+              showParameterAlert(change.message);
+            });
+          }, 0);
 
           return nextState;
         }
@@ -298,6 +312,13 @@ export default function ModelPage() {
           ? andersonRubinUserChoiceRef.current
           : false;
         markAdvancedChangeFromBasic(prev, nextState);
+
+        const changes = trackParameterChanges(prevState, nextState, param);
+        setTimeout(() => {
+          changes.forEach((change) => {
+            showParameterAlert(change.message);
+          });
+        }, 0);
 
         return nextState;
       }
@@ -331,6 +352,13 @@ export default function ModelPage() {
           ? andersonRubinUserChoiceRef.current
           : false;
 
+        const changes = trackParameterChanges(prevState, nextState, param);
+        setTimeout(() => {
+          changes.forEach((change) => {
+            showParameterAlert(change.message);
+          });
+        }, 0);
+
         return nextState;
       }
 
@@ -348,6 +376,13 @@ export default function ModelPage() {
         nextState.computeAndersonRubin = willShowAndersonRubin
           ? andersonRubinUserChoiceRef.current
           : false;
+
+        const changes = trackParameterChanges(prevState, nextState, param);
+        setTimeout(() => {
+          changes.forEach((change) => {
+            showParameterAlert(change.message);
+          });
+        }, 0);
 
         return nextState;
       }
