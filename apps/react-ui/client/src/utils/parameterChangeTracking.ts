@@ -40,7 +40,7 @@ const VALUE_LABELS: Record<string, string> = {
   // MAIVE methods
   PET: "PET",
   PEESE: "PEESE",
-  "PET-PEESE": "PET-PEESE",
+  "PET-PEESE": "PET-PEESE", // eslint-disable-line
   EK: "EK",
   // Standard error treatments
   not_clustered: "Not Clustered",
