@@ -53,6 +53,156 @@ const VALUE_LABELS: Record<string, string> = {
 };
 
 /**
+ * Context for determining change explanations.
+ */
+type ChangeContext = {
+  param: keyof ModelParameters;
+  oldValue: unknown;
+  newValue: unknown;
+  changedByUser: keyof ModelParameters | null;
+  prev: ModelParameters;
+  next: ModelParameters;
+};
+
+/**
+ * Explanation rules for automatic parameter changes.
+ * Each rule is a function that returns an explanation string or null.
+ * Rules are evaluated in order; first matching rule wins.
+ *
+ * This design is scalable: just add new rules to handle new scenarios.
+ */
+type ExplanationRule = (context: ChangeContext) => string | null;
+
+const EXPLANATION_RULES: ExplanationRule[] = [
+  // shouldUseInstrumenting changes
+  ({ param, next, changedByUser }) => {
+    if (param !== "shouldUseInstrumenting") {
+      return null;
+    }
+    if (changedByUser !== "modelType") {
+      return null;
+    }
+
+    if (next.modelType === CONST.MODEL_TYPES.WLS) {
+      return "**WLS** doesn't use instrumenting";
+    }
+    if (next.modelType === CONST.MODEL_TYPES.WAIVE) {
+      return "**WAIVE** requires instrumenting";
+    }
+    if (next.modelType === CONST.MODEL_TYPES.MAIVE) {
+      return "**MAIVE** requires instrumenting";
+    }
+    return null;
+  },
+
+  // computeAndersonRubin disabled due to model type
+  ({ param, next, changedByUser }) => {
+    if (param !== "computeAndersonRubin") {
+      return null;
+    }
+    if (
+      changedByUser === "modelType" &&
+      next.modelType === CONST.MODEL_TYPES.WLS
+    ) {
+      return "**WLS** doesn't use instrumenting";
+    }
+    return null;
+  },
+
+  // computeAndersonRubin disabled due to weight
+  ({ param, next, changedByUser }) => {
+    if (param !== "computeAndersonRubin") {
+      return null;
+    }
+    if (
+      changedByUser === "weight" &&
+      next.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE
+    ) {
+      return "**Anderson-Rubin CI** is not available with **Standard Weights**";
+    }
+    return null;
+  },
+
+  // computeAndersonRubin disabled due to study dummies
+  ({ param, next, changedByUser }) => {
+    if (param !== "computeAndersonRubin") {
+      return null;
+    }
+    if (changedByUser === "includeStudyDummies" && next.includeStudyDummies) {
+      return "**Anderson-Rubin CI** is not available with **Fixed-Intercept Multilevel**";
+    }
+    return null;
+  },
+
+  // weight changed due to instrumenting being disabled
+  ({ param, changedByUser }) => {
+    if (param !== "weight") {
+      return null;
+    }
+    if (changedByUser === "shouldUseInstrumenting") {
+      return "**Adjusted Weights** requires instrumenting";
+    }
+    if (changedByUser === "modelType") {
+      return "**Adjusted Weights** requires instrumenting";
+    }
+    return null;
+  },
+
+  // maiveMethod changed due to WAIVE model
+  ({ param, next, changedByUser }) => {
+    if (param !== "maiveMethod") {
+      return null;
+    }
+    if (
+      changedByUser === "modelType" &&
+      next.modelType === CONST.MODEL_TYPES.WAIVE
+    ) {
+      return "**WAIVE** only supports **PET-PEESE**";
+    }
+    return null;
+  },
+
+  // useLogFirstStage changed due to WAIVE model
+  ({ param, next, changedByUser }) => {
+    if (param !== "useLogFirstStage") {
+      return null;
+    }
+    if (
+      changedByUser === "modelType" &&
+      next.modelType === CONST.MODEL_TYPES.WAIVE
+    ) {
+      return "log first stage is recommended for **WAIVE**";
+    }
+    return null;
+  },
+
+  // includeStudyClustering changed due to standard error treatment
+  ({ param, changedByUser }) => {
+    if (param !== "includeStudyClustering") {
+      return null;
+    }
+    if (changedByUser === "standardErrorTreatment") {
+      return "to match **Standard Error Treatment**";
+    }
+    return null;
+  },
+];
+
+/**
+ * Get an explanation for why a parameter changed automatically.
+ * Returns null if no specific explanation is available.
+ */
+function getChangeExplanation(context: ChangeContext): string | null {
+  for (const rule of EXPLANATION_RULES) {
+    const explanation = rule(context);
+    if (explanation) {
+      return explanation;
+    }
+  }
+  return null;
+}
+
+/**
  * Format a parameter value for display in an alert message.
  */
 function formatValue(value: unknown): string {
@@ -71,16 +221,40 @@ function formatValue(value: unknown): string {
 /**
  * Generate a human-readable message for a parameter change.
  * Uses **markdown** syntax for emphasis on key terms.
+ * Includes an explanation if one is available for the context.
  */
 export function getParameterChangeMessage(
   param: keyof ModelParameters,
   oldValue: unknown,
   newValue: unknown,
+  context?: {
+    changedByUser: keyof ModelParameters | null;
+    prev: ModelParameters;
+    next: ModelParameters;
+  },
 ): string {
   const paramLabel = PARAMETER_LABELS[param] ?? param;
   const formattedNewValue = formatValue(newValue);
 
-  return `**${paramLabel}** automatically set to **${formattedNewValue}**`;
+  let message = `**${paramLabel}** set to **${formattedNewValue}**`;
+
+  // Add explanation if context is provided
+  if (context) {
+    const explanation = getChangeExplanation({
+      param,
+      oldValue,
+      newValue,
+      changedByUser: context.changedByUser,
+      prev: context.prev,
+      next: context.next,
+    });
+
+    if (explanation) {
+      message += ` because ${explanation}`;
+    }
+  }
+
+  return message;
 }
 
 /**
@@ -127,7 +301,11 @@ export function detectIndirectChanges(
         param,
         oldValue,
         newValue,
-        message: getParameterChangeMessage(param, oldValue, newValue),
+        message: getParameterChangeMessage(param, oldValue, newValue, {
+          changedByUser,
+          prev,
+          next,
+        }),
       });
     }
   }
