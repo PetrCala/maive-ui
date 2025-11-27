@@ -400,30 +400,6 @@ const TEXT = {
         "Estimates the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels. Using logs typically strengthens the instrument and often performs better in practical applications.",
     },
     runModel: "Run Model",
-    parameterAlerts: {
-      wlsInstrumentingDisabled:
-        "**Use Instrumenting** set to **No** because **WLS** model doesn't use instrumenting",
-      wlsWeightChanged:
-        "**Weight** set to **Standard Weights** because **Adjusted Weights** only available with instrumenting",
-      wlsAndersonRubinDisabled:
-        "**Anderson-Rubin CI** disabled because **WLS** model doesn't use instrumenting",
-      waiveInstrumentingEnabled:
-        "**Use Instrumenting** set to **Yes** because **WAIVE** model requires instrumenting",
-      waiveMethodChanged:
-        "**MAIVE Method** set to **PET-PEESE** because **WAIVE** model only supports **PET-PEESE** method",
-      waiveLogFirstStageEnabled:
-        "**Use log first stage** set to **Yes** because log first stage recommended for **WAIVE**",
-      maiveInstrumentingEnabled:
-        "**Use Instrumenting** set to **Yes** because **MAIVE** model requires instrumenting",
-      weightStandardAndersonRubinDisabled:
-        "**Anderson-Rubin CI** disabled because **Anderson-Rubin CI** not available with **Standard Weights**",
-      studyDummiesAndersonRubinDisabled:
-        "**Anderson-Rubin CI** disabled because **Anderson-Rubin CI** not available with **Fixed-Intercept Multilevel**",
-      standardErrorClusteringAdjusted:
-        "**Study clustering** automatically adjusted to match **standard error treatment**",
-      adjustedWeightsWithoutInstrumenting:
-        "**Weight** set to **Standard Weights** because **Adjusted Weights** only available with instrumenting",
-    },
   },
   waive: {
     dropdownLabel: "WAIVE (Experimental)",
