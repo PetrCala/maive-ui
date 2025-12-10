@@ -7,11 +7,14 @@ import InvisibleLink from "./InvisibleLink";
 import CONFIG from "@src/CONFIG";
 import Link from "next/link";
 import {
-  FaFileAlt,
-  FaGithub,
+  FaCode,
+  FaCodeBranch,
   FaEnvelope,
   FaExclamationTriangle,
+  FaFileAlt,
   FaGlobe,
+  FaRProject,
+  FaTimes,
 } from "react-icons/fa";
 
 type FooterProps = {
@@ -79,6 +82,7 @@ const FooterButtonLinkItem = ({
 const Footer = ({ className = "" }: FooterProps) => {
   const [currentYear, setCurrentYear] = useState("2025");
   const [showCitation, setShowCitation] = useState(false);
+  const [showCodeLinks, setShowCodeLinks] = useState(false);
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear().toString());
@@ -90,6 +94,10 @@ const Footer = ({ className = "" }: FooterProps) => {
 
   const handleCitationClick = () => {
     setShowCitation(!showCitation);
+  };
+
+  const handleCodeClick = () => {
+    setShowCodeLinks(!showCodeLinks);
   };
 
   return (
@@ -124,10 +132,10 @@ const Footer = ({ className = "" }: FooterProps) => {
             icon={<FaGlobe />}
             text="Applications"
           />
-          <FooterHrefLinkItem
-            href={CONST.LINKS.APP_GITHUB.HOMEPAGE}
-            icon={<FaGithub />}
-            text="GitHub"
+          <FooterButtonLinkItem
+            onClick={handleCodeClick}
+            icon={<FaCode />}
+            text="Code"
           />
 
           <FooterHrefLinkItem
@@ -152,6 +160,49 @@ const Footer = ({ className = "" }: FooterProps) => {
               variant="full"
               onClose={() => setShowCitation(false)}
             />
+          </div>
+        </div>
+      )}
+
+      {showCodeLinks && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowCodeLinks(false)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full shadow-xl border border-gray-200 dark:border-gray-700"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="flex items-start justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+              <div>
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                  Access the MAIVE package
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  CRAN provides the stable release; GitHub hosts the development version.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCodeLinks(false)}
+                aria-label="Close code links"
+                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              >
+                <FaTimes className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-5 space-y-3 text-sm">
+              <FooterHrefLinkItem
+                href={CONST.LINKS.MAIVE.CRAN}
+                icon={<FaRProject className="text-blue-600" />}
+                text="MAIVE CRAN (stable release)"
+              />
+              <FooterHrefLinkItem
+                href={CONST.LINKS.MAIVE.GITHUB}
+                icon={<FaCodeBranch className="text-purple-600" />}
+                text="MAIVE GitHub (development)"
+              />
+            </div>
           </div>
         </div>
       )}

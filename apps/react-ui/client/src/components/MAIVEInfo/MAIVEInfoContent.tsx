@@ -115,6 +115,22 @@ export default function MAIVEInfoContent({
               {TEXT.maiveModal.papersAndResources.maivePaper.linkText}
             </Link>
           </div>
+          <div className="border-l-4 border-blue-500 pl-4">
+            <h4 className="font-semibold text-primary">
+              {TEXT.maiveModal.papersAndResources.maiveCRAN.head}
+            </h4>
+            <p className="text-sm text-muted mb-2">
+              {TEXT.maiveModal.papersAndResources.maiveCRAN.text}
+            </p>
+            <Link
+              href={CONST.LINKS.MAIVE.CRAN}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline text-sm interactive"
+            >
+              {TEXT.maiveModal.papersAndResources.maiveCRAN.linkText}
+            </Link>
+          </div>
           <div className="border-l-4 border-purple-500 pl-4">
             <h4 className="font-semibold text-primary">
               {TEXT.maiveModal.papersAndResources.maiveCode.head}

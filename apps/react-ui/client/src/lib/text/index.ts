@@ -503,6 +503,11 @@ const TEXT = {
         text: "Read the MAIVE paper for more information about the estimator.",
         linkText: "View Paper →",
       },
+      maiveCRAN: {
+        head: "MAIVE CRAN",
+        text: "Install the stable MAIVE release from CRAN.",
+        linkText: "View CRAN release →",
+      },
       maiveCode: {
         head: "MAIVE Code",
         text: "View the MAIVE code for more information about the estimator.",
