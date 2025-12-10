@@ -179,7 +179,8 @@ const Footer = ({ className = "" }: FooterProps) => {
                   Access the MAIVE package
                 </p>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                  CRAN provides the stable release; GitHub hosts the development version.
+                  CRAN provides the stable release; GitHub hosts the development
+                  version.
                 </p>
               </div>
               <button
