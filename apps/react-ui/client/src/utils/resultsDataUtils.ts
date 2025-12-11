@@ -11,7 +11,7 @@ export type ResultItem = {
   show: boolean;
   isSignificant?: boolean;
   isSignificantType?: "positive" | "negative";
-  section: "effect" | "bias" | "tests" | "runInfo";
+  section: "effect" | "bias" | "tests" | "runInfo" | "modelDetails";
   highlightColor?: string;
   extraText?: string;
   highlightCondition?: boolean;
@@ -74,6 +74,7 @@ export const generateResultsData = (
   runTimestamp?: Date,
   dataInfo?: DataInfo,
   resultsText: ResultsTextContent = TEXT.results,
+  showExtendedResults = false,
 ): ResultsData => {
   const andersonRubinCI =
     results.andersonRubinCI !== "NA" && hasValidCI(results.andersonRubinCI)
@@ -299,6 +300,92 @@ export const generateResultsData = (
     },
   ];
 
+  // Extended results (model details)
+  const extendedResults: ResultItem[] = [];
+
+  if (showExtendedResults) {
+    // 1. Final Model (PET-PEESE only)
+    const isPetPeeseMethod = parameters?.maiveMethod === "PET-PEESE";
+    const finalModel = results.petpeese_selected;
+
+    if (isPetPeeseMethod && finalModel && finalModel !== null) {
+      extendedResults.push({
+        label: resultsText.modelDetails.metrics.finalModel.label,
+        value: finalModel,
+        show: true,
+        section: "modelDetails",
+      });
+    }
+
+    // 2. Coefficient on SE² (when PEESE is final model)
+    const isPeeseMethod = parameters?.maiveMethod === "PEESE";
+    const isPeeseFinal = isPetPeeseMethod && finalModel === "PEESE";
+    const shouldShowPeeseSe2 = isPeeseMethod || isPeeseFinal;
+
+    if (shouldShowPeeseSe2) {
+      const peeseSe2Coef = results.peese_se2_coef;
+      const peeseSe2Se = results.peese_se2_se;
+
+      if (
+        peeseSe2Coef !== null &&
+        peeseSe2Coef !== undefined &&
+        !Number.isNaN(peeseSe2Coef) &&
+        Number.isFinite(peeseSe2Coef)
+      ) {
+        extendedResults.push({
+          label: resultsText.modelDetails.metrics.peeseSe2Coef.label,
+          value: peeseSe2Coef,
+          show: true,
+          section: "modelDetails",
+        });
+      }
+
+      if (
+        peeseSe2Se !== null &&
+        peeseSe2Se !== undefined &&
+        !Number.isNaN(peeseSe2Se) &&
+        Number.isFinite(peeseSe2Se)
+      ) {
+        extendedResults.push({
+          label: resultsText.modelDetails.metrics.peeseSe2Se.label,
+          value: peeseSe2Se,
+          show: true,
+          section: "modelDetails",
+        });
+      }
+    }
+
+    // 3. Kink Value (EK method only)
+    const isEkMethod = parameters?.maiveMethod === "EK";
+
+    if (isEkMethod) {
+      const slopeCoef = results.slope_coef;
+
+      // Extract kink_location from slope_coef
+      let kinkLocation: number | null = null;
+
+      if (
+        slopeCoef &&
+        typeof slopeCoef === "object" &&
+        "kink_location" in slopeCoef
+      ) {
+        kinkLocation = slopeCoef.kink_location;
+      }
+
+      if (kinkLocation !== null && Number.isFinite(kinkLocation)) {
+        const extraText = kinkLocation === 0 ? " (reduces to PET)" : undefined;
+
+        extendedResults.push({
+          label: resultsText.modelDetails.metrics.kinkValue.label,
+          value: kinkLocation,
+          show: true,
+          section: "modelDetails",
+          extraText: extraText,
+        });
+      }
+    }
+  }
+
   // Run information
   const runInfo: ResultItem[] = [];
 
@@ -390,7 +477,7 @@ export const generateResultsData = (
   }
 
   return {
-    coreResults,
+    coreResults: [...coreResults, ...extendedResults],
     runInfo,
   };
 };

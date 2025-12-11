@@ -47,6 +47,12 @@ export type ResultsText = Readonly<{
     firstStageFStatisticLog: MetricText;
     firstStageSpecification: MetricText;
   }>;
+  modelDetails: SectionWithMetrics<{
+    finalModel: MetricText;
+    peeseSe2Coef: MetricText;
+    peeseSe2Se: MetricText;
+    kinkValue: MetricText;
+  }>;
   funnelPlot: Readonly<{
     title: string;
     tooltip: string;
@@ -152,6 +158,31 @@ const RESULTS_TEXT: ResultsText = {
         label: "First-stage specification",
         tooltip:
           "Indicates the functional form used for the first-stage variance regression. Log mode reports log(SE²) ~ log N with Duan smearing to return fitted variances to levels.",
+      },
+    },
+  },
+  modelDetails: {
+    title: "Model Details",
+    metrics: {
+      finalModel: {
+        label: "Final Model",
+        tooltip:
+          "The model selected by the PET-PEESE procedure based on the significance of the intercept in the PET regression. If the intercept is significant, PEESE is used; otherwise, PET is used.",
+      },
+      peeseSe2Coef: {
+        label: "Coefficient on SE²",
+        tooltip:
+          "The estimated coefficient on the squared standard error term in the PEESE (Precision-Effect Estimate with Standard Error) regression. This captures the quadratic relationship between effect size and precision.",
+      },
+      peeseSe2Se: {
+        label: "SE of Coefficient on SE²",
+        tooltip:
+          "The standard error of the coefficient on SE², reflecting the uncertainty in the quadratic precision-effect relationship.",
+      },
+      kinkValue: {
+        label: "Kink Value",
+        tooltip:
+          "The threshold value at which the relationship between effect size and precision changes slope in the Endogenous Kink (EK) model. A kink value of 0 indicates the model reduces to PET (linear specification).",
       },
     },
   },

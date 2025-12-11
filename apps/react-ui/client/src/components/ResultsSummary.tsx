@@ -30,6 +30,7 @@ type ResultsSummaryProps = {
   resultsText?: ResultsTextContent;
   simpleMean?: number;
   showInterpretation?: boolean;
+  showExtendedResults?: boolean;
 };
 
 export default function ResultsSummary({
@@ -44,6 +45,7 @@ export default function ResultsSummary({
   resultsText = TEXT.results,
   simpleMean,
   showInterpretation = true,
+  showExtendedResults = false,
 }: ResultsSummaryProps) {
   const formatIntervalString = (value: string): string => {
     const trimmed = value.trim();
@@ -140,6 +142,7 @@ export default function ResultsSummary({
       effect: resultsText.effectEstimate.title,
       bias: resultsText.publicationBias.title,
       tests: resultsText.diagnosticTests.title,
+      modelDetails: resultsText.modelDetails.title,
     };
     return sectionTitles[section] || "";
   };
@@ -152,6 +155,7 @@ export default function ResultsSummary({
     runTimestamp,
     dataInfo,
     resultsText,
+    showExtendedResults,
   );
 
   const allResults = [...resultsData.coreResults];
@@ -253,7 +257,7 @@ export default function ResultsSummary({
   }
 
   // Horizontal layout (default) - render sections dynamically
-  const sectionOrder = ["effect", "bias", "tests"];
+  const sectionOrder = ["effect", "bias", "tests", "modelDetails"];
 
   // Generate interpretation text for each section
   const getInterpretationText = (sectionKey: string): string => {

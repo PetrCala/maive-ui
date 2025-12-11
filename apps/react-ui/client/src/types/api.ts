@@ -69,6 +69,24 @@ type ModelResults = {
     description: string;
     fStatisticLabel?: string;
   } | null;
+  // New fields added in MAIVE commit 80125b2
+  petpeese_selected?: "PET" | "PEESE" | null;
+  peese_se2_coef?: number | null;
+  peese_se2_se?: number | null;
+  slope_coef?:
+    | number
+    | {
+        kink_effect: number;
+        kink_location: number;
+      };
+  is_quadratic_fit?: {
+    quadratic: boolean;
+    slope_type: string;
+    slope_detail?: {
+      kink_location?: number;
+      kink_effect?: number;
+    } | null;
+  };
 };
 
 type PingResponse = {
