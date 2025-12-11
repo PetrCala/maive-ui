@@ -187,6 +187,7 @@ export default function RunInfoModal({
             runTimestamp={runTimestamp}
             dataInfo={dataInfo}
             resultsText={resultsText}
+            showExtendedResults={true}
           />
         </section>
       </div>

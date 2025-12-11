@@ -459,6 +459,7 @@ export const exportComprehensiveResults = (
       runTimestamp,
       dataInfo,
       resultsText,
+      true,
     ),
   );
 
