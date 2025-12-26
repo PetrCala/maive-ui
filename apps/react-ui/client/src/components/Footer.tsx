@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import CONST from "@src/CONST";
 import CitationBox from "./CitationBox";
+import CodeLinkCard from "./CodeLinkCard";
 import InvisibleLink from "./InvisibleLink";
 import CONFIG from "@src/CONFIG";
 import Link from "next/link";
@@ -56,6 +57,130 @@ const FooterHrefLinkItem = ({
     >
       <FooterLinkItemContents icon={icon} text={text} />
     </Link>
+  );
+};
+
+type CodeLinksModalProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
+const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
+  const titleId = useId();
+  const descriptionId = useId();
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    closeButtonRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (!isOpen) {
+    return null;
+  }
+
+  return (
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      onClick={onClose}
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full shadow-xl border border-gray-200 dark:border-gray-700"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between p-5 border-b border-gray-200 dark:border-gray-700">
+          <div>
+            <p
+              id={titleId}
+              className="text-sm font-semibold text-gray-900 dark:text-white"
+            >
+              Code & Packages
+            </p>
+            <p
+              id={descriptionId}
+              className="text-sm text-gray-600 dark:text-gray-300 mt-1"
+            >
+              Source code and package repositories used by this app.
+            </p>
+          </div>
+          <button
+            ref={closeButtonRef}
+            type="button"
+            onClick={onClose}
+            aria-label="Close code links"
+            className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          >
+            <FaTimes className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-5">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              MAIVE R package
+            </p>
+            <div className="space-y-2">
+              <CodeLinkCard
+                href={CONST.LINKS.MAIVE.CRAN}
+                icon={
+                  <FaRProject className="text-blue-700" aria-hidden="true" />
+                }
+                title="CRAN (stable release)"
+                description="Recommended for most users."
+              />
+              <CodeLinkCard
+                href={CONST.LINKS.MAIVE.GITHUB}
+                icon={
+                  <FaCodeBranch
+                    className="text-purple-700"
+                    aria-hidden="true"
+                  />
+                }
+                title="GitHub (development)"
+                description="Source code and development version."
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              MAIVE UI (this web app)
+            </p>
+            <div className="space-y-2">
+              <CodeLinkCard
+                href={CONST.LINKS.APP_GITHUB.HOMEPAGE}
+                icon={
+                  <FaCode className="text-emerald-700" aria-hidden="true" />
+                }
+                title="GitHub repository"
+                description="Frontend + API routes + deployment configuration."
+              />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -164,49 +289,10 @@ const Footer = ({ className = "" }: FooterProps) => {
         </div>
       )}
 
-      {showCodeLinks && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowCodeLinks(false)}
-        >
-          <div
-            className="bg-white dark:bg-gray-800 rounded-xl max-w-lg w-full shadow-xl border border-gray-200 dark:border-gray-700"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="flex items-start justify-between p-5 border-b border-gray-200 dark:border-gray-700">
-              <div>
-                <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                  Access the MAIVE package
-                </p>
-                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                  CRAN provides the stable release; GitHub hosts the development
-                  version.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShowCodeLinks(false)}
-                aria-label="Close code links"
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              >
-                <FaTimes className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="p-5 space-y-3 text-sm">
-              <FooterHrefLinkItem
-                href={CONST.LINKS.MAIVE.CRAN}
-                icon={<FaRProject className="text-blue-600" />}
-                text="MAIVE CRAN (stable release)"
-              />
-              <FooterHrefLinkItem
-                href={CONST.LINKS.MAIVE.GITHUB}
-                icon={<FaCodeBranch className="text-purple-600" />}
-                text="MAIVE GitHub (development)"
-              />
-            </div>
-          </div>
-        </div>
-      )}
+      <CodeLinksModal
+        isOpen={showCodeLinks}
+        onClose={() => setShowCodeLinks(false)}
+      />
     </>
   );
 };
