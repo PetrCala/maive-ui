@@ -361,15 +361,45 @@ export const generateResultsData = (
     if (isEkMethod) {
       const slopeCoef = results.slope_coef;
 
-      // Extract kink_location from slope_coef
+      const isKinkCoefObject = (
+        value: unknown,
+      ): value is { kink_location: number; kink_effect: number } => {
+        if (value === null || typeof value !== "object") {
+          return false;
+        }
+        if (!("kink_location" in value) || !("kink_effect" in value)) {
+          return false;
+        }
+        const maybe = value as Record<string, unknown>;
+        return (
+          typeof maybe.kink_location === "number" &&
+          Number.isFinite(maybe.kink_location) &&
+          typeof maybe.kink_effect === "number" &&
+          Number.isFinite(maybe.kink_effect)
+        );
+      };
+
+      // EK can return:
+      // - a kink object (with kink_location)
+      // - a plain slope coefficient (linear fit -> effectively no kink)
+      // Prefer the explicit kink location if present; otherwise fall back to
+      // is_quadratic_fit metadata to show kink=0 for linear EK (reduces to PET).
       let kinkLocation: number | null = null;
 
-      if (
-        slopeCoef &&
-        typeof slopeCoef === "object" &&
-        "kink_location" in slopeCoef
-      ) {
+      if (isKinkCoefObject(slopeCoef)) {
         kinkLocation = slopeCoef.kink_location;
+      } else if (
+        results.is_quadratic_fit?.slope_detail &&
+        typeof results.is_quadratic_fit.slope_detail.kink_location ===
+          "number" &&
+        Number.isFinite(results.is_quadratic_fit.slope_detail.kink_location)
+      ) {
+        kinkLocation = results.is_quadratic_fit.slope_detail.kink_location;
+      } else if (
+        results.is_quadratic_fit &&
+        results.is_quadratic_fit.quadratic === false
+      ) {
+        kinkLocation = 0;
       }
 
       if (kinkLocation !== null && Number.isFinite(kinkLocation)) {
@@ -380,7 +410,7 @@ export const generateResultsData = (
           value: kinkLocation,
           show: true,
           section: "modelDetails",
-          extraText: extraText,
+          extraText,
         });
       }
     }
