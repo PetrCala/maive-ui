@@ -2,7 +2,7 @@ const GH_OWNER = "PetrCala";
 const GH_REPO_UI = "maive-ui";
 
 const GH_REPO_PACKAGE = "MAIVE";
-const GH_REPO_PACKAGE_ORG = "meta-analysis-es/maive";
+const GH_REPO_PACKAGE_ORG = "PetrCala/MAIVE"; // meta-analysis-es/maive
 const GH_R_SCRIPTS_PATH = "apps/lambda-r-backend/r_scripts";
 
 const CONST = {
@@ -25,7 +25,7 @@ const CONST = {
       WEBSITE: "https://meta-analysis.cz/maive/",
       PAPER: "https://doi.org/10.1038/s41467-025-63261-0",
       CRAN: "https://cran.r-project.org/web/packages/MAIVE/index.html",
-      GITHUB: "https://github.com/meta-analysis-es/maive",
+      GITHUB: `https://github.com/${GH_REPO_PACKAGE_ORG}`,
     },
     APP_GITHUB: {
       HOMEPAGE: `https://github.com/${GH_OWNER}/${GH_REPO_UI}`,
