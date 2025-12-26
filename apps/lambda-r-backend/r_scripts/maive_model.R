@@ -484,7 +484,13 @@ run_maive_model <- function(data, parameters) {
       )
     } else {
       NULL
-    }
+    },
+    # New fields from MAIVE package (commit 80125b2)
+    petpeese_selected = maive_res$petpeese_selected,
+    peese_se2_coef = maive_res$peese_se2_coef,
+    peese_se2_se = maive_res$peese_se2_se,
+    slope_coef = maive_res$slope_coef,
+    is_quadratic_fit = maive_res$is_quadratic_fit
   )
 
   results
