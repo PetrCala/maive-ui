@@ -94,6 +94,18 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
         ? maiveTag
         : `v${maiveTag}`;
 
+  const maiveTagForUrl =
+    maiveTag === "unknown"
+      ? null
+      : maiveTag.startsWith("v")
+        ? maiveTag
+        : `v${maiveTag}`;
+
+  const maiveGithubDevHref =
+    maiveTagForUrl === null
+      ? CONST.LINKS.MAIVE.GITHUB
+      : `${CONST.LINKS.MAIVE.GITHUB}/tree/${maiveTagForUrl}`;
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -209,7 +221,7 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
                 description="Recommended for most users."
               />
               <CodeLinkCard
-                href={CONST.LINKS.MAIVE.GITHUB}
+                href={maiveGithubDevHref}
                 icon={
                   <FaCodeBranch
                     className="text-purple-700"
