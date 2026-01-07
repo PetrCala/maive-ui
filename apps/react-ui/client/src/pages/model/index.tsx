@@ -24,6 +24,7 @@ import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
+import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
 
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
@@ -627,9 +628,10 @@ export default function ModelPage() {
         }
         console.error("Error running model:", error);
         if (isMountedRef.current) {
-          const msg =
+          const msg = cleanCliErrorMessage(
             "An error occurred while running the model: " +
-            (error instanceof Error ? error.message : String(error));
+              (error instanceof Error ? error.message : String(error)),
+          );
           showAlert(msg, "error");
           setLoading(false);
           setHasRunModel(false);

@@ -469,19 +469,28 @@ const validateData = (
     });
   }
 
-  const hasNegativeSE = fullData.some((row) => {
+  const nonPositiveSeIndexes: number[] = [];
+  fullData.forEach((row, index) => {
     const value = row.se;
     if (value === undefined || value === null) {
-      return false;
+      return;
     }
+
     const numericValue = typeof value === "number" ? value : Number(value);
-    return !Number.isNaN(numericValue) && numericValue < 0;
+    if (!Number.isNaN(numericValue) && numericValue <= 0) {
+      nonPositiveSeIndexes.push(index + 1);
+    }
   });
 
-  if (hasNegativeSE) {
+  if (nonPositiveSeIndexes.length > 0) {
+    const maxIndexes = 3;
+    const displayIndexes = nonPositiveSeIndexes.slice(0, maxIndexes);
+    const hasMore = nonPositiveSeIndexes.length > maxIndexes;
+    const indexesText = displayIndexes.join(", ") + (hasMore ? ",..." : "");
+
     messages.push({
       type: CONST.ALERT_TYPES.ERROR,
-      message: "Standard errors cannot be negative. Please check your data.",
+      message: `The ${seField} column must contain only positive values (greater than 0). Found invalid values at row(s): ${indexesText}. Please check your data.`,
     });
   }
 
