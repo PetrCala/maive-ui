@@ -85,9 +85,14 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
   const titleId = useId();
   const descriptionId = useId();
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [maiveTag, setMaiveTag] = useState(
-    CONST.REPRODUCIBILITY.DEFAULTS.MAIVE_TAG,
-  );
+  const [maiveTag, setMaiveTag] = useState("unknown");
+
+  const maiveTagDisplay =
+    maiveTag === "unknown"
+      ? "unknown"
+      : maiveTag.startsWith("v")
+        ? maiveTag
+        : `v${maiveTag}`;
 
   useEffect(() => {
     if (!isOpen) {
@@ -118,9 +123,7 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
           return;
         }
 
-        setMaiveTag(
-          data.maiveTag as typeof CONST.REPRODUCIBILITY.DEFAULTS.MAIVE_TAG,
-        );
+        setMaiveTag(data.maiveTag);
       } catch (error) {
         if (error instanceof DOMException && error.name === "AbortError") {
           return;
@@ -194,7 +197,7 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
         <div className="p-5 space-y-5">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              MAIVE R package (v{maiveTag})
+              MAIVE R package ({maiveTagDisplay})
             </p>
             <div className="space-y-2">
               <CodeLinkCard
