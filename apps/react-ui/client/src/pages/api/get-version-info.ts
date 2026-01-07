@@ -29,14 +29,19 @@ function getVersionInfo(): VersionInfo {
   // Read UI version from package.json
   const packageJsonPath = join(process.cwd(), "package.json");
   const packageJsonContent = readFileSync(packageJsonPath, "utf-8");
-  const packageJson = JSON.parse(packageJsonContent) as { version?: string };
+  const packageJson = JSON.parse(packageJsonContent) as {
+    version?: string;
+    maiveTag?: string;
+  };
   const uiVersion =
     typeof packageJson.version === "string" ? packageJson.version : "unknown";
 
-  // Get MAIVE tag from environment variable (set during build/deployment)
-  // Falls back to default from constants
+  // Get MAIVE tag from environment variable (set during build/deployment).
+  // Falls back to the repo-controlled value in package.json (kept in sync by set-maive-tag).
+  const maiveTagFromPackageJson =
+    typeof packageJson.maiveTag === "string" ? packageJson.maiveTag : undefined;
   const maiveTag =
-    process.env.MAIVE_TAG ?? CONST.REPRODUCIBILITY.DEFAULTS.MAIVE_TAG;
+    process.env.MAIVE_TAG ?? maiveTagFromPackageJson ?? "unknown";
 
   // Get git commit hash from environment variable (set during build)
   // Falls back to "latest" if not available

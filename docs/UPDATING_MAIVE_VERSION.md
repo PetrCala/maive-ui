@@ -16,7 +16,10 @@ To bump the maive package version, simply run the following script:
 npm run set-maive-tag <new-tag>
 ```
 
-This updates all the relevant files and creates a commit with the newly bumped MAIVE tag.
+This updates all the relevant files and creates a commit with the newly bumped MAIVE tag:
+
+- `.github/workflows/release.yml` (`env.MAIVE_TAG`) - used by CI to build the R library image
+- `apps/react-ui/client/package.json` (`maiveTag`) - used by the UI to display the currently used MAIVE version (and as a fallback when the `MAIVE_TAG` env var isn't set)
 
 ## Local Development and Debugging
 

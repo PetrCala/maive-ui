@@ -7,9 +7,15 @@ source "$SCRIPTS_DIR/shellUtils.sh"
 
 OWNER_REPO="PetrCala/MAIVE"
 WORKFLOW_FILE=".github/workflows/release.yml"
+CLIENT_PACKAGE_JSON="apps/react-ui/client/package.json"
 
 if [[ ! -f "$WORKFLOW_FILE" ]]; then
     error "The $WORKFLOW_FILE file does not exist"
+    exit 1
+fi
+
+if [[ ! -f "$CLIENT_PACKAGE_JSON" ]]; then
+    error "The $CLIENT_PACKAGE_JSON file does not exist"
     exit 1
 fi
 
@@ -50,6 +56,12 @@ fi
 
 sed -i.bak "s/^\([[:space:]]*MAIVE_TAG:\).*/\1 $MAIVE_TAG/" $WORKFLOW_FILE
 
+# Also store the MAIVE tag in the Next.js app manifest so the UI can display
+# it (and the server can use it as a fallback when MAIVE_TAG env var isn't set).
+tmp_pkg_json="$(mktemp)"
+jq --arg tag "$MAIVE_TAG" '.maiveTag = $tag' "$CLIENT_PACKAGE_JSON" > "$tmp_pkg_json"
+mv "$tmp_pkg_json" "$CLIENT_PACKAGE_JSON"
+
 
 # Verify that th desired tag exists in the file
 if ! grep -q "MAIVE_TAG: $MAIVE_TAG" "$WORKFLOW_FILE"; then
@@ -57,7 +69,14 @@ if ! grep -q "MAIVE_TAG: $MAIVE_TAG" "$WORKFLOW_FILE"; then
     exit 1
 fi
 
+# Verify the desired tag exists in the package.json
+if ! jq -e --arg tag "$MAIVE_TAG" '.maiveTag == $tag' "$CLIENT_PACKAGE_JSON" >/dev/null; then
+    error "Failed to update maiveTag in $CLIENT_PACKAGE_JSON"
+    exit 1
+fi
+
 git add "$WORKFLOW_FILE"
+git add "$CLIENT_PACKAGE_JSON"
 git commit -m "build: update the MAIVE version to $MAIVE_TAG"
 
 success "MAIVE_TAG $MAIVE_TAG is now used in the project. Please push your changes to the remote repository using 'git push'."
