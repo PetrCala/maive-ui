@@ -340,54 +340,6 @@ run_maive_model <- function(data, parameters) {
   pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
 
 
-  parse_slope_metadata <- function(res) {
-    slope_summary <- if ("is_quadratic_fit" %in% names(res)) res$is_quadratic_fit else NULL
-    slope_coef <- if ("slope_coef" %in% names(res)) res$slope_coef else NULL
-
-    metadata <- list(
-      quadratic = FALSE,
-      type = NULL,
-      coefficient = slope_coef,
-      detail = NULL
-    )
-
-    if (is.list(slope_summary)) {
-      metadata$quadratic <- isTRUE(slope_summary$quadratic)
-
-      slope_type <- NULL
-      if (!is.null(slope_summary$slope_type)) {
-        slope_type <- slope_summary$slope_type
-      } else if (!is.null(slope_summary$type)) {
-        slope_type <- slope_summary$type
-      }
-      if (!is.null(slope_type)) {
-        metadata$type <- slope_type
-      }
-
-      if (!is.null(slope_summary$slope_detail)) {
-        metadata$detail <- slope_summary$slope_detail
-      } else if (!is.null(slope_summary$detail)) {
-        metadata$detail <- slope_summary$detail
-      }
-
-      if (!is.null(slope_summary$coefficient) && is.null(metadata$coefficient)) {
-        metadata$coefficient <- slope_summary$coefficient
-      }
-    } else if (is.logical(slope_summary) && length(slope_summary) == 1) {
-      metadata$quadratic <- isTRUE(slope_summary)
-    } else if (!is.null(slope_summary)) {
-      metadata$quadratic <- isTRUE(slope_summary)
-    }
-
-    if (is.null(metadata$type)) {
-      metadata$type <- if (isTRUE(metadata$quadratic)) "quadratic" else "linear"
-    }
-
-    metadata
-  }
-
-  slope_metadata <- parse_slope_metadata(maive_res)
-
   parse_boot_result <- function(boot_result, field) if (is.null(boot_result)) "NA" else boot_result[[field]]
   format_ci_field <- function(ci_field) {
     if (is.null(ci_field)) {
@@ -415,18 +367,6 @@ run_maive_model <- function(data, parameters) {
   egger_boot_ci <- format_ci_field(maive_res$egger_boot_ci)
   egger_ar_ci <- format_ci_field(maive_res$egger_ar_ci)
 
-  se_adjusted_for_plot <- if (instrument == 0) NULL else maive_res$SE_instrumented
-
-  waive_point_weights <- NULL
-  if (is_waive && instrument == 1 && !is.null(maive_res$weights)) {
-    weights <- maive_res$weights
-    if (is.numeric(weights) && length(weights) == nrow(df)) {
-      if (any(is.finite(weights)) && any(weights > 0, na.rm = TRUE)) {
-        waive_point_weights <- weights
-      }
-    }
-  }
-
   first_stage_mode <- if (instrument == 1 && isTRUE(log_first_stage)) "log" else "levels"
   first_stage_description <- if (first_stage_mode == "log") {
     "log(SE^2) ~ log N; Duan smearing applied"
@@ -440,15 +380,10 @@ run_maive_model <- function(data, parameters) {
   }
 
   funnel_plot_data <- get_funnel_plot_data( # nolint: object_usage_linter.
-    effect = df$bs,
-    se = df$sebs,
-    se_adjusted = se_adjusted_for_plot,
-    intercept = maive_res$beta,
-    intercept_se = maive_res$SE,
-    slope = slope_metadata,
+    dat = df,
+    result = maive_res,
     instrument = instrument,
-    model_type = model_type,
-    adjusted_weights = waive_point_weights
+    model_type = model_type
   )
 
   results <- list(
