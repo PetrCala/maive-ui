@@ -7,6 +7,7 @@ import CodeLinkCard from "./CodeLinkCard";
 import InvisibleLink from "./InvisibleLink";
 import CONFIG from "@src/CONFIG";
 import Link from "next/link";
+import type { VersionInfo } from "@src/types/reproducibility";
 import {
   FaCode,
   FaCodeBranch,
@@ -65,16 +66,71 @@ type CodeLinksModalProps = {
   onClose: () => void;
 };
 
+function isVersionInfo(value: unknown): value is VersionInfo {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+
+  const candidate = value as Record<string, unknown>;
+  return (
+    typeof candidate.uiVersion === "string" &&
+    typeof candidate.maiveTag === "string" &&
+    typeof candidate.gitCommitHash === "string" &&
+    typeof candidate.rVersion === "string" &&
+    typeof candidate.timestamp === "string"
+  );
+}
+
 const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
   const titleId = useId();
   const descriptionId = useId();
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [maiveTag, setMaiveTag] = useState(
+    CONST.REPRODUCIBILITY.DEFAULTS.MAIVE_TAG,
+  );
 
   useEffect(() => {
     if (!isOpen) {
       return;
     }
     closeButtonRef.current?.focus();
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const controller = new AbortController();
+
+    const fetchVersionInfo = async () => {
+      try {
+        const response = await fetch("/api/get-version-info", {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data: unknown = await response.json();
+        if (!isVersionInfo(data)) {
+          return;
+        }
+
+        setMaiveTag(
+          data.maiveTag as typeof CONST.REPRODUCIBILITY.DEFAULTS.MAIVE_TAG,
+        );
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+      }
+    };
+
+    void fetchVersionInfo();
+
+    return () => controller.abort();
   }, [isOpen]);
 
   useEffect(() => {
@@ -138,7 +194,7 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
         <div className="p-5 space-y-5">
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              MAIVE R package
+              MAIVE R package (v{maiveTag})
             </p>
             <div className="space-y-2">
               <CodeLinkCard
