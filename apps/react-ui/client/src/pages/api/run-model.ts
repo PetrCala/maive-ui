@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { modelService } from "@api/services/modelService";
 import type { DataArray, ModelParameters, ModelResponse } from "@src/types";
+import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
 
 export default async function handler(
   req: NextApiRequest,
@@ -35,7 +36,7 @@ export default async function handler(
     const errorMessage = error instanceof Error ? error.message : String(error);
     res.status(500).json({
       error: "Failed to run model",
-      message: errorMessage,
+      message: cleanCliErrorMessage(errorMessage),
     });
   }
 }
