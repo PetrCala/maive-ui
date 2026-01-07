@@ -10,6 +10,26 @@ MAIVE (Meta-Analysis for Identifying Variability and Errors) is a tool for detec
 - **R Backend** (Plumber): Statistical analysis service running MAIVE algorithms
 - **AWS Infrastructure**: Deployed on ECS with ALB, VPC, and Lambda
 
+## Citation
+
+**CRITICAL**: The Nature Communications (2025) paper is the canonical reference for MAIVE and must be cited everywhere users see references to the method or application.
+
+**Official Citation**:
+
+```text
+Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025).
+Spurious precision in meta-analysis of observational research.
+Nature Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0
+```
+
+**When updating references**:
+
+- Always use the Nature Communications (2025) paper as the primary reference
+- Ensure all UI components, text, tooltips, and documentation reference this paper
+- The citation is already implemented in the UI via [CitationBox.tsx](apps/react-ui/client/src/components/CitationBox.tsx) and [citationUtils.ts](apps/react-ui/client/src/utils/citationUtils.ts)
+- Update the MAIVE R package `DESCRIPTION` and `inst/CITATION` files to reference this paper
+- Never reference working papers or preprints as the primary citation
+
 ## Commands
 
 ### Development
