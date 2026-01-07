@@ -84,10 +84,6 @@ run_maive_model <- function(data, parameters) {
   cli::cli_h2("Original data frame:")
   cli::cli_code(capture.output(print(head(df)))) # nolint: undesirable_function_linter.
 
-  if (nrow(df) < 4) {
-    cli::cli_abort("Input data must have at least 4 observations.")
-  }
-
   n_cols <- ncol(df)
   if (n_cols < 3 || n_cols > 4) {
     cli::cli_abort(paste("Data must have exactly 3 or 4 columns. Found", n_cols, "columns."))
@@ -113,8 +109,6 @@ run_maive_model <- function(data, parameters) {
       df[[col]] <- as.numeric(df[[col]])
     }
   }
-
-  df <- df[rowSums(is.na(df)) != ncol(df), ]
 
   winsorize_pct <- suppressWarnings(as.numeric(params$winsorize))
   if (length(winsorize_pct) == 1 && !is.na(winsorize_pct) && winsorize_pct > 0) {
@@ -195,17 +189,6 @@ run_maive_model <- function(data, parameters) {
     if (study_dummies == 1) 3 else 2
   } else {
     if (study_dummies == 1) 1 else 0
-  }
-
-  if ("study_id" %in% names(df)) {
-    # We need at least 3 DoF for distribution functions - otherwise qt() will return NA
-    if (!(nrow(df) >= length(unique(df$study_id)) + 3)) {
-      cli::cli_abort("The number of rows must be larger than the number of unique study_id plus 3.")
-    }
-  } else {
-    # If no study_id column, force studylevel to 0 (no study-level effects)
-    studylevel <- 0
-    cli::cli_alert_warning("No study_id column found, forcing studylevel to 0")
   }
 
   cli::cli_alert_info(paste("standardErrorTreatment parameter:", params$standardErrorTreatment))
@@ -308,10 +291,32 @@ run_maive_model <- function(data, parameters) {
     },
     error = function(e) {
       err_message <- conditionMessage(e)
-      cli::cli_alert_danger(paste(model_label, "function error:", err_message))
-      cli::cli_alert_danger(paste("Error traceback:"))
-      print(traceback()) # nolint: undesirable_function_linter.
-      cli::cli_abort(err_message)
+
+      # Check if this is a validation error from MAIVE package
+      # These have user-friendly messages, pass through directly
+      validation_patterns <- c(
+        "Insufficient data",
+        "Missing required columns",
+        "must be numeric",
+        "must be positive",
+        "degrees of freedom"
+      )
+
+      is_validation_error <- any(sapply(validation_patterns, function(pattern) {
+        grepl(pattern, err_message, ignore.case = TRUE)
+      }))
+
+      if (is_validation_error) {
+        # User-friendly validation error from MAIVE - pass through
+        cli::cli_alert_danger(err_message)
+        cli::cli_abort(err_message)
+      } else {
+        # Unexpected analysis error - add context and traceback
+        cli::cli_alert_danger(paste(model_label, "function error:", err_message))
+        cli::cli_alert_danger("Error traceback:")
+        print(traceback())
+        cli::cli_abort(paste("Analysis failed:", err_message))
+      }
     }
   )
 
