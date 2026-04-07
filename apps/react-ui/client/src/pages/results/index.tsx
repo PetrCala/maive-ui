@@ -21,10 +21,12 @@ import {
   generateDataInfo,
 } from "@utils/dataInfoUtils";
 import type { ModelParameters, ModelResults } from "@src/types";
+import type { RTMAResults } from "@src/types/api";
 import type { VersionInfo } from "@src/types/reproducibility";
 import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
+import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import Alert from "@src/components/Alert";
@@ -106,6 +108,7 @@ export default function ResultsPage() {
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;
   const isWaiveModel = parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
+  const isRtmaModel = parsedParameters.modelType === CONST.MODEL_TYPES.RTMA;
 
   const funnelInterpretationText = useMemo(() => {
     if (!shouldUseInstrumenting) {
@@ -262,6 +265,12 @@ export default function ResultsPage() {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
   const parsedResults: ModelResults = JSON.parse(results ?? "{}");
 
+  // For RTMA, parse the results as RTMAResults (different shape)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const parsedRtmaResults: RTMAResults | null = isRtmaModel
+    ? JSON.parse(results ?? "{}")
+    : null;
+
   const handleRerunModel = () => {
     router.push(`/model?dataId=${dataId}&parameters=${parameters}`);
   };
@@ -293,33 +302,67 @@ export default function ResultsPage() {
         dataCache.set(dataId, currentData);
       }
 
-      exportComprehensiveResults(
-        currentData.data,
-        parsedResults,
-        parsedParameters,
-        parsedResults.seInstrumented,
-        currentData.filename,
-        runDuration ? parseInt(runDuration, 10) : undefined,
-        runTimestamp ? new Date(runTimestamp) : undefined,
-        dataInfo,
-      );
+      if (isRtmaModel && parsedRtmaResults) {
+        // RTMA-specific export: simple CSV with results summary
+        const rows = [
+          ["Metric", "Value"],
+          ["Corrected Effect (mu)", String(parsedRtmaResults.mu)],
+          ["mu CI Lower", String(parsedRtmaResults.muCI[0])],
+          ["mu CI Upper", String(parsedRtmaResults.muCI[1])],
+          ["Heterogeneity (tau)", String(parsedRtmaResults.tau)],
+          ["tau CI Lower", String(parsedRtmaResults.tauCI[0])],
+          ["tau CI Upper", String(parsedRtmaResults.tauCI[1])],
+          [
+            "Nonaffirmative Count",
+            String(parsedRtmaResults.nonaffirmativeCount),
+          ],
+          [
+            "Nonaffirmative Proportion",
+            String(parsedRtmaResults.nonaffirmativeProportion),
+          ],
+        ];
+        const csv = rows.map((r) => r.join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `rtma_results_${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else {
+        exportComprehensiveResults(
+          currentData.data,
+          parsedResults,
+          parsedParameters,
+          parsedResults.seInstrumented,
+          currentData.filename,
+          runDuration ? parseInt(runDuration, 10) : undefined,
+          runTimestamp ? new Date(runTimestamp) : undefined,
+          dataInfo,
+        );
+      }
     } catch (error) {
       console.error("Error exporting data:", error);
       alert("Failed to export data. Please try again.");
     }
   };
 
-  const handleDownloadFunnelPlot = () => {
+  const handleDownloadPlot = () => {
     try {
-      const filename = `funnel_plot_${Date.now()}`;
-      downloadImageAsJpg(
-        parsedResults.funnelPlot,
-        filename,
-        !!CONFIG.SHOULD_ADD_CITATION_TO_FUNNEL_PLOT,
-      );
+      if (isRtmaModel && parsedRtmaResults) {
+        const filename = `z_score_plot_${Date.now()}`;
+        downloadImageAsJpg(parsedRtmaResults.zScorePlot, filename, false);
+      } else {
+        const filename = `funnel_plot_${Date.now()}`;
+        downloadImageAsJpg(
+          parsedResults.funnelPlot,
+          filename,
+          !!CONFIG.SHOULD_ADD_CITATION_TO_FUNNEL_PLOT,
+        );
+      }
     } catch (error) {
-      console.error("Error downloading funnel plot:", error);
-      alert("Failed to download funnel plot. Please try again.");
+      console.error("Error downloading plot:", error);
+      alert("Failed to download plot. Please try again.");
     }
   };
 
@@ -433,63 +476,116 @@ export default function ResultsPage() {
                   ) : null}
                 </div>
               ) : null}
-              {/* Results Summary */}
-              <ResultsSummary
-                results={parsedResults}
-                parameters={parsedParameters}
-                variant="detailed"
-                layout="horizontal"
-                runDuration={
-                  runDuration ? parseInt(runDuration, 10) : undefined
-                }
-                runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}
-                dataInfo={dataInfo}
-                showTooltips={true}
-                resultsText={resultsText}
-                simpleMean={simpleMean}
-                showInterpretation={true}
-              />
+              {/* Results Summary + Plot: branch on model type */}
+              {isRtmaModel && parsedRtmaResults ? (
+                <>
+                  <RTMAResultsSummary
+                    results={parsedRtmaResults}
+                    showTooltips={true}
+                  />
 
-              {/* Funnel Plot */}
-              <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
-                <div className="mb-4 flex items-start justify-between">
-                  <Tooltip
-                    content={resultsText.funnelPlot.tooltip}
-                    visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
-                  >
-                    <SectionHeading
-                      level="h2"
-                      text={resultsText.funnelPlot.title}
-                      className="leading-tight"
-                    />
-                  </Tooltip>
-                  <InterpretationButton
-                    interpretationText={funnelInterpretationText}
-                    section={resultsText.funnelPlot.title}
-                    variant="icon"
-                  />
-                </div>
-                <div className="flex justify-center">
-                  <Image
-                    src={parsedResults.funnelPlot}
-                    alt={
-                      isWaiveModel
-                        ? "WAIVE-adjusted funnel plot"
-                        : "MAIVE-adjusted funnel plot"
+                  {/* Z-Score Density Plot */}
+                  <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+                    <div className="mb-4 flex items-start justify-between">
+                      <Tooltip
+                        content={resultsText.funnelPlot.tooltip}
+                        visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
+                      >
+                        <SectionHeading
+                          level="h2"
+                          text={resultsText.funnelPlot.title}
+                          className="leading-tight"
+                        />
+                      </Tooltip>
+                      <InterpretationButton
+                        interpretationText="The figure shows the distribution of z-scores (estimate divided by standard error). The shaded red region marks statistically significant estimates (|z| > critical value). RTMA uses only the nonaffirmative (insignificant) estimates to correct for p-hacking and publication bias."
+                        section={resultsText.funnelPlot.title}
+                        variant="icon"
+                      />
+                    </div>
+                    <div className="flex justify-center">
+                      <Image
+                        src={parsedRtmaResults.zScorePlot}
+                        alt="Z-score density plot"
+                        width={Math.min(parsedRtmaResults.zScorePlotWidth, 800)}
+                        height={Math.min(
+                          parsedRtmaResults.zScorePlotHeight,
+                          800,
+                        )}
+                        className="max-w-full h-auto"
+                      />
+                    </div>
+                    <div className="absolute flex bottom-6 right-6 sm:bottom-8 sm:right-8">
+                      <DownloadButton
+                        onClick={handleDownloadPlot}
+                        title="Download z-score plot as JPG"
+                        className="shadow-lg"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <ResultsSummary
+                    results={parsedResults}
+                    parameters={parsedParameters}
+                    variant="detailed"
+                    layout="horizontal"
+                    runDuration={
+                      runDuration ? parseInt(runDuration, 10) : undefined
                     }
-                    width={Math.min(parsedResults.funnelPlotWidth, 800)}
-                    height={Math.min(parsedResults.funnelPlotHeight, 800)}
-                    className="max-w-full h-auto"
+                    runTimestamp={
+                      runTimestamp ? new Date(runTimestamp) : undefined
+                    }
+                    dataInfo={dataInfo}
+                    showTooltips={true}
+                    resultsText={resultsText}
+                    simpleMean={simpleMean}
+                    showInterpretation={true}
                   />
-                </div>
-                <div className="absolute flex bottom-6 right-6 sm:bottom-8 sm:right-8">
-                  <DownloadButton
-                    onClick={handleDownloadFunnelPlot}
-                    title="Download funnel plot as JPG"
-                    className="shadow-lg"
-                  />
-                </div>
-              </div>
+
+                  {/* Funnel Plot */}
+                  <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+                    <div className="mb-4 flex items-start justify-between">
+                      <Tooltip
+                        content={resultsText.funnelPlot.tooltip}
+                        visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
+                      >
+                        <SectionHeading
+                          level="h2"
+                          text={resultsText.funnelPlot.title}
+                          className="leading-tight"
+                        />
+                      </Tooltip>
+                      <InterpretationButton
+                        interpretationText={funnelInterpretationText}
+                        section={resultsText.funnelPlot.title}
+                        variant="icon"
+                      />
+                    </div>
+                    <div className="flex justify-center">
+                      <Image
+                        src={parsedResults.funnelPlot}
+                        alt={
+                          isWaiveModel
+                            ? "WAIVE-adjusted funnel plot"
+                            : "MAIVE-adjusted funnel plot"
+                        }
+                        width={Math.min(parsedResults.funnelPlotWidth, 800)}
+                        height={Math.min(parsedResults.funnelPlotHeight, 800)}
+                        className="max-w-full h-auto"
+                      />
+                    </div>
+                    <div className="absolute flex bottom-6 right-6 sm:bottom-8 sm:right-8">
+                      <DownloadButton
+                        onClick={handleDownloadPlot}
+                        title="Download funnel plot as JPG"
+                        className="shadow-lg"
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
               <CitationBox variant="compact" useBlueStyling />
             </div>
           </div>
@@ -528,7 +624,9 @@ export default function ResultsPage() {
                 className="inline-flex items-center gap-2 w-full"
               >
                 <FaDownload className="w-4 h-4" />
-                Export Results and Adjusted SEs
+                {isRtmaModel
+                  ? "Export Results"
+                  : "Export Results and Adjusted SEs"}
               </ActionButton>
               <ActionButton
                 onClick={() => setIsRunInfoModalOpen(true)}
@@ -613,6 +711,7 @@ export default function ResultsPage() {
         onClose={() => setIsRunInfoModalOpen(false)}
         parameters={parsedParameters}
         results={parsedResults}
+        rtmaResults={parsedRtmaResults}
         dataInfo={dataInfo}
         runDuration={runDuration ? parseInt(runDuration, 10) : undefined}
         runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}

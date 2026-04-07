@@ -106,6 +106,9 @@ export async function generateReproducibilityPackage(
   if (rCodeBundle.hostHelpers) {
     zip.file("host.R", rCodeBundle.hostHelpers);
   }
+  if (rCodeBundle.rtmaModel) {
+    zip.file("rtma_model.R", rCodeBundle.rtmaModel);
+  }
 
   // Data and configuration
   zip.file("data.csv", dataCsv);

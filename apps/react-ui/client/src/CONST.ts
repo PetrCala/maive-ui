@@ -48,6 +48,7 @@ const CONST = {
     MAIVE: "MAIVE",
     WAIVE: "WAIVE",
     WLS: "WLS",
+    RTMA: "RTMA",
   },
   MAIVE_METHODS: {
     PET: "PET",

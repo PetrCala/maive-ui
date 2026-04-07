@@ -40,6 +40,14 @@ export const modelOptionsConfig: ModelOptionsConfig = {
             value: CONST.MODEL_TYPES.WLS,
             label: CONST.MODEL_TYPES.WLS,
           },
+          ...(CONFIG.RTMA_ENABLED
+            ? [
+                {
+                  value: CONST.MODEL_TYPES.RTMA,
+                  label: TEXT.rtma.dropdownLabel,
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -62,6 +70,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         ),
         visibility: {
           hideIf: (context) =>
+            context.parameters.modelType === CONST.MODEL_TYPES.RTMA ||
             !hasStudyIdColumn(
               (context.uploadedData as { data: DataArray } | undefined)?.data,
             ),
@@ -95,6 +104,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         type: "yesno",
         visibility: {
           hideIf: ({ parameters }) =>
+            parameters.modelType === CONST.MODEL_TYPES.RTMA ||
             !parameters.shouldUseInstrumenting ||
             parameters.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE ||
             parameters.includeStudyDummies === true,
@@ -108,6 +118,16 @@ export const modelOptionsConfig: ModelOptionsConfig = {
               parameters.computeAndersonRubin === true,
           },
         ],
+      },
+      {
+        key: "favorPositive",
+        label: TEXT.model.favorPositive.label,
+        tooltip: TEXT.model.favorPositive.tooltip,
+        type: "yesno",
+        visibility: {
+          hideIf: ({ parameters }) =>
+            parameters.modelType !== CONST.MODEL_TYPES.RTMA,
+        },
       },
     ],
   },
@@ -125,6 +145,10 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           value: method,
           label: method,
         })),
+        visibility: {
+          hideIf: ({ parameters }) =>
+            parameters.modelType === CONST.MODEL_TYPES.RTMA,
+        },
         warnings: [
           {
             message: TEXT.citation.reminder.text,
@@ -145,6 +169,10 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           value: option.VALUE,
           label: option.TEXT,
         })),
+        visibility: {
+          hideIf: ({ parameters }) =>
+            parameters.modelType === CONST.MODEL_TYPES.RTMA,
+        },
       },
       {
         key: "winsorize",
@@ -164,6 +192,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         type: "yesno",
         visibility: {
           hideIf: (context) =>
+            context.parameters.modelType === CONST.MODEL_TYPES.RTMA ||
             !hasStudyIdColumn(
               (context.uploadedData as { data: DataArray } | undefined)?.data,
             ),
@@ -175,7 +204,9 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         tooltip: TEXT.model.useLogFirstStage.tooltip,
         type: "yesno",
         visibility: {
-          hideIf: ({ parameters }) => !parameters.shouldUseInstrumenting,
+          hideIf: ({ parameters }) =>
+            parameters.modelType === CONST.MODEL_TYPES.RTMA ||
+            !parameters.shouldUseInstrumenting,
         },
       },
     ],

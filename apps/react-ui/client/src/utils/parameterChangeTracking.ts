@@ -22,6 +22,7 @@ const PARAMETER_LABELS: Record<keyof ModelParameters, string> = {
   shouldUseInstrumenting: "Use Instrumenting",
   useLogFirstStage: "Log First Stage",
   winsorize: "Winsorization",
+  favorPositive: "Favor Positive",
 };
 
 /**
@@ -32,6 +33,7 @@ const VALUE_LABELS: Record<string, string> = {
   MAIVE: "MAIVE",
   WAIVE: "WAIVE",
   WLS: "WLS",
+  RTMA: "RTMA",
   // Weights
   equal_weights: "Equal Weights",
   standard_weights: "Standard Weights",
@@ -79,11 +81,14 @@ const EXPLANATION_RULES: ExplanationRule[] = [
     if (param !== "computeAndersonRubin") {
       return null;
     }
-    if (
-      changedByUser === "modelType" &&
-      next.modelType === CONST.MODEL_TYPES.WLS
-    ) {
+    if (changedByUser !== "modelType") {
+      return null;
+    }
+    if (next.modelType === CONST.MODEL_TYPES.WLS) {
       return "**WLS** doesn't use instrumenting";
+    }
+    if (next.modelType === CONST.MODEL_TYPES.RTMA) {
+      return "**RTMA** doesn't use instrumenting";
     }
     return null;
   },
@@ -238,6 +243,7 @@ const TRACKED_PARAMETERS: Array<keyof ModelParameters> = [
   "weight",
   "useLogFirstStage",
   "winsorize",
+  "favorPositive",
 ];
 
 /**

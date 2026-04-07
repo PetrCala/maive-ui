@@ -37,6 +37,7 @@ source(file.path(script_dir, "utils/test_helpers.R"))
 source(file.path(script_dir, "scenarios/basic_maive_test.R"))
 source(file.path(script_dir, "scenarios/publication_bias_test.R"))
 source(file.path(script_dir, "scenarios/edge_cases_test.R"))
+source(file.path(script_dir, "scenarios/basic_rtma_test.R"))
 
 # Define available test scenarios
 AVAILABLE_SCENARIOS <- list(
@@ -94,6 +95,13 @@ AVAILABLE_SCENARIOS <- list(
     name = "Invalid Parameters Test",
     description = "Test handling of invalid parameters",
     function_name = "test_invalid_parameters"
+  ),
+
+  # RTMA scenarios
+  "basic-rtma" = list(
+    name = "Basic RTMA Test",
+    description = "Test basic RTMA functionality with phacking package",
+    function_name = "test_basic_rtma"
   ),
 
   # Special scenarios
@@ -313,8 +321,20 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   }
   test_count <- test_count + 1
 
+  # RTMA tests
+  cat("\n5. Running RTMA tests...\n")
+  rtma_result <- test_basic_rtma()
+  all_results$basic_rtma <- rtma_result
+  if (rtma_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ Basic RTMA test passed\n")
+  } else {
+    cat("   ✗ Basic RTMA test failed:", rtma_result$error, "\n")
+  }
+  test_count <- test_count + 1
+
   # Edge cases tests
-  cat("\n5. Running edge cases tests...\n")
+  cat("\n6. Running edge cases tests...\n")
   edge_tests <- list(
     minimal_data = test_minimal_data(),
     large_dataset = test_large_dataset(),

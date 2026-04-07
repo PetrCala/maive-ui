@@ -53,3 +53,34 @@ function(data, parameters) {
     }
   )
 }
+
+#* Run the RTMA (Right-Truncated Meta-Analysis) model
+#* @param data The file data to run the model on, passed as a JSON string
+#* @param parameters The parameters to run the model on
+#* @post /run-rtma
+function(data, parameters) {
+  tryCatch(
+    {
+      # nolint start: undesirable_function_linter.
+      source("rtma_model.R")
+      # nolint end: undesirable_function_linter.
+
+      if (is.null(data) || is.null(parameters)) {
+        cli::cli_abort("Missing data or parameters")
+      }
+
+      results <- run_rtma_model(data, parameters)
+      list(data = results)
+    },
+    error = function(e) {
+      err_message <- conditionMessage(e)
+      cli::cli_alert_danger("Error in run-rtma endpoint: {err_message}")
+      cli::cli_h2("Error traceback:")
+      cli::cli_code(capture.output(traceback()))
+      list(
+        error = TRUE,
+        message = paste("Internal server error:", err_message)
+      )
+    }
+  )
+}

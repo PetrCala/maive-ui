@@ -2,6 +2,7 @@
  * Validation utilities for reproducibility export
  */
 
+import CONST from "@src/CONST";
 import type { ModelParameters, ModelResults } from "@src/types/api";
 import type { DataArray } from "@src/types";
 
@@ -42,11 +43,15 @@ export function validateExportData(
     throw new Error("Invalid data structure. Each row must be an object.");
   }
 
-  // Validate minimum number of columns (at least bs, sebs, Ns)
+  // Validate minimum number of columns
   const columns: string[] = Object.keys(firstRow);
-  if (columns.length < 3) {
+  const isRtma = parameters.modelType === CONST.MODEL_TYPES.RTMA;
+  const minColumns = isRtma ? 2 : 3;
+  if (columns.length < minColumns) {
     throw new Error(
-      "Data must have at least 3 columns (effect sizes, standard errors, sample sizes).",
+      isRtma
+        ? "Data must have at least 2 columns (effect sizes, standard errors)."
+        : "Data must have at least 3 columns (effect sizes, standard errors, sample sizes).",
     );
   }
 }

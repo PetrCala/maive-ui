@@ -27,6 +27,10 @@ SCENARIOS <- list(
   edge_cases = list(
     name = "Edge Cases Test",
     description = "Tests edge cases and error conditions"
+  ),
+  basic_rtma = list(
+    name = "Basic RTMA Test",
+    description = "Tests basic RTMA functionality with phacking package"
   )
 )
 

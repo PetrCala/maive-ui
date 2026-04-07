@@ -74,6 +74,39 @@ test_run_model <- function(data, parameters,
   )
 }
 
+#' Test run-rtma endpoint
+#' @param data JSON string of file data
+#' @param parameters JSON string of parameters
+#' @param base_url Base URL of the API
+#' @param timeout Timeout in seconds
+#' @return Response from run-rtma endpoint
+test_run_rtma <- function(data, parameters,
+                          base_url = API_BASE_URL,
+                          timeout = 300) {
+  tryCatch(
+    {
+      response <- httr::POST(
+        paste0(base_url, "/run-rtma"),
+        body = list(
+          data = data,
+          parameters = parameters
+        ),
+        encode = "form",
+        httr::timeout(timeout)
+      )
+
+      if (httr::status_code(response) == 200) {
+        return(httr::content(response, "parsed"))
+      } else {
+        stop(paste("Run-rtma test failed with status:", httr::status_code(response)))
+      }
+    },
+    error = function(e) {
+      stop(paste("Run-rtma test error:", e$message))
+    }
+  )
+}
+
 #' Convert data frame to JSON string for API
 #' @param df Data frame to convert
 #' @return JSON string

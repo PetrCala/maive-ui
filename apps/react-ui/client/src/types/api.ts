@@ -9,7 +9,7 @@ type ApiResponse<T = unknown> = {
 };
 
 type ModelParameters = {
-  modelType: "MAIVE" | "WAIVE" | "WLS";
+  modelType: "MAIVE" | "WAIVE" | "WLS" | "RTMA";
   includeStudyDummies: boolean;
   includeStudyClustering: boolean;
   standardErrorTreatment:
@@ -27,6 +27,7 @@ type ModelParameters = {
   shouldUseInstrumenting: boolean;
   useLogFirstStage: boolean;
   winsorize: number;
+  favorPositive: boolean;
 };
 
 type ModelRequest = {
@@ -89,6 +90,26 @@ type ModelResults = {
   };
 };
 
+type RTMAParameters = {
+  modelType: "RTMA";
+  favorPositive: boolean;
+  alphaSelect: number;
+  ciLevel: number;
+  winsorize: number;
+};
+
+type RTMAResults = {
+  mu: number;
+  muCI: [number, number];
+  tau: number;
+  tauCI: [number, number];
+  zScorePlot: string; // Base64 encoded image
+  zScorePlotWidth: number;
+  zScorePlotHeight: number;
+  nonaffirmativeCount: number;
+  nonaffirmativeProportion: number;
+};
+
 type PingResponse = {
   status: string;
   time: string;
@@ -114,6 +135,8 @@ export type {
   ModelRequest,
   ModelResponse,
   ModelResults,
+  RTMAParameters,
+  RTMAResults,
   PingResponse,
   ApiConfig,
   ApiError,

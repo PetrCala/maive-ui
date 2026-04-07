@@ -10,24 +10,42 @@ import type { VersionInfo } from "@src/types/reproducibility";
  * Converts model parameters to a readable markdown table
  */
 function generateParameterTable(parameters: ModelParameters): string {
-  const rows = [
-    ["Model Type", parameters.modelType],
-    ["MAIVE Method", parameters.maiveMethod],
-    ["Weight Scheme", parameters.weight.replace(/_/g, " ")],
-    ["Use Instrumenting", parameters.shouldUseInstrumenting ? "Yes" : "No"],
-    ["Include Study Dummies", parameters.includeStudyDummies ? "Yes" : "No"],
-    [
-      "Include Study Clustering",
-      parameters.includeStudyClustering ? "Yes" : "No",
-    ],
-    [
-      "Standard Error Treatment",
-      parameters.standardErrorTreatment.replace(/_/g, " "),
-    ],
-    ["Compute Anderson-Rubin", parameters.computeAndersonRubin ? "Yes" : "No"],
-    ["Use Log First Stage", parameters.useLogFirstStage ? "Yes" : "No"],
-    ["Winsorize Percentage", `${parameters.winsorize}%`],
-  ];
+  const rows =
+    parameters.modelType === "RTMA"
+      ? [
+          ["Model Type", "RTMA"],
+          ["Favor Positive", parameters.favorPositive ? "Yes" : "No"],
+          ["Alpha Select", "0.05"],
+          ["CI Level", "0.95"],
+          ["Winsorize Percentage", `${parameters.winsorize}%`],
+        ]
+      : [
+          ["Model Type", parameters.modelType],
+          ["MAIVE Method", parameters.maiveMethod],
+          ["Weight Scheme", parameters.weight.replace(/_/g, " ")],
+          [
+            "Use Instrumenting",
+            parameters.shouldUseInstrumenting ? "Yes" : "No",
+          ],
+          [
+            "Include Study Dummies",
+            parameters.includeStudyDummies ? "Yes" : "No",
+          ],
+          [
+            "Include Study Clustering",
+            parameters.includeStudyClustering ? "Yes" : "No",
+          ],
+          [
+            "Standard Error Treatment",
+            parameters.standardErrorTreatment.replace(/_/g, " "),
+          ],
+          [
+            "Compute Anderson-Rubin",
+            parameters.computeAndersonRubin ? "Yes" : "No",
+          ],
+          ["Use Log First Stage", parameters.useLogFirstStage ? "Yes" : "No"],
+          ["Winsorize Percentage", `${parameters.winsorize}%`],
+        ];
 
   const table = [
     "| Parameter | Value |",
@@ -57,9 +75,15 @@ export function generateReadme(
 
   const parameterTable = generateParameterTable(parameters);
 
-  return `# MAIVE Analysis Reproducibility Package
+  const isRtma = parameters.modelType === "RTMA";
+  const title = isRtma
+    ? "RTMA Analysis Reproducibility Package"
+    : "MAIVE Analysis Reproducibility Package";
+  const analysisType = isRtma ? "RTMA" : "MAIVE";
 
-This package contains everything needed to reproduce the MAIVE meta-analysis performed on **${timestamp}**.
+  return `# ${title}
+
+This package contains everything needed to reproduce the ${analysisType} meta-analysis performed on **${timestamp}**.
 
 ## Package Information
 
@@ -69,14 +93,25 @@ This package contains everything needed to reproduce the MAIVE meta-analysis per
 - **Git Commit:** ${versionInfo.gitCommitHash}
 - **Dataset Size:** ${numRows} observations
 
-## What is MAIVE?
+${
+  isRtma
+    ? `## What is RTMA?
+
+RTMA (Right-Truncated Meta-Analysis) corrects for the joint effects of p-hacking and publication bias by fitting a truncated normal likelihood to the distribution of z-scores. It uses the \`phacking\` R package (Mathur, 2022).
+
+**Learn more:**
+- **phacking package:** [CRAN](https://cran.r-project.org/package=phacking)
+- **Paper:** Mathur, M.B. (2022). Sensitivity analysis for p-hacking in meta-analyses. *OSF Preprints*.
+- **MAIVE App:** [${CONST.LINKS.MAIVE.WEBSITE}](${CONST.LINKS.MAIVE.WEBSITE})`
+    : `## What is MAIVE?
 
 MAIVE (Meta-Analysis for Identifying Variability and Errors) is a statistical tool for detecting spurious precision in meta-analysis data. It helps identify potential data quality issues that may affect the validity of meta-analytic findings.
 
 **Learn more:**
 - **Paper:** [Nature Communications](${CONST.LINKS.MAIVE.PAPER})
 - **Website:** [meta-analysis.cz/maive](${CONST.LINKS.MAIVE.WEBSITE})
-- **GitHub:** [PetrCala/maive-ui](${CONST.LINKS.APP_GITHUB.HOMEPAGE})
+- **GitHub:** [PetrCala/maive-ui](${CONST.LINKS.APP_GITHUB.HOMEPAGE})`
+}
 
 ## Prerequisites
 

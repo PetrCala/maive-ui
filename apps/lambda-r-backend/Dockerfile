@@ -93,6 +93,7 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 COPY r_scripts/index.R .
 COPY r_scripts/maive_model.R .
 COPY r_scripts/funnel_plot.R .
+COPY r_scripts/rtma_model.R .
 COPY r_scripts/host.R .
 
 # Adapter / server settings
