@@ -20,6 +20,8 @@ import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
+import type { RTMAParameters } from "@src/types/api";
+import { runRTMAClient } from "@src/api/client/rtma";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
@@ -294,6 +296,25 @@ export default function ModelPage() {
           return nextState;
         }
 
+        if (nextModelType === CONST.MODEL_TYPES.RTMA) {
+          const nextState: ModelParameters = {
+            ...prev,
+            modelType: nextModelType,
+            shouldUseInstrumenting: false,
+            computeAndersonRubin: false,
+          };
+          markAdvancedChangeFromBasic(prev, nextState);
+
+          detectAndDispatchAlerts(
+            prevState,
+            nextState,
+            param,
+            showParameterAlert,
+          );
+
+          return nextState;
+        }
+
         const restoredWeight =
           isSwitchingFromWls && autoSetWeightForWlsRef.current
             ? lastInstrumentedWeightRef.current
@@ -525,13 +546,45 @@ export default function ModelPage() {
     }
 
     if (
+      parameters.modelType === CONST.MODEL_TYPES.RTMA &&
+      (parameters.shouldUseInstrumenting || parameters.computeAndersonRubin)
+    ) {
+      setParameters((prev) => {
+        if (prev.modelType !== CONST.MODEL_TYPES.RTMA) {
+          return prev;
+        }
+
+        const nextState = {
+          ...prev,
+          shouldUseInstrumenting: false,
+          computeAndersonRubin: false,
+        };
+
+        detectAndDispatchAlerts(
+          prev,
+          nextState,
+          "modelType",
+          showParameterAlert,
+        );
+
+        return nextState;
+      });
+
+      return;
+    }
+
+    if (
       parameters.modelType !== CONST.MODEL_TYPES.WLS &&
+      parameters.modelType !== CONST.MODEL_TYPES.RTMA &&
       !parameters.shouldUseInstrumenting
     ) {
       autoSetWeightForWlsRef.current = false;
 
       setParameters((prev) => {
-        if (prev.modelType === CONST.MODEL_TYPES.WLS) {
+        if (
+          prev.modelType === CONST.MODEL_TYPES.WLS ||
+          prev.modelType === CONST.MODEL_TYPES.RTMA
+        ) {
           return prev;
         }
 
@@ -584,7 +637,21 @@ export default function ModelPage() {
       try {
         let result: { data?: unknown; error?: string; message?: string };
 
-        if (shouldUseMockResults()) {
+        if (parameters.modelType === CONST.MODEL_TYPES.RTMA) {
+          const rtmaParams: RTMAParameters = {
+            modelType: "RTMA",
+            favorPositive: parameters.favorPositive,
+            alphaSelect: 0.05,
+            ciLevel: 0.95,
+            winsorize: parameters.winsorize,
+          };
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+          result = await runRTMAClient(
+            uploadedData?.data ?? [],
+            rtmaParams,
+            abortControllerRef.current?.signal,
+          );
+        } else if (shouldUseMockResults()) {
           // Use mock data in development mode
           console.debug("Generating mock results in development mode");
           const nrow = uploadedData?.data.length ?? 0;

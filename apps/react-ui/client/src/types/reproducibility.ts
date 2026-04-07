@@ -48,6 +48,8 @@ export type RCodeBundle = {
   funnelPlot: string;
   /** Content of host.R (helper functions) */
   hostHelpers?: string;
+  /** Content of rtma_model.R (RTMA analysis) */
+  rtmaModel?: string;
 };
 
 /**

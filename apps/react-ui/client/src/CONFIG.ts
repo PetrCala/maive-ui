@@ -3,6 +3,7 @@ import CONST from "./CONST";
 const CONFIG = {
   BOOTSTRAP_ENABLED: true,
   WAIVE_ENABLED: true,
+  RTMA_ENABLED: true,
   SHOULD_SEND_EMAIL_IN_FOOTER_CONTACT: false,
   SHOULD_USE_CLUSTERED_CR2_SE_AS_DEFAULT: true,
   SHOULD_ADD_CITATION_TO_FUNNEL_PLOT: true,
@@ -26,6 +27,7 @@ const CONFIG = {
     shouldUseInstrumenting: true,
     useLogFirstStage: false,
     winsorize: 0,
+    favorPositive: true,
   },
 
   PARAMETER_ALERTS: {

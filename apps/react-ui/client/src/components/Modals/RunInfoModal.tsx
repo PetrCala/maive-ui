@@ -1,10 +1,12 @@
 "use client";
 
 import type { ModelParameters, ModelResults } from "@src/types";
+import type { RTMAResults } from "@src/types/api";
 import type { DataInfo } from "@src/types/data";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import ResultsSummary from "@src/components/ResultsSummary";
+import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
 import RunDetails from "@src/components/RunDetails";
 import SectionHeading from "@src/components/SectionHeading";
 import BaseModal from "./BaseModal";
@@ -17,6 +19,7 @@ type RunInfoModalProps = {
   onClose: () => void;
   parameters: ModelParameters;
   results: ModelResults;
+  rtmaResults?: RTMAResults | null;
   dataInfo?: DataInfo;
   runDuration?: number; // in milliseconds
   runTimestamp?: Date;
@@ -34,12 +37,14 @@ export default function RunInfoModal({
   onClose,
   parameters,
   results,
+  rtmaResults,
   dataInfo,
   runDuration,
   runTimestamp,
   onExportButtonClick,
   resultsText,
 }: RunInfoModalProps) {
+  const isRtmaModel = parameters.modelType === CONST.MODEL_TYPES.RTMA;
   const getParameterDisplayName = (key: keyof ModelParameters): string => {
     return TEXT.model[key].label;
   };
@@ -56,6 +61,7 @@ export default function RunInfoModal({
       case "computeAndersonRubin":
       case "shouldUseInstrumenting":
       case "useLogFirstStage":
+      case "favorPositive":
         return value ? "Yes" : "No";
       case "winsorize": {
         const numericValue =
@@ -178,17 +184,21 @@ export default function RunInfoModal({
         {/* Results Summary */}
         <section>
           <SectionHeading level="h3" text="Results Summary" className="mb-3" />
-          <ResultsSummary
-            results={results}
-            parameters={parameters}
-            variant="simple"
-            layout="vertical"
-            runDuration={runDuration}
-            runTimestamp={runTimestamp}
-            dataInfo={dataInfo}
-            resultsText={resultsText}
-            showExtendedResults={true}
-          />
+          {isRtmaModel && rtmaResults ? (
+            <RTMAResultsSummary results={rtmaResults} />
+          ) : (
+            <ResultsSummary
+              results={results}
+              parameters={parameters}
+              variant="simple"
+              layout="vertical"
+              runDuration={runDuration}
+              runTimestamp={runTimestamp}
+              dataInfo={dataInfo}
+              resultsText={resultsText}
+              showExtendedResults={true}
+            />
+          )}
         </section>
       </div>
     </BaseModal>

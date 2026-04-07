@@ -89,6 +89,7 @@ async function fetchReproducibilityBundle(
     { key: "maiveModel", filename: "maive_model.R" },
     { key: "funnelPlot", filename: "funnel_plot.R" },
     { key: "hostHelpers", filename: "host.R" },
+    { key: "rtmaModel", filename: "rtma_model.R" },
   ];
 
   const results: Partial<RCodeBundle> = {};
@@ -103,7 +104,7 @@ async function fetchReproducibilityBundle(
       } catch (error) {
         console.error(`Failed to fetch ${filename}:`, error);
         // For optional files like hostHelpers, we can continue without them
-        if (key === "hostHelpers") {
+        if (key === "hostHelpers" || key === "rtmaModel") {
           console.warn(`Skipping optional file ${filename}`);
         } else {
           throw error; // Re-throw for required files

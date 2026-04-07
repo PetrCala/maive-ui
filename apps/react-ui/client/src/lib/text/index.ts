@@ -333,6 +333,10 @@ const TEXT = {
         createElement("br"),
         createElement("strong", null, "WLS:"),
         " Meta-regression corrections without instrumenting.",
+        createElement("br"),
+        createElement("br"),
+        createElement("strong", null, "RTMA:"),
+        " Right-Truncated Meta-Analysis (Mathur, 2022). Corrects for p-hacking and publication bias using a truncated normal likelihood.",
       ),
     },
     includeStudyDummies: {
@@ -430,7 +434,15 @@ const TEXT = {
       tooltip:
         "Estimates the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels. Using logs typically strengthens the instrument and often performs better in practical applications.",
     },
+    favorPositive: {
+      label: "Favor Positive",
+      tooltip:
+        "Assumes that publication bias and p-hacking favor positive (right-tailed) results. Set to No if the literature in question favors negative results instead.",
+    },
     runModel: "Run Model",
+  },
+  rtma: {
+    dropdownLabel: "RTMA",
   },
   waive: {
     dropdownLabel: "WAIVE (Experimental)",
@@ -626,12 +638,21 @@ export const getResultsText = (
     STANDARD_ERROR_TREATMENT_TOOLTIPS.not_clustered;
 
   const isWaive = modelType === CONST.MODEL_TYPES.WAIVE;
-  const funnelTitle = isWaive
-    ? baseResultsText.funnelPlot.title.replace(/MAIVE/g, "WAIVE")
-    : baseResultsText.funnelPlot.title;
-  const funnelTooltip = isWaive
-    ? baseResultsText.funnelPlot.tooltip.replace(/MAIVE/g, "WAIVE")
-    : baseResultsText.funnelPlot.tooltip;
+  const isRtma = modelType === CONST.MODEL_TYPES.RTMA;
+
+  let plotTitle: string;
+  let plotTooltip: string;
+  if (isRtma) {
+    plotTitle = "Z-Score Distribution";
+    plotTooltip =
+      "Distribution of z-scores (estimate / standard error). The shaded region marks statistically significant estimates. RTMA uses the distribution of nonaffirmative (insignificant) estimates to correct for selection bias.";
+  } else if (isWaive) {
+    plotTitle = baseResultsText.funnelPlot.title.replace(/MAIVE/g, "WAIVE");
+    plotTooltip = baseResultsText.funnelPlot.tooltip.replace(/MAIVE/g, "WAIVE");
+  } else {
+    plotTitle = baseResultsText.funnelPlot.title;
+    plotTooltip = baseResultsText.funnelPlot.tooltip;
+  }
 
   return {
     ...baseResultsText,
@@ -647,8 +668,8 @@ export const getResultsText = (
     },
     funnelPlot: {
       ...baseResultsText.funnelPlot,
-      title: funnelTitle,
-      tooltip: funnelTooltip,
+      title: plotTitle,
+      tooltip: plotTooltip,
     },
   };
 };
