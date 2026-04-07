@@ -161,13 +161,17 @@ export default function ModelPage() {
 
       if (
         parsed.shouldUseInstrumenting === false &&
-        parsed.modelType !== CONST.MODEL_TYPES.WAIVE
+        parsed.modelType !== CONST.MODEL_TYPES.WAIVE &&
+        parsed.modelType !== CONST.MODEL_TYPES.RTMA
       ) {
         params.modelType = CONST.MODEL_TYPES
           .WLS as ModelParameters["modelType"];
       }
 
-      if (params.modelType === CONST.MODEL_TYPES.WLS) {
+      if (
+        params.modelType === CONST.MODEL_TYPES.WLS ||
+        params.modelType === CONST.MODEL_TYPES.RTMA
+      ) {
         params.shouldUseInstrumenting = false;
       } else {
         params.shouldUseInstrumenting = true;
