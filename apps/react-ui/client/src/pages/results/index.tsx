@@ -94,12 +94,16 @@ export default function ResultsPage() {
 
   if (
     parsedParameters.shouldUseInstrumenting === false &&
-    parsedParameters.modelType !== CONST.MODEL_TYPES.WAIVE
+    parsedParameters.modelType !== CONST.MODEL_TYPES.WAIVE &&
+    parsedParameters.modelType !== CONST.MODEL_TYPES.RTMA
   ) {
     parsedParameters.modelType = CONST.MODEL_TYPES.WLS;
   }
 
-  if (parsedParameters.modelType === CONST.MODEL_TYPES.WLS) {
+  if (
+    parsedParameters.modelType === CONST.MODEL_TYPES.WLS ||
+    parsedParameters.modelType === CONST.MODEL_TYPES.RTMA
+  ) {
     parsedParameters.shouldUseInstrumenting = false;
   } else {
     parsedParameters.shouldUseInstrumenting = true;
