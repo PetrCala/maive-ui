@@ -17,6 +17,14 @@ RUN bun run build
 # Stage 2: Run
 FROM oven/bun:1
 WORKDIR /app
+
+# AWS Lambda Web Adapter: when running on Lambda it bridges Function URL events
+# to the local HTTP server. Inert outside the Lambda runtime, so the same image
+# still runs as a normal container locally and on ECS (dual-mode).
+COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.0 /lambda-adapter /opt/extensions/lambda-adapter
+ENV AWS_LWA_PORT=3000
+ENV AWS_LWA_READINESS_CHECK_PATH=/api/health
+
 COPY --from=builder /app ./
 COPY entrypoint.sh ./
 EXPOSE 3000
