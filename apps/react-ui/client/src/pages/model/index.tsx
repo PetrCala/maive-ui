@@ -36,6 +36,7 @@ export default function ModelPage() {
   const searchParams = useSearchParams();
   const dataId = searchParams?.get("dataId");
   const [loading, setLoading] = useState(false);
+  const [showWarmupHint, setShowWarmupHint] = useState(false);
   const [hasRunModel, setHasRunModel] = useState(false);
   const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const [parameters, setParameters] = useState<ModelParameters>({
@@ -431,9 +432,22 @@ export default function ModelPage() {
     });
   };
 
+  // Surface a warming-up hint if the run is slow (e.g. a Lambda cold start),
+  // rather than trying to detect coldness directly.
+  useEffect(() => {
+    if (!loading) {
+      setShowWarmupHint(false);
+      return undefined;
+    }
+    const timer = setTimeout(() => setShowWarmupHint(true), 4000);
+    return () => clearTimeout(timer);
+  }, [loading]);
+
   const modelLoadingCopy = {
     title: "Running your analysis...",
-    subtitle: "Hang tight while we process your model settings.",
+    subtitle: showWarmupHint
+      ? "Still working - the first run can take a little longer while the analysis engine warms up."
+      : "Hang tight while we process your model settings.",
   };
 
   useEffect(() => {
