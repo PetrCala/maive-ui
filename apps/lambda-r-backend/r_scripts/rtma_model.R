@@ -132,34 +132,54 @@ run_rtma_model <- function(data, parameters) {
   favor_positive <- if (!is.null(params$favorPositive)) isTRUE(params$favorPositive) else TRUE
   alpha_select <- if (!is.null(params$alphaSelect)) as.numeric(params$alphaSelect) else 0.05
   ci_level <- if (!is.null(params$ciLevel)) as.numeric(params$ciLevel) else 0.95
-  parallelize <- if (!is.null(params$parallelize)) isTRUE(params$parallelize) else TRUE
+  # Default FALSE: parallel chains add fork overhead with no speedup, and thrash
+  # on the Lambda's sub-1-vCPU allocation. Benchmarks showed no gain even on 8 cores.
+  parallelize <- if (!is.null(params$parallelize)) isTRUE(params$parallelize) else FALSE
+  # Wall-clock budget kept below the Lambda function timeout so a degenerate
+  # dataset returns a clear error instead of being hard-killed mid-request.
+  timeout_sec <- if (!is.null(params$timeoutSeconds)) as.numeric(params$timeoutSeconds) else 480
 
   cli::cli_h2("RTMA parameters:")
   cli::cli_bullets(c(
     "favor_positive: {favor_positive}",
     "alpha_select: {alpha_select}",
     "ci_level: {ci_level}",
-    "parallelize: {parallelize}"
+    "parallelize: {parallelize}",
+    "timeout_sec: {timeout_sec}"
   ))
 
-  # Run RTMA via phacking package
-  tryCatch(
-    {
-      rtma_res <- phacking::phacking_meta(
-        yi = yi,
-        vi = vi,
-        favor_positive = favor_positive,
-        alpha_select = alpha_select,
-        ci_level = ci_level,
-        parallelize = parallelize
-      )
-    },
+  # Run RTMA via phacking package, bounded by a wall-clock limit. Pathological
+  # datasets can make the sampler's tree depth explode to effectively unbounded
+  # runtimes; the limit converts that into a clean failure instead of a hang.
+  # The time-limit interrupt fires inside phacking, which re-throws it as an
+  # opaque message, so timeout is detected by elapsed time rather than message.
+  start_time <- Sys.time()
+  setTimeLimit(elapsed = timeout_sec, transient = TRUE)
+  rtma_res <- tryCatch(
+    phacking::phacking_meta(
+      yi = yi,
+      vi = vi,
+      favor_positive = favor_positive,
+      alpha_select = alpha_select,
+      ci_level = ci_level,
+      parallelize = parallelize
+    ),
     error = function(e) {
+      setTimeLimit() # clear so error reporting is not itself interrupted
+      elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
       err_message <- conditionMessage(e)
+      if (elapsed >= timeout_sec * 0.95 ||
+        grepl("elapsed time limit", err_message, fixed = TRUE)) {
+        cli::cli_abort(c(
+          "RTMA timed out after {timeout_sec} seconds.",
+          "i" = "This dataset makes the sampler diverge. Try winsorizing outliers or reducing the number of estimates."
+        ))
+      }
       cli::cli_alert_danger(paste("RTMA error:", err_message))
       cli::cli_abort(paste("RTMA analysis failed:", err_message))
     }
   )
+  setTimeLimit() # clear the limit for the rest of the request (plot, response)
 
   cli::cli_h2("RTMA results structure:")
   cli::cli_code(capture.output(str(rtma_res, max.level = 2)))
