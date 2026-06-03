@@ -16,7 +16,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <Providers>
-      <Script src="/runtime-config.js" />
+      <Script src="/api/runtime-config" />
       <div className="flex flex-col min-h-screen">
         {!isHomePage && <Header />}
         <main className="flex-1 flex-col">
