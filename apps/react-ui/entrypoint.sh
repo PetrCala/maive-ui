@@ -1,11 +1,4 @@
 #!/bin/sh
 
-# Write the runtime config file with actual environment variables
-cat <<EOF > /app/public/runtime-config.js
-window.RUNTIME_CONFIG = {
-  R_API_URL: "${NEXT_PUBLIC_R_API_URL}"
-};
-EOF
-
-# Start Next.js
+# Runtime config is served by the /api/runtime-config route (read-only FS safe).
 exec bun run start
