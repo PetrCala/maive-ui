@@ -578,8 +578,8 @@ export default function ModelPage() {
             data: generateMockResults(nrow, parameters.useLogFirstStage),
           };
         } else {
-          // This is a client-side call to the server-side API
-          // For server-side, use the runModelClient function
+          // Calls the R backend Function URL directly from the browser
+          // (URL resolved from runtime config); bypasses the web tier.
           result = await modelService.runModel(
             uploadedData?.data ?? [],
             parameters,

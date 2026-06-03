@@ -8,8 +8,10 @@ import { getRApiUrl } from "@api/utils/config";
 import { httpPost } from "@api/utils/http";
 
 /**
- * Service for model-related API operations
- * This service runs server-side and calls the R-plumber service directly
+ * Service for model-related API operations.
+ * Isomorphic: in the browser it calls the R backend Function URL directly
+ * (URL resolved from runtime config); server-side it uses the configured
+ * R_API_URL. See getRApiUrl().
  */
 export class ModelService {
   /**
