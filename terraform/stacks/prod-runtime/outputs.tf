@@ -9,3 +9,9 @@ output "ui_alb_dns_name" {
   description = "DNS name of the public UI ALB"
   value       = aws_lb.ui.dns_name
 }
+
+# UI Lambda Function URL (Cloudflare origin for the serverless UI)
+output "ui_lambda_url" {
+  description = "Function URL of the UI Lambda"
+  value       = aws_lambda_function_url.ui.function_url
+}

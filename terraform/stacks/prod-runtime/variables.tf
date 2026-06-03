@@ -37,6 +37,24 @@ variable "ui_desired_count" {
   default     = 1
 }
 
+variable "ui_lambda_memory_size" {
+  type        = number
+  description = "Memory size in MB for the UI Lambda function"
+  default     = 1024
+}
+
+variable "ui_lambda_timeout" {
+  type        = number
+  description = "Timeout in seconds for the UI Lambda function (web tier; long analyses bypass it and hit the R backend directly)"
+  default     = 30
+}
+
+variable "ui_lambda_log_retention_days" {
+  type        = number
+  description = "Number of days to retain UI Lambda CloudWatch logs"
+  default     = 3
+}
+
 variable "lambda_r_backend_function_base_name" {
   type        = string
   description = "The base name of the Lambda function"
