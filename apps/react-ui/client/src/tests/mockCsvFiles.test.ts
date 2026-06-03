@@ -62,7 +62,8 @@ describe("Mock CSV Files", () => {
 
     it("should have valid numeric values in first three columns", () => {
       mockCsvFiles.forEach((csvFile) => {
-        const lines = csvFile.content.trim().split("\n");
+        // Skip the header row prepended by mockCsvFiles
+        const lines = csvFile.content.trim().split("\n").slice(1);
 
         lines.forEach((line, lineIndex) => {
           const columns = line.split(",");
@@ -181,7 +182,8 @@ describe("Mock CSV Files", () => {
   describe("Data quality checks", () => {
     it("should have reasonable effect size values", () => {
       mockCsvFiles.forEach((csvFile) => {
-        const lines = csvFile.content.trim().split("\n");
+        // Skip the header row prepended by mockCsvFiles
+        const lines = csvFile.content.trim().split("\n").slice(1);
 
         lines.forEach((line, lineIndex) => {
           const effectSize = parseFloat(line.split(",")[0]);
@@ -197,7 +199,8 @@ describe("Mock CSV Files", () => {
 
     it("should have reasonable sample sizes", () => {
       mockCsvFiles.forEach((csvFile) => {
-        const lines = csvFile.content.trim().split("\n");
+        // Skip the header row prepended by mockCsvFiles
+        const lines = csvFile.content.trim().split("\n").slice(1);
 
         lines.forEach((line, lineIndex) => {
           const sampleSize = parseInt(line.split(",")[2], 10);
@@ -213,7 +216,8 @@ describe("Mock CSV Files", () => {
 
     it("should have reasonable standard errors", () => {
       mockCsvFiles.forEach((csvFile) => {
-        const lines = csvFile.content.trim().split("\n");
+        // Skip the header row prepended by mockCsvFiles
+        const lines = csvFile.content.trim().split("\n").slice(1);
 
         lines.forEach((line, lineIndex) => {
           const standardError = parseFloat(line.split(",")[1]);
