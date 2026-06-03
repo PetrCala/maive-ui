@@ -46,7 +46,9 @@ variable "lambda_r_backend_function_base_name" {
 variable "lambda_r_backend_memory_size" {
   type        = number
   description = "Memory size in MB for the Lambda R backend function"
-  default     = 1024
+  # 2048 MB ~= 1.15 vCPU. RTMA (phacking) sampling is single-threaded and
+  # CPU-bound, so a faster single core matters more than extra cores.
+  default = 2048
 }
 
 variable "lambda_r_backend_timeout" {
