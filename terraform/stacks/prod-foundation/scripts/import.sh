@@ -12,10 +12,6 @@ terraform import 'aws_ecr_repository.repos["lambda-r-backend"]' $PROJECT_NAME-la
 terraform import aws_iam_role.gha_terraform gha-terraform
 
 # CloudWatch Log Groups
-terraform import 'aws_cloudwatch_log_group.service["react-ui"]' /ecs/$PROJECT_NAME/react-ui
-terraform import 'aws_cloudwatch_log_group.service["lambda-r-backend"]' /aws/lambda/$PROJECT_NAME-r-backend
-
-# S3 Bucket
-terraform import aws_s3_bucket.data $PROJECT_NAME-user-data
+terraform import aws_cloudwatch_log_group.lambda_default /aws/lambda/$PROJECT_NAME-lambda-r-backend
 
 aws iam list-open-id-connect-providers --query 'OpenIDConnectProviderList[?contains(Arn, `token.actions.githubusercontent.com`)].Arn' --output text

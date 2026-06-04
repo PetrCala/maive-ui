@@ -8,7 +8,7 @@ MAIVE (Meta-Analysis for Identifying Variability and Errors) is a tool for detec
 
 - **React UI** (Next.js 14): Interactive frontend for data upload, analysis, and visualization
 - **R Backend** (Plumber): Statistical analysis service running MAIVE algorithms
-- **AWS Infrastructure**: Deployed on ECS with ALB, VPC, and Lambda
+- **AWS Infrastructure**: Fully serverless — both the UI and the R backend run as AWS Lambda functions exposed via Lambda Function URLs, fronted by Cloudflare (CDN/TLS/WAF)
 
 ## Citation
 
@@ -62,7 +62,7 @@ npm run images:rebuild-lambda   # Force rebuild R backend image only
 ### AWS Deployment
 
 ```bash
-npm run cloud:init      # Deploy foundation infrastructure (VPC, ECR, S3)
+npm run cloud:init      # Deploy foundation infrastructure (ECR, IAM/OIDC, S3 state, logs)
 npm run cloud:status    # Get all service URLs and status
 npm run cloud:ui-url    # Get UI frontend URL
 npm run cloud:lambda-url # Get R backend URL
@@ -79,21 +79,32 @@ npm run mergePR:admin   # Merge PR with admin privileges
 
 ## Architecture
 
-### Two-Tier Architecture
+### Serverless Architecture
 
-The application uses a server-side API pattern to solve VPC network constraints:
+The application is fully serverless. Both the Next.js UI and the R-Plumber backend run as AWS Lambda functions, each exposed via a Lambda Function URL. Cloudflare sits in front of the UI for CDN, TLS, and WAF:
 
 ```
-Browser → Next.js API Routes → R-Plumber Service
-          (Public Subnet)      (Private Subnet)
+                      ┌─────────────────────────────┐
+Browser ──► Cloudflare ──► UI Lambda Function URL (Next.js)
+   │        (CDN/TLS/WAF)
+   │
+   └──────────────────────► R Lambda Function URL (Plumber)
+          (heavy /run-model analysis call, direct from browser)
 ```
 
 **Key Points:**
 
-- Client-side code cannot directly access R service (private subnet isolation)
-- All requests flow through Next.js API routes (`/api/*`)
-- API routes run server-side and communicate with R service via internal VPC network
-- This enables secure deployment while maintaining browser compatibility
+- The Next.js UI runs on AWS Lambda via a container image using the [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter), exposed through a Lambda Function URL.
+- Cloudflare fronts the UI for CDN/TLS/WAF. A Cloudflare Worker rewrites the `Host`/SNI to the `.on.aws` origin, because Lambda Function URLs reject a foreign `Host` header.
+- The R backend is a separate public Lambda Function URL (authorization `NONE`, CORS `*`).
+- The heavy `/run-model` analysis call goes **directly from the browser to the R Lambda Function URL** — it does not pass through the Next.js server. The browser obtains the R URL from the `/api/runtime-config` route (exposed as `window.RUNTIME_CONFIG`), served at request time.
+- Lightweight Next.js API routes (e.g. `/api/runtime-config`, `/api/ping`, `/api/get-version-info`) still run server-side inside the UI Lambda.
+- There is no longer an ALB, ECS/Fargate cluster, or VPC public/private-subnet serving path.
+
+**Domains:**
+
+- `maive.eu` and `spuriousprecision.com` (apex + `www`) are proxied through Cloudflare.
+- `easymeta.org` redirects to `spuriousprecision.com` via GoDaddy domain forwarding.
 
 ### Directory Structure
 
@@ -102,8 +113,8 @@ apps/
 ├── react-ui/client/          # Next.js frontend
 │   ├── src/
 │   │   ├── api/              # API layer
-│   │   │   ├── client/       # Client-side API calls to Next.js routes
-│   │   │   ├── services/     # Server-side services (R backend communication)
+│   │   │   ├── client/       # Client-side API calls (Next.js routes + R backend)
+│   │   │   ├── services/     # Isomorphic services (R backend communication)
 │   │   │   └── utils/        # API utilities and config
 │   │   ├── components/       # React components (PascalCase)
 │   │   ├── pages/            # Next.js pages and API routes
@@ -125,11 +136,16 @@ docs/                         # Project documentation
 
 ### API Request Flow
 
-1. **Client request**: Browser calls Next.js API route (e.g., `/api/run-model`)
-2. **API route**: Validates request and calls server-side service
-3. **Service layer**: Makes HTTP request to R-Plumber backend
-4. **R processing**: R service executes MAIVE analysis
-5. **Response**: Data flows back through service → API route → client
+The heavy analysis request goes directly from the browser to the R Lambda; lightweight metadata still flows through Next.js API routes.
+
+**Analysis (`/run-model`):**
+
+1. **Runtime config**: On load, the browser fetches `/api/runtime-config`, which sets `window.RUNTIME_CONFIG.R_API_URL` to the R Lambda Function URL.
+2. **Direct call**: The browser's `modelService` POSTs the data and parameters straight to `${R_API_URL}/run-model` (no Next.js proxy involved).
+3. **R processing**: The R Lambda executes the MAIVE analysis.
+4. **Response**: Results return directly to the browser.
+
+**Lightweight routes (server-side, inside the UI Lambda):** `/api/runtime-config`, `/api/ping`, `/api/get-version-info`, etc. These run in the Next.js server context. The same `modelService`/`pingService` code is isomorphic — see `getRApiUrl()` for how the R URL is resolved on the client vs. the server.
 
 ### State Management
 
@@ -408,9 +424,11 @@ R_PORT=8787
 ### Production
 
 ```bash
-# React UI (server-side only)
-R_API_URL=https://internal-maive-r-alb-...elb.amazonaws.com
-NEXT_PUBLIC_R_API_URL=  # Not used in production (server-side routing)
+# React UI (UI Lambda) — the public R Lambda Function URL.
+# The /api/runtime-config route reads this and exposes it to the browser
+# (window.RUNTIME_CONFIG), since the browser calls /run-model directly.
+R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws
+# NEXT_PUBLIC_R_API_URL is also honored (takes precedence if set).
 ```
 
 **Important**: Copy `apps/react-ui/client/env.example` for local secrets. Never commit `.env` files.
@@ -425,18 +443,23 @@ NEXT_PUBLIC_R_API_URL=  # Not used in production (server-side routing)
 
 ## Common Issues
 
-### DNS Resolution in VPC
+### Browser Can't Reach the R Backend
 
-If browser shows DNS errors for internal ALB addresses, verify:
+The browser calls the R Lambda Function URL directly for `/run-model`. If analysis requests fail, verify:
 
-1. Requests go through `/api/*` routes (check Network tab)
-2. `R_API_URL` is set correctly in ECS task environment
-3. API routes properly call server-side services (not client-side)
+1. `/api/runtime-config` returns a non-empty `R_API_URL` (check the Network tab and `window.RUNTIME_CONFIG`).
+2. `R_API_URL` (or `NEXT_PUBLIC_R_API_URL`) is set on the UI Lambda and points to the public R Lambda Function URL.
+3. The R Lambda Function URL has CORS configured (`*`) and authorization `NONE`, so cross-origin browser calls are allowed.
+
+### Cloudflare / Function URL Host Mismatch
+
+The UI is served via Cloudflare in front of a Lambda Function URL. Lambda Function URLs reject requests with a foreign `Host` header, so a Cloudflare Worker rewrites the `Host`/SNI to the `.on.aws` origin. If the UI returns 403s from the origin, check that the Worker is rewriting the host correctly.
 
 ### Server-Side vs Client-Side Code
 
-- **Server-side**: API routes in `src/pages/api/*`, services in `src/api/services/*`
+- **Server-side**: API routes in `src/pages/api/*` (run inside the UI Lambda)
 - **Client-side**: Components, client API calls in `src/api/client/*`
+- **Isomorphic**: Services in `src/api/services/*` run in both contexts; `getRApiUrl()` resolves the R URL accordingly
 - **Check**: `typeof window === "undefined"` for server-side detection
 - **Environment vars**: `NEXT_PUBLIC_*` accessible on client, others server-only
 
