@@ -19,24 +19,6 @@ variable "image_tag" {
   description = "The tag of the ECR images"
 }
 
-variable "ui_task_cpu" {
-  type        = number
-  description = "The CPU of the UI task"
-  default     = 256
-}
-
-variable "ui_task_mem" {
-  type        = number
-  description = "The memory of the UI task"
-  default     = 512 # Allow overhead for data processing
-}
-
-variable "ui_desired_count" {
-  type        = number
-  description = "Number of UI tasks to run"
-  default     = 1
-}
-
 variable "ui_lambda_memory_size" {
   type        = number
   description = "Memory size in MB for the UI Lambda function"
@@ -83,16 +65,4 @@ variable "lambda_r_backend_log_retention_days" {
   type        = number
   description = "Number of days to retain Lambda R backend CloudWatch logs"
   default     = 3
-}
-
-variable "domain_name" {
-  type        = string
-  description = "The domain name of the UI"
-  default     = "spuriousprecision.com"
-}
-
-variable "additional_domains" {
-  type        = list(string)
-  description = "Additional domains of the UI"
-  default     = ["maive.eu", "*.maive.eu", "*.spuriousprecision.com", "easymeta.org", "*.easymeta.org"]
 }
