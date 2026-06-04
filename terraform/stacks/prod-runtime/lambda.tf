@@ -1,9 +1,5 @@
 # Lambda R Backend Configuration
 
-data "aws_iam_role" "ui_task" {
-  name = "${var.project}-ui-task"
-}
-
 # IAM role for Lambda execution
 resource "aws_iam_role" "lambda_r_backend" {
   name = "${local.lambda_r_backend_function_name}-role"
@@ -63,15 +59,6 @@ resource "aws_lambda_function_url" "r_backend" {
     max_age           = 86400
   }
 }
-
-# Allow UI ECS task to invoke the Lambda function -> replaced by public_invoke
-# resource "aws_lambda_permission" "ui_task_invoke" {
-#   statement_id  = "AllowUITaskInvoke"
-#   action        = "lambda:InvokeFunction"
-#   function_name = aws_lambda_function.r_backend.function_name
-#   principal     = "ecs-tasks.amazonaws.com"
-#   source_arn    = aws_ecs_task_definition.ui.task_role_arn
-# }
 
 resource "aws_lambda_permission" "public_invoke" {
   statement_id           = "FunctionURLAllowPublicAccess"
