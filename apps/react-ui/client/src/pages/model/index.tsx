@@ -21,7 +21,6 @@ import TEXT from "@src/lib/text";
 import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
 import type { RTMAParameters } from "@src/types/api";
-import { runRTMAClient } from "@src/api/client/rtma";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
@@ -649,11 +648,13 @@ export default function ModelPage() {
             ciLevel: 0.95,
             winsorize: parameters.winsorize,
           };
-          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-          result = await runRTMAClient(
+          // Calls the R backend Function URL directly from the browser
+          // (URL resolved from runtime config); bypasses the web tier so the
+          // long MCMC run is not capped by the UI Lambda's short timeout.
+          result = await modelService.runRTMA(
             uploadedData?.data ?? [],
             rtmaParams,
-            abortControllerRef.current?.signal,
+            abortControllerRef.current,
           );
         } else if (shouldUseMockResults()) {
           // Use mock data in development mode
