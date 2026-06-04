@@ -5,8 +5,7 @@ const CONFIG = {
   WAIVE_ENABLED: true,
   RTMA_ENABLED: true,
   // Async (non-blocking) model runs + per-browser runs history.
-  // Dark launch: ships off; flip on after the infra is deployed and verified.
-  ASYNC_RUNS_ENABLED: false,
+  ASYNC_RUNS_ENABLED: true,
   SHOULD_SEND_EMAIL_IN_FOOTER_CONTACT: false,
   SHOULD_USE_CLUSTERED_CR2_SE_AS_DEFAULT: true,
   SHOULD_ADD_CITATION_TO_FUNNEL_PLOT: true,
