@@ -38,7 +38,7 @@
     "cloud:destroy:runtime:keep-backend": "./scripts/destroy.sh --runtime-only --keep-bootstrap",
     "cloud:cleanup-vpc": "./scripts/cleanup-vpc.sh",
     "cloud:status": "cd terraform/stacks/prod-runtime && terragrunt output",
-    "cloud:ui-url": "cd terraform/stacks/prod-runtime && terragrunt output -raw ui_alb_dns_name",
+    "cloud:ui-url": "cd terraform/stacks/prod-runtime && terragrunt output -raw ui_lambda_url",
     "cloud:lambda-url": "cd terraform/stacks/prod-runtime && terragrunt output -raw lambda_r_backend_url",
     "release": "./scripts/openPR.sh --release",
     "openPR": "./scripts/openPR.sh",

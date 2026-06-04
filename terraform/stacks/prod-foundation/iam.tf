@@ -57,50 +57,6 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
     Version = "2012-10-17",
     Statement = [
       {
-        Sid : "VPCResources",
-        Effect : "Allow",
-        Action : [
-          "ec2:CreateVpc",
-          "ec2:CreateSubnet",
-          "ec2:CreateRouteTable",
-          "ec2:AssociateRouteTable",
-          "ec2:CreateInternetGateway",
-          "ec2:AttachInternetGateway",
-          "ec2:CreateNatGateway",
-          "ec2:AllocateAddress",
-          "ec2:CreateSecurityGroup",
-          "ec2:*VpcEndpoint*",
-          "ec2:Describe*",
-          "ec2:CreateTags",
-          "ec2:DeleteTags",
-          "ec2:AuthorizeSecurityGroupIngress",
-          "ec2:AuthorizeSecurityGroupEgress",
-          "ec2:RevokeSecurityGroupIngress",
-          "ec2:RevokeSecurityGroupEgress",
-          "ec2:UpdateSecurityGroupRuleDescriptionsIngress",
-          "ec2:UpdateSecurityGroupRuleDescriptionsEgress",
-          "ec2:DeleteSecurityGroup"
-        ],
-        Resource : "*"
-      },
-      {
-        Sid : "ECS",
-        Effect : "Allow",
-        Action : [
-          "ecs:*",
-          "iam:PassRole"
-        ],
-        Resource : "*"
-      },
-      {
-        Sid : "ApplicationAutoScaling",
-        Effect : "Allow",
-        Action : [
-          "application-autoscaling:*"
-        ],
-        Resource : "*"
-      },
-      {
         Sid : "ECR",
         Effect : "Allow",
         Action : [
@@ -173,22 +129,6 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
         Resource : "*"
       },
       {
-        Sid : "ELBv2",
-        Effect : "Allow",
-        Action : [
-          "elasticloadbalancing:*"
-        ],
-        Resource : "*"
-      },
-      {
-        Sid : "WAFv2",
-        Effect : "Allow",
-        Action : [
-          "wafv2:*"
-        ],
-        Resource : "*"
-      },
-      {
         Sid : "CloudWatchLogs",
         Effect : "Allow",
         Action : [
@@ -235,20 +175,12 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
         Resource : "*"
       },
       {
-        Sid: "ACM",
-        Effect: "Allow",
-        Action: [
-          "acm:*"
-        ],
-        Resource: "*"
-      },
-      {
-        Sid: "SSM",
-        Effect: "Allow",
-        Action: [
+        Sid : "SSM",
+        Effect : "Allow",
+        Action : [
           "ssm:*"
         ],
-        Resource: "*"
+        Resource : "*"
       }
     ]
   })

@@ -1,6 +1,6 @@
 # UI (Next.js) on Lambda via the AWS Lambda Web Adapter.
-# Stood up alongside the existing ECS service (additive); not fronted by any
-# DNS yet. Cloudflare points at the Function URL in a later phase.
+# Exposed through a public Function URL; Cloudflare (CDN/TLS/WAF) is the only
+# thing in front of it and rewrites the Host/SNI to the .on.aws origin.
 
 resource "aws_iam_role" "ui_lambda" {
   name = "${var.project}-ui-lambda-role"

@@ -62,7 +62,7 @@ npm run images:rebuild-lambda   # Force rebuild R backend image only
 ### AWS Deployment
 
 ```bash
-npm run cloud:init      # Deploy foundation infrastructure (VPC, ECR, S3)
+npm run cloud:init      # Deploy foundation infrastructure (ECR, IAM/OIDC, S3 state, logs)
 npm run cloud:status    # Get all service URLs and status
 npm run cloud:ui-url    # Get UI frontend URL
 npm run cloud:lambda-url # Get R backend URL

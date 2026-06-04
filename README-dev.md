@@ -84,7 +84,7 @@ We also recommend you [create a profile](https://docs.aws.amazon.com/cli/v1/user
 Before the application stack can be deployed, you must first deploy the infra foundation:
 
 1. Make sure you are logged in to the account you want to deploy the resources for. Confirm this by calling `aws sts get-caller-identity`.
-1. Run `npm run cloud:init`. This will deploy the foundation infrastructure such as S3, ECR, VPC, etc.
+1. Run `npm run cloud:init`. This will deploy the foundation infrastructure (the S3 state bucket, DynamoDB lock table, ECR repositories, the GitHub Actions OIDC role, and CloudWatch log groups).
 
 ## Deploying the app stack
 
