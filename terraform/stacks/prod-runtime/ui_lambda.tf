@@ -47,6 +47,33 @@ resource "aws_iam_role_policy_attachment" "ui_lambda_ssm_read" {
   policy_arn = aws_iam_policy.ui_lambda_ssm_read.arn
 }
 
+# /api/runs submits jobs to the queue and reads run status/results.
+resource "aws_iam_policy" "ui_lambda_runs" {
+  name        = "${var.project}-ui-lambda-runs"
+  description = "Allow the UI Lambda to submit async runs and read their status"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+        Resource = aws_dynamodb_table.runs.arn
+      },
+      {
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
+        Resource = aws_sqs_queue.runs.arn
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ui_lambda_runs" {
+  role       = aws_iam_role.ui_lambda.name
+  policy_arn = aws_iam_policy.ui_lambda_runs.arn
+}
+
 # Explicit log group so retention is bounded (Lambda otherwise auto-creates one
 # that never expires).
 resource "aws_cloudwatch_log_group" "ui_lambda" {
@@ -70,6 +97,8 @@ resource "aws_lambda_function" "ui" {
       STATUS_BANNER_ENABLED_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_enabled.name
       STATUS_BANNER_MESSAGE_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_message.name
       STATUS_BANNER_AWS_REGION             = var.region
+      RUNS_TABLE_NAME                      = aws_dynamodb_table.runs.name
+      RUNS_QUEUE_URL                       = aws_sqs_queue.runs.id
     }
   }
 

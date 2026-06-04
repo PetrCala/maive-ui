@@ -6,6 +6,7 @@ import Head from "next/head";
 import { useRouter } from "next/navigation";
 import { generateMockResults, shouldUseMockResults } from "@utils/mockData";
 import { useDataStore, dataCache, type UploadedData } from "@store/dataStore";
+import { useRunsStore } from "@src/store/runsStore";
 import HelpButton from "@src/components/Icons/HelpIcon";
 import { ParametersHelpModal } from "@src/components/Modals";
 import { OptionSection } from "@src/components/Options";
@@ -65,6 +66,7 @@ export default function ModelPage() {
   const runModelButtonRef = useRef<HTMLButtonElement>(null);
   const { showAlert } = useGlobalAlert();
   const { showParameterAlert } = useParameterAlert();
+  const addRun = useRunsStore((state) => state.addRun);
 
   const handleAdvancedAutoOpenHandled = useCallback(() => {
     setShouldSuppressAdvancedAutoOpen(false);
@@ -638,6 +640,66 @@ export default function ModelPage() {
       const runTimestamp = new Date();
 
       try {
+        // Async (non-blocking) submission: queue the run, record it locally,
+        // and navigate immediately so the user can keep working. Skips mock
+        // mode (dev); falls back to the synchronous path below when the dataset
+        // is too large to queue.
+        if (CONFIG.ASYNC_RUNS_ENABLED && !shouldUseMockResults()) {
+          const runParameters: ModelParameters | RTMAParameters =
+            parameters.modelType === CONST.MODEL_TYPES.RTMA
+              ? {
+                  modelType: "RTMA",
+                  favorPositive: parameters.favorPositive,
+                  alphaSelect: 0.05,
+                  ciLevel: 0.95,
+                  winsorize: parameters.winsorize,
+                }
+              : parameters;
+
+          const submission = await modelService.submitRun(
+            uploadedData?.data ?? [],
+            runParameters,
+            dataId ?? "",
+            parameters.modelType,
+            abortControllerRef.current ?? undefined,
+          );
+
+          if (submission.jobId && !submission.tooLarge) {
+            addRun({
+              jobId: submission.jobId,
+              modelType: parameters.modelType,
+              dataId: dataId ?? null,
+              parameters: JSON.stringify(parameters),
+              submittedAt: Date.now(),
+              status: "queued",
+            });
+
+            // Persist data for reproducibility export (same as the sync path).
+            try {
+              sessionStorage.setItem(
+                `maive-data-${dataId}`,
+                JSON.stringify(uploadedData?.data ?? []),
+              );
+            } catch (storageError) {
+              console.warn(
+                "Failed to store data in sessionStorage:",
+                storageError,
+              );
+            }
+
+            if (isMountedRef.current) {
+              const asyncParams = new URLSearchParams({
+                jobId: submission.jobId,
+                dataId: dataId ?? "",
+                parameters: JSON.stringify(parameters),
+              });
+              router.push(`/results?${asyncParams.toString()}`);
+            }
+            return;
+          }
+          // tooLarge → fall through to the synchronous path below.
+        }
+
         let result: { data?: unknown; error?: string; message?: string };
 
         if (parameters.modelType === CONST.MODEL_TYPES.RTMA) {
@@ -730,7 +792,7 @@ export default function ModelPage() {
         abortControllerRef.current = null;
       }
     })();
-  }, [dataId, parameters, uploadedData, router, showAlert]);
+  }, [dataId, parameters, uploadedData, router, showAlert, addRun]);
 
   useEffect(() => {
     if (!uploadedData || !hasStudyIdColumn(uploadedData.data)) {

@@ -27,6 +27,8 @@ import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
+import LoadingCard from "@src/components/LoadingCard";
+import { useRunStatus } from "@src/hooks/useRunStatus";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import Alert from "@src/components/Alert";
@@ -59,11 +61,12 @@ const ratioToPercentage = (ratio: number): number =>
 export default function ResultsPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const results = searchParams?.get("results") ?? null;
+  const jobId = searchParams?.get("jobId") ?? null;
+  const urlResults = searchParams?.get("results") ?? null;
   const dataId = searchParams?.get("dataId") ?? null;
   const parameters = searchParams?.get("parameters") ?? null;
-  const runDuration = searchParams?.get("runDuration") ?? null;
-  const runTimestamp = searchParams?.get("runTimestamp") ?? null;
+  const urlRunDuration = searchParams?.get("runDuration") ?? null;
+  const urlRunTimestamp = searchParams?.get("runTimestamp") ?? null;
 
   const [isRunInfoModalOpen, setIsRunInfoModalOpen] = useState(false);
   const [isExportingReproducibility, setIsExportingReproducibility] =
@@ -74,6 +77,23 @@ export default function ResultsPage() {
   const [exportErrorMessage, setExportErrorMessage] = useState<string | null>(
     null,
   );
+
+  // Async runs: when a jobId is present, poll for status/result. No-op (and the
+  // synchronous URL-param path is used) when jobId is null.
+  const runStatus = useRunStatus(jobId);
+
+  // Unify the result source: polled (async) vs URL params (synchronous).
+  const results = jobId
+    ? runStatus.result
+      ? JSON.stringify(runStatus.result)
+      : null
+    : urlResults;
+  const runDuration = jobId
+    ? runStatus.runDurationMs != null
+      ? String(runStatus.runDurationMs)
+      : null
+    : urlRunDuration;
+  const runTimestamp = jobId ? runStatus.runTimestamp : urlRunTimestamp;
 
   let parsedParametersJson: Partial<ModelParameters> = {};
   if (parameters) {
@@ -241,6 +261,43 @@ export default function ResultsPage() {
       return () => clearTimeout(timer);
     }
   }, [exportErrorMessage]);
+
+  // Async run still in flight (or failed) — show a loading / error state while
+  // polling, instead of the "no results" view.
+  if (jobId && !results) {
+    const runFailed =
+      runStatus.status === "failed" || runStatus.status === "timedout";
+    return (
+      <>
+        <Head>
+          <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
+        </Head>
+        <main className="content-page-container">
+          {runFailed ? (
+            <div className="text-center">
+              <SectionHeading level="h1" text="Run failed" className="mb-4" />
+              <p className="mb-6 text-gray-600 dark:text-gray-300">
+                {runStatus.errorMessage ??
+                  "The analysis did not complete. Please try again."}
+              </p>
+              <GoBackButton
+                href={`/model?dataId=${dataId ?? ""}`}
+                text="Back to model setup"
+                variant="simple"
+              />
+            </div>
+          ) : (
+            <div className="mx-auto max-w-md">
+              <LoadingCard
+                title="Running your analysis..."
+                subtitle="You can leave this page — your run is queued and will appear in My Runs. The first run can take a little longer while the engine warms up."
+              />
+            </div>
+          )}
+        </main>
+      </>
+    );
+  }
 
   if (!results) {
     return (

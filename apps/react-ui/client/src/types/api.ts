@@ -115,6 +115,29 @@ type PingResponse = {
   time: string;
 };
 
+// Async runs (queue) types -----------------------------------------------
+type RunStatus = "queued" | "running" | "succeeded" | "failed" | "timedout";
+
+// Response from POST /api/runs. `tooLarge` signals the client to fall back to
+// the synchronous path (dataset too big to queue via SQS).
+type SubmitRunResponse = {
+  jobId?: string;
+  tooLarge?: boolean;
+  error?: string;
+};
+
+// Response from GET /api/runs/{jobId}. `result` is the stringified
+// ModelResults | RTMAResults, present only once `status` is terminal.
+type GetRunResponse = {
+  jobId: string;
+  status: RunStatus;
+  modelType?: ModelParameters["modelType"];
+  result?: string;
+  errorMessage?: string;
+  runDurationMs?: number;
+  runTimestamp?: string;
+};
+
 // API configuration
 type ApiConfig = {
   baseUrl?: string;
@@ -141,4 +164,7 @@ export type {
   ApiConfig,
   ApiError,
   ApiResponse,
+  RunStatus,
+  SubmitRunResponse,
+  GetRunResponse,
 };

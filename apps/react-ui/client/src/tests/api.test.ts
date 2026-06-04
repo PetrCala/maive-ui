@@ -20,6 +20,11 @@ describe("API Services", () => {
     it("should have a runModel method", () => {
       expect(typeof modelService.runModel).toBe("function");
     });
+
+    it("should have submitRun and getRun methods", () => {
+      expect(typeof modelService.submitRun).toBe("function");
+      expect(typeof modelService.getRun).toBe("function");
+    });
   });
 
   describe("PingService", () => {

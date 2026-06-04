@@ -1,0 +1,19 @@
+{
+  "name": "maive-orchestrator",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SQS-triggered worker that runs queued MAIVE/RTMA jobs against the R backend Function URL and persists status + results to DynamoDB.",
+  "main": "dist/index.js",
+  "scripts": {
+    "bundle": "esbuild src/index.ts --bundle --platform=node --target=node20 --external:@aws-sdk/* --outfile=dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1061.0",
+    "@aws-sdk/lib-dynamodb": "^3.1061.0",
+    "@types/aws-lambda": "^8.10.145",
+    "@types/node": "^20",
+    "esbuild": "^0.24.0",
+    "typescript": "^5"
+  }
+}

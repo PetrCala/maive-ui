@@ -161,6 +161,14 @@ jobs:
         with:
           ref: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build orchestrator bundle
+        run: |
+          cd apps/orchestrator
+          npm ci
+          npm run bundle
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -188,6 +196,14 @@ jobs:
         with:
           ref: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build orchestrator bundle
+        run: |
+          cd apps/orchestrator
+          npm ci
+          npm run bundle
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/gha-terraform
