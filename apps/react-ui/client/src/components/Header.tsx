@@ -4,6 +4,7 @@ import HelpIcon from "@components/Icons/HelpIcon";
 import HomeIcon from "@components/Icons/HomeIcon";
 import Link from "next/link";
 import CONST from "@src/CONST";
+import CONFIG from "@src/CONFIG";
 import ThemeToggle from "@components/ThemeToggle";
 
 type HeaderProps = {
@@ -32,6 +33,14 @@ export default function Header({
 
       {/* Right side - icons */}
       <div className="flex items-center gap-2">
+        {CONFIG.ASYNC_RUNS_ENABLED && (
+          <Link
+            href="/runs"
+            className="text-primary hover:text-primary-600 px-2 text-sm font-medium transition-colors"
+          >
+            My Runs
+          </Link>
+        )}
         <ThemeToggle className="icon-header" />
         {!!showHelpIcon && <HelpIcon className="icon-header" />}
         {!!showHomeIcon && <HomeIcon className="icon-header" />}

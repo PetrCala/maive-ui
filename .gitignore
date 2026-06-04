@@ -84,6 +84,9 @@ node_modules/
 **/.terraform.lock.hcl
 **/backend.tf
 **/versions.tf
+
+# Orchestrator zip built by Terraform's archive_file (built in CI)
+terraform/stacks/prod-runtime/orchestrator.zip
 **/*.tfstate
 **/*.tfstate.*
 **/*.out

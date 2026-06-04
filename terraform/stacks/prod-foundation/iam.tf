@@ -157,7 +157,24 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "dynamodb:UpdateTable",
           "dynamodb:TagResource",
           "dynamodb:UntagResource",
-          "dynamodb:ListTagsOfResource"
+          "dynamodb:ListTagsOfResource",
+          "dynamodb:UpdateTimeToLive",
+          "dynamodb:DescribeTimeToLive",
+          "dynamodb:DescribeContinuousBackups",
+          "dynamodb:UpdateContinuousBackups",
+          "dynamodb:Query",
+          "dynamodb:UpdateItem",
+          "dynamodb:BatchGetItem",
+          "dynamodb:BatchWriteItem",
+          "dynamodb:Scan"
+        ],
+        Resource : "*"
+      },
+      {
+        Sid : "SQS",
+        Effect : "Allow",
+        Action : [
+          "sqs:*"
         ],
         Resource : "*"
       },
