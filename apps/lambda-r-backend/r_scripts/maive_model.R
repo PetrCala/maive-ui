@@ -171,7 +171,7 @@ run_maive_model <- function(data, parameters) {
     "winsorize"
   )
 
-  if (!all(names(params) %in% expected_parameters) || !all(expected_parameters %in% names(params))) {
+  if (!all(expected_parameters %in% names(params))) {
     cli::cli_abort(paste0("The parameters must include the following: ", paste(expected_parameters, collapse = ", ")))
   }
 
