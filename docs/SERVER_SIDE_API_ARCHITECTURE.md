@@ -1,224 +1,141 @@
-# API Architecture: Server-Side Design
+# API Architecture: Serverless Design
 
 ## Overview
 
-This document explains the (currently unused) server-side API architecture implemented in the MAIVE UI application and why it's necessary for the VPC (Virtual Private Cloud) deployment setup.
+This document explains how the MAIVE UI talks to the R backend in the current
+**fully serverless** deployment. The application no longer runs behind an ALB
+on ECS/Fargate, and there is no VPC public/private-subnet serving path. Both the
+Next.js UI and the R-Plumber backend run as AWS Lambda functions, each exposed
+through a Lambda Function URL.
 
-## Why Server-Side APIs Are Necessary
-
-### VPC Network Constraints
-
-In our AWS VPC setup, the React frontend runs in a public subnet behind an Application Load Balancer (ALB), while the R-plumber backend service runs in a private subnet. This architecture provides security benefits but creates network connectivity challenges:
-
-1. **Private Subnet Isolation**: The R-plumber service is intentionally placed in a private subnet for security, making it inaccessible from the public internet
-2. **Client-Side Limitations**: Browser-based JavaScript cannot directly access private subnet resources
-3. **Security Requirements**: Direct client-to-backend communication would require exposing the R service to the public internet, compromising security
-
-### Security Benefits
-
-- **Backend Protection**: R service remains isolated in private subnet
-- **Controlled Access**: All external requests must go through the ALB and Next.js API routes
-- **Authentication/Authorization**: Can be implemented at the API gateway level
-- **Request Validation**: Server-side validation before reaching sensitive backend services
+> **History:** an earlier design proxied every analysis request through Next.js
+> API routes so that an R service in a private subnet was never exposed to the
+> public internet. That VPC/ALB topology has been retired. The heavy
+> `/run-model` call now goes directly from the browser to the R Lambda.
 
 ## Architecture Overview
 
 ```
-┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   User Browser  │    │   Next.js App   │    │  Next.js API   │    │   R-Plumber     │
-│                 │    │   (Public Subnet)│    │   Routes       │    │  (Private      │
-│                 │    │                  │    │                │    │   Subnet)       │
-└─────────────────┘    └──────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │                       │
-         │                       │                       │                       │
-         │ 1. User Action       │                       │                       │
-         │─────────────────────▶│                       │                       │
-         │                       │                       │                       │
-         │                       │ 2. API Route Call     │                       │
-         │                       │──────────────────────▶│                       │
-         │                       │                       │                       │
-         │                       │                       │ 3. Direct Service    │
-         │                       │                       │ Call (Server-side)   │
-         │                       │                       │─────────────────────▶│
-         │                       │                       │                       │
-         │                       │                       │ 4. R Processing     │
-         │                       │                       │◀─────────────────────│
-         │                       │                       │                       │
-         │                       │ 5. Response           │                       │
-         │                       │◀──────────────────────│                       │
-         │                       │                       │                       │
-         │ 6. UI Update         │                       │                       │
-         │◀─────────────────────│                       │                       │
+                      ┌──────────────────────────────────┐
+   ┌─────────────┐    │      Cloudflare (CDN/TLS/WAF)     │
+   │ User Browser│───►│  Worker rewrites Host/SNI to .on.aws│
+   └─────────────┘    └──────────────────────────────────┘
+        │  │                          │
+        │  │                          ▼
+        │  │              ┌────────────────────────────┐
+        │  │              │  UI Lambda Function URL      │
+        │  │              │  (Next.js via Lambda Web      │
+        │  │              │   Adapter; lightweight        │
+        │  │              │   /api/* routes)              │
+        │  │              └────────────────────────────┘
+        │  │
+        │  └─ /api/runtime-config ──► returns window.RUNTIME_CONFIG.R_API_URL
+        │
+        └──── POST /run-model (data + parameters) ──────────────┐
+                                                                ▼
+                                            ┌────────────────────────────┐
+                                            │  R Lambda Function URL       │
+                                            │  (Plumber; auth NONE,        │
+                                            │   CORS *)                    │
+                                            └────────────────────────────┘
 ```
 
-## Implementation Details
+**Key facts:**
 
-### 1. Client-Side API Layer
+- The Next.js UI runs on AWS Lambda using a container image with the
+  [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter),
+  exposed through a Lambda Function URL.
+- Cloudflare fronts the UI for CDN, TLS, and WAF. Because Lambda Function URLs
+  reject requests carrying a foreign `Host` header, a Cloudflare Worker rewrites
+  the `Host`/SNI to the `.on.aws` origin.
+- The R backend is a separate **public** Lambda Function URL with authorization
+  `NONE` and CORS `*`, so the browser can call it cross-origin.
+- The heavy `/run-model` analysis request is sent **directly from the browser**
+  to the R Lambda Function URL — it does not pass through the Next.js server.
 
-The client-side code (`src/api/client/`) provides a clean interface that makes requests to Next.js API routes:
+## How the Browser Finds the R Backend
+
+Because the R URL is environment-specific and the UI image runs on a read-only
+filesystem (only `/tmp` is writable on Lambda), the URL is served at request
+time rather than baked into the bundle.
+
+### 1. Runtime config route
 
 ```typescript
-// src/api/client/model.ts
-export async function runModelClient(
-  data: any[],
-  parameters: any,
-  signal?: AbortSignal,
-) {
-  const response = await fetch("/api/run-model", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ data, parameters }),
-    signal,
-  });
-  // ... error handling and response processing
+// src/pages/api/runtime-config.ts
+export default function handler(_req: NextApiRequest, res: NextApiResponse) {
+  const rApiUrl =
+    process.env.NEXT_PUBLIC_R_API_URL ?? process.env.R_API_URL ?? "";
+
+  const body = `window.RUNTIME_CONFIG = ${JSON.stringify({ R_API_URL: rApiUrl })};\n`;
+
+  res.setHeader("Content-Type", "application/javascript; charset=utf-8");
+  res.setHeader("Cache-Control", "no-store");
+  res.status(200).send(body);
 }
 ```
 
-### 2. Next.js API Routes
-
-API routes (`src/pages/api/`) act as the server-side entry point:
+### 2. Reading the config on the client
 
 ```typescript
-// src/pages/api/run-model.ts
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse,
-) {
-  // Validate request
-  const { data, parameters } = req.body;
-  
-  // Call server-side service
-  const result = await modelService.runModel(data, parameters);
-  
-  // Return response
-  res.status(200).json(result);
+// src/utils/getRuntimeConfig.ts
+export function getRuntimeConfig(): RuntimeConfig {
+  if (typeof window === "undefined") return {} as RuntimeConfig; // SSR
+  return (window as ExtendedWindow).RUNTIME_CONFIG ?? ({} as RuntimeConfig);
+  // (in development, falls back to NEXT_PUBLIC_DEV_R_API_URL or localhost:8787)
 }
 ```
 
-### 3. Server-Side Services
+### 3. Calling the R backend directly
 
-Services (`src/api/services/`) handle the actual communication with the R backend:
+`modelService` is isomorphic. In the browser it resolves the R Function URL from
+the runtime config and POSTs straight to it; server-side code (the lightweight
+API routes) uses the configured env var. See `getRApiUrl()`.
 
 ```typescript
 // src/api/services/modelService.ts
-export class ModelService {
-  async runModel(data: any[], parameters: ModelParameters): Promise<ModelResponse> {
-    const requestData = {
-      data: JSON.stringify(data),
-      parameters: JSON.stringify(parameters),
-    };
-
-    // Direct server-to-server communication
-    return await httpPost<ModelResponse>(
-      `${getRApiUrl()}/run-model`,
-      requestData,
-      { timeout: 300000 } // 5 minutes for long-running models
-    );
-  }
-}
+return await httpPost<ModelResponse>(`${getRApiUrl()}/run-model`, requestData, {
+  timeout: 300000, // 5 minutes for long-running models
+});
 ```
 
-### 4. Configuration Management
+## What Still Runs Server-Side
 
-The configuration system (`src/api/utils/config.ts`) handles environment-specific URLs:
+The UI Lambda still hosts lightweight Next.js API routes that execute in the
+Next.js server context, e.g.:
 
-```typescript
-export function getRApiUrl(): string {
-  // Server-side: check environment variables first
-  if (typeof window === "undefined") {
-    return (
-      process.env.NEXT_PUBLIC_R_API_URL ||
-      process.env.R_API_URL ||
-      "http://localhost:8787"
-    );
-  }
-  
-  // Client-side: use runtime config
-  const { R_API_URL } = getRuntimeConfig();
-  return R_API_URL;
-}
-```
+- `/api/runtime-config` — exposes the R backend URL to the browser
+- `/api/ping` — connectivity check
+- `/api/get-version-info`, `/api/system-status` — metadata
 
-## Data Flow
-
-1. **User Interaction**: User submits model parameters on the model page
-2. **Client Request**: React component calls `runModelClient()`
-3. **API Route**: Request reaches `/api/run-model` Next.js API route
-4. **Service Layer**: API route calls `modelService.runModel()`
-5. **Backend Communication**: Service makes direct HTTP request to R-plumber
-6. **Response Processing**: R service processes data and returns results
-7. **Data Return**: Results flow back through the service → API route → client
-8. **UI Update**: React component receives results and updates the UI
+The previous `/api/run-model` proxy has been **removed**.
 
 ## Environment Configuration
 
 ### Development
 
-- R service runs on `localhost:8787`
-- Direct communication between Next.js and R service
-- No VPC constraints
+- R service runs on `localhost:8787`.
+- `NEXT_PUBLIC_DEV_R_API_URL` overrides the local R URL if set.
 
 ### Production
 
-- R service runs in private subnet
-- Next.js API routes run in public subnet
-- Communication through internal VPC network
-- Environment variables configure R service URLs
+- `R_API_URL` (or `NEXT_PUBLIC_R_API_URL`, which takes precedence) on the UI
+  Lambda holds the **public R Lambda Function URL**. The `/api/runtime-config`
+  route reads it and hands it to the browser.
 
-## Benefits of This Architecture
+## Domains
 
-### Security
+- `maive.eu` and `spuriousprecision.com` (apex + `www`) are proxied through
+  Cloudflare.
+- `easymeta.org` redirects to `spuriousprecision.com` via GoDaddy domain
+  forwarding.
 
-- Backend services remain in private subnets
-- No direct client access to sensitive services
-- Centralized authentication/authorization possible
+## Trade-offs
 
-### Scalability
-
-- API routes can be scaled independently
-- Backend services can be scaled based on demand
-- Load balancing at the ALB level
-
-### Maintainability
-
-- Clear separation of concerns
-- Consistent API interface
-- Easy to add middleware (logging, monitoring, etc.)
-
-### Flexibility
-
-- Can easily add caching layers
-- Request/response transformation
-- Rate limiting and throttling
-
-## Alternative Approaches Considered
-
-### 1. Client-Side Direct Access
-
-- **Problem**: Would require exposing R service to public internet
-- **Security Risk**: High - direct access to backend services
-- **Rejected**: Security concerns
-
-### 2. API Gateway Pattern
-
-- **Problem**: Additional complexity and cost
-- **Benefit**: More sophisticated routing and security
-- **Status**: Could be implemented in future if needed
-
-### 3. WebSocket Connections
-
-- **Problem**: More complex state management
-- **Benefit**: Real-time updates
-- **Status**: Could be added for specific use cases
-
-## Future Enhancements
-
-1. **Authentication**: Add JWT or session-based authentication
-2. **Rate Limiting**: Implement request throttling
-3. **Caching**: Add Redis or similar for response caching
-4. **Monitoring**: Add request/response logging and metrics
-5. **Circuit Breaker**: Implement failure handling patterns
-
-## Conclusion
-
-The server-side API architecture is essential for our VPC deployment, providing security, scalability, and maintainability while ensuring the R backend service remains properly isolated. This design pattern follows cloud-native best practices and provides a solid foundation for future enhancements.
+- **Simplicity / cost:** no ALB, ECS cluster, or NAT — just two Lambdas and a
+  CDN. Scales to zero when idle.
+- **CORS:** the R Lambda is public and CORS-open, so browsers can call it
+  directly. There is no private-subnet isolation; protection comes from
+  Cloudflare's WAF in front of the UI and the stateless nature of the R service.
+- **Cold starts:** Lambda cold starts can make the first analysis run slow; the
+  UI shows a "warming up" hint during slow model runs.

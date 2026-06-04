@@ -1,120 +1,102 @@
-# API Architecture - Server-Side Implementation
+# API Architecture - Serverless Implementation
 
 ## Overview
 
-This document describes the refactored API architecture that moves from client-side to server-side requests to solve DNS resolution issues in the VPC environment.
+This document describes how the React UI communicates with the R-Plumber backend
+in the current **serverless** deployment. The UI and the R backend each run as an
+AWS Lambda function exposed via a Lambda Function URL. There is no ALB, ECS task,
+or VPC private subnet in the serving path anymore.
 
-## Problem
-
-The previous implementation made **client-side requests** directly from the user's browser to the R-plumber service. This caused DNS resolution failures because:
-
-- The browser (client-side) tried to resolve internal VPC DNS names like `internal-maive-r-alb-...elb.amazonaws.com`
-- These internal DNS names are only resolvable from within the VPC
-- The browser runs on the user's machine, outside the VPC
-
-## Solution
-
-The new architecture implements **server-side requests** through Next.js API routes:
+## Request Topology
 
 ```plain
-Browser → Next.js API Route → R-plumber Service
-   ↓           ↓                    ↓
-Client    Server (ECS)         Internal ALB
-         (VPC Network)
+Browser ──► Cloudflare (CDN/TLS/WAF) ──► UI Lambda Function URL (Next.js)
+   │
+   └──────► R Lambda Function URL (Plumber)   ← heavy /run-model call, direct
+```
+
+- **UI** runs on Lambda via a container image using the AWS Lambda Web Adapter,
+  fronted by Cloudflare. A Cloudflare Worker rewrites the `Host`/SNI to the
+  `.on.aws` origin because Lambda Function URLs reject a foreign `Host` header.
+- **R backend** is a public Lambda Function URL (authorization `NONE`, CORS `*`).
+- The **`/run-model`** analysis request goes straight from the browser to the R
+  Lambda — it no longer proxies through a Next.js API route.
+
+## How It Works
+
+### Resolving the R backend URL
+
+The R URL is provided to the browser at request time via `/api/runtime-config`,
+which sets `window.RUNTIME_CONFIG`:
+
+```typescript
+// src/pages/api/runtime-config.ts (server-side)
+const rApiUrl =
+  process.env.NEXT_PUBLIC_R_API_URL ?? process.env.R_API_URL ?? "";
+// → window.RUNTIME_CONFIG = { R_API_URL: rApiUrl }
+```
+
+`getRApiUrl()` resolves this on the client (from `window.RUNTIME_CONFIG`, falling
+back to `NEXT_PUBLIC_DEV_R_API_URL` / `localhost:8787` in development).
+
+### Calling the backend
+
+`modelService` is isomorphic and POSTs directly to the resolved R URL:
+
+```typescript
+// src/api/services/modelService.ts
+return await httpPost<ModelResponse>(`${getRApiUrl()}/run-model`, requestData, {
+  timeout: 300000, // 5 minutes for long-running models
+});
 ```
 
 ## Architecture Components
 
-### 1. Server-Side Services (`/src/api/services/`)
+### Isomorphic Services (`/src/api/services/`)
 
-- **`modelService.ts`** - Makes HTTP requests to R-plumber from server context
-- **`pingService.ts`** - Handles ping requests to R-plumber from server context
+- **`modelService.ts`** — POSTs analysis requests to the R backend. In the
+  browser this hits the R Lambda Function URL directly.
+- **`pingService.ts`** — connectivity check against the R backend.
 
-### 2. Client-Side Services (`/src/api/services/`)
+### Next.js API Routes (`/src/pages/api/`)
 
-- **`modelService.ts`** - Calls Next.js API routes from browser
-- **`pingService.ts`** - Calls Next.js API routes from browser
+Lightweight routes that run server-side inside the UI Lambda:
 
-### 3. Next.js API Routes (`/src/pages/api/`)
+- **`/api/runtime-config`** — exposes the R backend URL to the browser
+- **`/api/ping`** — connectivity testing
+- **`/api/get-version-info`**, **`/api/system-status`** — metadata
 
-- **`/api/run-model`** - Handles model execution requests
-- **`/api/ping`** - Handles connectivity testing
-
-## How It Works
-
-### Before (Client-Side)
-
-```typescript
-// ❌ This runs in the browser
-const result = await modelService.runModel(data, parameters);
-// Browser tries to resolve internal VPC DNS → FAILS
-```
-
-### After (Server-Side)
-
-```typescript
-// ✅ This runs in the browser
-const result = await modelService.runModel(data, parameters);
-
-// ✅ This runs on the server (ECS task)
-// /api/run-model → modelService.runModel() → R-plumber
-```
+> The previous **`/api/run-model`** proxy route has been removed.
 
 ## Environment Configuration
 
-### Server-Side (ECS Task)
-
-The server-side services use environment variables for configuration:
-
 ```bash
-# Production
-R_API_URL=https://internal-maive-r-alb-...elb.amazonaws.com
+# Production (UI Lambda) — public R Lambda Function URL exposed to the browser
+R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws
+# NEXT_PUBLIC_R_API_URL is also honored (takes precedence if set)
 
 # Development
 NEXT_PUBLIC_DEV_R_API_URL=http://localhost:8787
 ```
 
-### Client-Side (Browser)
-
-The client-side services call relative URLs that resolve to the same ECS task:
-
-```typescript
-// Calls /api/run-model on the same domain
-fetch("/api/run-model", { ... })
-```
-
-## Benefits
-
-1. **✅ DNS Resolution** - Server-side requests can resolve internal VPC DNS names
-2. **✅ Security** - Internal service URLs are not exposed to the client
-3. **✅ Performance** - Server-to-server communication within VPC is faster
-4. **✅ Reliability** - No dependency on client network configuration
-
-## Migration Notes
-
-- **Client components** now use `modelService` and `pingService`
-- **Server-side logic** continues to use `modelService` and `pingService`
-- **API routes** handle the translation between client and server services
-- **Environment variables** control server-side service URLs
-
 ## Testing
 
-Test the new architecture by:
-
-1. **Ping Test**: Use the ping button to verify connectivity
-2. **Model Execution**: Run a model to verify end-to-end functionality
-3. **Network Inspection**: Verify requests go through `/api/*` routes
+1. **Runtime config**: confirm `/api/runtime-config` returns a non-empty
+   `R_API_URL` and that `window.RUNTIME_CONFIG` is populated.
+2. **Ping test**: use the ping button to verify connectivity.
+3. **Model execution**: run a model to verify the direct browser → R Lambda call.
+4. **Network inspection**: confirm `/run-model` goes to the `.on.aws` R URL, not
+   to a `/api/*` route.
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Environment Variables**: Ensure `R_API_URL` is set in ECS task
-2. **API Routes**: Verify `/api/run-model` and `/api/ping` are accessible
-3. **Service Health**: Check R-plumber service is running and accessible
-
-### Debug Steps
-
-1. Check browser network tab for API route calls
-2. Check ECS task logs for server-side request details
-3. Verify environment variables in ECS task configuration
+1. **Empty R URL**: ensure `R_API_URL` / `NEXT_PUBLIC_R_API_URL` is set on the UI
+   Lambda.
+2. **CORS errors**: the R Lambda Function URL must allow CORS (`*`) and use
+   authorization `NONE` for direct browser calls.
+3. **403 from origin**: check the Cloudflare Worker is rewriting the `Host`/SNI to
+   the `.on.aws` origin.
+4. **Service health**: confirm the R Lambda is reachable (cold starts can make the
+   first request slow).

@@ -20,13 +20,10 @@
     - [Service URLs](#service-urls)
     - [Example Output](#example-output)
     - [Access Your Application](#access-your-application)
-  - [Certificate Management](#certificate-management)
-    - [Certificate Validation](#certificate-validation)
-      - [DNS Validation](#dns-validation)
-    - [Using Certificates in Deployment](#using-certificates-in-deployment)
-    - [Certificate ARN Format](#certificate-arn-format)
-    - [Managing Existing Certificates](#managing-existing-certificates)
-    - [Troubleshooting](#troubleshooting)
+  - [TLS, Domains \& DNS](#tls-domains--dns)
+    - [How it fits together](#how-it-fits-together)
+    - [Domains](#domains)
+    - [Verifying](#verifying)
   - [Destroying the architecture](#destroying-the-architecture)
   - [🔄 Development \& Releases](#-development--releases)
     - [Quarterly Release Automation](#quarterly-release-automation)
@@ -114,147 +111,48 @@ bun run cloud:lambda-url
 
 After running `bun run cloud:status`, you'll see:
 
-- **Frontend (React UI)**: `<ui-alb-dns-name>` - Public access
-- **Backend (AWS Lambda)**: `https://<lambda-url>` - Public access
-- **Monitoring Dashboard**: CloudWatch dashboard URL
+- **Frontend (React UI)**: the UI Lambda Function URL (`ui_lambda_url`) — fronted by Cloudflare in production
+- **Backend (AWS Lambda)**: the R backend Function URL (`lambda_r_backend_url`) — public access
 
 ### Example Output
 
 ```bash
 $ bun run cloud:status
-lambda_backend_url = "https://<url>.lambda-url.<region>.on.aws/"
-ui_alb_dns_name = "maive-ui-alb-<alb_id>.<region>.elb.amazonaws.com"
+lambda_r_backend_url = "https://<id>.lambda-url.<region>.on.aws/"
+ui_lambda_url        = "https://<id>.lambda-url.<region>.on.aws/"
 ```
 
 ### Access Your Application
 
-1. **Open your browser** and navigate to the UI URL
+1. **Open your browser** and navigate to the UI URL (a public domain via Cloudflare, or the `ui_lambda_url` origin directly)
 2. **Use the R lambda backend URL** for API calls
-3. **Monitor performance** via the CloudWatch dashboard
+3. **Inspect logs** via CloudWatch Logs for the UI and R Lambda functions
 
-## Certificate Management
+## TLS, Domains & DNS
 
-SSL certificates are essential for securing your application with HTTPS. This section covers how to request, manage, and deploy certificates for your MAIVE application.
+TLS is terminated by **Cloudflare**, which sits in front of the UI Lambda Function URL and provides CDN, TLS, and WAF. There is no ACM certificate or ALB HTTPS listener to manage anymore.
 
-### Certificate Validation
+### How it fits together
 
-A certificate is created during each deploy. To use a certificate, you must validate it:
+- The UI Lambda is exposed via a public Lambda Function URL (`ui_lambda_url`).
+- Cloudflare proxies the public domains to that Function URL origin.
+- Lambda Function URLs reject requests carrying a foreign `Host` header, so a **Cloudflare Worker rewrites the `Host`/SNI** to the `.on.aws` origin.
+- The R backend is a separate public Lambda Function URL (`lambda_r_backend_url`); the browser calls it directly for the `/run-model` analysis request.
 
-#### DNS Validation
+### Domains
 
-- **Find the CNAME records**: After requesting a certificate, AWS will provide CNAME records that need to be added to your domain's DNS. You can find these in **AWS Certificate Manager**. For each certificate, each of it's domains will have the _CNAME name_ and _CNAME value_ - you will need these in the next step
-- **Add CNAME records to your DNS provider**: Go to your domain registrar (e.g., CloudFlare, Namecheap, GoDaddy, Route 53) or DNS provider and add the values via the examples below
-- **Wait for validation**: DNS changes can take 5-30 minutes to propagate globally
+- `maive.eu` and `spuriousprecision.com` (apex + `www`) are **proxied through Cloudflare** (orange-cloud), pointing at the UI Lambda Function URL origin.
+- `easymeta.org` **redirects** to `spuriousprecision.com` via GoDaddy domain forwarding.
 
-   **Add to your DNS provider:**
-
-- **Name**: `_<some_id>.spuriousprecision.com.`
-- **Type**: `CNAME`
-- **Value**: `_<some_id>.<some_value>.acm-validation.aws.`
-- **Proxy status**: `DNS only`
-- **TTL**: `1` (or default)
-
-   **Where to add:**
-
-- **Namecheap**: Domain List → Manage → Advanced DNS → Add Record
-- **GoDaddy**: My Domains → DNS → Add Record
-- **Route 53**: Hosted Zones → Your Domain → Create Record
-- **Cloudflare**: DNS → Add Record
-
-   **Verify validation:**
-
-   ```bash
-   # Check certificate status
-   aws acm list-certificates \
-     --region eu-central-1 \
-     --query 'CertificateSummaryList[?DomainName==`spuriousprecision.com`].Status'
-   ```
-
-### Using Certificates in Deployment
-
-Once you have a validated certificate:
-
-1. **Redeploy**: The next deployment will automatically:
-   - Create HTTPS listener on port 443
-   - Add HTTP redirect listener on port 80
-   - Remove HTTP-only forward listener
-
-2. **Add CNAME records to the host DNS records**: You should now go to your domain registrar and point your domain to the AWS ALB.
-
-- Add the following three records to your record list:
-  - 1.
-    - **Type**: `CNAME`
-    - **Name**: `*`
-    - **Content**: <alb-dns-name> (e.g. _maive-ui-alb-<id>.<region>.elb.amazonaws.com_)
-    - **Proxy status**: `DNS only`
-    - **TTL**: `Auto`
-  - 2.
-    - **Type**: `CNAME`
-    - **Name**: `www`
-    - **Content**: <alb-dns-name> (e.g. _maive-ui-alb-<id>.<region>.elb.amazonaws.com_)
-    - **Proxy status**: `DNS only`
-    - **TTL**: `Auto`
-  - 2.
-    - **Type**: `CNAME`
-    - **Name**: `<your-domain>` (without the www prefix, e.g. _maive.eu_)
-    - **Content**: <alb-dns-name> (e.g. _maive-ui-alb-<id>.<region>.elb.amazonaws.com_)
-    - **Proxy status**: `DNS only`
-    - **TTL**: `Auto`
-
-  You must add these records **for every domain associated with your certificate**.
-
-### Certificate ARN Format
-
-The certificate ARN follows this pattern:
-
-```plain
-arn:aws:acm:{region}:{account-id}:certificate/{certificate-id}
-```
-
-Example:
-
-```plain
-arn:aws:acm:eu-central-1:123456789012:certificate/abcd1234-5678-90ef-ghij-klmnopqrstuv
-```
-
-### Managing Existing Certificates
+### Verifying
 
 ```bash
-# List all certificates in your region
-aws acm list-certificates --region eu-central-1
+# Show the UI and R Lambda Function URLs
+bun run cloud:status
 
-# Get certificate details
-aws acm describe-certificate --certificate-arn <your-cert-arn> --region eu-central-1
-
-# Check certificate status
-aws acm list-certificates --region eu-central-1 --query 'CertificateSummaryList[?Status==`ISSUED`]'
+# Check that a domain resolves through Cloudflare and serves the app
+curl -sI https://spuriousprecision.com | head -n 20
 ```
-
-### Troubleshooting
-
-**Common Issues:**
-
-1. **Certificate not found**: Ensure you're in the correct AWS region
-2. **Validation pending**: Complete DNS or email validation
-3. **Certificate expired**: Request a new certificate (ACM auto-renews valid certificates)
-4. **Wrong region**: Certificates must be in the same region as your ALB
-
-**Deployment without Certificate:**
-
-If you don't have a certificate yet, your application will deploy with HTTP-only:
-
-- ✅ No duplicate listener errors
-- ✅ Simple HTTP setup
-- ✅ Easy to add HTTPS later
-- ❌ Not secure for production
-
-**Best Practices:**
-
-- Request certificates well before deployment
-- Use DNS validation for faster processing
-- Keep certificate ARNs in GitHub secrets
-- Monitor certificate expiration dates
-- Test HTTPS setup in staging first
 
 ## Destroying the architecture
 
@@ -397,10 +295,9 @@ When merging a release PR:
 
 ## **Secure Setup**
 
-- **Cost**: ~$18/month additional  
-- **Security**: High (ALB + WAF + Enhanced Security)
-- **Architecture**: Internet → ALB → ECS UI → Lambda R Backend
-- **Best for**: Production, high security requirements
+- **Security**: Cloudflare WAF in front of the UI Lambda; R backend is a public Function URL (auth `NONE`, CORS `*`)
+- **Architecture**: Internet → Cloudflare (CDN/TLS/WAF) → UI Lambda Function URL; browser → R Lambda Function URL (direct, for analysis)
+- **Best for**: Production — serverless, scales to zero when idle
 
 # Commit message formatting
 
