@@ -105,3 +105,9 @@ notes/
 **/*.png
 **/*.bak
 
+# Claude Code — local & ephemeral (never commit). Shared config such as
+# .claude/settings.json and .claude/commands/ is intentionally NOT ignored.
+.claude/settings.local.json
+.claude/projects/
+.claude/worktrees/
+
