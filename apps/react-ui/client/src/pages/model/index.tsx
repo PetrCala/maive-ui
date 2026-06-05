@@ -21,7 +21,7 @@ import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
-import type { RTMAParameters } from "@src/types/api";
+import type { RTMAParameters, SubmitRunResponse } from "@src/types/api";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
@@ -659,15 +659,33 @@ export default function ModelPage() {
                 }
               : parameters;
 
-          const submission = await modelService.submitRun(
-            uploadedData?.data ?? [],
-            runParameters,
-            dataId ?? "",
-            parameters.modelType,
-            abortControllerRef.current ?? undefined,
-          );
+          // Best-effort: if the async submit fails (e.g. the queue/table isn't
+          // configured — 503 locally — or a transient error), degrade to the
+          // synchronous path below rather than failing the whole run. A user
+          // abort is re-thrown so the outer handler can report it.
+          let submission: SubmitRunResponse | null = null;
+          try {
+            submission = await modelService.submitRun(
+              uploadedData?.data ?? [],
+              runParameters,
+              dataId ?? "",
+              parameters.modelType,
+              abortControllerRef.current ?? undefined,
+            );
+          } catch (submitError) {
+            if (
+              submitError instanceof Error &&
+              submitError.name === "AbortError"
+            ) {
+              throw submitError;
+            }
+            console.warn(
+              "Async submit unavailable; running synchronously instead:",
+              submitError,
+            );
+          }
 
-          if (submission.jobId && !submission.tooLarge) {
+          if (submission?.jobId && !submission.tooLarge) {
             addRun({
               jobId: submission.jobId,
               modelType: parameters.modelType,
@@ -700,8 +718,9 @@ export default function ModelPage() {
             }
             return;
           }
-          // tooLarge → fall through to the synchronous path below, where the
-          // user must stay on the page while the run completes.
+          // Not queued (too large, async not configured, or submit failed) →
+          // fall through to the synchronous path below, where the user must
+          // stay on the page while the run completes.
           setLoadingPhase("blocking");
         }
 
