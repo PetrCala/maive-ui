@@ -100,6 +100,11 @@ resource "aws_iam_role_policy" "gha_terraform_policy" {
           "iam:DeletePolicy",
           "iam:GetPolicy",
           "iam:GetPolicyVersion",
+          # Needed to update an existing customer-managed policy in place
+          # (terraform creates a new default version and prunes old ones).
+          "iam:CreatePolicyVersion",
+          "iam:DeletePolicyVersion",
+          "iam:SetDefaultPolicyVersion",
           "iam:List*",
           "iam:CreateServiceLinkedRole"
         ],
