@@ -28,6 +28,7 @@ import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
 import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
 import { requestNotificationPermission } from "@src/utils/notifications";
+import { getUploadedData as getCachedUploadedData } from "@src/utils/dataCacheDb";
 
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
@@ -96,7 +97,7 @@ export default function ModelPage() {
     }
   });
 
-  const loadDataFromStore = () => {
+  const loadDataFromStore = async () => {
     try {
       // Try to get data from cache first
       let data = dataCache.get(dataId ?? "");
@@ -111,8 +112,23 @@ export default function ModelPage() {
         }
       }
 
+      // Durable fallback: the in-memory cache is lost on a page reload (the
+      // persisted store keeps only the dataId), so recover from IndexedDB
+      // before giving up — otherwise the run would submit with empty data.
+      if (!data && dataId) {
+        const cached = await getCachedUploadedData(dataId);
+        if (cached) {
+          data = cached;
+          dataCache.set(dataId, data);
+        }
+      }
+
       if (!data) {
         throw new Error("Data not found");
+      }
+
+      if (!isMountedRef.current) {
+        return;
       }
 
       setUploadedData(data);
@@ -133,6 +149,13 @@ export default function ModelPage() {
       }
     } catch (error) {
       console.error("Error loading data:", error);
+      if (isMountedRef.current) {
+        showAlert(
+          "We couldn't find your data — it isn't kept after a page reload. Please upload it again or re-run the demo.",
+          "error",
+        );
+        router.push("/upload");
+      }
     }
   };
 
@@ -141,7 +164,7 @@ export default function ModelPage() {
     if (dataId) {
       // Reset search params applied flag when navigating to different data
       searchParamsAppliedRef.current = false;
-      loadDataFromStore();
+      void loadDataFromStore();
     } else {
       showAlert("No data selected", "error");
       router.push("/upload");
@@ -630,6 +653,16 @@ export default function ModelPage() {
 
   const handleRunModel = useCallback(() => {
     void (async () => {
+      // Never submit an empty-data run — without this the backend fails with a
+      // confusing "Data must have exactly 3 or 4 columns. Found 0 columns."
+      if (!uploadedData || uploadedData.data.length === 0) {
+        showAlert(
+          "Your data isn't loaded — please upload it again or re-run the demo.",
+          "error",
+        );
+        return;
+      }
+
       const isAsyncRun = CONFIG.ASYNC_RUNS_ENABLED && !shouldUseMockResults();
       setLoadingPhase(isAsyncRun ? "submitting" : "blocking");
       setLoading(true);
