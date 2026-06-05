@@ -6,6 +6,7 @@ import type { AppProps } from "next/app";
 import { usePathname } from "next/navigation";
 import Header from "@components/Header";
 import Footer from "@components/Footer";
+import RunsWatcher from "@components/RunsWatcher";
 import Script from "next/script";
 
 export default function App({ Component, pageProps }: AppProps) {
@@ -17,6 +18,7 @@ export default function App({ Component, pageProps }: AppProps) {
   return (
     <Providers>
       <Script src="/api/runtime-config" />
+      <RunsWatcher />
       <div className="flex flex-col min-h-screen">
         {!isHomePage && <Header />}
         <main className="flex-1 flex-col">

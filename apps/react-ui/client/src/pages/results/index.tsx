@@ -27,7 +27,7 @@ import CitationBox from "@src/components/CitationBox";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
-import LoadingCard from "@src/components/LoadingCard";
+import RunLoading from "@src/components/RunLoading";
 import { useRunStatus } from "@src/hooks/useRunStatus";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
@@ -287,12 +287,7 @@ export default function ResultsPage() {
               />
             </div>
           ) : (
-            <div className="mx-auto max-w-md">
-              <LoadingCard
-                title="Running your analysis..."
-                subtitle="You can leave this page — your run is queued and will appear in My Runs. The first run can take a little longer while the engine warms up."
-              />
-            </div>
+            <RunLoading phase="running" dataId={dataId} />
           )}
         </main>
       </>

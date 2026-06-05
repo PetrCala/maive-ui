@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { ModelResults, RTMAResults, RunStatus } from "@src/types/api";
 import { modelService } from "@api/services/modelService";
 import { useRunsStore } from "@src/store/runsStore";
+import { getResult, putResult } from "@src/utils/runsCache";
 
 type UseRunStatusResult = {
   status: RunStatus | null;
@@ -67,7 +68,9 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
         }
         if (run.result) {
           try {
-            setResult(JSON.parse(run.result) as ModelResults | RTMAResults);
+            const parsed = JSON.parse(run.result) as ModelResults | RTMAResults;
+            setResult(parsed);
+            void putResult(jobId, parsed); // durable client-side cache
           } catch {
             setErrorMessage("Failed to parse run result.");
           }
@@ -103,7 +106,24 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
       timer = setTimeout(() => void poll(), interval);
     };
 
-    void poll();
+    const init = async () => {
+      // Durable cache: if this result is already cached locally, render it
+      // immediately and skip polling (results are immutable once produced, and
+      // this still works after the 48h server TTL).
+      const cached = await getResult(jobId);
+      if (cancelled) {
+        return;
+      }
+      if (cached) {
+        setResult(cached);
+        setStatus("succeeded");
+        setIsPolling(false);
+        return;
+      }
+      void poll();
+    };
+
+    void init();
 
     return () => {
       cancelled = true;

@@ -4,8 +4,10 @@ import Head from "next/head";
 import { useRouter } from "next/navigation";
 import SectionHeading from "@src/components/SectionHeading";
 import { GoBackButton } from "@src/components/Buttons";
+import ActionButton from "@src/components/Buttons/ActionButton";
 import CONST from "@src/CONST";
 import { useRunsStore } from "@src/store/runsStore";
+import { deleteResult, clearAllResults } from "@src/utils/runsCache";
 import type { RunStatus } from "@src/types/api";
 
 const statusLabel = (status: RunStatus): string => {
@@ -25,15 +27,16 @@ const statusLabel = (status: RunStatus): string => {
   }
 };
 
+// Badge classes (background + text) for the status pill.
 const statusClasses = (status: RunStatus): string => {
   switch (status) {
     case "succeeded":
-      return "text-green-600 dark:text-green-400";
+      return "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400";
     case "failed":
     case "timedout":
-      return "text-red-600 dark:text-red-400";
+      return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
     default:
-      return "text-blue-600 dark:text-blue-400";
+      return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
   }
 };
 
@@ -68,13 +71,16 @@ export default function RunsPage() {
           <div className="mb-4 flex items-center justify-between">
             <SectionHeading level="h1" text="My Runs" />
             {runsList.length > 0 && (
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() => clearRuns()}
+              <ActionButton
+                variant="secondary"
+                size="sm"
+                onClick={() => {
+                  clearRuns();
+                  void clearAllResults();
+                }}
               >
                 Clear all
-              </button>
+              </ActionButton>
             )}
           </div>
 
@@ -91,38 +97,41 @@ export default function RunsPage() {
               />
             </div>
           ) : (
-            <ul className="space-y-3">
+            <ul className="space-y-2">
               {runsList.map((run) => (
                 <li
                   key={run.jobId}
-                  className="card flex items-center justify-between gap-4"
+                  className="surface-elevated flex items-center justify-between gap-4 rounded-lg border border-primary px-4 py-3"
                 >
-                  <div>
+                  <div className="min-w-0">
                     <p className="font-medium">{run.modelType}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {new Date(run.submittedAt).toLocaleString()}
                     </p>
                   </div>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3">
                     <span
-                      className={`text-sm font-medium ${statusClasses(run.status)}`}
+                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${statusClasses(run.status)}`}
                     >
                       {statusLabel(run.status)}
                     </span>
-                    <button
-                      type="button"
-                      className="btn-primary"
+                    <ActionButton
+                      variant="primary"
+                      size="sm"
                       onClick={() =>
                         openRun(run.jobId, run.dataId, run.parameters)
                       }
                     >
                       Open
-                    </button>
+                    </ActionButton>
                     <button
                       type="button"
-                      className="text-sm text-gray-400 hover:text-red-500"
+                      className="text-sm text-gray-400 transition-colors hover:text-red-600"
                       aria-label="Remove run"
-                      onClick={() => removeRun(run.jobId)}
+                      onClick={() => {
+                        removeRun(run.jobId);
+                        void deleteResult(run.jobId);
+                      }}
                     >
                       Remove
                     </button>
