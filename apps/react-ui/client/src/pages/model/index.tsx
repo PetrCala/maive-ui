@@ -14,7 +14,7 @@ import ActionButton from "@src/components/Buttons/ActionButton";
 import { GoBackButton } from "@src/components/Buttons";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import { useParameterAlert } from "@src/components/ParameterAlertProvider";
-import LoadingCard from "@src/components/LoadingCard";
+import RunLoading, { type RunLoadingPhase } from "@src/components/RunLoading";
 import SectionHeading from "@src/components/SectionHeading";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
@@ -27,6 +27,7 @@ import { hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
 import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
+import { requestNotificationPermission } from "@src/utils/notifications";
 
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
@@ -40,6 +41,10 @@ export default function ModelPage() {
   const [loading, setLoading] = useState(false);
   const [showWarmupHint, setShowWarmupHint] = useState(false);
   const [hasRunModel, setHasRunModel] = useState(false);
+  // Drives the unified loading screen: "submitting" for the async queue path
+  // (before we navigate to /results, which then shows "running"), "blocking"
+  // for the synchronous / mock / too-large fallback where the user must stay.
+  const [loadingPhase, setLoadingPhase] = useState<RunLoadingPhase>("blocking");
   const [uploadedData, setUploadedData] = useState<UploadedData | null>(null);
   const [parameters, setParameters] = useState<ModelParameters>({
     ...CONFIG.DEFAULT_MODEL_PARAMETERS,
@@ -469,13 +474,6 @@ export default function ModelPage() {
     return () => clearTimeout(timer);
   }, [loading]);
 
-  const modelLoadingCopy = {
-    title: "Running your analysis...",
-    subtitle: showWarmupHint
-      ? "Still working - the first run can take a little longer while the analysis engine warms up."
-      : "Hang tight while we process your model settings.",
-  };
-
   useEffect(() => {
     if (parameters.modelType === CONST.MODEL_TYPES.WAIVE) {
       if (
@@ -632,6 +630,8 @@ export default function ModelPage() {
 
   const handleRunModel = useCallback(() => {
     void (async () => {
+      const isAsyncRun = CONFIG.ASYNC_RUNS_ENABLED && !shouldUseMockResults();
+      setLoadingPhase(isAsyncRun ? "submitting" : "blocking");
       setLoading(true);
       setHasRunModel(true);
       abortControllerRef.current = new AbortController();
@@ -644,7 +644,10 @@ export default function ModelPage() {
         // and navigate immediately so the user can keep working. Skips mock
         // mode (dev); falls back to the synchronous path below when the dataset
         // is too large to queue.
-        if (CONFIG.ASYNC_RUNS_ENABLED && !shouldUseMockResults()) {
+        if (isAsyncRun) {
+          // Ask for notification permission lazily, on first submit, so the
+          // global RunsWatcher can ping the user when a backgrounded run ends.
+          requestNotificationPermission();
           const runParameters: ModelParameters | RTMAParameters =
             parameters.modelType === CONST.MODEL_TYPES.RTMA
               ? {
@@ -697,7 +700,9 @@ export default function ModelPage() {
             }
             return;
           }
-          // tooLarge → fall through to the synchronous path below.
+          // tooLarge → fall through to the synchronous path below, where the
+          // user must stay on the page while the run completes.
+          setLoadingPhase("blocking");
         }
 
         let result: { data?: unknown; error?: string; message?: string };
@@ -890,11 +895,10 @@ export default function ModelPage() {
             {/* Card transition: parameters or loading */}
             <div className="min-h-[400px] w-full items-center justify-center">
               {loading || hasRunModel ? (
-                <LoadingCard
-                  title={modelLoadingCopy.title}
-                  subtitle={modelLoadingCopy.subtitle}
-                  color="blue"
-                  size="md"
+                <RunLoading
+                  phase={loadingPhase}
+                  dataId={dataId}
+                  showWarmupHint={showWarmupHint}
                 />
               ) : (
                 <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">

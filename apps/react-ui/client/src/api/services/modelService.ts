@@ -94,6 +94,33 @@ export class ModelService {
   }
 
   /**
+   * Batch-fetch the status of multiple runs by jobId (for the My Runs list /
+   * the global watcher). Returns status-only entries (no heavy result payload).
+   * @param jobIds - The run job ids to look up
+   */
+  async getRuns(jobIds: string[]): Promise<GetRunResponse[]> {
+    if (jobIds.length === 0) {
+      return [];
+    }
+    try {
+      return await httpGet<GetRunResponse[]>(
+        `/api/runs?ids=${jobIds.map((id) => encodeURIComponent(id)).join(",")}`,
+        {
+          timeout: 30000,
+          headers: {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    } catch (error: unknown) {
+      throw new Error(
+        `Failed to fetch runs: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
+  }
+
+  /**
    * Submit a model run to the async queue (non-blocking).
    * Calls the same-origin UI Lambda route, which persists a queued job and
    * enqueues it for the orchestrator, returning a jobId. Returns

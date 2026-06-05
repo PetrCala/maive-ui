@@ -57,7 +57,7 @@ resource "aws_iam_policy" "ui_lambda_runs" {
     Statement = [
       {
         Effect   = "Allow"
-        Action   = ["dynamodb:GetItem", "dynamodb:PutItem"]
+        Action   = ["dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:PutItem"]
         Resource = aws_dynamodb_table.runs.arn
       },
       {
