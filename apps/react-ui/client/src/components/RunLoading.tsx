@@ -54,24 +54,25 @@ export default function RunLoading({
       <LoadingCard title={title} subtitle={subtitle}>
         {phase === "running" && (
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <ActionButton
-              variant="primary"
-              size="sm"
-              onClick={() => router.push("/upload")}
-            >
-              Run another analysis
-            </ActionButton>
             {dataId ? (
               <ActionButton
-                variant="secondary"
+                variant="primary"
                 size="sm"
                 onClick={() =>
                   router.push(`/model?dataId=${encodeURIComponent(dataId)}`)
                 }
               >
-                Model setup
+                Revise your model setup
               </ActionButton>
             ) : null}
+            <ActionButton
+              // Prominent only when there's no model setup to return to.
+              variant={dataId ? "secondary" : "primary"}
+              size="sm"
+              onClick={() => router.push("/upload")}
+            >
+              Analyze a new dataset
+            </ActionButton>
             <ActionButton
               variant="secondary"
               size="sm"
