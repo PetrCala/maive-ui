@@ -18,6 +18,7 @@ import CONFIG from "@src/CONFIG";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import { dataCache, useDataStore } from "@store/dataStore";
 import type { ColumnMapping, UploadedData } from "@store/dataStore";
+import { getUploadedData as getCachedUploadedData } from "@src/utils/dataCacheDb";
 import type {
   AlertType,
   DataArray,
@@ -578,6 +579,30 @@ export default function ValidationPage() {
   const [filterGroup, setFilterGroup] =
     useState<SubsampleFilterGroupNode>(createEmptyGroup());
   const continueButtonRef = useRef<HTMLButtonElement>(null);
+  // Gate: hydrate the in-memory cache from IndexedDB before the loader below
+  // reads it, so the data survives a page reload (the in-memory cache does not,
+  // and the persisted store keeps only the dataId).
+  const [cacheHydrated, setCacheHydrated] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    setCacheHydrated(false);
+    const hydrate = async () => {
+      if (dataId && !dataCache.get(dataId)) {
+        const cached = await getCachedUploadedData(dataId);
+        if (!cancelled && cached) {
+          dataCache.set(dataId, cached);
+        }
+      }
+      if (!cancelled) {
+        setCacheHydrated(true);
+      }
+    };
+    void hydrate();
+    return () => {
+      cancelled = true;
+    };
+  }, [dataId]);
 
   useEnterKeyAction(() => {
     const button = continueButtonRef.current;
@@ -597,6 +622,12 @@ export default function ValidationPage() {
       setIsFilterEnabled(false);
       setFilterGroup(createEmptyGroup());
       setLoading(false);
+      return;
+    }
+
+    // Wait until the IndexedDB → in-memory cache hydration has run, so a
+    // reloaded page recovers its data instead of flashing a "data not found".
+    if (!cacheHydrated) {
       return;
     }
 
@@ -695,7 +726,7 @@ export default function ValidationPage() {
     } finally {
       setLoading(false);
     }
-  }, [dataId, showAlert]);
+  }, [dataId, showAlert, cacheHydrated]);
 
   const mappingComplete = useMemo(() => {
     return REQUIRED_FIELDS.every((field) => Boolean(mapping[field]));

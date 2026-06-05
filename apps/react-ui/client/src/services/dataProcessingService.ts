@@ -8,6 +8,7 @@ import type { SubsampleFilterState } from "@src/types";
 import { generateDataId, processUploadedFile } from "@utils/dataUtils";
 import { mockCsvFiles } from "@utils/mockCsvFiles";
 import { generateMockCSVFile } from "@utils/mockData";
+import { putUploadedData } from "@utils/dataCacheDb";
 
 /**
  * Service for processing data.
@@ -113,6 +114,9 @@ export class DataProcessingService {
     // Store in Zustand store and cache
     setUploadedData(uploadedData);
     dataCache.set(uploadedData.id, uploadedData);
+    // Durable copy so the data survives a page reload (the in-memory cache
+    // does not, and the persisted store keeps only the dataId).
+    void putUploadedData(uploadedData.id, uploadedData);
   }
 
   /**
@@ -123,6 +127,7 @@ export class DataProcessingService {
     const { setUploadedData } = useDataStore.getState();
     setUploadedData(uploadedData);
     dataCache.set(uploadedData.id, uploadedData);
+    void putUploadedData(uploadedData.id, uploadedData);
   }
 
   /**
