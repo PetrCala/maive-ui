@@ -8,10 +8,16 @@ import React, {
 } from "react";
 import AlertPopup from "./AlertPopup";
 import type { AlertType } from "@src/types/alert";
+import type { AlertAction } from "@src/components/Alert/types";
 import CONST from "@src/CONST";
 
 type GlobalAlertContextType = {
-  showAlert: (message: string, type?: AlertType, duration?: number) => void;
+  showAlert: (
+    message: string,
+    type?: AlertType,
+    duration?: number,
+    action?: AlertAction,
+  ) => void;
 };
 
 const GlobalAlertContext = createContext<GlobalAlertContextType | undefined>(
@@ -33,13 +39,20 @@ export const GlobalAlertProvider: React.FC<{ children: React.ReactNode }> = ({
   const [message, setMessage] = useState("");
   const [type, setType] = useState<AlertType>(CONST.ALERT_TYPES.INFO);
   const [duration, setDuration] = useState(2500);
+  const [action, setAction] = useState<AlertAction | undefined>(undefined);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const showAlert = useCallback(
-    (msg: string, lvl: AlertType = CONST.ALERT_TYPES.INFO, dur = 2500) => {
+    (
+      msg: string,
+      lvl: AlertType = CONST.ALERT_TYPES.INFO,
+      dur = 2500,
+      act?: AlertAction,
+    ) => {
       setMessage(msg);
       setType(lvl);
       setDuration(dur);
+      setAction(act);
       setOpen(true);
       if (timerRef.current) {
         clearTimeout(timerRef.current);
@@ -67,6 +80,7 @@ export const GlobalAlertProvider: React.FC<{ children: React.ReactNode }> = ({
         open={open}
         onClose={handleClose}
         duration={duration}
+        action={action}
       />
     </GlobalAlertContext.Provider>
   );

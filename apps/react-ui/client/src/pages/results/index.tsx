@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, useMemo, useEffect, type ReactNode } from "react";
 import Head from "next/head";
+import Link from "next/link";
 import Image from "next/image";
 import Tooltip from "@components/Tooltip";
 import DownloadButton from "@components/Buttons/DownloadButton";
@@ -262,6 +263,17 @@ export default function ResultsPage() {
     }
   }, [exportErrorMessage]);
 
+  // Lateral nav back to the run history — only meaningful when this page was
+  // opened for a specific async run (jobId present, i.e. from My Runs).
+  const allRunsLink = jobId ? (
+    <Link
+      href="/runs"
+      className="inline-flex items-center gap-1 text-sm font-medium text-secondary transition-colors hover:text-primary"
+    >
+      <span aria-hidden>←</span> All runs
+    </Link>
+  ) : null;
+
   // Async run still in flight (or terminal-but-unavailable) — show a loading /
   // error state while polling, instead of the "no results" view.
   if (jobId && !results) {
@@ -283,6 +295,7 @@ export default function ResultsPage() {
             text="Back to model setup"
             variant="simple"
           />
+          <div className="mt-4">{allRunsLink}</div>
         </div>
       );
     } else if (runFailed) {
@@ -298,6 +311,7 @@ export default function ResultsPage() {
             text="Back to model setup"
             variant="simple"
           />
+          <div className="mt-4">{allRunsLink}</div>
         </div>
       );
     } else {
@@ -526,6 +540,7 @@ export default function ResultsPage() {
       <main className="content-page-container">
         <div className="max-w-4xl w-full space-y-8 px-2 sm:px-0">
           <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
+            {allRunsLink && <div className="mb-4">{allRunsLink}</div>}
             <SectionHeading level="h1" text="Model Results" className="mb-6" />
 
             <div className="space-y-6">

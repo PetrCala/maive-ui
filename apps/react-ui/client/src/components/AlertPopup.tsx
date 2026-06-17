@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import type { AlertType } from "@src/types/alert";
+import type { AlertAction } from "@src/components/Alert/types";
 import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
 
@@ -9,6 +10,7 @@ export type AlertPopupProps = {
   open: boolean;
   onClose: () => void;
   duration?: number; // ms
+  action?: AlertAction;
 };
 
 const FADE_IN_DURATION = 600; // ms
@@ -20,6 +22,7 @@ const AlertPopup = ({
   open,
   onClose,
   duration = 2500,
+  action,
 }: AlertPopupProps) => {
   const [show, setShow] = useState(open);
   const [visible, setVisible] = useState(open);
@@ -67,7 +70,14 @@ const AlertPopup = ({
       }}
       className={`fixed right-6 bottom-6 z-50 ${show ? "opacity-100" : "opacity-0"}`}
     >
-      <Alert message={message} type={type} standalone onClick={onClose} />
+      <Alert
+        message={message}
+        type={type}
+        standalone
+        onClick={onClose}
+        action={action}
+        showCloseButton={!!action}
+      />
     </div>
   );
 };
