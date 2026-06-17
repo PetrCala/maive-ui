@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, type ReactNode } from "react";
 import Head from "next/head";
 import Image from "next/image";
 import Tooltip from "@components/Tooltip";
@@ -262,34 +262,54 @@ export default function ResultsPage() {
     }
   }, [exportErrorMessage]);
 
-  // Async run still in flight (or failed) — show a loading / error state while
-  // polling, instead of the "no results" view.
+  // Async run still in flight (or terminal-but-unavailable) — show a loading /
+  // error state while polling, instead of the "no results" view.
   if (jobId && !results) {
+    const runExpired = runStatus.status === "expired";
     const runFailed =
       runStatus.status === "failed" || runStatus.status === "timedout";
+
+    let body: ReactNode;
+    if (runExpired) {
+      body = (
+        <div className="text-center">
+          <SectionHeading level="h1" text="Run expired" className="mb-4" />
+          <p className="mb-6 text-gray-600 dark:text-gray-300">
+            Results are only kept for 48 hours after a run is submitted, so this
+            run is no longer available. Please run the analysis again.
+          </p>
+          <GoBackButton
+            href={`/model?dataId=${dataId ?? ""}`}
+            text="Back to model setup"
+            variant="simple"
+          />
+        </div>
+      );
+    } else if (runFailed) {
+      body = (
+        <div className="text-center">
+          <SectionHeading level="h1" text="Run failed" className="mb-4" />
+          <p className="mb-6 text-gray-600 dark:text-gray-300">
+            {runStatus.errorMessage ??
+              "The analysis did not complete. Please try again."}
+          </p>
+          <GoBackButton
+            href={`/model?dataId=${dataId ?? ""}`}
+            text="Back to model setup"
+            variant="simple"
+          />
+        </div>
+      );
+    } else {
+      body = <RunLoading phase="running" dataId={dataId} />;
+    }
+
     return (
       <>
         <Head>
           <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
         </Head>
-        <main className="content-page-container">
-          {runFailed ? (
-            <div className="text-center">
-              <SectionHeading level="h1" text="Run failed" className="mb-4" />
-              <p className="mb-6 text-gray-600 dark:text-gray-300">
-                {runStatus.errorMessage ??
-                  "The analysis did not complete. Please try again."}
-              </p>
-              <GoBackButton
-                href={`/model?dataId=${dataId ?? ""}`}
-                text="Back to model setup"
-                variant="simple"
-              />
-            </div>
-          ) : (
-            <RunLoading phase="running" dataId={dataId} />
-          )}
-        </main>
+        <main className="content-page-container">{body}</main>
       </>
     );
   }

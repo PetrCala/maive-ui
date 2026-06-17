@@ -44,6 +44,15 @@ const CONST = {
     },
   },
 
+  // Async runs. TTL_SECONDS is the authoritative server-side DynamoDB record
+  // lifetime (set when a job is queued); the client uses TTL_MS to decide when a
+  // run that is missing from the backend is genuinely expired vs. transiently
+  // absent. Single source of truth shared by the API route and the client.
+  RUNS: {
+    TTL_SECONDS: 48 * 60 * 60, // 48h pickup buffer
+    TTL_MS: 48 * 60 * 60 * 1000,
+  },
+
   MODEL_TYPES: {
     MAIVE: "MAIVE",
     WAIVE: "WAIVE",
