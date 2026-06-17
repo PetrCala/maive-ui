@@ -3,6 +3,7 @@ import type { ModelResults, RTMAResults, RunStatus } from "@src/types/api";
 import { modelService } from "@api/services/modelService";
 import { useRunsStore } from "@src/store/runsStore";
 import { getResult, putResult } from "@src/utils/runsCache";
+import CONST from "@src/CONST";
 
 type UseRunStatusResult = {
   status: RunStatus | null;
@@ -13,7 +14,12 @@ type UseRunStatusResult = {
   isPolling: boolean;
 };
 
-const TERMINAL_STATUSES: RunStatus[] = ["succeeded", "failed", "timedout"];
+const TERMINAL_STATUSES: RunStatus[] = [
+  "succeeded",
+  "failed",
+  "timedout",
+  "expired",
+];
 const INITIAL_INTERVAL_MS = 2000;
 const BACKOFF_INTERVAL_MS = 5000;
 const BACKOFF_AFTER_MS = 30000;
@@ -117,6 +123,19 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
       if (cached) {
         setResult(cached);
         setStatus("succeeded");
+        setIsPolling(false);
+        return;
+      }
+      // No durable result and the run is past the 48h server TTL — its record is
+      // gone, so polling would only spin until MAX_POLL_MS. Mark it expired and
+      // stop. (The cache check above still wins, so an immutable cached result
+      // always renders regardless of age.)
+      const entry = useRunsStore
+        .getState()
+        .runsList.find((run) => run.jobId === jobId);
+      if (entry && Date.now() - entry.submittedAt > CONST.RUNS.TTL_MS) {
+        setStatus("expired");
+        updateRunStatus(jobId, "expired");
         setIsPolling(false);
         return;
       }

@@ -30,6 +30,8 @@ const statusLabel = (status: RunStatus): string => {
       return "Failed";
     case "timedout":
       return "Timed out";
+    case "expired":
+      return "Expired";
     default:
       return status;
   }
@@ -43,6 +45,8 @@ const statusClasses = (status: RunStatus): string => {
     case "failed":
     case "timedout":
       return "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400";
+    case "expired":
+      return "bg-gray-100 text-gray-600 dark:bg-gray-800/40 dark:text-gray-400";
     default:
       return "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400";
   }
