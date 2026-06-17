@@ -1,10 +1,12 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useRunsStore } from "@src/store/runsStore";
+import { useRunsStore, migrateRunsState } from "@src/store/runsStore";
 
 const makeEntry = (jobId: string, submittedAt: number) => ({
   jobId,
   modelType: "RTMA",
   dataId: "data_1",
+  filename: "study-data.csv",
+  rowCount: 42,
   parameters: "{}",
   submittedAt,
   status: "queued" as const,
@@ -43,5 +45,40 @@ describe("runsStore", () => {
     useRunsStore.getState().addRun(makeEntry("a", 1));
     useRunsStore.getState().removeRun("a");
     expect(useRunsStore.getState().runsList).toHaveLength(0);
+  });
+});
+
+describe("migrateRunsState", () => {
+  it("backfills filename/rowCount on pre-v1 entries", () => {
+    const legacy = {
+      runsList: [
+        {
+          jobId: "a",
+          modelType: "MAIVE",
+          dataId: "data_1",
+          parameters: "{}",
+          submittedAt: 1,
+          status: "succeeded",
+        },
+      ],
+    };
+    const migrated = migrateRunsState(legacy, 0);
+    expect(migrated.runsList?.[0]).toMatchObject({
+      filename: "Unknown dataset",
+      rowCount: 0,
+    });
+  });
+
+  it("leaves existing filename/rowCount untouched", () => {
+    const current = { runsList: [makeEntry("a", 1)] };
+    const migrated = migrateRunsState(current, 1);
+    expect(migrated.runsList?.[0]).toMatchObject({
+      filename: "study-data.csv",
+      rowCount: 42,
+    });
+  });
+
+  it("returns an empty list when nothing was persisted", () => {
+    expect(migrateRunsState(undefined, 0)).toEqual({ runsList: [] });
   });
 });

@@ -12,12 +12,20 @@ export type RunEntry = {
   jobId: string;
   modelType: string;
   dataId: string | null;
+  // Name of the uploaded dataset, so runs of the same model are distinguishable
+  // in the My Runs list. Falls back to "Unknown dataset" for migrated entries.
+  filename: string;
+  // Number of observations (rows) in the dataset at submit time.
+  rowCount: number;
   // JSON-stringified ModelParameters, so a run can be reopened with full
   // fidelity (the results page reads `parameters` from the URL).
   parameters: string;
   submittedAt: number; // epoch ms
   status: RunStatus;
 };
+
+// Defaults applied to entries persisted before `filename`/`rowCount` existed.
+const UNKNOWN_FILENAME = "Unknown dataset";
 
 type RunsStore = {
   // State
@@ -32,6 +40,31 @@ type RunsStore = {
 
 // Cap the locally-tracked history so localStorage never grows unbounded.
 const MAX_RUNS = 50;
+
+type PersistedRunsState = { runsList?: RunEntry[] };
+
+/**
+ * Backfill persisted runs across schema versions. v1 introduced
+ * `filename`/`rowCount`; older entries are given safe defaults so the My Runs
+ * list never renders blank/undefined dataset labels. Exported for testing.
+ */
+export const migrateRunsState = (
+  persisted: unknown,
+  version: number,
+): PersistedRunsState => {
+  const state = persisted as PersistedRunsState | undefined;
+  if (!state?.runsList) {
+    return { runsList: [] };
+  }
+  if (version < 1) {
+    state.runsList = state.runsList.map((run) => ({
+      ...run,
+      filename: run.filename ?? UNKNOWN_FILENAME,
+      rowCount: run.rowCount ?? 0,
+    }));
+  }
+  return state;
+};
 
 export const useRunsStore = create<RunsStore>()(
   persist(
@@ -71,6 +104,10 @@ export const useRunsStore = create<RunsStore>()(
       name: "maive-runs-list",
       // Persist the lightweight list only (result payloads stay server-side).
       partialize: (state) => ({ runsList: state.runsList }),
+      // v1 introduced `filename`/`rowCount`; backfill older entries so the My
+      // Runs list never renders blank/undefined dataset labels.
+      version: 1,
+      migrate: migrateRunsState,
     },
   ),
 );

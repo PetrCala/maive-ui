@@ -1,14 +1,22 @@
 "use client";
 
+import { useState } from "react";
 import Head from "next/head";
 import { useRouter } from "next/navigation";
 import SectionHeading from "@src/components/SectionHeading";
 import { GoBackButton } from "@src/components/Buttons";
 import ActionButton from "@src/components/Buttons/ActionButton";
+import ConfirmDialog from "@src/components/Modals/ConfirmDialog";
 import CONST from "@src/CONST";
 import { useRunsStore } from "@src/store/runsStore";
 import { deleteResult, clearAllResults } from "@src/utils/runsCache";
 import type { RunStatus } from "@src/types/api";
+
+// Non-terminal statuses get a live "pulse" cue, since RunsWatcher updates them
+// in place while the run is still in flight.
+const PENDING_STATUSES: RunStatus[] = ["queued", "running"];
+const isPending = (status: RunStatus): boolean =>
+  PENDING_STATUSES.includes(status);
 
 const statusLabel = (status: RunStatus): string => {
   switch (status) {
@@ -45,6 +53,7 @@ export default function RunsPage() {
   const runsList = useRunsStore((state) => state.runsList);
   const removeRun = useRunsStore((state) => state.removeRun);
   const clearRuns = useRunsStore((state) => state.clearRuns);
+  const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
 
   const openRun = (
     jobId: string,
@@ -68,21 +77,24 @@ export default function RunsPage() {
       </Head>
       <main className="content-page-container">
         <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-1 flex items-center justify-between">
             <SectionHeading level="h1" text="My Runs" />
             {runsList.length > 0 && (
               <ActionButton
                 variant="secondary"
                 size="sm"
-                onClick={() => {
-                  clearRuns();
-                  void clearAllResults();
-                }}
+                onClick={() => setIsClearConfirmOpen(true)}
               >
                 Clear all
               </ActionButton>
             )}
           </div>
+
+          {runsList.length > 0 && (
+            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
+              Runs are saved on this device only.
+            </p>
+          )}
 
           {runsList.length === 0 ? (
             <div className="card text-center">
@@ -104,15 +116,29 @@ export default function RunsPage() {
                   className="surface-elevated flex items-center justify-between gap-4 rounded-lg border border-primary px-4 py-3"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium">{run.modelType}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {new Date(run.submittedAt).toLocaleString()}
+                    <p className="truncate font-medium" title={run.filename}>
+                      {run.filename}
                     </p>
+                    <div className="mt-0.5 flex min-w-0 items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                      <span className="inline-flex flex-shrink-0 items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+                        {run.modelType}
+                      </span>
+                      <span className="truncate">
+                        {new Date(run.submittedAt).toLocaleString()}
+                        {run.rowCount > 0 ? ` · ${run.rowCount} rows` : ""}
+                      </span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <span
-                      className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${statusClasses(run.status)}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-xs font-semibold ${statusClasses(run.status)}`}
                     >
+                      {isPending(run.status) && (
+                        <span className="relative flex h-1.5 w-1.5">
+                          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-current opacity-75" />
+                          <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-current" />
+                        </span>
+                      )}
                       {statusLabel(run.status)}
                     </span>
                     <ActionButton
@@ -142,6 +168,18 @@ export default function RunsPage() {
           )}
         </div>
       </main>
+
+      <ConfirmDialog
+        isOpen={isClearConfirmOpen}
+        onClose={() => setIsClearConfirmOpen(false)}
+        onConfirm={() => {
+          clearRuns();
+          void clearAllResults();
+        }}
+        title="Clear all runs?"
+        message="This permanently removes every run from this device, including their cached results. This can't be undone."
+        confirmLabel="Clear all"
+      />
     </>
   );
 }

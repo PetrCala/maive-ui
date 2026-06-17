@@ -723,6 +723,8 @@ export default function ModelPage() {
               jobId: submission.jobId,
               modelType: parameters.modelType,
               dataId: dataId ?? null,
+              filename: uploadedData?.filename ?? "Unknown dataset",
+              rowCount: uploadedData?.data?.length ?? 0,
               parameters: JSON.stringify(parameters),
               submittedAt: Date.now(),
               status: "queued",
