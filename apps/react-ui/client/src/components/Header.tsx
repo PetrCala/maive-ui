@@ -6,6 +6,9 @@ import Link from "next/link";
 import CONST from "@src/CONST";
 import CONFIG from "@src/CONFIG";
 import ThemeToggle from "@components/ThemeToggle";
+import { useRunsStore } from "@src/store/runsStore";
+
+const PENDING_STATUSES = ["queued", "running"];
 
 type HeaderProps = {
   showHomeIcon?: boolean;
@@ -18,6 +21,12 @@ export default function Header({
   showHelpIcon = true,
   className = "",
 }: HeaderProps) {
+  const activeRunCount = useRunsStore(
+    (state) =>
+      state.runsList.filter((run) => PENDING_STATUSES.includes(run.status))
+        .length,
+  );
+
   return (
     <header
       className={`surface-elevated border-b border-primary flex justify-between items-center w-full py-4 px-4 z-50 sticky top-0 ${className}`}
@@ -36,9 +45,17 @@ export default function Header({
         {CONFIG.ASYNC_RUNS_ENABLED && (
           <Link
             href="/runs"
-            className="text-primary hover:text-primary-600 px-2 text-sm font-medium transition-colors"
+            className="text-primary hover:text-primary-600 flex items-center gap-1.5 px-2 text-sm font-medium transition-colors"
           >
             My Runs
+            {activeRunCount > 0 && (
+              <span
+                className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-blue-100 px-1.5 py-0.5 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                aria-label={`${activeRunCount} run${activeRunCount === 1 ? "" : "s"} in progress`}
+              >
+                {activeRunCount}
+              </span>
+            )}
           </Link>
         )}
         <ThemeToggle className="icon-header" />

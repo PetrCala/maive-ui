@@ -15,6 +15,8 @@ const addRun = (jobId: string, status: "queued" | "succeeded") => {
     jobId,
     modelType: "RTMA",
     dataId: "d1",
+    filename: "study-data.csv",
+    rowCount: 42,
     parameters: "{}",
     submittedAt: Date.now(),
     status,
