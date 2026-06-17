@@ -5,9 +5,13 @@ import ActionButton from "@src/components/Buttons/ActionButton";
 import Alert from "@src/components/Alert";
 import { useState, useEffect } from "react";
 import CONST from "@src/CONST";
+import CONFIG from "@src/CONFIG";
 import TEXT from "@src/lib/text";
 import DemoButton from "@src/components/Buttons/DemoButton";
+import { useRunsStore } from "@src/store/runsStore";
 import { FaInfoCircle } from "react-icons/fa";
+
+const PENDING_STATUSES = ["queued", "running"];
 
 type StatusBannerResponse = {
   show: boolean;
@@ -35,6 +39,15 @@ export default function Home() {
   const [bannerMessage, setBannerMessage] = useState<string>("");
   const [shouldShowBanner, setShouldShowBanner] = useState(false);
   const [hasDismissedBanner, setHasDismissedBanner] = useState(false);
+
+  // The home page has no header, so this is the only path back to past runs for
+  // a returning user. Shown only when there is something to see (runs are
+  // per-browser); the count comes from the same store the header badge uses.
+  const runsList = useRunsStore((state) => state.runsList);
+  const activeRunCount = runsList.filter((run) =>
+    PENDING_STATUSES.includes(run.status),
+  ).length;
+  const showMyRuns = CONFIG.ASYNC_RUNS_ENABLED && runsList.length > 0;
 
   useEffect(() => {
     setIsDevelopment(process.env.NODE_ENV === "development");
@@ -137,6 +150,25 @@ export default function Home() {
               shouldShowIcon={true}
             />
           </div>
+
+          {showMyRuns && (
+            <Link
+              href="/runs"
+              className="inline-flex items-center gap-2 text-sm font-medium text-secondary hover:text-primary transition-colors"
+            >
+              {activeRunCount > 0 ? (
+                <>
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
+                  </span>
+                  {`${activeRunCount} run${activeRunCount === 1 ? "" : "s"} in progress — view My Runs`}
+                </>
+              ) : (
+                `View My Runs (${runsList.length})`
+              )}
+            </Link>
+          )}
         </div>
 
         {isDevelopment && <PingButton />}

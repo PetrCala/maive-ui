@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import { useRunsStore } from "@src/store/runsStore";
@@ -8,6 +9,9 @@ import { modelService } from "@src/api/services/modelService";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import { notifyRunComplete } from "@src/utils/notifications";
 import type { RunStatus } from "@src/types/api";
+
+// Keep the in-app completion toast on screen long enough to click its action.
+const COMPLETION_ALERT_MS = 8000;
 
 const TERMINAL_STATUSES: RunStatus[] = [
   "succeeded",
@@ -27,6 +31,7 @@ const isTerminal = (status: RunStatus) => TERMINAL_STATUSES.includes(status);
  * in-app alert fallback. Inert when CONFIG.ASYNC_RUNS_ENABLED is false.
  */
 export default function RunsWatcher() {
+  const router = useRouter();
   const runsList = useRunsStore((state) => state.runsList);
   const updateRunStatus = useRunsStore((state) => state.updateRunStatus);
   const { showAlert } = useGlobalAlert();
@@ -70,11 +75,19 @@ export default function RunsWatcher() {
             });
             if (!shown) {
               const ok = run.status === "succeeded";
+              const modelType = run.modelType ?? prev.modelType ?? "Model";
+              const { jobId } = run;
               showAlert(
                 ok
-                  ? "Your run finished — open it from My Runs."
-                  : "A run did not complete — see My Runs.",
+                  ? `Your ${modelType} run finished.`
+                  : `Your ${modelType} run didn't complete.`,
                 ok ? "success" : "error",
+                COMPLETION_ALERT_MS,
+                {
+                  label: ok ? "View results" : "View details",
+                  onClick: () =>
+                    router.push(`/results?jobId=${encodeURIComponent(jobId)}`),
+                },
               );
             }
           }
@@ -114,7 +127,7 @@ export default function RunsWatcher() {
         clearTimeout(timer);
       }
     };
-  }, [pendingIdsKey, updateRunStatus, showAlert]);
+  }, [pendingIdsKey, updateRunStatus, showAlert, router]);
 
   return null;
 }

@@ -38,6 +38,7 @@ const Alert = ({
   standalone = false,
   role = "alert",
   showCloseButton = false,
+  action,
 }: AlertProps) => {
   const getAlertStyles = () => {
     switch (type) {
@@ -127,6 +128,18 @@ const Alert = ({
       <div className="flex-shrink-0 mr-3 mt-0.5">{getIcon()}</div>
       <div className="flex-1">
         <p className="text-sm font-medium">{renderMessage(message)}</p>
+        {action && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              action.onClick();
+            }}
+            className="mt-1.5 text-sm font-semibold underline underline-offset-2 hover:opacity-80"
+          >
+            {action.label}
+          </button>
+        )}
       </div>
       {showCloseButton && (
         <button
