@@ -12,6 +12,7 @@ import type {
   RunStatus,
 } from "@src/types/api";
 import { generateJobId } from "@src/utils/idUtils";
+import CONST from "@src/CONST";
 
 // Allow larger request bodies than Next.js's 1mb default so we can accept a
 // dataset and decide whether to queue it or signal the synchronous fallback.
@@ -29,7 +30,7 @@ const region =
 const tableName = process.env.RUNS_TABLE_NAME;
 const queueUrl = process.env.RUNS_QUEUE_URL;
 
-const TTL_SECONDS = 48 * 60 * 60; // 48h pickup buffer
+const TTL_SECONDS = CONST.RUNS.TTL_SECONDS; // 48h pickup buffer
 // Keep the SQS message under the 256KB hard limit; larger datasets fall back
 // to the synchronous path (which posts directly to the R Lambda).
 const MAX_QUEUE_BODY_BYTES = 200 * 1024;

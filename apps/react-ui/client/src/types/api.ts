@@ -116,7 +116,17 @@ type PingResponse = {
 };
 
 // Async runs (queue) types -----------------------------------------------
-type RunStatus = "queued" | "running" | "succeeded" | "failed" | "timedout";
+// "expired" is a client-synthetic terminal status: the backend never writes it.
+// It is assigned locally when a non-terminal run is past the 48h server TTL and
+// its record is gone (see RunsWatcher / useRunStatus), so a stale run does not
+// appear stuck on "running" forever.
+type RunStatus =
+  | "queued"
+  | "running"
+  | "succeeded"
+  | "failed"
+  | "timedout"
+  | "expired";
 
 // Response from POST /api/runs. `tooLarge` signals the client to fall back to
 // the synchronous path (dataset too big to queue via SQS).
