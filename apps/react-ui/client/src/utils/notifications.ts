@@ -35,6 +35,11 @@ export const notifyRunComplete = ({
   if (!isSupported() || Notification.permission !== "granted") {
     return false;
   }
+  // "expired" is assigned locally to stale runs, not a completion event — never
+  // surface it as a notification.
+  if (status === "expired") {
+    return false;
+  }
   const succeeded = status === "succeeded";
   const title = succeeded
     ? `${modelType} run finished`

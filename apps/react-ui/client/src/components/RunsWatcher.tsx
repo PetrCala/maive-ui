@@ -2,13 +2,19 @@
 
 import { useEffect } from "react";
 import CONFIG from "@src/CONFIG";
+import CONST from "@src/CONST";
 import { useRunsStore } from "@src/store/runsStore";
 import { modelService } from "@src/api/services/modelService";
 import { useGlobalAlert } from "@src/components/GlobalAlertProvider";
 import { notifyRunComplete } from "@src/utils/notifications";
 import type { RunStatus } from "@src/types/api";
 
-const TERMINAL_STATUSES: RunStatus[] = ["succeeded", "failed", "timedout"];
+const TERMINAL_STATUSES: RunStatus[] = [
+  "succeeded",
+  "failed",
+  "timedout",
+  "expired",
+];
 const POLL_INTERVAL_MS = 5000;
 
 const isTerminal = (status: RunStatus) => TERMINAL_STATUSES.includes(status);
@@ -73,6 +79,23 @@ export default function RunsWatcher() {
             }
           }
           updateRunStatus(run.jobId, run.status);
+        });
+
+        // Flip runs that are gone from the backend AND past the 48h TTL to a
+        // terminal "expired" status. Done in a separate pass (not driven by the
+        // response) so it never fires a "run finished" notification. The age
+        // guard means a run only transiently absent from a throttled batch
+        // response is not falsely expired — a younger missing run keeps polling
+        // until its record reappears or it genuinely ages out.
+        const returnedIds = new Set(runs.map((run) => run.jobId));
+        const now = Date.now();
+        pending.forEach((run) => {
+          if (
+            !returnedIds.has(run.jobId) &&
+            now - run.submittedAt > CONST.RUNS.TTL_MS
+          ) {
+            updateRunStatus(run.jobId, "expired");
+          }
         });
       } catch {
         // transient (network/throttle) — keep polling

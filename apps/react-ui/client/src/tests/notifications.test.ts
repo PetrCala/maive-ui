@@ -86,6 +86,17 @@ describe("notifications", () => {
       notifyRunComplete({ jobId: "j3", modelType: "RTMA", status: "timedout" });
       expect(constructed[0].title).toBe("RTMA run timed out");
     });
+
+    it("does not notify for an expired run", () => {
+      installNotification("granted");
+      const shown = notifyRunComplete({
+        jobId: "j4",
+        modelType: "RTMA",
+        status: "expired",
+      });
+      expect(shown).toBe(false);
+      expect(constructed).toHaveLength(0);
+    });
   });
 
   describe("requestNotificationPermission", () => {
