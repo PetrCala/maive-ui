@@ -124,27 +124,26 @@ test_data_with_nas <- function() {
       file_data_json <- df_to_json(test_data)
       params_json <- params_to_json(params)
 
-      # Call API
+      # Call API. The backend rejects data with missing values, so the
+      # graceful behavior to assert is a clean validation error rather
+      # than a successful analysis.
       cat("Testing with data containing NA values...\n")
       response <- test_run_model(file_data_json, params_json)
 
-      # Validate response
-      assert_response_structure(response)
-      assert_maive_results(response)
-
-      results <- response$data
-
-      # Check that NA values are handled gracefully
-      if (is.na(results$effectEstimate)) {
-        stop("Should handle NA values gracefully")
+      if (!isTRUE(response$error)) {
+        stop("Expected a validation error for data with NA values")
       }
 
-      log_test_result(test_name, "PASS", "NA values handled correctly")
+      if (!grepl("missing values", response$message, ignore.case = TRUE)) {
+        stop(paste("Unexpected error message:", response$message))
+      }
+
+      log_test_result(test_name, "PASS", "NA values rejected with a clear validation error")
 
       return(list(
         status = "PASS",
         test_name = test_name,
-        results = results
+        error_message = response$message
       ))
     },
     error = function(e) {
@@ -191,11 +190,13 @@ test_extreme_values <- function() {
         10 # Very small sample
       )
 
+      # Group observations into 5 studies (3 each) so study dummies leave
+      # enough degrees of freedom for the model.
       extreme_data <- data.frame(
         bs = effects,
         sebs = standard_errors,
         Ns = sample_sizes,
-        study_id = paste0("study_", 1:n_studies)
+        study_id = paste0("study_", rep(1:5, each = 3))
       )
 
       # Prepare parameters
@@ -265,7 +266,8 @@ test_invalid_parameters <- function() {
         maiveMethod = "INVALID_METHOD",
         weight = "equal_weights",
         shouldUseInstrumenting = TRUE,
-        useLogFirstStage = FALSE
+        useLogFirstStage = FALSE,
+        winsorize = 0
       ),
       expected_error = TRUE
     ),
@@ -280,7 +282,8 @@ test_invalid_parameters <- function() {
         maiveMethod = "PET-PEESE",
         weight = "standard_weights",
         shouldUseInstrumenting = TRUE,
-        useLogFirstStage = FALSE
+        useLogFirstStage = FALSE,
+        winsorize = 0
       ),
       expected_error = TRUE
     )
@@ -300,14 +303,26 @@ test_invalid_parameters <- function() {
         file_data_json <- df_to_json(test_data)
         params_json <- params_to_json(test_case$params)
 
-        # Call API
+        # Call API. The endpoint catches model errors and returns a 200
+        # response with an error body, so check the body rather than
+        # relying on test_run_model to throw.
         response <- test_run_model(file_data_json, params_json)
+        got_error <- isTRUE(response$error)
 
-        # If we expected an error but didn't get one
-        if (test_case$expected_error) {
+        if (test_case$expected_error && got_error) {
+          results[[test_case$name]] <- list(
+            status = "PASS",
+            error_message = response$message
+          )
+        } else if (test_case$expected_error) {
           results[[test_case$name]] <- list(
             status = "FAIL",
             error = "Expected error but got successful response"
+          )
+        } else if (got_error) {
+          results[[test_case$name]] <- list(
+            status = "FAIL",
+            error = response$message
           )
         } else {
           results[[test_case$name]] <- list(

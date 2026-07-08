@@ -1,8 +1,8 @@
 # E2E Test Configuration
 
 # API Configuration
-API_BASE_URL <- "http://localhost:8787"
-API_TIMEOUT <- 30 # seconds
+API_BASE_URL <- Sys.getenv("E2E_API_BASE_URL", "http://localhost:8787")
+API_TIMEOUT <- as.numeric(Sys.getenv("E2E_API_TIMEOUT", "30")) # seconds
 
 # Test Data Configuration
 TEST_DATA_DIR <- "fixtures"
