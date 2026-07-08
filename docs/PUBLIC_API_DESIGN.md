@@ -333,16 +333,17 @@ synchronous UI runs. Revisit only if bypass abuse is actually observed (§12).
       plots unless `?include=plot`, set proper status codes. Legacy routes
       untouched. Shipped in #469.
 - [x] `Dockerfile`: `COPY r_scripts/api_v1.R .` Shipped in #469.
-- [ ] Next.js `pages/api/v1/runs.ts` + `pages/api/v1/runs/[jobId].ts`: public
+- [x] Next.js `pages/api/v1/runs.ts` + `pages/api/v1/runs/[jobId].ts`: public
       re-skins of the existing runs routes (shared helpers extracted, not
       duplicated) with D8 semantics (parsed `result`, `413`, plot stripping,
-      error envelope).
+      error envelope). Shipped in #467.
 - [ ] `docs/api/openapi.yaml` (D10) + `docs/PUBLIC_API.md` usage guide with
       curl/R/Python examples.
 - [x] Tests (R side): e2e scenario `tests/e2e/scenarios/api_v1_test.R` (happy
       path, validation 400s, defaults, plot opt-in, legacy-route parity) via an
       extended `utils/api_client.R`. Shipped in #469.
-- [ ] Tests (UI side): Vitest coverage for the `/api/v1/runs` routes.
+- [x] Tests (UI side): Vitest coverage for the `/api/v1/runs` routes. Shipped
+      in #467.
 
 **Phase 2 — infra & edge:**
 
