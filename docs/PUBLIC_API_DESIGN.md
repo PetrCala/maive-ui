@@ -324,24 +324,25 @@ synchronous UI runs. Revisit only if bypass abuse is actually observed (§12).
 
 **Phase 1 — the contract (one PR, no infra):**
 
-- [ ] `r_scripts/api_v1.R`: validation helpers (column resolution per D5,
+- [x] `r_scripts/api_v1.R`: validation helpers (column resolution per D5,
       UI-parity checks per §6.2, parameter defaulting per D6, error responses
-      per §6.1).
-- [ ] `r_scripts/index.R`: add `POST /v1/run-model`, `POST /v1/run-rtma`,
+      per §6.1). Shipped in #469.
+- [x] `r_scripts/index.R`: add `POST /v1/run-model`, `POST /v1/run-rtma`,
       `GET /v1/health` — thin wrappers that validate, apply defaults,
       `toJSON()` the inputs, call the **unchanged** model functions, strip
       plots unless `?include=plot`, set proper status codes. Legacy routes
-      untouched.
-- [ ] `Dockerfile`: `COPY r_scripts/api_v1.R .`
+      untouched. Shipped in #469.
+- [x] `Dockerfile`: `COPY r_scripts/api_v1.R .` Shipped in #469.
 - [ ] Next.js `pages/api/v1/runs.ts` + `pages/api/v1/runs/[jobId].ts`: public
       re-skins of the existing runs routes (shared helpers extracted, not
       duplicated) with D8 semantics (parsed `result`, `413`, plot stripping,
       error envelope).
 - [ ] `docs/api/openapi.yaml` (D10) + `docs/PUBLIC_API.md` usage guide with
       curl/R/Python examples.
-- [ ] Tests: R e2e scenario `tests/e2e/scenarios/api_v1_test.R` (happy path,
-      validation 400s, defaults, plot opt-in) via an extended
-      `utils/api_client.R`; Vitest coverage for the `/api/v1/runs` routes.
+- [x] Tests (R side): e2e scenario `tests/e2e/scenarios/api_v1_test.R` (happy
+      path, validation 400s, defaults, plot opt-in, legacy-route parity) via an
+      extended `utils/api_client.R`. Shipped in #469.
+- [ ] Tests (UI side): Vitest coverage for the `/api/v1/runs` routes.
 
 **Phase 2 — infra & edge:**
 
