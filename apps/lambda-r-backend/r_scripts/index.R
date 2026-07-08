@@ -84,3 +84,34 @@ function(data, parameters) {
     }
   )
 }
+
+# -- Public /v1 API (docs/PUBLIC_API_DESIGN.md) ------------------------------
+# Versioned routes with a plain nested JSON contract, server-side validation,
+# parameter defaults, and real HTTP status codes. The legacy routes above are
+# untouched; the UI depends on them unchanged.
+
+#* Health check (public /v1 alias of /health)
+#* @get /v1/health
+function() {
+  list(status = "ok", time = format(Sys.time(), tz = "UTC"))
+}
+
+#* Run the MAIVE/WAIVE/WLS model via the public /v1 API
+#* @param include Set to "plot" to include the funnel plot fields in the response
+#* @post /v1/run-model
+function(req, res, include = "", ...) {
+  # nolint start: undesirable_function_linter.
+  source("api_v1.R")
+  # nolint end: undesirable_function_linter.
+  api_v1_run_model(req, res, include = include)
+}
+
+#* Run the RTMA model via the public /v1 API
+#* @param include Set to "plot" to include the z-score plot fields in the response
+#* @post /v1/run-rtma
+function(req, res, include = "", ...) {
+  # nolint start: undesirable_function_linter.
+  source("api_v1.R")
+  # nolint end: undesirable_function_linter.
+  api_v1_run_rtma(req, res, include = include)
+}
