@@ -246,6 +246,27 @@ test_api_v1 <- function() {
         "non-boolean flag parameter"
       )
 
+      # A body that is not valid JSON fails before the handler runs; the
+      # global error handler in host.R must still produce the 400 envelope.
+      expect_api_v1_validation_error(
+        v1_post_raw("/v1/run-model", "not json at all"),
+        "malformed JSON body"
+      )
+
+      # Canonical names are matched case-insensitively
+      cat("Testing /v1/run-model case-insensitive canonical names...\n")
+      uppercase_rows <- lapply(canonical_rows, function(row) {
+        stats::setNames(row, toupper(names(row)))
+      })
+      uppercase_body <- expect_api_v1_success(
+        v1_post_json("/v1/run-model", list(data = uppercase_rows)),
+        "uppercase-keys run"
+      )
+      expect_api_v1(
+        abs(uppercase_body$effectEstimate - minimal_body$effectEstimate) < 1e-8,
+        "uppercase-keys run: canonical names must match case-insensitively"
+      )
+
       # 8. RTMA: minimal request with defaults, plots stripped
       # Deterministic data with a solid share of nonaffirmative estimates;
       # mostly-affirmative datasets make the phacking sampler unpredictably

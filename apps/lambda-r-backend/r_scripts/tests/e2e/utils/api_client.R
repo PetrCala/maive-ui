@@ -131,6 +131,27 @@ v1_post_json <- function(path, body, query = NULL,
   )
 }
 
+#' POST a raw (possibly invalid) body to a public /v1 endpoint
+#'
+#' Used to exercise the malformed-body error path, which v1_post_json cannot
+#' produce because it always serializes valid JSON.
+#'
+#' @param path Endpoint path (e.g. "/v1/run-model")
+#' @param body Raw request body string, sent as application/json
+#' @param base_url Base URL of the API
+#' @param timeout Timeout in seconds
+#' @return Raw httr response object
+v1_post_raw <- function(path, body,
+                        base_url = API_BASE_URL,
+                        timeout = API_TIMEOUT) {
+  httr::POST(
+    paste0(base_url, path),
+    body = body,
+    httr::content_type_json(),
+    httr::timeout(timeout)
+  )
+}
+
 #' GET a public /v1 endpoint
 #' @param path Endpoint path (e.g. "/v1/health")
 #' @param base_url Base URL of the API

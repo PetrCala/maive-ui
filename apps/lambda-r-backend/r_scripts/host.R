@@ -74,4 +74,43 @@ pr$filter("cors", function(req, res) {
   forward()
 })
 
+# ---- GLOBAL ERROR HANDLER ------------------------------------------------
+# Body parsing runs before route handlers, so a malformed JSON body never
+# reaches the /v1 handlers' own error mapping and would surface as plumber's
+# default 500. Give /v1 requests the structured envelope (see
+# docs/PUBLIC_API_DESIGN.md section 6.1); keep plumber's default shape for all
+# other routes so legacy behavior is unchanged.
+pr$setErrorHandler(function(req, res, err) {
+  err_message <- conditionMessage(err)
+  path <- req$PATH_INFO %||% ""
+
+  if (startsWith(path, "/v1/")) {
+    is_parse_error <- grepl(
+      "lexical error|parse error|invalid|unexpected",
+      err_message,
+      ignore.case = TRUE
+    )
+    if (is_parse_error) {
+      res$status <- 400L
+      return(list(error = list(
+        code = "validation_error",
+        message = paste0(
+          "Request body must be valid JSON of the form ",
+          "{\"data\": [...], \"parameters\": {...}}."
+        )
+      )))
+    }
+    cli::cli_alert_danger("Unhandled error on {path}: {err_message}")
+    res$status <- 500L
+    return(list(error = list(
+      code = "internal_error",
+      message = "Internal server error."
+    )))
+  }
+
+  cli::cli_alert_danger("Unhandled error on {path}: {err_message}")
+  res$status <- 500L
+  list(error = "500 - Internal server error")
+})
+
 pr$run(host = R_HOST, port = R_PORT)

@@ -22,6 +22,7 @@ describe("resolveColumns", () => {
       se: "se",
       nObs: "n_obs",
       studyId: undefined,
+      byName: true,
     });
   });
 
@@ -34,6 +35,7 @@ describe("resolveColumns", () => {
       se: "SE",
       nObs: "N_Obs",
       studyId: undefined,
+      byName: true,
     });
   });
 
@@ -44,6 +46,7 @@ describe("resolveColumns", () => {
       se: "s",
       nObs: "n",
       studyId: "study",
+      byName: false,
     });
   });
 
@@ -54,6 +57,7 @@ describe("resolveColumns", () => {
       se: "s",
       nObs: undefined,
       studyId: undefined,
+      byName: false,
     });
   });
 
@@ -62,7 +66,7 @@ describe("resolveColumns", () => {
   });
 });
 
-describe("validateDataset — MAIVE-family", () => {
+describe("validateDataset: MAIVE-family", () => {
   it("accepts a valid dataset", () => {
     const data = [
       maiveRow(0.42, 0.11, 120),
@@ -141,9 +145,45 @@ describe("validateDataset — MAIVE-family", () => {
       /unique study IDs plus 3/,
     );
   });
+
+  it("rejects more than 4 columns when resolving positionally", () => {
+    const data = [
+      { a: 0.1, b: 0.1, c: 10, d: "A", e: 1 },
+      { a: 0.2, b: 0.1, c: 10, d: "A", e: 1 },
+      { a: 0.3, b: 0.1, c: 10, d: "B", e: 1 },
+      { a: 0.4, b: 0.1, c: 10, d: "B", e: 1 },
+    ];
+    expect(validateDataset(data, "MAIVE")?.message).toMatch(
+      /3 or 4 columns; found 5/,
+    );
+  });
+
+  it("tolerates extra columns when canonical names are present", () => {
+    const data = [
+      { effect: 0.1, se: 0.1, n_obs: 10, note: "x" },
+      { effect: 0.2, se: 0.1, n_obs: 10, note: "x" },
+      { effect: 0.3, se: 0.1, n_obs: 10, note: "x" },
+      { effect: 0.4, se: 0.1, n_obs: 10, note: "x" },
+    ];
+    expect(validateDataset(data, "MAIVE")).toBeNull();
+  });
+
+  it("rejects empty study_id values", () => {
+    const data = [
+      maiveRow(0.1, 0.1, 10, "A"),
+      maiveRow(0.2, 0.1, 10, ""),
+      maiveRow(0.3, 0.1, 10, "A"),
+      maiveRow(0.4, 0.1, 10, "B"),
+      maiveRow(0.5, 0.1, 10, "B"),
+      maiveRow(0.6, 0.1, 10, "B"),
+    ];
+    expect(validateDataset(data, "MAIVE")?.message).toMatch(
+      /study_id.*empty values/,
+    );
+  });
 });
 
-describe("validateDataset — RTMA", () => {
+describe("validateDataset: RTMA", () => {
   it("accepts a 2-column effect/se dataset", () => {
     const data = [
       { effect: 0.1, se: 0.1 },

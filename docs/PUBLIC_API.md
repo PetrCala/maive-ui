@@ -1,24 +1,24 @@
-# Public Model API — Usage Guide
+# Public Model API: Usage Guide
 
 ## Overview
 
 MAIVE exposes a public, anonymous HTTP API for running MAIVE / WAIVE / WLS
-and RTMA meta-analysis models programmatically — no accounts, no API keys.
+and RTMA meta-analysis models programmatically; no accounts, no API keys.
 It's the same compute the MAIVE UI uses, given a clean, documented contract.
 
 > **Status:** this guide documents the target `/v1` contract. The branded
-> hostname (`api.maive.eu`) goes live in a later rollout phase — if it
+> hostname (`api.maive.eu`) goes live in a later rollout phase; if it
 > doesn't resolve yet, that's expected; see
 > [`PUBLIC_API_DESIGN.md`](PUBLIC_API_DESIGN.md) for the rollout plan.
 
 The full machine-readable contract lives in
-[`docs/api/openapi.yaml`](api/openapi.yaml) (OpenAPI 3) — it is the source of
+[`docs/api/openapi.yaml`](api/openapi.yaml) (OpenAPI 3); it is the source of
 truth for request/response shapes. This guide is a narrative companion with
 copy-paste examples.
 
 - Base URL: `https://api.maive.eu`
 - Content type: `application/json` both ways
-- Auth: none — the API is anonymous by design. Abuse is bounded by
+- Auth: none; the API is anonymous by design. Abuse is bounded by
   server-side concurrency caps and edge rate limits, not identity.
 
 ## Sync vs. async
@@ -29,7 +29,7 @@ Two ways to run a model:
 |---|---|---|
 | Endpoints | `POST /v1/run-model`, `POST /v1/run-rtma` | `POST /v1/runs` (submit) + `GET /v1/runs/{jobId}` (poll) |
 | Shape | One request, one response | Submit returns a `jobId` immediately; poll until terminal, then read `result` |
-| Edge cap | Subject to Cloudflare's **~100s** proxy cap on `api.maive.eu` | Not subject to the cap — no long-lived connection |
+| Edge cap | Subject to Cloudflare's **~100s** proxy cap on `api.maive.eu` | Not subject to the cap (no long-lived connection) |
 | When to use | Typical datasets, runs finishing in well under 100s (roughly 15-60s including cold start) | **Recommended default.** Anything that might run long, batch/CI usage, or when you'd rather not hold a connection open |
 
 **Recommendation: use the async path by default.** It has no failure mode tied
@@ -39,8 +39,9 @@ want the simplicity of a single request.
 ## Data requirements
 
 Requests take `data` as an array of row objects. Columns are resolved by
-canonical key name when present (`effect`, `se`, `n_obs`, `study_id`);
-otherwise the first 3-4 object keys are read positionally in that order.
+canonical key name when present (`effect`, `se`, `n_obs`, `study_id`,
+matched case-insensitively); otherwise the first 3-4 object keys are read
+positionally in that order.
 
 | Field | Type | Required for | Notes |
 |---|---|---|---|
@@ -52,10 +53,10 @@ otherwise the first 3-4 object keys are read positionally in that order.
 | Endpoint | Columns | Min rows |
 |---|---|---|
 | `POST /v1/run-model` (MAIVE/WAIVE/WLS) | 3 or 4 | 4 |
-| `POST /v1/run-rtma` | 2 (`effect`, `se`) | Rows with missing/non-positive `se` are dropped with a warning |
+| `POST /v1/run-rtma` | 2 (`effect`, `se`) | Rows with missing/non-positive `se` are silently dropped |
 
 These mirror the MAIVE UI's own validation page, enforced server-side so API
-callers get a structured `400 validation_error` instead of a raw R error —
+callers get a structured `400 validation_error` instead of a raw R error;
 see [`components/responses/ValidationError`](api/openapi.yaml) in the spec.
 
 All model parameters are optional; unset ones fall back to documented
@@ -64,7 +65,7 @@ just `{"data": [...]}`. See the `ModelParameters` / `RTMAParameters` schemas
 in the OpenAPI spec for the full enum/default table.
 
 Plots (`funnelPlot`, `zScorePlot`, and their width/height companions) are
-**excluded by default** — each is a ~50KB base64 PNG, noise for most
+**excluded by default**: each is a ~50KB base64 PNG, noise for most
 programmatic callers. Add `?include=plot` to any run or poll request to embed
 them.
 
@@ -244,7 +245,7 @@ Batch status for multiple runs at once (no results, just status): `GET
 ## `jobId` semantics
 
 `jobId` is an **opaque bearer token**, not a user- or account-scoped
-identifier. Anyone holding a `jobId` can read that run's status and result —
+identifier. Anyone holding a `jobId` can read that run's status and result;
 the same exposure model the MAIVE UI's own async runs already use. Treat it
 like a share link:
 
@@ -255,27 +256,27 @@ like a share link:
 
 ## Privacy
 
-- Requests are anonymous — no accounts, no identity is collected.
+- Requests are anonymous: no accounts, no identity is collected.
 - Synchronous runs are stateless; nothing is persisted beyond the response.
 - Asynchronous runs persist the submitted parameters and the result in the
   run store for up to 48 hours, keyed by `jobId`, then expire automatically.
   The input dataset itself is not persisted beyond the transient queue
   message used to dispatch the run.
 - **Do not submit confidential or personally identifiable data.** The API has
-  no data-classification or redaction layer — treat every request the same
+  no data-classification or redaction layer; treat every request the same
   way you'd treat a request to any other unauthenticated public web service.
 
 ## Rate limits & errors
 
 Two independent guardrails apply, load-bearing in this order:
 
-1. A hard concurrency cap on the compute backend — once saturated, further
+1. A hard concurrency cap on the compute backend; once saturated, further
    requests receive `429 rate_limited` regardless of entry path.
 2. Per-IP rate limiting at the edge on `api.maive.eu` for casual abuse
    deterrence.
 
 Both are documented starting points and may be tuned based on observed load
-— treat any `429` as "retry with backoff," not a hard quota. Datasets that
+Treat any `429` as "retry with backoff," not a hard quota. Datasets that
 are too large to queue asynchronously (roughly 200KB of JSON) get `413
 payload_too_large` pointing you at the synchronous endpoint instead.
 
@@ -298,11 +299,11 @@ If you use MAIVE in published or reported work, please cite:
 
 ## See also
 
-- [`docs/api/openapi.yaml`](api/openapi.yaml) — the OpenAPI 3 contract
+- [`docs/api/openapi.yaml`](api/openapi.yaml): the OpenAPI 3 contract
   (source of truth).
-- [`PUBLIC_API_DESIGN.md`](PUBLIC_API_DESIGN.md) — the design doc this API is
+- [`PUBLIC_API_DESIGN.md`](PUBLIC_API_DESIGN.md): the design doc this API is
   scoped from, including rollout phases and abuse/cost controls.
-- [`SERVER_SIDE_API_ARCHITECTURE.md`](SERVER_SIDE_API_ARCHITECTURE.md) —
+- [`SERVER_SIDE_API_ARCHITECTURE.md`](SERVER_SIDE_API_ARCHITECTURE.md):
   current serving topology (UI Lambda, R Lambda, Cloudflare).
-- [`ASYNC_RUNS_DESIGN.md`](ASYNC_RUNS_DESIGN.md) — the async runs
+- [`ASYNC_RUNS_DESIGN.md`](ASYNC_RUNS_DESIGN.md): the async runs
   infrastructure this API's `/v1/runs*` routes wrap.

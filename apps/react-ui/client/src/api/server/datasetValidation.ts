@@ -13,6 +13,8 @@ export type ResolvedColumns = {
   se: string;
   nObs?: string;
   studyId?: string;
+  /** True when resolved by canonical names rather than positionally. */
+  byName: boolean;
 };
 
 export type ValidationError = { message: string };
@@ -43,14 +45,26 @@ export const resolveColumns = (
   const studyIdKey = findKeyCaseInsensitive(first, "study_id");
 
   if (effectKey && seKey && nObsKey) {
-    return { effect: effectKey, se: seKey, nObs: nObsKey, studyId: studyIdKey };
+    return {
+      effect: effectKey,
+      se: seKey,
+      nObs: nObsKey,
+      studyId: studyIdKey,
+      byName: true,
+    };
   }
 
   const keys = Object.keys(first);
   if (keys.length < 2) {
     return null;
   }
-  return { effect: keys[0], se: keys[1], nObs: keys[2], studyId: keys[3] };
+  return {
+    effect: keys[0],
+    se: keys[1],
+    nObs: keys[2],
+    studyId: keys[3],
+    byName: false,
+  };
 };
 
 const isFiniteNumber = (value: unknown): boolean => {
@@ -93,16 +107,18 @@ export const validateDataset = (
   }
 
   if (!isRtma) {
-    const resolvedCount = [
-      columns.effect,
-      columns.se,
-      columns.nObs,
-      columns.studyId,
-    ].filter(Boolean).length;
-
-    if (!columns.nObs || resolvedCount < 3 || resolvedCount > 4) {
+    // Positional resolution requires exactly 3-4 columns (matching the sync R
+    // path); by-name resolution tolerates extra columns since they're ignored.
+    const totalKeys = Object.keys(rows[0]).length;
+    if (!columns.byName && (totalKeys < 3 || totalKeys > 4)) {
       return {
-        message: `Data must have 3 or 4 columns; found ${resolvedCount}.`,
+        message: `Data must have 3 or 4 columns; found ${totalKeys}.`,
+      };
+    }
+
+    if (!columns.nObs) {
+      return {
+        message: `Data must have 3 or 4 columns; found ${totalKeys}.`,
       };
     }
 
@@ -162,13 +178,20 @@ export const validateDataset = (
 
   if (!isRtma && columns.studyId) {
     const studyIdKey = columns.studyId;
-    const uniqueStudyIds = new Set(
-      rows
-        .map((row) => row[studyIdKey])
-        .filter(
-          (value) => value !== undefined && value !== null && value !== "",
-        ),
-    ).size;
+    const studyIds = rows.map((row) => row[studyIdKey]);
+
+    const hasEmptyStudyId = studyIds.some(
+      (value) =>
+        value === undefined || value === null || String(value).trim() === "",
+    );
+    if (hasEmptyStudyId) {
+      return {
+        message:
+          "The `study_id` column contains empty values. Study IDs can be strings or numbers.",
+      };
+    }
+
+    const uniqueStudyIds = new Set(studyIds.map((value) => String(value))).size;
 
     if (rows.length < uniqueStudyIds + 3) {
       return {

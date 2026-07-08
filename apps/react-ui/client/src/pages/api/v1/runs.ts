@@ -39,7 +39,7 @@ const handler = async (
     );
   }
 
-  // GET /v1/runs?ids=a,b,c — batch status lookup (statuses only, no results).
+  // GET /v1/runs?ids=a,b,c: batch status lookup (statuses only, no results).
   if (req.method === "GET") {
     const ids = parseIdsParam(req.query.ids, MAX_BATCH_IDS);
     if (ids.length === 0) {
@@ -74,7 +74,13 @@ const handler = async (
     modelType?: string;
   };
 
-  const resolved = resolveRunParameters(modelType, parameters);
+  const { resolved, error: parameterError } = resolveRunParameters(
+    modelType,
+    parameters,
+  );
+  if (parameterError) {
+    return sendApiError(res, "validation_error", parameterError.message);
+  }
 
   const validationError = validateDataset(data, resolved.modelType);
   if (validationError) {
