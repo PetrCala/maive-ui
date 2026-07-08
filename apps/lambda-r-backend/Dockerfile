@@ -91,6 +91,7 @@ COPY --from=public.ecr.aws/awsguru/aws-lambda-adapter:0.9.1 /lambda-adapter /opt
 # App code
 WORKDIR ${LAMBDA_TASK_ROOT}
 COPY r_scripts/index.R .
+COPY r_scripts/api_v1.R .
 COPY r_scripts/maive_model.R .
 COPY r_scripts/funnel_plot.R .
 COPY r_scripts/rtma_model.R .

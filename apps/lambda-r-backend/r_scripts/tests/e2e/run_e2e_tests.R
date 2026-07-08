@@ -38,6 +38,7 @@ source(file.path(script_dir, "scenarios/basic_maive_test.R"))
 source(file.path(script_dir, "scenarios/publication_bias_test.R"))
 source(file.path(script_dir, "scenarios/edge_cases_test.R"))
 source(file.path(script_dir, "scenarios/basic_rtma_test.R"))
+source(file.path(script_dir, "scenarios/api_v1_test.R"))
 
 # Define available test scenarios
 AVAILABLE_SCENARIOS <- list(
@@ -102,6 +103,13 @@ AVAILABLE_SCENARIOS <- list(
     name = "Basic RTMA Test",
     description = "Test basic RTMA functionality with phacking package",
     function_name = "test_basic_rtma"
+  ),
+
+  # Public /v1 API scenarios
+  "api-v1" = list(
+    name = "API v1 Test",
+    description = "Test the public /v1 endpoints (validation, defaults, plot opt-in)",
+    function_name = "test_api_v1"
   ),
 
   # Special scenarios
@@ -355,6 +363,18 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     }
     test_count <- test_count + 1
   }
+
+  # Public /v1 API tests
+  cat("\n7. Running API v1 tests...\n")
+  api_v1_result <- test_api_v1()
+  all_results$api_v1 <- api_v1_result
+  if (api_v1_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ API v1 test passed\n")
+  } else {
+    cat("   ✗ API v1 test failed:", api_v1_result$error, "\n")
+  }
+  test_count <- test_count + 1
 
   # Summary
   cat("\n", paste(rep("=", 60), collapse = ""), "\n")

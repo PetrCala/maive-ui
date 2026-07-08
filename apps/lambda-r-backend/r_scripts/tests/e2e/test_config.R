@@ -45,6 +45,7 @@ DEFAULT_PARAMETERS <- list(
   weight = "equal_weights",
   shouldUseInstrumenting = TRUE,
   useLogFirstStage = FALSE,
+  winsorize = 0,
   # The UI forwards the full ModelParameters object, which carries the
   # RTMA-only favorPositive key. run_maive_model must tolerate extra keys.
   favorPositive = TRUE

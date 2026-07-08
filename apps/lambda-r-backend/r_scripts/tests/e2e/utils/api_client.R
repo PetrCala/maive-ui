@@ -107,6 +107,53 @@ test_run_rtma <- function(data, parameters,
   )
 }
 
+#' POST a plain nested JSON body to a public /v1 endpoint
+#'
+#' Unlike the legacy helpers above, this sends `application/json` (no form
+#' encoding, no double-encoded JSON strings) and returns the raw httr response
+#' so tests can assert on HTTP status codes and error envelopes.
+#'
+#' @param path Endpoint path (e.g. "/v1/run-model")
+#' @param body Request body as an R list (e.g. list(data = ..., parameters = ...))
+#' @param query Optional named list of query parameters (e.g. list(include = "plot"))
+#' @param base_url Base URL of the API
+#' @param timeout Timeout in seconds
+#' @return Raw httr response object
+v1_post_json <- function(path, body, query = NULL,
+                         base_url = API_BASE_URL,
+                         timeout = API_TIMEOUT) {
+  httr::POST(
+    paste0(base_url, path),
+    body = jsonlite::toJSON(body, auto_unbox = TRUE, digits = NA, null = "null"),
+    httr::content_type_json(),
+    query = query,
+    httr::timeout(timeout)
+  )
+}
+
+#' GET a public /v1 endpoint
+#' @param path Endpoint path (e.g. "/v1/health")
+#' @param base_url Base URL of the API
+#' @param timeout Timeout in seconds
+#' @return Raw httr response object
+v1_get <- function(path, base_url = API_BASE_URL, timeout = API_TIMEOUT) {
+  httr::GET(paste0(base_url, path), httr::timeout(timeout))
+}
+
+#' Parse a /v1 JSON response body into an R list
+#' @param response Raw httr response object
+#' @return Parsed response body
+v1_parse_body <- function(response) {
+  httr::content(response, "parsed")
+}
+
+#' Convert a data frame into a list of /v1 row objects
+#' @param df Data frame to convert
+#' @return Unnamed list of named lists, one per row
+df_to_v1_rows <- function(df) {
+  lapply(seq_len(nrow(df)), function(i) as.list(df[i, , drop = FALSE]))
+}
+
 #' Convert data frame to JSON string for API
 #' @param df Data frame to convert
 #' @return JSON string
