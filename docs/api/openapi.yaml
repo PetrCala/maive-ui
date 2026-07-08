@@ -1,0 +1,854 @@
+openapi: 3.0.3
+info:
+  title: MAIVE Public Model API
+  version: "1.0.0"
+  description: |
+    Public, anonymous HTTP API for running MAIVE / WAIVE / WLS and RTMA
+    meta-analysis models programmatically, without going through the MAIVE UI.
+
+    This is the `/v1` contract described in
+    [`docs/PUBLIC_API_DESIGN.md`](../PUBLIC_API_DESIGN.md) (§6). See
+    [`docs/PUBLIC_API.md`](../PUBLIC_API.md) for a usage guide with copy-paste
+    curl / R / Python examples.
+
+    **Status:** this spec documents the target contract. The branded hostname
+    (`api.maive.eu`) goes live in a later rollout phase (Phase 2 of the design
+    doc) — it may not resolve yet.
+
+    **Access:** anonymous — no accounts, no API keys. Abuse is bounded by
+    server-side concurrency caps and edge rate limits, not identity.
+
+    **Citation:** if you use MAIVE in published or reported work, please cite:
+
+    > Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious
+    > precision in meta-analysis of observational research. Nature
+    > Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0
+  license:
+    name: See repository LICENSE
+    url: https://github.com/PetrCala/maive-ui/blob/master/LICENSE
+
+servers:
+  - url: https://api.maive.eu
+    description: Production
+
+# Anonymous by design (D1) — no accounts, no API keys. Documented explicitly
+# rather than omitted, so linters don't flag a missing security definition.
+security: []
+
+tags:
+  - name: sync
+    description: Synchronous model runs (single request/response round trip).
+  - name: async
+    description: Asynchronous model runs (submit, then poll for a result).
+  - name: meta
+    description: Service metadata.
+
+paths:
+  /v1/run-model:
+    post:
+      tags: [sync]
+      operationId: runModel
+      summary: Run MAIVE, WAIVE, or WLS synchronously
+      description: |
+        Runs the requested model and returns the result in the same HTTP
+        response. Subject to Cloudflare's ~100s proxy cap at the edge — fine
+        for typical runs (roughly 15-60s including cold start), but
+        unsuitable for large or slow datasets. Prefer `POST /v1/runs` (async)
+        for anything that might run long. See §6.3 of the design doc.
+      parameters:
+        - $ref: "#/components/parameters/Include"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunModelRequest"
+            examples:
+              minimal:
+                summary: Minimal request (all parameters default)
+                value:
+                  data:
+                    - effect: 0.42
+                      se: 0.11
+                      n_obs: 120
+                    - effect: 0.31
+                      se: 0.06
+                      n_obs: 90
+                    - effect: 0.55
+                      se: 0.2
+                      n_obs: 45
+                    - effect: 0.12
+                      se: 0.04
+                      n_obs: 200
+              full:
+                summary: Explicit parameters
+                value:
+                  data:
+                    - effect: 0.42
+                      se: 0.11
+                      n_obs: 120
+                      study_id: Smith2020
+                    - effect: 0.31
+                      se: 0.06
+                      n_obs: 90
+                      study_id: Smith2020
+                    - effect: 0.55
+                      se: 0.2
+                      n_obs: 45
+                      study_id: Jones2019
+                    - effect: 0.12
+                      se: 0.04
+                      n_obs: 200
+                      study_id: Jones2019
+                  parameters:
+                    modelType: MAIVE
+                    maiveMethod: PET-PEESE
+                    weight: equal_weights
+                    standardErrorTreatment: clustered_cr2
+                    includeStudyDummies: false
+                    includeStudyClustering: false
+                    computeAndersonRubin: false
+                    useLogFirstStage: false
+                    winsorize: 0
+      responses:
+        "200":
+          description: Model results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ModelResults"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /v1/run-rtma:
+    post:
+      tags: [sync]
+      operationId: runRtma
+      summary: Run RTMA (Right-Truncated Meta-Analysis) synchronously
+      description: |
+        Same synchronous envelope and edge-cap caveat as `POST /v1/run-model`.
+        See §6.4 of the design doc.
+      parameters:
+        - $ref: "#/components/parameters/Include"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunRtmaRequest"
+            examples:
+              minimal:
+                summary: Minimal request (all parameters default)
+                value:
+                  data:
+                    - effect: 0.42
+                      se: 0.11
+                    - effect: 0.31
+                      se: 0.06
+                    - effect: 0.55
+                      se: 0.2
+                    - effect: 0.12
+                      se: 0.04
+      responses:
+        "200":
+          description: RTMA results.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RTMAResults"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /v1/runs:
+    post:
+      tags: [async]
+      operationId: submitRun
+      summary: Submit an asynchronous run
+      description: |
+        Queues a model run and returns immediately with a `jobId`. Poll
+        `GET /v1/runs/{jobId}` until the status is terminal, then read
+        `result`. Recommended as the default integration path — immune to the
+        edge's ~100s proxy cap. See §6.5 of the design doc.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubmitRunRequest"
+            examples:
+              maive:
+                summary: Submit a MAIVE run
+                value:
+                  modelType: MAIVE
+                  data:
+                    - effect: 0.42
+                      se: 0.11
+                      n_obs: 120
+                    - effect: 0.31
+                      se: 0.06
+                      n_obs: 90
+                    - effect: 0.55
+                      se: 0.2
+                      n_obs: 45
+                    - effect: 0.12
+                      se: 0.04
+                      n_obs: 200
+              rtma:
+                summary: Submit an RTMA run
+                value:
+                  modelType: RTMA
+                  data:
+                    - effect: 0.42
+                      se: 0.11
+                    - effect: 0.31
+                      se: 0.06
+                    - effect: 0.55
+                      se: 0.2
+                    - effect: 0.12
+                      se: 0.04
+      responses:
+        "200":
+          description: Run queued.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [jobId]
+                properties:
+                  jobId:
+                    type: string
+                    description: >-
+                      Opaque bearer token. Anyone holding it can read the run
+                      for 48h — treat it like a share link.
+                    example: "8f14e45f-ceea-467e-9e42-1c0e0f5a4e3e"
+        "400":
+          $ref: "#/components/responses/ValidationError"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "413":
+          $ref: "#/components/responses/PayloadTooLarge"
+        "429":
+          $ref: "#/components/responses/RateLimited"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/NotConfigured"
+    get:
+      tags: [async]
+      operationId: listRunStatuses
+      summary: Batch status lookup
+      description: |
+        Returns status (no `result`) for up to 100 job ids in one call. Used
+        for polling multiple runs at once (e.g. a "my runs" list). Unknown ids
+        are silently omitted from the response — this endpoint never 404s.
+      parameters:
+        - name: ids
+          in: query
+          required: false
+          description: Comma-separated list of job ids (max 100).
+          schema:
+            type: string
+          example: "8f14e45f-ceea-467e-9e42-1c0e0f5a4e3e,3c9e2f10-9b7a-4b1a-9a1a-2f6b8e7c1d2a"
+      responses:
+        "200":
+          description: Status for each recognized id (may be empty).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/RunStatusSummary"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/NotConfigured"
+
+  /v1/runs/{jobId}:
+    get:
+      tags: [async]
+      operationId: getRun
+      summary: Poll a run / fetch its result
+      description: |
+        Returns the run's current status. Once `status` is `succeeded`,
+        `result` is populated with the parsed `ModelResults` or `RTMAResults`
+        object (never a JSON-encoded string). Suggested polling interval:
+        every 2-5s. Runs expire and start 404ing 48h after submission.
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: "8f14e45f-ceea-467e-9e42-1c0e0f5a4e3e"
+        - $ref: "#/components/parameters/Include"
+      responses:
+        "200":
+          description: Run status (and result, once terminal-successful).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+        "500":
+          $ref: "#/components/responses/InternalError"
+        "503":
+          $ref: "#/components/responses/NotConfigured"
+
+  /v1/health:
+    get:
+      tags: [meta]
+      operationId: health
+      summary: Health check
+      description: Alias of the existing `/health` route. No auth, no rate limiting.
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, time]
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  time:
+                    type: string
+                    description: Server time (UTC).
+                    example: "2026-07-08 12:34:56 UTC"
+        "405":
+          $ref: "#/components/responses/MethodNotAllowed"
+
+components:
+  parameters:
+    Include:
+      name: include
+      in: query
+      required: false
+      description: >-
+        Set to `plot` to embed the base64-encoded plot image(s) in the
+        response. Omitted by default (D7) — the plot is ~50KB and most
+        programmatic callers don't need it.
+      schema:
+        type: string
+        enum: [plot]
+
+  responses:
+    ValidationError:
+      description: The request body failed validation.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: validation_error
+              message: "Data must have 3 or 4 columns; found 6."
+    NotFound:
+      description: The requested resource does not exist or has expired.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: not_found
+              message: "Run not found or expired."
+    MethodNotAllowed:
+      description: The HTTP method is not supported on this route.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: method_not_allowed
+              message: "Method Not Allowed"
+    PayloadTooLarge:
+      description: >-
+        The dataset is too large to queue (SQS message budget, ~200KB). Use
+        the synchronous endpoint instead.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: payload_too_large
+              message: "Dataset too large to queue; use POST /v1/run-model or /v1/run-rtma instead."
+    RateLimited:
+      description: >-
+        Too many requests — either the edge rate limit or the server-side
+        concurrency cap was hit. Retry with backoff.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: rate_limited
+              message: "Too many requests. Please retry after a short delay."
+    InternalError:
+      description: An unexpected server-side error occurred.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: internal_error
+              message: "Internal server error."
+    NotConfigured:
+      description: This deployment does not have the async runs infrastructure configured.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: not_configured
+              message: "Async runs are not configured."
+
+  schemas:
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              enum:
+                - validation_error
+                - not_found
+                - method_not_allowed
+                - payload_too_large
+                - rate_limited
+                - internal_error
+                - not_configured
+            message:
+              type: string
+
+    DataRow:
+      type: object
+      description: |
+        One row of meta-analysis input data. Columns are resolved by the
+        canonical keys below when present; otherwise the first 3-4 keys of
+        the object are taken positionally as (effect, se, n_obs[, study_id])
+        for MAIVE-family endpoints, or (effect, se) for RTMA (D5).
+      properties:
+        effect:
+          type: number
+          description: Estimated effect size.
+        se:
+          type: number
+          description: Standard error of the effect estimate. Must be > 0.
+        n_obs:
+          type: integer
+          description: >-
+            Number of observations underlying the estimate. Required for
+            MAIVE-family endpoints (not used by RTMA). Must be a positive
+            integer.
+        study_id:
+          type: string
+          description: >-
+            Optional study identifier, used for clustering. If present across
+            rows, the number of rows must be at least the number of unique
+            study ids plus 3.
+      additionalProperties: true
+      example:
+        effect: 0.42
+        se: 0.11
+        n_obs: 120
+        study_id: Smith2020
+
+    ModelParameters:
+      type: object
+      description: >-
+        All parameters are optional; defaults match the UI's
+        `CONFIG.DEFAULT_MODEL_PARAMETERS`. A minimal valid request is just
+        `{"data": [...]}` (D6).
+      properties:
+        modelType:
+          type: string
+          enum: [MAIVE, WAIVE, WLS]
+          default: MAIVE
+        maiveMethod:
+          type: string
+          enum: [PET, PEESE, PET-PEESE, EK]
+          default: PET-PEESE
+        weight:
+          type: string
+          enum:
+            [
+              equal_weights,
+              standard_weights,
+              adjusted_weights,
+              study_weights,
+            ]
+          default: equal_weights
+        standardErrorTreatment:
+          type: string
+          enum: [not_clustered, clustered, clustered_cr2, bootstrap]
+          default: clustered_cr2
+        includeStudyDummies:
+          type: boolean
+          default: false
+        includeStudyClustering:
+          type: boolean
+          default: false
+        computeAndersonRubin:
+          type: boolean
+          default: false
+        useLogFirstStage:
+          type: boolean
+          default: false
+        winsorize:
+          type: number
+          description: Winsorization percentage applied to effect sizes and standard errors. 0 disables it.
+          default: 0
+        shouldUseInstrumenting:
+          type: boolean
+          description: >-
+            Internal parameter, not required knowledge for callers. Derived
+            from `modelType` unless explicitly set: `false` when `modelType`
+            is `WLS`, `true` otherwise.
+
+    RTMAParameters:
+      type: object
+      description: All parameters are optional. See §6.4 of the design doc.
+      properties:
+        favorPositive:
+          type: boolean
+          default: true
+        alphaSelect:
+          type: number
+          default: 0.05
+        ciLevel:
+          type: number
+          default: 0.95
+        winsorize:
+          type: number
+          description: Winsorization percentage applied to effect sizes and standard errors. 0 disables it.
+          default: 0
+
+    RunModelRequest:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          minItems: 4
+          description: >-
+            3 or 4 columns; at least 4 rows; `effect`/`se`/`n_obs` numeric;
+            `se > 0`; `n_obs` positive integers; if `study_id` is present,
+            rows must be >= unique studies + 3 (§6.2).
+          items:
+            $ref: "#/components/schemas/DataRow"
+        parameters:
+          $ref: "#/components/schemas/ModelParameters"
+
+    RunRtmaRequest:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          minItems: 2
+          description: >-
+            At least 2 columns (`effect`, `se`). Rows with missing or
+            non-positive `se` are dropped with a warning (§6.2).
+          items:
+            $ref: "#/components/schemas/DataRow"
+        parameters:
+          $ref: "#/components/schemas/RTMAParameters"
+
+    SubmitRunRequest:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/DataRow"
+        parameters:
+          description: >-
+            `ModelParameters` if `modelType` is `MAIVE`/`WAIVE`/`WLS`, or
+            `RTMAParameters` if `modelType` is `RTMA`.
+          oneOf:
+            - $ref: "#/components/schemas/ModelParameters"
+            - $ref: "#/components/schemas/RTMAParameters"
+        modelType:
+          type: string
+          enum: [MAIVE, WAIVE, WLS, RTMA]
+          default: MAIVE
+          description: Routes the queued run to the MAIVE-family or RTMA compute path.
+
+    CIInterval:
+      description: A `[lower, upper]` confidence interval, or `"NA"` when not computed.
+      oneOf:
+        - type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+        - type: string
+          enum: ["NA"]
+
+    ModelResults:
+      type: object
+      description: >-
+        Result of `POST /v1/run-model`. Field names mirror the internal R
+        result object 1:1 (`maive_model.R`, `run_maive_model`) — they are
+        already the de-facto contract for the UI and reproducibility
+        packages, and are frozen as-is (§11).
+      required:
+        - effectEstimate
+        - standardError
+        - isSignificant
+        - andersonRubinCI
+        - publicationBias
+        - firstStageFStatistic
+        - hausmanTest
+        - seInstrumented
+        - bootSE
+        - bootCI
+      properties:
+        effectEstimate:
+          type: number
+        standardError:
+          type: number
+        isSignificant:
+          type: boolean
+        andersonRubinCI:
+          $ref: "#/components/schemas/CIInterval"
+        publicationBias:
+          type: object
+          required: [eggerCoef, eggerSE, isSignificant, eggerBootCI, eggerAndersonRubinCI]
+          properties:
+            eggerCoef:
+              type: number
+            eggerSE:
+              type: number
+            isSignificant:
+              type: boolean
+            eggerBootCI:
+              $ref: "#/components/schemas/CIInterval"
+            eggerAndersonRubinCI:
+              $ref: "#/components/schemas/CIInterval"
+            pValue:
+              type: number
+        firstStageFStatistic:
+          description: Numeric F-statistic, or `"NA"` when not computed (e.g. no instrumenting).
+          oneOf:
+            - type: number
+            - type: string
+              enum: ["NA"]
+        hausmanTest:
+          type: object
+          required: [statistic, criticalValue, rejectsNull]
+          properties:
+            statistic:
+              type: number
+            criticalValue:
+              type: number
+            rejectsNull:
+              type: boolean
+        seInstrumented:
+          type: array
+          items:
+            type: number
+        bootSE:
+          description: '`[se_lower, se_upper]`, or `"NA"` when bootstrap SE was not requested/computed.'
+          oneOf:
+            - type: array
+              items:
+                type: number
+              minItems: 2
+              maxItems: 2
+            - type: string
+              enum: ["NA"]
+        bootCI:
+          description: A pair of confidence intervals `[[lo, hi], [lo, hi]]`, or `"NA"`.
+          oneOf:
+            - type: array
+              items:
+                type: array
+                items:
+                  type: number
+                minItems: 2
+                maxItems: 2
+              minItems: 2
+              maxItems: 2
+            - type: string
+              enum: ["NA"]
+        firstStage:
+          nullable: true
+          type: object
+          properties:
+            mode:
+              type: string
+              enum: [levels, log]
+            description:
+              type: string
+            fStatisticLabel:
+              type: string
+        petpeese_selected:
+          nullable: true
+          type: string
+          enum: [PET, PEESE]
+        peese_se2_coef:
+          nullable: true
+          type: number
+        peese_se2_se:
+          nullable: true
+          type: number
+        slope_coef:
+          description: A single slope coefficient, or a kink description when the fit is piecewise.
+          oneOf:
+            - type: number
+            - type: object
+              properties:
+                kink_effect:
+                  type: number
+                kink_location:
+                  type: number
+        is_quadratic_fit:
+          type: object
+          properties:
+            quadratic:
+              type: boolean
+            slope_type:
+              type: string
+            slope_detail:
+              nullable: true
+              type: object
+              properties:
+                kink_location:
+                  type: number
+                kink_effect:
+                  type: number
+        funnelPlot:
+          type: string
+          description: 'Base64-encoded PNG data URI. Only present with `?include=plot`.'
+        funnelPlotWidth:
+          type: number
+          description: Only present with `?include=plot`.
+        funnelPlotHeight:
+          type: number
+          description: Only present with `?include=plot`.
+
+    RTMAResults:
+      type: object
+      description: >-
+        Result of `POST /v1/run-rtma`. Field names mirror the internal R
+        result object 1:1 (`rtma_model.R`, `run_rtma_model`).
+      required:
+        - mu
+        - muCI
+        - tau
+        - tauCI
+        - nonaffirmativeCount
+        - nonaffirmativeProportion
+      properties:
+        mu:
+          type: number
+        muCI:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+        tau:
+          type: number
+        tauCI:
+          type: array
+          items:
+            type: number
+          minItems: 2
+          maxItems: 2
+        nonaffirmativeCount:
+          type: integer
+        nonaffirmativeProportion:
+          type: number
+        zScorePlot:
+          type: string
+          description: 'Base64-encoded PNG data URI. Only present with `?include=plot`.'
+        zScorePlotWidth:
+          type: number
+          description: Only present with `?include=plot`.
+        zScorePlotHeight:
+          type: number
+          description: Only present with `?include=plot`.
+
+    RunStatus:
+      type: string
+      enum: [queued, running, succeeded, failed, timedout]
+
+    RunStatusSummary:
+      type: object
+      description: Status-only view returned by the batch `GET /v1/runs?ids=` lookup (no `result`).
+      required: [jobId, status]
+      properties:
+        jobId:
+          type: string
+        status:
+          $ref: "#/components/schemas/RunStatus"
+        modelType:
+          type: string
+          enum: [MAIVE, WAIVE, WLS, RTMA]
+        errorMessage:
+          type: string
+        runDurationMs:
+          type: number
+        runTimestamp:
+          type: string
+          format: date-time
+
+    Run:
+      type: object
+      description: Full run object returned by `GET /v1/runs/{jobId}`.
+      required: [jobId, status]
+      properties:
+        jobId:
+          type: string
+        status:
+          $ref: "#/components/schemas/RunStatus"
+        modelType:
+          type: string
+          enum: [MAIVE, WAIVE, WLS, RTMA]
+        runDurationMs:
+          type: number
+        runTimestamp:
+          type: string
+          format: date-time
+        result:
+          description: >-
+            Parsed result object, present once `status` is `succeeded`.
+            `ModelResults` for `MAIVE`/`WAIVE`/`WLS` runs, `RTMAResults` for
+            `RTMA` runs.
+          oneOf:
+            - $ref: "#/components/schemas/ModelResults"
+            - $ref: "#/components/schemas/RTMAResults"
+        errorMessage:
+          type: string
+          description: Present on `failed`/`timedout`.
