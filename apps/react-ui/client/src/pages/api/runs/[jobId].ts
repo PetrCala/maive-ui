@@ -1,23 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand } from "@aws-sdk/lib-dynamodb";
-import type { GetRunResponse, RunStatus } from "@src/types/api";
-
-const region =
-  process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? undefined;
-const tableName = process.env.RUNS_TABLE_NAME;
-
-let ddbDocClient: DynamoDBDocumentClient | undefined;
-
-const getDdbDocClient = () => {
-  if (!region) {
-    return undefined;
-  }
-  if (!ddbDocClient) {
-    ddbDocClient = DynamoDBDocumentClient.from(new DynamoDBClient({ region }));
-  }
-  return ddbDocClient;
-};
+import type { GetRunResponse } from "@src/types/api";
+import { getRunItem, getRunsStoreConfig } from "@api/server/runsService";
 
 const handler = async (
   req: NextApiRequest,
@@ -28,12 +11,8 @@ const handler = async (
     return res.status(405).json({ error: "Method Not Allowed" });
   }
 
-  if (!tableName) {
-    return res.status(503).json({ error: "Async runs are not configured." });
-  }
-
-  const ddb = getDdbDocClient();
-  if (!ddb) {
+  const store = getRunsStoreConfig();
+  if (!store) {
     return res.status(503).json({ error: "Async runs are not configured." });
   }
 
@@ -44,45 +23,28 @@ const handler = async (
   }
 
   try {
-    // Single GetItem with a projection. While the run is non-terminal the
-    // `result` attribute doesn't exist yet (cheap read); the client stops
-    // polling on a terminal status, so the heavy result is read exactly once.
-    const { Item } = await ddb.send(
-      new GetCommand({
-        TableName: tableName,
-        Key: { jobId: id },
-        ProjectionExpression:
-          "jobId, #status, modelType, #result, errorMessage, runDurationMs, submittedAt",
-        ExpressionAttributeNames: {
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          "#status": "status",
-          // eslint-disable-next-line @typescript-eslint/naming-convention
-          "#result": "result",
-        },
-      }),
-    );
+    const item = await getRunItem(store.ddb, store.tableName, id);
 
-    if (!Item) {
+    if (!item) {
       return res.status(404).json({ error: "Run not found or expired." });
     }
 
-    const status = Item.status as RunStatus;
     const body: GetRunResponse = {
       jobId: id,
-      status,
-      modelType: Item.modelType as GetRunResponse["modelType"],
+      status: item.status,
+      modelType: item.modelType,
     };
-    if (Item.result) {
-      body.result = Item.result as string;
+    if (item.result) {
+      body.result = item.result;
     }
-    if (Item.errorMessage) {
-      body.errorMessage = Item.errorMessage as string;
+    if (item.errorMessage) {
+      body.errorMessage = item.errorMessage;
     }
-    if (typeof Item.runDurationMs === "number") {
-      body.runDurationMs = Item.runDurationMs;
+    if (typeof item.runDurationMs === "number") {
+      body.runDurationMs = item.runDurationMs;
     }
-    if (typeof Item.submittedAt === "number") {
-      body.runTimestamp = new Date(Item.submittedAt).toISOString();
+    if (typeof item.submittedAt === "number") {
+      body.runTimestamp = new Date(item.submittedAt).toISOString();
     }
 
     return res.status(200).json(body);
