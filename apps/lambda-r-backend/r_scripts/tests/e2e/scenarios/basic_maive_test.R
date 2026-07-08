@@ -81,7 +81,8 @@ test_parameter_combinations <- function() {
         maiveMethod = "PET",
         weight = "equal_weights",
         shouldUseInstrumenting = TRUE,
-        useLogFirstStage = FALSE
+        useLogFirstStage = FALSE,
+        winsorize = 0
       )
     ),
     list(
@@ -95,7 +96,8 @@ test_parameter_combinations <- function() {
         maiveMethod = "PEESE",
         weight = "standard_weights",
         shouldUseInstrumenting = TRUE,
-        useLogFirstStage = FALSE
+        useLogFirstStage = FALSE,
+        winsorize = 0
       )
     ),
     list(
@@ -109,7 +111,8 @@ test_parameter_combinations <- function() {
         maiveMethod = "EK",
         weight = "adjusted_weights",
         shouldUseInstrumenting = FALSE,
-        useLogFirstStage = FALSE
+        useLogFirstStage = FALSE,
+        winsorize = 0
       )
     )
   )

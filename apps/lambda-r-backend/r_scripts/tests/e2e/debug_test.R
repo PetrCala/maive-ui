@@ -22,7 +22,8 @@ params <- list(
   maiveMethod = "PET",
   weight = "standard_weights",
   shouldUseInstrumenting = TRUE,
-  useLogFirstStage = FALSE
+  useLogFirstStage = FALSE,
+  winsorize = 0
 )
 
 # Convert to JSON
