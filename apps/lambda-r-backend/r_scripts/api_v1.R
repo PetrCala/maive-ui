@@ -36,7 +36,8 @@ API_V1_MODEL_VALIDATION_PATTERNS <- c(
   "must be numeric",
   "must be positive",
   "degrees of freedom",
-  "Data must have"
+  "Data must have",
+  "nonaffirmative"
 )
 
 API_V1_BODY_SHAPE_MESSAGE <- paste0(
@@ -61,6 +62,9 @@ api_v1_abort_validation <- function(msg) {
 #' @return The error envelope to serialize as the response body
 api_v1_error_body <- function(res, status, code, msg) {
   res$status <- status
+  # cli_abort wraps long messages with embedded newlines; collapse them so the
+  # JSON error message is a single line
+  msg <- gsub("[[:space:]]+", " ", msg)
   list(error = list(code = code, message = msg))
 }
 
@@ -176,13 +180,18 @@ api_v1_data_columns <- function(data) {
 api_v1_resolve_maive_columns <- function(data) {
   columns <- api_v1_data_columns(data)
   keys <- names(columns)
+  keys_lower <- tolower(keys)
 
-  if (all(API_V1_MAIVE_CANONICAL %in% keys)) {
-    selected <- API_V1_MAIVE_CANONICAL
-    if ("study_id" %in% keys) {
-      selected <- c(selected, "study_id")
+  if (all(API_V1_MAIVE_CANONICAL %in% keys_lower)) {
+    selected <- match(API_V1_MAIVE_CANONICAL, keys_lower)
+    resolved_names <- API_V1_MAIVE_CANONICAL
+    if ("study_id" %in% keys_lower) {
+      selected <- c(selected, match("study_id", keys_lower))
+      resolved_names <- c(resolved_names, "study_id")
     }
-    return(columns[selected])
+    columns <- columns[selected]
+    names(columns) <- resolved_names
+    return(columns)
   }
 
   if (length(keys) < 3 || length(keys) > 4) {
@@ -201,9 +210,12 @@ api_v1_resolve_maive_columns <- function(data) {
 api_v1_resolve_rtma_columns <- function(data) {
   columns <- api_v1_data_columns(data)
   keys <- names(columns)
+  keys_lower <- tolower(keys)
 
-  if (all(API_V1_RTMA_CANONICAL %in% keys)) {
-    return(columns[API_V1_RTMA_CANONICAL])
+  if (all(API_V1_RTMA_CANONICAL %in% keys_lower)) {
+    columns <- columns[match(API_V1_RTMA_CANONICAL, keys_lower)]
+    names(columns) <- API_V1_RTMA_CANONICAL
+    return(columns)
   }
 
   if (length(keys) < 2) {

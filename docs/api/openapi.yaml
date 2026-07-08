@@ -13,9 +13,9 @@ info:
 
     **Status:** this spec documents the target contract. The branded hostname
     (`api.maive.eu`) goes live in a later rollout phase (Phase 2 of the design
-    doc) — it may not resolve yet.
+    doc); it may not resolve yet.
 
-    **Access:** anonymous — no accounts, no API keys. Abuse is bounded by
+    **Access:** anonymous; no accounts, no API keys. Abuse is bounded by
     server-side concurrency caps and edge rate limits, not identity.
 
     **Citation:** if you use MAIVE in published or reported work, please cite:
@@ -31,7 +31,7 @@ servers:
   - url: https://api.maive.eu
     description: Production
 
-# Anonymous by design (D1) — no accounts, no API keys. Documented explicitly
+# Anonymous by design (D1): no accounts, no API keys. Documented explicitly
 # rather than omitted, so linters don't flag a missing security definition.
 security: []
 
@@ -51,7 +51,7 @@ paths:
       summary: Run MAIVE, WAIVE, or WLS synchronously
       description: |
         Runs the requested model and returns the result in the same HTTP
-        response. Subject to Cloudflare's ~100s proxy cap at the edge — fine
+        response. Subject to Cloudflare's ~100s proxy cap at the edge, fine
         for typical runs (roughly 15-60s including cold start), but
         unsuitable for large or slow datasets. Prefer `POST /v1/runs` (async)
         for anything that might run long. See §6.3 of the design doc.
@@ -179,7 +179,7 @@ paths:
       description: |
         Queues a model run and returns immediately with a `jobId`. Poll
         `GET /v1/runs/{jobId}` until the status is terminal, then read
-        `result`. Recommended as the default integration path — immune to the
+        `result`. Recommended as the default integration path, immune to the
         edge's ~100s proxy cap. See §6.5 of the design doc.
       requestBody:
         required: true
@@ -231,7 +231,7 @@ paths:
                     type: string
                     description: >-
                       Opaque bearer token. Anyone holding it can read the run
-                      for 48h — treat it like a share link.
+                      for 48h; treat it like a share link.
                     example: "8f14e45f-ceea-467e-9e42-1c0e0f5a4e3e"
         "400":
           $ref: "#/components/responses/ValidationError"
@@ -252,7 +252,7 @@ paths:
       description: |
         Returns status (no `result`) for up to 100 job ids in one call. Used
         for polling multiple runs at once (e.g. a "my runs" list). Unknown ids
-        are silently omitted from the response — this endpoint never 404s.
+        are silently omitted from the response; this endpoint never 404s.
       parameters:
         - name: ids
           in: query
@@ -302,6 +302,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Run"
+        "400":
+          $ref: "#/components/responses/ValidationError"
         "404":
           $ref: "#/components/responses/NotFound"
         "405":
@@ -344,7 +346,7 @@ components:
       required: false
       description: >-
         Set to `plot` to embed the base64-encoded plot image(s) in the
-        response. Omitted by default (D7) — the plot is ~50KB and most
+        response. Omitted by default (D7): the plot is ~50KB and most
         programmatic callers don't need it.
       schema:
         type: string
@@ -395,7 +397,7 @@ components:
               message: "Dataset too large to queue; use POST /v1/run-model or /v1/run-rtma instead."
     RateLimited:
       description: >-
-        Too many requests — either the edge rate limit or the server-side
+        Too many requests: either the edge rate limit or the server-side
         concurrency cap was hit. Retry with backoff.
       content:
         application/json:
@@ -452,9 +454,12 @@ components:
       type: object
       description: |
         One row of meta-analysis input data. Columns are resolved by the
-        canonical keys below when present; otherwise the first 3-4 keys of
-        the object are taken positionally as (effect, se, n_obs[, study_id])
-        for MAIVE-family endpoints, or (effect, se) for RTMA (D5).
+        canonical keys below when present (matched case-insensitively);
+        otherwise the first 3-4 keys of the object are taken positionally as
+        (effect, se, n_obs[, study_id]) for MAIVE-family endpoints, or
+        (effect, se) for RTMA (D5). With positional resolution, MAIVE-family
+        rows must have exactly 3 or 4 keys; extra columns are tolerated only
+        when the canonical names are present.
       properties:
         effect:
           type: number
@@ -618,7 +623,7 @@ components:
       type: object
       description: >-
         Result of `POST /v1/run-model`. Field names mirror the internal R
-        result object 1:1 (`maive_model.R`, `run_maive_model`) — they are
+        result object 1:1 (`maive_model.R`, `run_maive_model`); they are
         already the de-facto contract for the UI and reproducibility
         packages, and are frozen as-is (§11).
       required:
