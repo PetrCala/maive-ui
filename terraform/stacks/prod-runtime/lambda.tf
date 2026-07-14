@@ -86,6 +86,26 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_errors" {
   }
 }
 
+# Throttle alarm: with reserved concurrency now capping the R backend
+# (docs/PUBLIC_API_DESIGN.md D2), throttles are the signal that the cap is being
+# hit, whether from an abusive caller or organic growth that warrants raising it.
+resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_throttles" {
+  alarm_name          = "${local.lambda_r_backend_function_name}-throttles"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = "1"
+  metric_name         = "Throttles"
+  namespace           = "AWS/Lambda"
+  period              = "300"
+  statistic           = "Sum"
+  threshold           = "0"
+  alarm_description   = "Lambda R backend is being throttled (reserved concurrency cap reached)"
+  alarm_actions       = []
+
+  dimensions = {
+    FunctionName = aws_lambda_function.r_backend.function_name
+  }
+}
+
 resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_duration" {
   alarm_name          = "${local.lambda_r_backend_function_name}-duration"
   comparison_operator = "GreaterThanThreshold"
@@ -119,7 +139,8 @@ resource "aws_cloudwatch_dashboard" "lambda_r_backend" {
           metrics = [
             ["AWS/Lambda", "Invocations", "FunctionName", aws_lambda_function.r_backend.function_name],
             [".", "Errors", ".", "."],
-            [".", "Duration", ".", "."]
+            [".", "Duration", ".", "."],
+            [".", "Throttles", ".", "."]
           ]
           period = 300
           stat   = "Sum"

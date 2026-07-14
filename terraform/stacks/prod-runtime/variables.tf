@@ -58,9 +58,16 @@ variable "lambda_r_backend_timeout" {
 }
 
 variable "lambda_r_backend_reserved_concurrency" {
-  description = "Reserved concurrency for Lambda R backend (-1 = unreserved)"
+  description = <<-EOT
+    Reserved concurrency for the Lambda R backend (-1 = unreserved). This is the
+    primary cost/abuse control for the public /v1 API (docs/PUBLIC_API_DESIGN.md
+    D2): it hard-caps concurrent R executions regardless of entry path (UI, sync
+    /v1, or the async orchestrator), so worst-case spend is bounded and excess
+    requests get a 429. Must stay above the orchestrator's maximum_concurrency
+    (5) so async runs never starve synchronous UI/API calls.
+  EOT
   type        = number
-  default     = -1
+  default     = 10
 }
 
 variable "lambda_r_backend_log_retention_days" {
