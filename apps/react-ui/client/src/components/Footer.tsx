@@ -16,6 +16,7 @@ import {
   FaFileAlt,
   FaGlobe,
   FaRProject,
+  FaTerminal,
   FaTimes,
 } from "react-icons/fa";
 
@@ -54,6 +55,25 @@ const FooterHrefLinkItem = ({
       href={href}
       target="_blank"
       rel="noopener noreferrer"
+      className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 flex items-center"
+    >
+      <FooterLinkItemContents icon={icon} text={text} />
+    </Link>
+  );
+};
+
+const FooterInternalLinkItem = ({
+  icon,
+  href,
+  text,
+}: {
+  icon: React.ReactNode;
+  text: string;
+  href: string;
+}) => {
+  return (
+    <Link
+      href={href}
       className="hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200 flex items-center"
     >
       <FooterLinkItemContents icon={icon} text={text} />
@@ -322,6 +342,11 @@ const Footer = ({ className = "" }: FooterProps) => {
             onClick={handleCitationClick}
             icon={<FaFileAlt />}
             text="Cite"
+          />
+          <FooterInternalLinkItem
+            href={CONST.LINKS.PUBLIC_API.DOCS_ROUTE}
+            icon={<FaTerminal />}
+            text="API"
           />
           <FooterHrefLinkItem
             href={CONST.LINKS.APPLICATIONS_URL}

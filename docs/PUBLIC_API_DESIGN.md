@@ -1,6 +1,6 @@
 # Public Model API: Design & Implementation Plan
 
-**Status:** Phases 1-2 implemented and live at `https://api.maive.eu`; Phase 3 (UI docs page, announcement) pending
+**Status:** Phases 1-2 implemented and live at `https://api.maive.eu`; Phase 3 UI docs page shipped, announcement pending
 **Date:** 2026-07-08
 **Related:** [ASYNC_RUNS_DESIGN.md](ASYNC_RUNS_DESIGN.md) (async runs infra this design reuses);
 [SERVER_SIDE_API_ARCHITECTURE.md](SERVER_SIDE_API_ARCHITECTURE.md) (current serving topology)
@@ -370,10 +370,13 @@ Two things differed from the plan as written:
 
 **Phase 3, publication:**
 
-- [ ] Docs page in the UI (e.g. `/api`) rendering the OpenAPI spec + examples;
-      link from the footer next to the reproducibility material.
-- [ ] Citation requirement surfaced in the docs (Nature Communications 2025,
-      per repo policy).
+- [x] Docs page in the UI (`/api-docs`, kept clear of the Next.js `/api`
+      route namespace): endpoint/data/parameter tables plus curl/R/Python
+      examples, hand-written against `docs/PUBLIC_API.md` with a link out to
+      the OpenAPI spec on GitHub as the source of truth; linked from the
+      footer next to the citation/code material.
+- [x] Citation requirement surfaced in the docs (Nature Communications 2025,
+      per repo policy), via the shared `CitationBox`.
 - [ ] Announce; monitor throttles/alarms; tune rate limits and the
       concurrency cap from observed load.
 
