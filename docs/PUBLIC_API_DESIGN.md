@@ -1,6 +1,6 @@
 # Public Model API: Design & Implementation Plan
 
-**Status:** Phase 1 implemented (sync + async /v1, spec, docs); Phases 2-3 pending
+**Status:** Phases 1-2 implemented and live at `https://api.maive.eu`; Phase 3 (UI docs page, announcement) pending
 **Date:** 2026-07-08
 **Related:** [ASYNC_RUNS_DESIGN.md](ASYNC_RUNS_DESIGN.md) (async runs infra this design reuses);
 [SERVER_SIDE_API_ARCHITECTURE.md](SERVER_SIDE_API_ARCHITECTURE.md) (current serving topology)
@@ -344,15 +344,29 @@ synchronous UI runs. Revisit only if bypass abuse is actually observed (§12).
 - [x] Tests (UI side): Vitest coverage for the `/api/v1/runs` routes. Shipped
       in #467.
 
-**Phase 2, infra & edge:**
+**Phase 2, infra & edge:** *(done)*
 
-- [ ] Terraform (`prod-runtime`): `reserved_concurrent_executions = 10` on the
+- [x] Terraform (`prod-runtime`): `reserved_concurrent_executions = 10` on the
       R Lambda; CloudWatch throttle alarm.
-- [ ] Cloudflare (managed out of band, like the existing Worker): DNS
-      `api.maive.eu`, Worker route with path-based origin selection (D9),
-      rate-limit + WAF rules.
-- [ ] Smoke test the full surface through the branded hostname; verify the UI
+- [x] Cloudflare: DNS `api.maive.eu`, Worker route with path-based origin
+      selection (D9), rate-limit rule. The Worker sources and the edge
+      inventory now live in `infra/cloudflare/` rather than only in the
+      Cloudflare account.
+- [x] Smoke test the full surface through the branded hostname; verify the UI
       is unaffected (its direct `.on.aws` path unchanged).
+
+Two things differed from the plan as written:
+
+- **Rate limiting:** the zone is on the **Free** plan, which allows exactly
+  **one** rate-limiting rule and locks the window to 10s, and that one rule was
+  already in use for the UI. So instead of the separate per-method limits this
+  document originally specced (10/min POST, 120/min GET), the existing rule's
+  expression was extended to also match `api.maive.eu`, giving the API a shared
+  ~100 req/10s per-IP limit. The concurrency cap (D2) remains the real control,
+  so this is a speed bump rather than the primary defense.
+- **DNS:** a wildcard `CNAME *.maive.eu` already existed, so `api.maive.eu`
+  resolved (and hung) before any change. An explicit `api` record was added so
+  the API does not silently depend on that wildcard.
 
 **Phase 3, publication:**
 
@@ -390,12 +404,30 @@ until Phase 3.
   eventual fix.
 - **Concurrency cap = 10 is a guess.** It now also throttles UI sync traffic
   at the margin; previously it was deliberately unreserved. Watch the throttle
-  alarm; tune.
+  alarm; tune. Each unit of concurrency is worth roughly **$0.12/hour
+  (~$86/month)** of worst-case exposure at 2 GB, so the cap is effectively the
+  ceiling on an anonymous abuse bill: ~$29/day at 10, ~$58/day at 20. Note the
+  cap is **global, not per-caller**: anonymous access means there is no
+  per-user quota, and the edge rule limits request *rate*, not concurrency, so
+  one heavy caller can occupy all of it.
+- **Sync traffic can crowd out async runs.** Async is capped at 5 by the
+  orchestrator's event-source `maximum_concurrency`, so it cannot exhaust the
+  cap alone; but sync calls compete for the same 10 slots. When they win, the
+  orchestrator's call to R gets a 429. It now retries that with bounded backoff
+  (async design D4, amended) so runs wait rather than fail. Before that fix a
+  sync burst could mark queued UI runs permanently `failed`. If the throttle
+  alarm shows this happening for real, raise `maximum_concurrency` and
+  `lambda_r_backend_reserved_concurrency` **together**: raising R alone will not
+  speed async up, and raising the orchestrator alone starves sync.
 - **Column resolution by name (D5)** adds one behavior divergence from legacy
   (which is purely positional). Contained to `/v1`; property-tested in the e2e
   scenario.
-- **Hostname mirroring:** also expose `api.spuriousprecision.com`? Deferred;
-  one canonical hostname keeps docs and rate-limit scoping simple.
+- **Hostname mirroring:** ~~also expose `api.spuriousprecision.com`?~~
+  **Decided:** no. `api.maive.eu` is the single canonical hostname; one
+  hostname keeps docs and rate-limit scoping simple (and on the Free plan the
+  zone gets only one rate-limit rule anyway). `easymeta.org` is GoDaddy
+  domain-forwarding, not a Cloudflare zone, so it could not host an API
+  hostname without moving its DNS first.
 - **Result-shape stability:** `/v1` freezes field names that today mirror
   internal R naming (`petpeese_selected`, `is_quadratic_fit`, …). Accepted;
   they're already the de-facto contract for the UI and reproducibility
