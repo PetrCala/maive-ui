@@ -6,10 +6,9 @@ MAIVE exposes a public, anonymous HTTP API for running MAIVE / WAIVE / WLS
 and RTMA meta-analysis models programmatically; no accounts, no API keys.
 It's the same compute the MAIVE UI uses, given a clean, documented contract.
 
-> **Status:** this guide documents the target `/v1` contract. The branded
-> hostname (`api.maive.eu`) goes live in a later rollout phase; if it
-> doesn't resolve yet, that's expected; see
-> [`PUBLIC_API_DESIGN.md`](PUBLIC_API_DESIGN.md) for the rollout plan.
+> **Status:** live. `https://api.maive.eu` serves the `/v1` contract described
+> here. See [`PUBLIC_API_DESIGN.md`](PUBLIC_API_DESIGN.md) for the design
+> decisions behind it.
 
 The full machine-readable contract lives in
 [`docs/api/openapi.yaml`](api/openapi.yaml) (OpenAPI 3); it is the source of

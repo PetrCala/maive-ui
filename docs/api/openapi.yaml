@@ -11,9 +11,7 @@ info:
     [`docs/PUBLIC_API.md`](../PUBLIC_API.md) for a usage guide with copy-paste
     curl / R / Python examples.
 
-    **Status:** this spec documents the target contract. The branded hostname
-    (`api.maive.eu`) goes live in a later rollout phase (Phase 2 of the design
-    doc); it may not resolve yet.
+    **Status:** live. `https://api.maive.eu` serves this contract.
 
     **Access:** anonymous; no accounts, no API keys. Abuse is bounded by
     server-side concurrency caps and edge rate limits, not identity.

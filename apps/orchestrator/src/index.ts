@@ -11,8 +11,72 @@ const tableName = process.env.RUNS_TABLE_NAME ?? "";
 const rApiUrl = (process.env.R_API_URL ?? "").replace(/\/+$/, "");
 
 const TTL_SECONDS = 48 * 60 * 60; // 48h
-const FETCH_TIMEOUT_MS = 630_000; // below the Lambda 660s timeout
+const FETCH_TIMEOUT_MS = 630_000; // total work budget, below the Lambda 660s timeout
 const TERMINAL_STATUSES = new Set(["succeeded", "failed", "timedout"]);
+
+// Retry budget for HTTP 429 only (see postWithThrottleRetry). Nominally
+// 2+4+8+16+32 = ~62s of waiting for a concurrency slot, jittered, and always
+// bounded by the run's overall deadline.
+const THROTTLE_MAX_RETRIES = 5;
+const THROTTLE_BASE_DELAY_MS = 2_000;
+
+const sleep = (ms: number): Promise<void> =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+
+/**
+ * POST to the R backend, retrying *only* on HTTP 429.
+ *
+ * A 429 means the R Lambda's reserved-concurrency cap rejected the invocation,
+ * so the analysis never ran. That makes a retry both safe and cheap, and it is
+ * the one case the async design's D4 ("no auto-retry") does not actually cover:
+ * D4 refuses retries because MCMC is nondeterministic and pathological datasets
+ * just re-time-out at double cost, which is only true of runs that executed.
+ * Without this, a burst of synchronous traffic saturating the cap would mark
+ * queued runs permanently `failed` instead of letting them wait for a slot.
+ *
+ * Every other response, including 5xx, is returned untouched for the caller to
+ * record as terminal.
+ */
+export async function postWithThrottleRetry(
+  url: string,
+  body: string,
+  deadline: number,
+): Promise<Response> {
+  for (let attempt = 0; ; attempt++) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) {
+      throw new Error("Timed out waiting for R backend capacity.");
+    }
+
+    // eslint-disable-next-line no-await-in-loop
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body,
+      signal: AbortSignal.timeout(remaining),
+    });
+
+    if (response.status !== 429) {
+      return response;
+    }
+
+    const delay = Math.round(
+      THROTTLE_BASE_DELAY_MS * 2 ** attempt * (0.5 + Math.random()),
+    );
+    if (attempt >= THROTTLE_MAX_RETRIES || Date.now() + delay >= deadline) {
+      return response; // out of budget; caller records the 429 as terminal
+    }
+
+    // Release the socket before sleeping; the body is a throttle error we
+    // never read.
+    // eslint-disable-next-line no-await-in-loop
+    await response.arrayBuffer().catch(() => undefined);
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(delay);
+  }
+}
 
 const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({ region }));
 
@@ -87,27 +151,29 @@ async function processRecord(record: SQSRecord): Promise<void> {
   const endpoint = modelType === "RTMA" ? "/run-rtma" : "/run-model";
 
   try {
-    const response = await fetch(`${rApiUrl}${endpoint}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const response = await postWithThrottleRetry(
+      `${rApiUrl}${endpoint}`,
       // Mirror the browser modelService request shape: the R Plumber endpoint
       // expects JSON strings for `data` and `parameters`.
-      body: JSON.stringify({
+      JSON.stringify({
         data: JSON.stringify(data),
         parameters: JSON.stringify(parameters),
       }),
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-
-    const text = await response.text();
+      startedAt + FETCH_TIMEOUT_MS,
+    );
 
     if (!response.ok) {
       await markTerminal(jobId, "failed", {
         startedAt,
-        errorMessage: `R backend returned HTTP ${response.status}`,
+        errorMessage:
+          response.status === 429
+            ? "R backend is at capacity: every concurrency slot was busy for the whole retry window. Please try again."
+            : `R backend returned HTTP ${response.status}`,
       });
       return;
     }
+
+    const text = await response.text();
 
     let parsed: RBackendResponse;
     try {

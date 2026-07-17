@@ -70,7 +70,7 @@ This aligns with the direction agreed in #441 ("async/background runs now").
 | D1 | **Worker invocation: SQS → thin orchestrator Lambda (Node 20) → existing R Function URL.** The R backend is unchanged. | The R image is an HTTP server behind the Lambda Web Adapter; an SQS event source or async SDK `Invoke` would not route to it without a risky runtime rewrite. The orchestrator isolates the brittle R image and gives retries/concurrency/DLQ for free. |
 | D2 | **Result storage: DynamoDB-only, full result (~50 KB) stored inline; 48 h TTL.** No S3. | Result fits well under DynamoDB's 400 KB item limit. One store, minimal footprint. S3 reserved only if a payload ever exceeds ~400 KB. |
 | D3 | **Durable history is client-side** (IndexedDB for result payloads, localStorage for the lightweight job list). The DynamoDB item is only a **48 h pickup buffer**. | Matches "persist it in the client's session"; minimizes server persistence. |
-| D4 | **No auto-retry** (`maxReceiveCount=1` → DLQ; user re-runs explicitly). | MCMC is nondeterministic (a retry yields a different result) and pathological datasets just re-time-out, doubling cost. |
+| D4 | **No auto-retry for runs that executed** (`maxReceiveCount=1` → DLQ; user re-runs explicitly). **Amended 2026-07-17:** HTTP 429 from the R backend *is* retried in-process with bounded backoff. | MCMC is nondeterministic (a retry yields a different result) and pathological datasets just re-time-out, doubling cost, but both rationales only apply to runs that actually ran. A 429 means the reserved-concurrency cap (see PUBLIC_API_DESIGN.md D2) refused the invocation and no analysis happened, so retrying is deterministic-safe and free. Without the carve-out, a burst of synchronous traffic saturating the cap marks queued runs permanently `failed` instead of letting them wait for a slot. |
 | D5 | **Keep the synchronous path as a flagged fallback** — and as the route for datasets too large to queue. | Instant rollback lever; avoids needing S3 input plumbing in Phase 1 (large datasets bypass the queue). |
 | D6 | **Runs list is per-browser** (no accounts). `jobId` is an opaque bearer token; results readable by anyone holding the id. | No identity system exists; same sharing model as today's shareable results URL. |
 | D7 | **Status delivery via short polling** (status-only reads; full result fetched once when terminal). No SSE/WebSocket. | Simple; fast handlers; avoids Lambda/Cloudflare long-connection issues. |
@@ -171,6 +171,9 @@ All handlers are fast (DDB/SQS calls), so the UI Lambda's 30 s cap is irrelevant
   `maximum_concurrency` set to match so it never out-calls the R cap (avoids 429s).
 - **SQS visibility timeout** (~660 s) > R Lambda max work time (600 s) to avoid mid-run redelivery.
 - **No auto-retry** (D4): `maxReceiveCount=1` → DLQ; CloudWatch alarm on DLQ depth.
+  The one exception is an HTTP 429 from the R backend (its reserved-concurrency
+  cap refusing the invocation): the orchestrator retries in-process with
+  bounded, jittered backoff, since no analysis ran. See D4.
 - **SQS 256 KB message limit**: datasets above the budget use the synchronous fallback (D5);
   the S3 input-pointer escape hatch is deferred (see §15).
 
