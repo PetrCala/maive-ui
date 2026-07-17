@@ -31,6 +31,14 @@ const CONST = {
       HOMEPAGE: `https://github.com/${GH_OWNER}/${GH_REPO_UI}`,
       ISSUES: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/issues`,
     },
+    PUBLIC_API: {
+      // Branded hostname for the public /v1 model API (see docs/PUBLIC_API.md).
+      BASE_URL: "https://api.maive.eu",
+      // In-app docs page. Kept off /api, which is the Next.js API-routes namespace.
+      DOCS_ROUTE: "/api-docs",
+      SPEC: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/blob/master/docs/api/openapi.yaml`,
+      GUIDE: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/blob/master/docs/PUBLIC_API.md`,
+    },
     APPLICATIONS_URL: "https://meta-analysis.cz/",
     CREATOR_URL: `https://github.com/${GH_OWNER}`,
     CONTACT_WEBSITE_URL: "https://irsova.com/",
