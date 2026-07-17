@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { resolveColumns, validateDataset } from "@api/server/datasetValidation";
+import {
+  MAX_ROWS,
+  resolveColumns,
+  validateDataset,
+} from "@api/server/datasetValidation";
 
 const maiveRow = (
   effect: number,
@@ -86,6 +90,20 @@ describe("validateDataset: MAIVE-family", () => {
   it("rejects fewer than 4 rows", () => {
     const data = [maiveRow(0.4, 0.1, 100), maiveRow(0.3, 0.1, 90)];
     expect(validateDataset(data, "MAIVE")?.message).toMatch(/at least 4 rows/);
+  });
+
+  it("rejects more than MAX_ROWS rows", () => {
+    const data = Array.from({ length: MAX_ROWS + 1 }, () =>
+      maiveRow(0.4, 0.1, 100),
+    );
+    expect(validateDataset(data, "MAIVE")?.message).toMatch(/at most .* rows/);
+  });
+
+  it("accepts exactly MAX_ROWS rows", () => {
+    const data = Array.from({ length: MAX_ROWS }, () =>
+      maiveRow(0.4, 0.1, 100),
+    );
+    expect(validateDataset(data, "MAIVE")).toBeNull();
   });
 
   it("rejects a 2-column dataset (missing n_obs)", () => {

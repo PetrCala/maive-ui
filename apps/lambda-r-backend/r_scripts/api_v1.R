@@ -24,6 +24,14 @@ API_V1_SE_TREATMENTS <- c(
 API_V1_MAIVE_CANONICAL <- c("effect", "se", "n_obs")
 API_V1_RTMA_CANONICAL <- c("effect", "se")
 
+# Upper bound on dataset rows accepted by any HTTP route. A cost/abuse control
+# (docs/COST_CONTROLS.md), not a statistical limit: it caps the per-request work
+# an anonymous caller can trigger through the public Function URL, independent of
+# the reserved-concurrency cap and the Lambda timeout. Set far above any
+# realistic meta-analysis so it never blocks genuine use. Keep in sync with
+# MAX_INPUT_ROWS in index.R and MAX_ROWS in the UI's datasetValidation.ts.
+MAX_INPUT_ROWS <- 50000L
+
 API_V1_MAIVE_PLOT_FIELDS <- c("funnelPlot", "funnelPlotWidth", "funnelPlotHeight")
 API_V1_RTMA_PLOT_FIELDS <- c("zScorePlot", "zScorePlotWidth", "zScorePlotHeight")
 
@@ -145,7 +153,18 @@ api_v1_data_columns <- function(data) {
     if (nrow(data) == 0 || ncol(data) == 0) {
       api_v1_abort_validation("The `data` array must contain at least one row.")
     }
+    if (nrow(data) > MAX_INPUT_ROWS) {
+      api_v1_abort_validation(
+        sprintf("Data must contain at most %d rows; found %d.", MAX_INPUT_ROWS, nrow(data))
+      )
+    }
     return(as.list(data))
+  }
+
+  if (is.list(data) && length(data) > MAX_INPUT_ROWS) {
+    api_v1_abort_validation(
+      sprintf("Data must contain at most %d rows; found %d.", MAX_INPUT_ROWS, length(data))
+    )
   }
 
   if (!is.list(data) || length(data) == 0 || !is.null(names(data))) {

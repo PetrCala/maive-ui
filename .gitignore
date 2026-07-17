@@ -85,8 +85,9 @@ node_modules/
 **/backend.tf
 **/versions.tf
 
-# Orchestrator zip built by Terraform's archive_file (built in CI)
+# Lambda zips built by Terraform's archive_file
 terraform/stacks/prod-runtime/orchestrator.zip
+terraform/stacks/prod-runtime/kill_switch.zip
 **/*.tfstate
 **/*.tfstate.*
 **/*.out

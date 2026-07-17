@@ -83,10 +83,11 @@ resource "aws_cloudwatch_log_group" "ui_lambda" {
 }
 
 resource "aws_lambda_function" "ui" {
-  function_name = "${var.project}-ui"
-  role          = aws_iam_role.ui_lambda.arn
-  timeout       = var.ui_lambda_timeout
-  memory_size   = var.ui_lambda_memory_size
+  function_name                  = "${var.project}-ui"
+  role                           = aws_iam_role.ui_lambda.arn
+  timeout                        = var.ui_lambda_timeout
+  memory_size                    = var.ui_lambda_memory_size
+  reserved_concurrent_executions = var.ui_lambda_reserved_concurrency
 
   package_type = "Image"
   image_uri    = "${local.ecr_urls["react-ui"]}:${var.image_tag}"
