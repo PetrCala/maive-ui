@@ -8,6 +8,14 @@ import CONST from "@src/CONST";
 
 export const MIN_MAIVE_ROWS = 4;
 
+// Upper bound on dataset rows accepted by the public API. A cost/abuse control,
+// not a statistical limit: it caps the per-request work an anonymous caller can
+// trigger, independent of the R Lambda's concurrency cap and timeout. Set far
+// above any realistic meta-analysis (largest known are a few thousand
+// estimates), so it never blocks genuine use. Keep in sync with MAX_INPUT_ROWS
+// in the R backend (api_v1.R / index.R).
+export const MAX_ROWS = 50000;
+
 export type ResolvedColumns = {
   effect: string;
   se: string;
@@ -86,6 +94,12 @@ export const validateDataset = (
 ): ValidationError | null => {
   if (!Array.isArray(data) || data.length === 0) {
     return { message: "`data` must be a non-empty array of row objects." };
+  }
+
+  if (data.length > MAX_ROWS) {
+    return {
+      message: `Data must contain at most ${MAX_ROWS} rows; found ${data.length}.`,
+    };
   }
 
   const hasInvalidRow = data.some(

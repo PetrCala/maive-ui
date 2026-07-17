@@ -3,6 +3,33 @@
 # Load required libraries
 library(plumber) # nolint: undesirable_function_linter.
 
+# Upper bound on dataset rows accepted by the legacy routes. A cost/abuse
+# control (docs/COST_CONTROLS.md), not a statistical limit: the legacy routes
+# are reachable anonymously on the raw Function URL, bypassing the edge, so the
+# guard lives at the compute boundary. Keep in sync with MAX_INPUT_ROWS in
+# api_v1.R and MAX_ROWS in the UI's datasetValidation.ts.
+MAX_INPUT_ROWS <- 50000L
+
+# Abort a legacy request whose dataset exceeds MAX_INPUT_ROWS. `data` is the raw
+# JSON string the route received; parsing failures fall through to the model
+# function, which reports them in its own error envelope.
+enforce_max_input_rows <- function(data) {
+  n_rows <- tryCatch(
+    {
+      parsed <- jsonlite::fromJSON(data, simplifyVector = TRUE)
+      if (is.data.frame(parsed)) nrow(parsed) else length(parsed)
+    },
+    error = function(e) 0L
+  )
+  if (isTRUE(n_rows > MAX_INPUT_ROWS)) {
+    cli::cli_abort(
+      "Data must contain at most {MAX_INPUT_ROWS} rows; found {n_rows}.",
+      call = NULL
+    )
+  }
+  invisible(n_rows)
+}
+
 #* Echo back the input
 #* @usage curl --data "a=4&b=3" "http://localhost:8787/sum"
 #* @param msg The message to echo
@@ -38,6 +65,8 @@ function(data, parameters) {
         cli::cli_abort("Missing data or parameters")
       }
 
+      enforce_max_input_rows(data)
+
       results <- run_maive_model(data, parameters)
       list(data = results)
     },
@@ -68,6 +97,8 @@ function(data, parameters) {
       if (is.null(data) || is.null(parameters)) {
         cli::cli_abort("Missing data or parameters")
       }
+
+      enforce_max_input_rows(data)
 
       results <- run_rtma_model(data, parameters)
       list(data = results)

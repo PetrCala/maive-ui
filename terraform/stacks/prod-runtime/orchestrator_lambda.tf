@@ -86,8 +86,9 @@ resource "aws_lambda_function" "orchestrator" {
 }
 
 # SQS -> orchestrator. maximum_concurrency caps how many queued runs fan out to
-# the R backend at once (bounds cost without throttling synchronous browser
-# calls, which is why the R Lambda itself stays unreserved).
+# the R backend at once, and must stay below the R backend's reserved
+# concurrency (lambda_r_backend_reserved_concurrency) so async runs never starve
+# synchronous UI/API calls.
 resource "aws_lambda_event_source_mapping" "orchestrator" {
   event_source_arn = aws_sqs_queue.runs.arn
   function_name    = aws_lambda_function.orchestrator.arn

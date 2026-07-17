@@ -79,7 +79,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_errors" {
   statistic           = "Sum"
   threshold           = "0"
   alarm_description   = "Lambda R backend has errors"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alarm_notifications.arn]
 
   dimensions = {
     FunctionName = aws_lambda_function.r_backend.function_name
@@ -99,7 +99,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_throttles" {
   statistic           = "Sum"
   threshold           = "0"
   alarm_description   = "Lambda R backend is being throttled (reserved concurrency cap reached)"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alarm_notifications.arn]
 
   dimensions = {
     FunctionName = aws_lambda_function.r_backend.function_name
@@ -116,7 +116,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_duration" {
   statistic           = "Average"
   threshold           = var.lambda_r_backend_timeout * 1000 # Convert seconds to milliseconds
   alarm_description   = "Lambda R backend execution time is high"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alarm_notifications.arn]
 
   dimensions = {
     FunctionName = aws_lambda_function.r_backend.function_name

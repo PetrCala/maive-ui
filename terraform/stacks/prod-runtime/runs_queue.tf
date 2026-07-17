@@ -1,5 +1,5 @@
 # Async runs queue. The orchestrator consumes this; failures are NOT retried
-# (maxReceiveCount = 1) — model/analysis failures are recorded as terminal
+# (maxReceiveCount = 1). Model/analysis failures are recorded as terminal
 # states by the orchestrator, and only infra failures (a thrown handler) reach
 # the DLQ. MCMC is nondeterministic, so auto-retry is intentionally disabled.
 
@@ -31,7 +31,7 @@ resource "aws_cloudwatch_metric_alarm" "runs_dlq_not_empty" {
   statistic           = "Maximum"
   threshold           = "0"
   alarm_description   = "Async runs DLQ has messages (orchestrator/infra failure)"
-  alarm_actions       = []
+  alarm_actions       = [aws_sns_topic.alarm_notifications.arn]
 
   dimensions = {
     QueueName = aws_sqs_queue.runs_dlq.name

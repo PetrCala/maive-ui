@@ -37,6 +37,19 @@ variable "ui_lambda_log_retention_days" {
   default     = 3
 }
 
+variable "ui_lambda_reserved_concurrency" {
+  description = <<-EOT
+    Reserved concurrency for the UI Lambda (-1 = unreserved). Caps how much the
+    public UI Function URL can spend and stops a flood from consuming the
+    account-wide concurrency pool that the R backend and orchestrator also draw
+    from. UI requests are short (page loads and lightweight API routes), so a
+    small cap is ample for minimal traffic; raise it if legitimate traffic grows
+    (docs/COST_CONTROLS.md).
+  EOT
+  type        = number
+  default     = 30
+}
+
 variable "lambda_r_backend_function_base_name" {
   type        = string
   description = "The base name of the Lambda function"
@@ -74,4 +87,28 @@ variable "lambda_r_backend_log_retention_days" {
   type        = number
   description = "Number of days to retain Lambda R backend CloudWatch logs"
   default     = 3
+}
+
+variable "cost_circuit_breaker_enabled" {
+  description = <<-EOT
+    When true, sustained throttling of the R backend automatically trips the
+    circuit breaker: an SNS-triggered Lambda sets the R backend's reserved
+    concurrency to 0, halting all further compute spend until an operator
+    restores it (docs/COST_CONTROLS.md). When false, the same condition only
+    emails; no automatic shutoff happens.
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "cost_circuit_breaker_throttle_periods" {
+  description = <<-EOT
+    Number of consecutive 5-minute periods of continuous R-backend throttling
+    that must occur before the circuit breaker trips. Throttling only happens
+    when demand exceeds the reserved-concurrency cap, so sustained throttling is
+    a strong abuse signal; a multi-period window avoids tripping on brief
+    organic bursts. Default 6 = ~30 minutes.
+  EOT
+  type        = number
+  default     = 6
 }
