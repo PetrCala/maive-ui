@@ -153,9 +153,13 @@ cat("Comparing with expected results from web application...\\n")
 expected <- jsonlite::fromJSON("expected_results.json")
 tolerance <- 1e-8
 
-effect_match <- abs(results$effectEstimate - expected$effectEstimate) < tolerance
-se_match <- abs(results$standardError - expected$standardError) < tolerance
-egger_match <- abs(results$publicationBias$eggerCoef - expected$publicationBias$eggerCoef) < tolerance
+# expected_results.json was captured from the web app's JSON API response,
+# which rounds every numeric field to 4 decimal places before it reaches the
+# browser (jsonlite::toJSON default digits = 4). This script's local re-run
+# is not rounded, so round to that same precision before comparing.
+effect_match <- abs(round(results$effectEstimate, 4) - expected$effectEstimate) < tolerance
+se_match <- abs(round(results$standardError, 4) - expected$standardError) < tolerance
+egger_match <- abs(round(results$publicationBias$eggerCoef, 4) - expected$publicationBias$eggerCoef) < tolerance
 
 cat("Effect Estimate Match:  ", ifelse(effect_match, "✓ PASS", "✗ FAIL"), "\\n")
 cat("Standard Error Match:   ", ifelse(se_match, "✓ PASS", "✗ FAIL"), "\\n")
