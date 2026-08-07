@@ -8,10 +8,12 @@ import Tooltip from "@src/components/Tooltip";
 import Alert from "@src/components/Alert";
 import type { OptionConfig, OptionContext } from "@src/types/options";
 import type { ModelParameters } from "@src/types/api";
+import type { DataArray } from "@src/types";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import renderRichInfoMessage from "@src/lib/text/richText";
+import { hasNObsColumn } from "@src/utils/dataUtils";
 
 type OptionRendererProps = {
   option: OptionConfig;
@@ -69,6 +71,15 @@ export default function OptionRenderer({
     option.key === "modelType" ? TEXT.model.modelType.tooltip : option.tooltip;
   const isWaiveModel =
     CONFIG.WAIVE_ENABLED && parameters.modelType === CONST.MODEL_TYPES.WAIVE;
+  const contextData = (
+    context?.uploadedData as { data?: DataArray } | undefined
+  )?.data;
+  // A dataset without a sample-size column can only run RTMA; MAIVE, WAIVE,
+  // and WLS all need n_obs.
+  const isRtmaOnlyData =
+    CONFIG.RTMA_ENABLED &&
+    Boolean(contextData?.length) &&
+    !hasNObsColumn(contextData);
 
   const renderOption = () => {
     switch (option.type) {
@@ -90,6 +101,13 @@ export default function OptionRenderer({
           return null;
         }
         let dropdownOptions = option.options;
+
+        if (option.key === "modelType" && isRtmaOnlyData) {
+          dropdownOptions = dropdownOptions.filter(
+            (dropdownOption) =>
+              dropdownOption.value === CONST.MODEL_TYPES.RTMA,
+          );
+        }
 
         if (option.key === "weight") {
           dropdownOptions = dropdownOptions.filter((dropdownOption) => {
@@ -190,6 +208,14 @@ export default function OptionRenderer({
       {option.key === "modelType" && isWaiveModel && (
         <Alert
           message={TEXT.waive.helpText}
+          type={CONST.ALERT_TYPES.INFO}
+          className="mt-3"
+          role="status"
+        />
+      )}
+      {option.key === "modelType" && isRtmaOnlyData && (
+        <Alert
+          message={TEXT.model.modelType.rtmaOnlyInfo}
           type={CONST.ALERT_TYPES.INFO}
           className="mt-3"
           role="status"

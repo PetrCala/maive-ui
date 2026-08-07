@@ -38,7 +38,10 @@ import {
   pruneFilterTree,
 } from "@src/utils/subsampleFilterUtils";
 
-const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se", "nObs"];
+// Sample size (nObs) is deliberately not required: a two-column (effect, se)
+// dataset is the standard input for RTMA, which never uses sample sizes. The
+// model page restricts such data to RTMA; MAIVE, WAIVE, and WLS need nObs.
+const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se"];
 
 type MappingState = {
   effect: string | null;
@@ -117,7 +120,7 @@ const autoMapColumns = (
     (field) => mapping[field] !== null,
   );
 
-  if (!requiredMapped && columns.length >= 3 && columns.length <= 4) {
+  if (!requiredMapped && columns.length >= 2 && columns.length <= 4) {
     mapping.effect = columns[0] ?? null;
     mapping.se = columns[1] ?? null;
     mapping.nObs = columns[2] ?? null;
@@ -137,7 +140,7 @@ type ValidationMessage = {
 type NormalizedRow = {
   effect: number | null;
   se: number | null;
-  n_obs: number | null;
+  n_obs?: number | null;
   study_id?: unknown;
   [key: string]: unknown;
 };
@@ -258,8 +261,13 @@ const convertToNormalizedRow = (
   const normalized: NormalizedRow = {
     effect: normalizeNumericValue(mapping.effect),
     se: normalizeSeValue(mapping.se),
-    n_obs: normalizeNumericValue(mapping.nObs),
   };
+
+  // Keep the key order effect, se, n_obs, study_id: the R backend reads the
+  // columns positionally.
+  if (mapping.nObs) {
+    normalized.n_obs = normalizeNumericValue(mapping.nObs);
+  }
 
   if (mapping.studyId) {
     normalized.study_id = getValue(mapping.studyId);
@@ -270,6 +278,7 @@ const convertToNormalizedRow = (
 
 const analyzeNormalizedRows = (
   rows: NormalizedRow[],
+  finiteColumns: ColumnKey[] = FINITE_COLUMNS,
 ): { sanitizedRows: NormalizedRow[]; issues: NormalizationIssues } => {
   const rowsWithMissing: RowIssue[] = [];
   const rowsWithInfinite: RowIssue[] = [];
@@ -279,7 +288,7 @@ const analyzeNormalizedRows = (
     const missingColumns: ColumnKey[] = [];
     const infiniteColumns: ColumnKey[] = [];
 
-    FINITE_COLUMNS.forEach((columnKey) => {
+    finiteColumns.forEach((columnKey) => {
       const value = row[columnKey];
 
       if (value === null || value === undefined) {
@@ -402,11 +411,23 @@ const validateData = (
       key: "se" as const,
       errorMsg: `The ${seField} column contains non-numeric values. All standard errors must be numbers.`,
     },
-    {
-      key: "n_obs" as const,
-      errorMsg: `The ${nObsField} column contains non-numeric values. All sample sizes must be numbers.`,
-    },
+    ...(mapping.nObs
+      ? [
+          {
+            key: "n_obs" as const,
+            errorMsg: `The ${nObsField} column contains non-numeric values. All sample sizes must be numbers.`,
+          },
+        ]
+      : []),
   ];
+
+  if (!mapping.nObs) {
+    messages.push({
+      type: CONST.ALERT_TYPES.INFO,
+      message:
+        "No sample-size column is mapped, so only RTMA (p-hacking correction) will be available on the next screen. MAIVE, WAIVE, and WLS require sample sizes.",
+    });
+  }
 
   columnChecks.forEach((col) => {
     const hasNonNumeric = fullData.some((row) => {
@@ -444,6 +465,10 @@ const validateData = (
 
   const nonPositiveIndexes: number[] = [];
   fullData.forEach((row, index) => {
+    if (!mapping.nObs) {
+      return;
+    }
+
     const value = row.n_obs;
     if (value === undefined || value === null) {
       return;
@@ -758,15 +783,18 @@ export default function ValidationPage() {
   }, [availableColumns, uploadedData]);
 
   const mappedPreviewHeaders = useMemo(() => {
-    if (!mappingComplete || !mapping.effect || !mapping.se || !mapping.nObs) {
+    if (!mappingComplete || !mapping.effect || !mapping.se) {
       return [] as string[];
     }
 
     const headers = [
       describeField(TEXT.mapping.fieldLabels.effect, mapping.effect),
       describeField(TEXT.mapping.fieldLabels.se, mapping.se),
-      describeField(TEXT.mapping.fieldLabels.nObs, mapping.nObs),
     ];
+
+    if (mapping.nObs) {
+      headers.push(describeField(TEXT.mapping.fieldLabels.nObs, mapping.nObs));
+    }
 
     if (mapping.studyId) {
       headers.push(
@@ -789,7 +817,11 @@ export default function ValidationPage() {
     }
 
     return normalizedData.slice(0, 5).map((row) => {
-      const values: unknown[] = [row.effect, row.se, row.n_obs];
+      const values: unknown[] = [row.effect, row.se];
+
+      if (mapping.nObs) {
+        values.push(row.n_obs);
+      }
 
       if (mapping.studyId) {
         values.push(row.study_id);
@@ -797,7 +829,7 @@ export default function ValidationPage() {
 
       return values.map((value) => formatNormalizedValue(value));
     });
-  }, [mapping.studyId, mappingComplete, normalizedData]);
+  }, [mapping.nObs, mapping.studyId, mappingComplete, normalizedData]);
 
   const usedColumns = useMemo(() => {
     return new Set(
@@ -863,7 +895,7 @@ export default function ValidationPage() {
       return;
     }
 
-    if (!mapping.effect || !mapping.se || !mapping.nObs) {
+    if (!mapping.effect || !mapping.se) {
       setNormalizedData([]);
       setNormalizationIssues(createEmptyNormalizationIssues());
       return;
@@ -874,12 +906,18 @@ export default function ValidationPage() {
         convertToNormalizedRow(row, mapping),
       );
 
-      const { sanitizedRows, issues } = analyzeNormalizedRows(normalizedRows);
+      const finiteColumns: ColumnKey[] = mapping.nObs
+        ? ["effect", "se", "n_obs"]
+        : ["effect", "se"];
+      const { sanitizedRows, issues } = analyzeNormalizedRows(
+        normalizedRows,
+        finiteColumns,
+      );
 
       const mappingConfig: ColumnMapping = {
         effect: mapping.effect,
         se: mapping.se,
-        nObs: mapping.nObs,
+        nObs: mapping.nObs ?? null,
         studyId: mapping.studyId ?? null,
       };
 
@@ -903,14 +941,14 @@ export default function ValidationPage() {
   }, [uploadedData, dataId, mapping, showAlert, filterEvaluation]);
 
   const validationResult = useMemo<ValidationResult | null>(() => {
-    if (!mappingComplete || !mapping.effect || !mapping.se || !mapping.nObs) {
+    if (!mappingComplete || !mapping.effect || !mapping.se) {
       return null;
     }
 
     const mappingConfig: ColumnMapping = {
       effect: mapping.effect,
       se: mapping.se,
-      nObs: mapping.nObs,
+      nObs: mapping.nObs ?? null,
       studyId: mapping.studyId ?? null,
     };
 

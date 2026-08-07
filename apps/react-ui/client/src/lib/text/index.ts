@@ -234,7 +234,7 @@ const TEXT = {
       columnMapping:
         "After uploading, you can **map the columns** in your file to MAIVE's required fields.",
       requiredColumns:
-        "Please include columns for **effect estimates**, **standard errors**, and **sample sizes** (study IDs are optional).",
+        "Please include columns for **effect estimates** and **standard errors**. **Sample sizes** are required for every model except RTMA (study IDs are optional).",
       numberFormats:
         "Effect estimates and standard errors can include decimal points or commas—MAIVE will interpret both.",
       extraColumns:
@@ -252,7 +252,7 @@ const TEXT = {
       studyId: "Study ID (optional)",
     },
     helperText:
-      "Each column can only be mapped once. The Study ID field is optional — leave it blank if you don't have study-level clustering.",
+      "Each column can only be mapped once. The Sample size field is required for every model except RTMA; without it, only RTMA will be available. The Study ID field is optional — leave it blank if you don't have study-level clustering.",
     continueButton: "Continue to validation",
     autoMappingNotice:
       "We've pre-selected columns where the headers looked familiar. Feel free to adjust before continuing.",
@@ -338,6 +338,8 @@ const TEXT = {
         createElement("strong", null, "RTMA:"),
         " Right-Truncated Meta-Analysis (Mathur, 2022). Corrects for p-hacking and publication bias using a truncated normal likelihood.",
       ),
+      rtmaOnlyInfo:
+        "Your data has no sample-size column, so RTMA is the only available model. MAIVE, WAIVE, and WLS require sample sizes; re-upload with a sample-size column to use them.",
     },
     includeStudyDummies: {
       label: "Fixed-Intercept Multilevel",
