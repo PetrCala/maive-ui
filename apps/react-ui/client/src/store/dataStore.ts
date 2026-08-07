@@ -1,4 +1,8 @@
-import type { DataArray, SubsampleFilterState } from "@src/types";
+import type {
+  DataArray,
+  ModelParameters,
+  SubsampleFilterState,
+} from "@src/types";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -26,12 +30,18 @@ type DataStore = {
   // State
   uploadedData: UploadedData | null;
   dataId: string | null;
+  // Last parameters used on the model page, kept so every return path
+  // (results, validation, failed or expired runs) can restore them instead
+  // of resetting the form to defaults. Only valid for modelParametersDataId.
+  modelParameters: ModelParameters | null;
+  modelParametersDataId: string | null;
 
   // Actions
   setUploadedData: (data: UploadedData) => void;
   clearUploadedData: () => void;
   setDataId: (id: string) => void;
   getUploadedData: () => UploadedData | null;
+  setModelParameters: (dataId: string, parameters: ModelParameters) => void;
 };
 
 export const useDataStore = create<DataStore>()(
@@ -40,6 +50,8 @@ export const useDataStore = create<DataStore>()(
       // Initial state
       uploadedData: null,
       dataId: null,
+      modelParameters: null,
+      modelParametersDataId: null,
 
       // Actions
       setUploadedData: (data: UploadedData) => {
@@ -47,7 +59,12 @@ export const useDataStore = create<DataStore>()(
       },
 
       clearUploadedData: () => {
-        set({ uploadedData: null, dataId: null });
+        set({
+          uploadedData: null,
+          dataId: null,
+          modelParameters: null,
+          modelParametersDataId: null,
+        });
       },
 
       setDataId: (id: string) => {
@@ -57,11 +74,20 @@ export const useDataStore = create<DataStore>()(
       getUploadedData: () => {
         return get().uploadedData;
       },
+
+      setModelParameters: (dataId: string, parameters: ModelParameters) => {
+        set({ modelParameters: parameters, modelParametersDataId: dataId });
+      },
     }),
     {
       name: "maive-data-storage",
-      // Only persist the dataId, not the actual data to avoid localStorage size limits
-      partialize: (state) => ({ dataId: state.dataId }),
+      // Only persist the dataId and model parameters, not the actual data,
+      // to avoid localStorage size limits
+      partialize: (state) => ({
+        dataId: state.dataId,
+        modelParameters: state.modelParameters,
+        modelParametersDataId: state.modelParametersDataId,
+      }),
     },
   ),
 );

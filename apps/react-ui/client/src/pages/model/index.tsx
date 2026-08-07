@@ -69,6 +69,10 @@ export default function ModelPage() {
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   const searchParamsAppliedRef = useRef(false);
+  // Blocks the parameter-saving effect until the initial parameters for this
+  // dataset are in place, so the mount-time defaults never overwrite a saved
+  // configuration before it is restored.
+  const parametersHydratedRef = useRef(false);
   const runModelButtonRef = useRef<HTMLButtonElement>(null);
   const { showAlert } = useGlobalAlert();
   const { showParameterAlert } = useParameterAlert();
@@ -96,6 +100,38 @@ export default function ModelPage() {
       button.click();
     }
   });
+
+  // Re-apply a saved parameter set, with the same consistency fixups and ref
+  // bookkeeping as the search-params restore path below.
+  const restoreSavedParameters = (saved: ModelParameters) => {
+    const params = { ...CONFIG.DEFAULT_MODEL_PARAMETERS, ...saved };
+
+    if (
+      params.modelType === CONST.MODEL_TYPES.WLS ||
+      params.modelType === CONST.MODEL_TYPES.RTMA
+    ) {
+      params.shouldUseInstrumenting = false;
+    } else {
+      params.shouldUseInstrumenting = true;
+    }
+
+    if (params.weight !== CONFIG.DEFAULT_MODEL_PARAMETERS.weight) {
+      weightUserOverrideRef.current = true;
+    }
+
+    if (
+      params.useLogFirstStage !==
+      CONFIG.DEFAULT_MODEL_PARAMETERS.useLogFirstStage
+    ) {
+      useLogFirstStageUserOverrideRef.current = true;
+    }
+
+    if (params.shouldUseInstrumenting) {
+      lastInstrumentedWeightRef.current = params.weight;
+    }
+
+    setParameters(params);
+  };
 
   const loadDataFromStore = async () => {
     try {
@@ -133,9 +169,16 @@ export default function ModelPage() {
 
       setUploadedData(data);
 
-      // Only set default parameters if no search params exist
+      // Without an explicit parameters query param (the "Rerun Model" path),
+      // restore the parameters last used with this dataset, so returning from
+      // results or validation keeps the configuration instead of resetting it.
+      // Data-driven defaults only apply to a dataset seen for the first time.
       if (!searchParams?.get("parameters")) {
-        if (
+        const { modelParameters: savedParameters, modelParametersDataId } =
+          useDataStore.getState();
+        if (savedParameters && modelParametersDataId === dataId) {
+          restoreSavedParameters(savedParameters);
+        } else if (
           hasStudyIdColumn(data.data) &&
           CONFIG.SHOULD_USE_CLUSTERED_CR2_SE_AS_DEFAULT
         ) {
@@ -147,6 +190,7 @@ export default function ModelPage() {
           }));
         }
       }
+      parametersHydratedRef.current = true;
     } catch (error) {
       console.error("Error loading data:", error);
       if (isMountedRef.current) {
@@ -164,6 +208,7 @@ export default function ModelPage() {
     if (dataId) {
       // Reset search params applied flag when navigating to different data
       searchParamsAppliedRef.current = false;
+      parametersHydratedRef.current = false;
       void loadDataFromStore();
     } else {
       showAlert("No data selected", "error");
@@ -229,6 +274,15 @@ export default function ModelPage() {
       searchParamsAppliedRef.current = true;
     }
   }, [searchParams, uploadedData]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep the stored copy of the parameters current, so any navigation away
+  // and back (results, validation, failed or expired runs) can restore them.
+  useEffect(() => {
+    if (!dataId || !parametersHydratedRef.current) {
+      return;
+    }
+    useDataStore.getState().setModelParameters(dataId, parameters);
+  }, [dataId, parameters]);
 
   const shouldShowAndersonRubinOption = useCallback(
     (params: ModelParameters) =>
