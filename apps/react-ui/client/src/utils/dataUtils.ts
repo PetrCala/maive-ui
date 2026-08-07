@@ -299,6 +299,23 @@ export const processUploadedFile = async (
 };
 
 /**
+ * Checks if the processed data has a sample-size (n_obs) column. Datasets
+ * without one (a two-column effect + se upload) can only run RTMA; MAIVE,
+ * WAIVE, and WLS all require sample sizes.
+ */
+export function hasNObsColumn(
+  data: Array<Record<string, unknown>> | undefined,
+): boolean {
+  if (!data?.[0]) {
+    return false;
+  }
+
+  const headers = Object.keys(data[0]);
+
+  return headers.some((header: string) => /^n[\s_-]?obs$/i.test(header));
+}
+
+/**
  * Checks if the uploaded data has a study ID column
  */
 export function hasStudyIdColumn(

@@ -9,7 +9,9 @@ import { persist } from "zustand/middleware";
 export type ColumnMapping = {
   effect: string;
   se: string;
-  nObs: string;
+  // Optional: a two-column (effect, se) dataset has no sample sizes and can
+  // still run RTMA, which does not use them.
+  nObs: string | null;
   studyId?: string | null;
 };
 

@@ -23,7 +23,7 @@ import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
 import type { RTMAParameters, SubmitRunResponse } from "@src/types/api";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
-import { hasStudyIdColumn } from "@src/utils/dataUtils";
+import { hasNObsColumn, hasStudyIdColumn } from "@src/utils/dataUtils";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
 import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
@@ -283,6 +283,28 @@ export default function ModelPage() {
     }
     useDataStore.getState().setModelParameters(dataId, parameters);
   }, [dataId, parameters]);
+
+  // A dataset without a sample-size column can only run RTMA; MAIVE, WAIVE,
+  // and WLS all need n_obs. The model dropdown offers only RTMA in that case
+  // (with an explanation), and the parameters must follow suit no matter how
+  // this page was reached.
+  useEffect(() => {
+    if (
+      !CONFIG.RTMA_ENABLED ||
+      !uploadedData?.data?.length ||
+      hasNObsColumn(uploadedData.data)
+    ) {
+      return;
+    }
+
+    if (parameters.modelType !== CONST.MODEL_TYPES.RTMA) {
+      setParameters((prev) => ({
+        ...prev,
+        modelType: CONST.MODEL_TYPES.RTMA as ModelParameters["modelType"],
+        shouldUseInstrumenting: false,
+      }));
+    }
+  }, [uploadedData, parameters.modelType]);
 
   const shouldShowAndersonRubinOption = useCallback(
     (params: ModelParameters) =>
