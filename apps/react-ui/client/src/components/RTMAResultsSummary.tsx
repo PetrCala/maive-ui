@@ -20,32 +20,75 @@ const formatCI = (ci: [number, number]): string =>
 const formatPercentage = (value: number): string =>
   `${(value * 100).toFixed(1)}%`;
 
+type Metric = {
+  label: string;
+  value: string;
+  subValue?: string;
+  tooltip: string;
+};
+
 export default function RTMAResultsSummary({
   results,
   showTooltips = false,
 }: RTMAResultsSummaryProps) {
-  const metrics = [
+  // The backend echoes the level of the equal-tailed credible intervals; runs
+  // stored before it did were always fitted at the UI's fixed 0.95.
+  const ciPercent = Math.round((results.ciLevel ?? 0.95) * 100);
+  const intervalNote = `The interval is the equal-tailed ${ciPercent}% credible interval (posterior quantiles; phacking does not compute HPD intervals).`;
+
+  const metrics: Metric[] = [
     {
       label: "Corrected Effect (μ)",
       value: `${formatNumber(results.mu)} ${formatCI(results.muCI)}`,
-      tooltip:
-        "Posterior mode of the bias-corrected mean effect from the right-truncated meta-analysis. The interval is the highest-posterior-density credible interval.",
+      subValue:
+        results.muMedian != null
+          ? `median ${formatNumber(results.muMedian)}`
+          : undefined,
+      tooltip: `Posterior mode of the bias-corrected mean effect from the right-truncated meta-analysis. ${intervalNote} The posterior can be skewed, so the median is shown alongside the mode.`,
     },
+    ...(results.unadjustedMean != null
+      ? [
+          {
+            label: "Unadjusted Mean",
+            value: formatNumber(results.unadjustedMean),
+            tooltip:
+              "Naive inverse-variance (fixed-effect) pooled mean of the analyzed estimates, with no correction applied. Compare it with the corrected effect to see the direction and size of the RTMA correction; the correction can move the estimate in either direction.",
+          },
+        ]
+      : []),
     {
       label: "Heterogeneity (τ)",
       value: `${formatNumber(results.tau)} ${formatCI(results.tauCI)}`,
-      tooltip:
-        "Posterior mode of the between-study standard deviation (heterogeneity). The interval is the highest-posterior-density credible interval.",
+      subValue:
+        results.tauMedian != null
+          ? `median ${formatNumber(results.tauMedian)}`
+          : undefined,
+      tooltip: `Posterior mode of the between-study standard deviation (heterogeneity). ${intervalNote}`,
     },
     {
-      label: "Non-significant Estimates",
+      label: "Not Affirmative Estimates",
       value: `${results.nonaffirmativeCount} (${formatPercentage(results.nonaffirmativeProportion)})`,
       tooltip:
-        "Number and proportion of estimates that are not statistically significant at the selection threshold (nonaffirmative). RTMA uses these estimates to identify and correct for p-hacking.",
+        "Estimates that are not statistically significant in the favored direction at the selection threshold. This is not the same as non-significant: an estimate significant in the opposite direction also counts as not affirmative. RTMA fits its model to these estimates to correct for p-hacking.",
     },
+    ...(results.k != null
+      ? [
+          {
+            label: "Estimates Used (k)",
+            value: String(results.k),
+            subValue:
+              results.affirmativeCount != null
+                ? `${results.affirmativeCount} affirmative`
+                : undefined,
+            tooltip:
+              "Number of estimates the model was fitted to, after removing rows with a missing or non-positive standard error. Affirmative estimates are significant in the favored direction at the selection threshold.",
+          },
+        ]
+      : []),
   ];
 
   const warnings = results.warnings ?? [];
+  const droppedRows = results.droppedRows ?? 0;
 
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
@@ -61,6 +104,14 @@ export default function RTMAResultsSummary({
           ))}
         </div>
       ) : null}
+      {droppedRows > 0 ? (
+        <div className="mb-4">
+          <Alert
+            message={`${droppedRows} uploaded ${droppedRows === 1 ? "row was" : "rows were"} dropped before fitting because of a missing or non-positive standard error.`}
+            type={CONST.ALERT_TYPES.INFO}
+          />
+        </div>
+      ) : null}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {metrics.map((metric) => {
           const content = (
@@ -69,6 +120,11 @@ export default function RTMAResultsSummary({
                 {metric.label}
               </p>
               <p className="text-lg font-medium">{metric.value}</p>
+              {metric.subValue ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  {metric.subValue}
+                </p>
+              ) : null}
             </div>
           );
 

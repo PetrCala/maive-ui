@@ -74,6 +74,9 @@ run_rtma_model <- function(data, parameters) {
   }
 
   valid <- !is.na(yi) & !is.na(se) & se > 0
+  # The drop count goes into the response (#481); it used to be visible only in
+  # this log, so callers could not tell that rows had been excluded.
+  dropped_rows <- sum(!valid)
   yi <- yi[valid]
   se <- se[valid]
 
@@ -204,8 +207,10 @@ run_rtma_model <- function(data, parameters) {
   tau_row <- stats[stats$param == "tau", ]
 
   mu_est <- mu_row$mode
+  mu_median <- mu_row$median
   mu_ci <- c(mu_row$ci_lower, mu_row$ci_upper)
   tau_est <- tau_row$mode
+  tau_median <- tau_row$median
   tau_ci <- c(tau_row$ci_lower, tau_row$ci_upper)
 
   # phacking_meta() does `if (!favor_positive) yi <- -yi` and then reports mu and
@@ -216,13 +221,20 @@ run_rtma_model <- function(data, parameters) {
   # left alone. Upstream: mathurlabstanford/metabias-apps#1.
   if (!favor_positive) {
     mu_est <- -mu_est
+    mu_median <- -mu_median
     mu_ci <- c(-mu_ci[2], -mu_ci[1])
   }
 
   # Nonaffirmative (insignificant) estimates
   k <- rtma_res$values$k
   k_nonaffirmative <- rtma_res$values$k_nonaffirmative
+  k_affirmative <- k - k_nonaffirmative
   nonaffirmative_proportion <- if (k > 0) k_nonaffirmative / k else NA_real_
+
+  # Naive inverse-variance (fixed-effect) pooled mean of the analyzed estimates,
+  # with no truncation correction, on the caller's sign convention. Returned so
+  # the UI can show the size and direction of the RTMA correction (#481).
+  unadjusted_mean <- sum(yi / vi) / sum(1 / vi)
 
   # Every estimate being nonaffirmative means nothing was truncated, so mu is the
   # uncorrected pooled mean wearing a corrected label. In practice this always
@@ -253,10 +265,14 @@ run_rtma_model <- function(data, parameters) {
   cli::cli_h2("RTMA summary:")
   cli::cli_bullets(c(
     "mu (mode): {round(mu_est, 4)}",
+    "mu (median): {round(mu_median, 4)}",
     "mu CI: [{round(mu_ci[1], 4)}, {round(mu_ci[2], 4)}]",
     "tau (mode): {round(tau_est, 4)}",
+    "tau (median): {round(tau_median, 4)}",
     "tau CI: [{round(tau_ci[1], 4)}, {round(tau_ci[2], 4)}]",
-    "k_nonaffirmative: {k_nonaffirmative} / {k} ({round(nonaffirmative_proportion * 100, 1)}%)"
+    "unadjusted FE mean: {round(unadjusted_mean, 4)}",
+    "k_nonaffirmative: {k_nonaffirmative} / {k} ({round(nonaffirmative_proportion * 100, 1)}%)",
+    "dropped rows: {dropped_rows}"
   ))
 
   # Generate z-score density plot
@@ -268,9 +284,19 @@ run_rtma_model <- function(data, parameters) {
 
   results <- list(
     mu = mu_est,
+    muMedian = mu_median,
     muCI = mu_ci,
     tau = tau_est,
+    tauMedian = tau_median,
     tauCI = tau_ci,
+    unadjustedMean = unadjusted_mean,
+    # The intervals above are equal-tailed posterior quantile intervals at this
+    # level (phacking does not compute HPD intervals); echoed back so displays
+    # can state the level instead of implying 95%.
+    ciLevel = ci_level,
+    k = k,
+    affirmativeCount = k_affirmative,
+    droppedRows = dropped_rows,
     zScorePlot = z_plot$data_uri,
     zScorePlotWidth = z_plot$width_px,
     zScorePlotHeight = z_plot$height_px,
