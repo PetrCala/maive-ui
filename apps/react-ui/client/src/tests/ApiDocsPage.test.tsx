@@ -55,7 +55,7 @@ describe("ApiDocsPage", () => {
     ).toHaveAttribute("href", CONST.LINKS.PUBLIC_API.SPEC);
   });
 
-  it("surfaces the Nature Communications citation", () => {
+  it("surfaces the MAIVE and RTMA citations", () => {
     render(<ApiDocsPage />);
 
     expect(
@@ -63,9 +63,19 @@ describe("ApiDocsPage", () => {
         /Irsova, Z., Bom, P\.R\.D\., Havranek, T\., & Rachinger, H\. \(2025\)/,
       ),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /paper/i })).toHaveAttribute(
-      "href",
+    expect(screen.getByText(/Mathur, M\. B\. \(2024\)/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/phacking: Sensitivity Analysis for p-Hacking/),
+    ).toBeInTheDocument();
+
+    const paperLinks = screen.getAllByRole("link", { name: /paper/i });
+    expect(paperLinks.map((link) => link.getAttribute("href"))).toEqual([
       CONST.LINKS.MAIVE.PAPER,
+      CONST.LINKS.RTMA.PAPER,
+    ]);
+    expect(screen.getByRole("link", { name: /package/i })).toHaveAttribute(
+      "href",
+      CONST.LINKS.RTMA.PHACKING_CRAN,
     );
   });
 

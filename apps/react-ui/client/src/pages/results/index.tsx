@@ -25,6 +25,7 @@ import type { ModelParameters, ModelResults } from "@src/types";
 import type { RTMAResults } from "@src/types/api";
 import type { VersionInfo } from "@src/types/reproducibility";
 import CitationBox from "@src/components/CitationBox";
+import { getCitationsForModel } from "@utils/citationUtils";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
@@ -677,7 +678,11 @@ export default function ResultsPage() {
                   </div>
                 </>
               )}
-              <CitationBox variant="compact" useBlueStyling />
+              <CitationBox
+                variant="compact"
+                useBlueStyling
+                citations={getCitationsForModel(parsedParameters.modelType)}
+              />
             </div>
           </div>
 

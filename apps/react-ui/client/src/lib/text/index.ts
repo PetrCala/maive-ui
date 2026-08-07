@@ -220,7 +220,10 @@ const TEXT = {
     title: "How to Cite This App",
     description:
       "Please cite the MAIVE paper when using this tool for your research.",
+    descriptionMulti:
+      "Please cite the method you used, and the MAIVE app that runs it, when using this tool for your research.",
     viewPaper: "View full paper →",
+    viewPackage: "View package →",
     copied: "Copied!",
     copy: "Copy",
   },
@@ -336,7 +339,7 @@ const TEXT = {
         createElement("br"),
         createElement("br"),
         createElement("strong", null, "RTMA:"),
-        " Right-Truncated Meta-Analysis (Mathur, 2022). Corrects for p-hacking and publication bias using a truncated normal likelihood.",
+        " Right-Truncated Meta-Analysis (Mathur, 2024). Corrects for p-hacking and publication bias using a truncated normal likelihood.",
       ),
       rtmaOnlyInfo:
         "Your data has no sample-size column, so RTMA is the only available model. MAIVE, WAIVE, and WLS require sample sizes; re-upload with a sample-size column to use them.",

@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-MAIVE (Meta-Analysis for Identifying Variability and Errors) is a tool for detecting spurious precision in meta-analysis data. The application consists of:
+MAIVE (Meta-Analysis Instrumental Variable Estimator) is a tool for detecting spurious precision in meta-analysis data. The application consists of:
 
 - **React UI** (Next.js 14): Interactive frontend for data upload, analysis, and visualization
 - **R Backend** (Plumber): Statistical analysis service running MAIVE algorithms
@@ -13,6 +13,8 @@ MAIVE (Meta-Analysis for Identifying Variability and Errors) is a tool for detec
 ## Citation
 
 **CRITICAL**: The Nature Communications (2025) paper is the canonical reference for MAIVE and must be cited everywhere users see references to the method or application.
+
+**RTMA exception**: RTMA is Mathur's method, not MAIVE's. Wherever users see RTMA results or RTMA documentation, cite Mathur (2024, Research Synthesis Methods, doi:10.1002/jrsm.1701) as the method and the `phacking` R package (Mathur & Braginsky, 2023) as the software, with the MAIVE app cited as the application. The registry in [citationUtils.ts](apps/react-ui/client/src/utils/citationUtils.ts) encodes this; use `getCitationsForModel(modelType)` rather than hardcoding either citation.
 
 **Official Citation**:
 
@@ -24,7 +26,7 @@ Nature Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0
 
 **When updating references**:
 
-- Always use the Nature Communications (2025) paper as the primary reference
+- Always use the Nature Communications (2025) paper as the primary reference for MAIVE-family models (RTMA follows the exception above)
 - Ensure all UI components, text, tooltips, and documentation reference this paper
 - The citation is already implemented in the UI via [CitationBox.tsx](apps/react-ui/client/src/components/CitationBox.tsx) and [citationUtils.ts](apps/react-ui/client/src/utils/citationUtils.ts)
 - Update the MAIVE R package `DESCRIPTION` and `inst/CITATION` files to reference this paper

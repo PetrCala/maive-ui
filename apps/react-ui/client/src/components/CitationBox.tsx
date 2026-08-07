@@ -1,17 +1,26 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import Link from "next/link";
-
-type CitationFormat = "apa" | "bibtex" | "ris" | "plain";
+import {
+  copyToClipboard,
+  getCitationsForModel,
+  type Citation,
+  type CitationFormat,
+} from "@src/utils/citationUtils";
 
 type CitationBoxProps = {
   className?: string;
   variant?: "compact" | "full";
   onClose?: () => void;
   useBlueStyling?: boolean;
+  /**
+   * Which references to show. Defaults to the MAIVE paper alone; results
+   * pages pass getCitationsForModel(modelType) so RTMA runs credit Mathur's
+   * method ahead of the app.
+   */
+  citations?: Citation[];
 };
 
 const CitationBox = ({
@@ -19,63 +28,28 @@ const CitationBox = ({
   variant = "full",
   onClose,
   useBlueStyling = false,
+  citations,
 }: CitationBoxProps) => {
-  const [copiedFormat, setCopiedFormat] = useState<CitationFormat | null>(null);
+  // Copy feedback is tracked per citation and format ("maive:apa").
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
-  const citations = useMemo(
-    () => ({
-      apa: "Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious precision in meta-analysis of observational research. Nature Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0",
-      bibtex: `@article{irsova2025spurious,
-  title={Spurious precision in meta-analysis of observational research},
-  author={Irsova, Zuzana and Bom, Pedro R. D. and Havranek, Tomas and Rachinger, Heiko},
-  journal={Nature Communications},
-  volume={16},
-  pages={8454},
-  year={2025},
-  doi={10.1038/s41467-025-63261-0},
-  url={https://doi.org/10.1038/s41467-025-63261-0}
-}`,
-      ris: `TY  - JOUR
-TI  - Spurious precision in meta-analysis of observational research
-AU  - Irsova, Zuzana
-AU  - Bom, Pedro R. D.
-AU  - Havranek, Tomas
-AU  - Rachinger, Heiko
-PY  - 2025
-JO  - Nature Communications
-VL  - 16
-SP  - 8454
-DO  - 10.1038/s41467-025-63261-0
-UR  - https://doi.org/10.1038/s41467-025-63261-0
-ER  -`,
-      plain:
-        "Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious precision in meta-analysis of observational research. Nature Communications 16, 8454. https://doi.org/10.1038/s41467-025-63261-0",
-    }),
-    [],
+  const citationList = useMemo(
+    () => citations ?? getCitationsForModel(),
+    [citations],
   );
 
   const handleCopy = useCallback(
-    (format: CitationFormat) => {
+    (citation: Citation, format: CitationFormat) => {
       void (async () => {
-        try {
-          await navigator.clipboard.writeText(citations[format]);
-          setCopiedFormat(format);
-          setTimeout(() => setCopiedFormat(null), 2000);
-        } catch (err) {
-          console.error("Failed to copy citation:", err);
-          // Fallback for older browsers
-          const textArea = document.createElement("textarea");
-          textArea.value = citations[format];
-          document.body.appendChild(textArea);
-          textArea.select();
-          document.execCommand("copy");
-          document.body.removeChild(textArea);
-          setCopiedFormat(format);
-          setTimeout(() => setCopiedFormat(null), 2000);
+        const succeeded = await copyToClipboard(citation.formats[format]);
+        if (!succeeded) {
+          return;
         }
+        setCopiedKey(`${citation.key}:${format}`);
+        setTimeout(() => setCopiedKey(null), 2000);
       })();
     },
-    [citations],
+    [],
   );
 
   useEffect(() => {
@@ -114,23 +88,34 @@ ER  -`,
             : "bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700"
         } rounded-lg p-4 ${className}`}
       >
-        <div className="flex items-center justify-between">
-          <div
-            className={`text-sm ${
-              useBlueStyling
-                ? "text-blue-800 dark:text-blue-200"
-                : "text-gray-700 dark:text-gray-300"
-            }`}
-          >
-            <span className="font-medium">Citation:</span> Irsova et al., Nature
-            Communications, 2025.
-          </div>
-          <button
-            onClick={() => handleCopy("plain")}
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-medium transition-colors"
-          >
-            {copiedFormat === "plain" ? "Copied!" : "Copy"}
-          </button>
+        <div className="flex flex-col gap-2">
+          {citationList.map((citation) => (
+            <div
+              key={citation.key}
+              className="flex items-center justify-between gap-4"
+            >
+              <div
+                className={`text-sm ${
+                  useBlueStyling
+                    ? "text-blue-800 dark:text-blue-200"
+                    : "text-gray-700 dark:text-gray-300"
+                }`}
+              >
+                <span className="font-medium">
+                  {citation.role ?? "Citation"}:
+                </span>{" "}
+                {citation.shortText}
+              </div>
+              <button
+                onClick={() => handleCopy(citation, "plain")}
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-sm font-medium transition-colors shrink-0"
+              >
+                {copiedKey === `${citation.key}:plain`
+                  ? TEXT.citation.copied
+                  : TEXT.citation.copy}
+              </button>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -150,7 +135,9 @@ ER  -`,
             {TEXT.citation.title}
           </h3>
           <p className="text-sm text-gray-600 dark:text-gray-300">
-            {TEXT.citation.description}
+            {citationList.length > 1
+              ? TEXT.citation.descriptionMulti
+              : TEXT.citation.description}
           </p>
         </div>
         <div className="text-blue-600 dark:text-blue-400">
@@ -193,41 +180,55 @@ ER  -`,
         </div>
       </div>
 
-      <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-4 border border-gray-200 dark:border-gray-700">
-        <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
-          {citations.apa}
-        </p>
-      </div>
+      <div className="flex flex-col gap-5">
+        {citationList.map((citation) => (
+          <div key={citation.key}>
+            {citation.role ? (
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-2">
+                {citation.role}
+              </p>
+            ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        {(["apa", "bibtex", "ris", "plain"] as CitationFormat[]).map(
-          (format) => (
-            <button
-              key={format}
-              onClick={() => handleCopy(format)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                copiedFormat === format
-                  ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700"
-                  : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600"
-              }`}
-            >
-              {copiedFormat === format
-                ? TEXT.citation.copied
-                : format.toUpperCase()}
-            </button>
-          ),
-        )}
-      </div>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 mb-3 border border-gray-200 dark:border-gray-700">
+              <p className="text-gray-800 dark:text-gray-200 text-sm leading-relaxed">
+                {citation.formats.apa}
+              </p>
+            </div>
 
-      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-        <Link
-          href={CONST.LINKS.MAIVE.PAPER}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-600 dark:text-blue-400 hover:underline"
-        >
-          {TEXT.citation.viewPaper}
-        </Link>
+            <div className="flex flex-wrap gap-2">
+              {(["apa", "bibtex", "ris", "plain"] as CitationFormat[]).map(
+                (format) => (
+                  <button
+                    key={format}
+                    onClick={() => handleCopy(citation, format)}
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                      copiedKey === `${citation.key}:${format}`
+                        ? "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-300 dark:border-green-700"
+                        : "bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-300 dark:hover:border-blue-600"
+                    }`}
+                  >
+                    {copiedKey === `${citation.key}:${format}`
+                      ? TEXT.citation.copied
+                      : format.toUpperCase()}
+                  </button>
+                ),
+              )}
+            </div>
+
+            <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
+              <Link
+                href={citation.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {citation.key === "phacking"
+                  ? TEXT.citation.viewPackage
+                  : TEXT.citation.viewPaper}
+              </Link>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
