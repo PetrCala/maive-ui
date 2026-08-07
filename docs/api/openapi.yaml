@@ -772,9 +772,14 @@ components:
         - tauCI
         - nonaffirmativeCount
         - nonaffirmativeProportion
+        - warnings
       properties:
         mu:
           type: number
+          description: >-
+            Posterior mode of the bias-corrected mean, on the sign convention of
+            the submitted data (so a negative literature analysed with
+            `favorPositive: false` returns a negative `mu`).
         muCI:
           type: array
           items:
@@ -793,6 +798,15 @@ components:
           type: integer
         nonaffirmativeProportion:
           type: number
+        warnings:
+          type: array
+          items:
+            type: string
+          description: >-
+            Conditions raised while fitting; empty when the fit was clean. The
+            most important one reports a favored direction opposite the pooled
+            estimate, which means nothing was truncated and `mu` is not actually
+            corrected for p-hacking.
         zScorePlot:
           type: string
           description: 'Base64-encoded PNG data URI. Only present with `?include=plot`.'

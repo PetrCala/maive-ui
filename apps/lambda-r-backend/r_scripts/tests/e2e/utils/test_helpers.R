@@ -37,6 +37,27 @@ generate_test_data <- function(n_studies = 20, include_study_id = TRUE) {
   return(df)
 }
 
+#' Generate sample data for RTMA
+#'
+#' generate_test_data() produces very precise estimates, which leaves RTMA only
+#' a handful of nonaffirmative ones to fit on and makes the sampler crawl. This
+#' generator keeps standard errors on the same order as the effects, so roughly
+#' two thirds of the estimates are nonaffirmative and the fit is well identified.
+#'
+#' @param n Number of estimates
+#' @param mean_effect Mean underlying effect
+#' @param tau Between-estimate heterogeneity
+#' @param seed Random seed, for reproducible tests
+#' @return Data frame with effect (bs) and standard error (sebs) columns
+generate_rtma_test_data <- function(n = 40, mean_effect = 0.15, tau = 0.08, seed = 2026) {
+  set.seed(seed)
+
+  se <- runif(n, 0.06, 0.20)
+  effects <- rnorm(n, mean_effect, sqrt(tau^2 + se^2))
+
+  data.frame(bs = effects, sebs = se)
+}
+
 #' Generate data with known publication bias
 #' @param n_studies Number of studies
 #' @param bias_strength Strength of publication bias

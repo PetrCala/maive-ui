@@ -153,16 +153,29 @@ run_rtma_model <- function(data, parameters) {
   # runtimes; the limit converts that into a clean failure instead of a hang.
   # The time-limit interrupt fires inside phacking, which re-throws it as an
   # opaque message, so timeout is detected by elapsed time rather than message.
+  #
+  # phacking_meta() also signals conditions the caller must see, above all
+  # "Favored direction is opposite of the pooled estimate.", which means the fit
+  # truncated nothing and the returned mu is effectively uncorrected. tryCatch
+  # only handles errors, so warnings are collected here and returned in the
+  # response instead of being dropped on the floor.
+  rtma_warnings <- character(0)
   start_time <- Sys.time()
   setTimeLimit(elapsed = timeout_sec, transient = TRUE)
   rtma_res <- tryCatch(
-    phacking::phacking_meta(
-      yi = yi,
-      vi = vi,
-      favor_positive = favor_positive,
-      alpha_select = alpha_select,
-      ci_level = ci_level,
-      parallelize = parallelize
+    withCallingHandlers(
+      phacking::phacking_meta(
+        yi = yi,
+        vi = vi,
+        favor_positive = favor_positive,
+        alpha_select = alpha_select,
+        ci_level = ci_level,
+        parallelize = parallelize
+      ),
+      warning = function(w) {
+        rtma_warnings <<- c(rtma_warnings, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      }
     ),
     error = function(e) {
       setTimeLimit() # clear so error reporting is not itself interrupted
@@ -195,10 +208,47 @@ run_rtma_model <- function(data, parameters) {
   tau_est <- tau_row$mode
   tau_ci <- c(tau_row$ci_lower, tau_row$ci_upper)
 
+  # phacking_meta() does `if (!favor_positive) yi <- -yi` and then reports mu and
+  # its credible interval on that flipped scale, never mapping them back to the
+  # caller's sign convention. Undo the flip here, otherwise favor_positive =
+  # FALSE returns a corrected mean with the wrong sign. Negating an interval also
+  # reverses its bounds. tau is a scale parameter and is sign-invariant, so it is
+  # left alone. Upstream: mathurlabstanford/metabias-apps#1.
+  if (!favor_positive) {
+    mu_est <- -mu_est
+    mu_ci <- c(-mu_ci[2], -mu_ci[1])
+  }
+
   # Nonaffirmative (insignificant) estimates
   k <- rtma_res$values$k
   k_nonaffirmative <- rtma_res$values$k_nonaffirmative
   nonaffirmative_proportion <- if (k > 0) k_nonaffirmative / k else NA_real_
+
+  # Every estimate being nonaffirmative means nothing was truncated, so mu is the
+  # uncorrected pooled mean wearing a corrected label. In practice this always
+  # means the favored direction is set the wrong way round for the data, so say
+  # so explicitly rather than leaving it to phacking's own warning, which is
+  # phrased in terms of the pooled estimate.
+  if (isTRUE(k > 0 && k_nonaffirmative == k)) {
+    rtma_warnings <- c(
+      rtma_warnings,
+      paste(
+        "No estimate is affirmative in the favored direction, so RTMA truncated",
+        "nothing and the reported mean is not corrected for p-hacking. Check the",
+        sprintf("\"favor positive\" setting (currently %s).", favor_positive)
+      )
+    )
+  }
+
+  # Warnings are muffled above so they never reach the Lambda log on their own;
+  # re-emit them here. "{msg}" keeps cli from glue-interpolating the message.
+  rtma_warnings <- unique(rtma_warnings)
+  if (length(rtma_warnings) > 0) {
+    cli::cli_h2("RTMA warnings:")
+    for (msg in rtma_warnings) {
+      cli::cli_alert_warning("{msg}")
+    }
+  }
 
   cli::cli_h2("RTMA summary:")
   cli::cli_bullets(c(
@@ -225,7 +275,10 @@ run_rtma_model <- function(data, parameters) {
     zScorePlotWidth = z_plot$width_px,
     zScorePlotHeight = z_plot$height_px,
     nonaffirmativeCount = k_nonaffirmative,
-    nonaffirmativeProportion = nonaffirmative_proportion
+    nonaffirmativeProportion = nonaffirmative_proportion,
+    # I() so the unboxed-JSON serializer keeps this an array even when a single
+    # warning was raised; callers can always treat it as a list of strings.
+    warnings = I(rtma_warnings)
   )
 
   results

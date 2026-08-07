@@ -38,6 +38,7 @@ source(file.path(script_dir, "scenarios/basic_maive_test.R"))
 source(file.path(script_dir, "scenarios/publication_bias_test.R"))
 source(file.path(script_dir, "scenarios/edge_cases_test.R"))
 source(file.path(script_dir, "scenarios/basic_rtma_test.R"))
+source(file.path(script_dir, "scenarios/rtma_direction_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
 
 # Define available test scenarios
@@ -103,6 +104,11 @@ AVAILABLE_SCENARIOS <- list(
     name = "Basic RTMA Test",
     description = "Test basic RTMA functionality with phacking package",
     function_name = "test_basic_rtma"
+  ),
+  "rtma-direction" = list(
+    name = "RTMA Favored Direction Test",
+    description = "Test that RTMA respects the favored direction and flags a wrong one",
+    function_name = "test_rtma_direction"
   ),
 
   # Public /v1 API scenarios
@@ -373,6 +379,21 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     cat("   ✓ API v1 test passed\n")
   } else {
     cat("   ✗ API v1 test failed:", api_v1_result$error, "\n")
+  }
+  test_count <- test_count + 1
+
+  # RTMA favored direction runs last: it fits three more RTMA models, and every
+  # extra fit in this long-lived process makes the rstan sampler more likely to
+  # wedge on a later one. Keeping it at the end leaves every other scenario with
+  # the same process state it had before this test existed.
+  cat("\n8. Running RTMA favored direction test...\n")
+  rtma_direction_result <- test_rtma_direction()
+  all_results$rtma_direction <- rtma_direction_result
+  if (rtma_direction_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ RTMA favored direction test passed\n")
+  } else {
+    cat("   ✗ RTMA favored direction test failed:", rtma_direction_result$error, "\n")
   }
   test_count <- test_count + 1
 

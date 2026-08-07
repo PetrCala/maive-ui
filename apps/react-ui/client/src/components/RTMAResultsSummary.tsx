@@ -1,8 +1,10 @@
 "use client";
 
 import type { RTMAResults } from "@src/types/api";
+import Alert from "@components/Alert";
 import Tooltip from "@components/Tooltip";
 import CONFIG from "@src/CONFIG";
+import CONST from "@src/CONST";
 
 type RTMAResultsSummaryProps = {
   results: RTMAResults;
@@ -43,9 +45,22 @@ export default function RTMAResultsSummary({
     },
   ];
 
+  const warnings = results.warnings ?? [];
+
   return (
     <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
       <h2 className="text-xl font-semibold mb-4">RTMA Results</h2>
+      {warnings.length > 0 ? (
+        <div className="mb-4 space-y-2">
+          {warnings.map((warning) => (
+            <Alert
+              key={warning}
+              message={warning}
+              type={CONST.ALERT_TYPES.WARNING}
+            />
+          ))}
+        </div>
+      ) : null}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {metrics.map((metric) => {
           const content = (
