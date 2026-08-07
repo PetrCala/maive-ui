@@ -394,7 +394,49 @@ export default function ResultsPage() {
       }
 
       if (isRtmaModel && parsedRtmaResults) {
-        // RTMA-specific export: simple CSV with results summary
+        // RTMA-specific export: simple CSV with results summary. The optional
+        // rows cover fields the backend only returns since #481; older stored
+        // runs simply omit them.
+        const optionalRows: string[][] = [];
+        if (parsedRtmaResults.muMedian != null) {
+          optionalRows.push([
+            "mu Posterior Median",
+            String(parsedRtmaResults.muMedian),
+          ]);
+        }
+        if (parsedRtmaResults.tauMedian != null) {
+          optionalRows.push([
+            "tau Posterior Median",
+            String(parsedRtmaResults.tauMedian),
+          ]);
+        }
+        if (parsedRtmaResults.unadjustedMean != null) {
+          optionalRows.push([
+            "Unadjusted Mean (Fixed Effect)",
+            String(parsedRtmaResults.unadjustedMean),
+          ]);
+        }
+        if (parsedRtmaResults.ciLevel != null) {
+          optionalRows.push(["CI Level", String(parsedRtmaResults.ciLevel)]);
+        }
+        if (parsedRtmaResults.k != null) {
+          optionalRows.push([
+            "Estimates Used (k)",
+            String(parsedRtmaResults.k),
+          ]);
+        }
+        if (parsedRtmaResults.affirmativeCount != null) {
+          optionalRows.push([
+            "Affirmative Count",
+            String(parsedRtmaResults.affirmativeCount),
+          ]);
+        }
+        if (parsedRtmaResults.droppedRows != null) {
+          optionalRows.push([
+            "Dropped Rows",
+            String(parsedRtmaResults.droppedRows),
+          ]);
+        }
         const rows = [
           ["Metric", "Value"],
           ["Corrected Effect (mu)", String(parsedRtmaResults.mu)],
@@ -411,6 +453,7 @@ export default function ResultsPage() {
             "Nonaffirmative Proportion",
             String(parsedRtmaResults.nonaffirmativeProportion),
           ],
+          ...optionalRows,
         ];
         const csv = rows.map((r) => r.join(",")).join("\n");
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -590,7 +633,7 @@ export default function ResultsPage() {
                         />
                       </Tooltip>
                       <InterpretationButton
-                        interpretationText="The figure shows the distribution of z-scores (estimate divided by standard error). The shaded red region marks statistically significant estimates (|z| > critical value). RTMA uses only the nonaffirmative (insignificant) estimates to correct for p-hacking and publication bias."
+                        interpretationText="The figure shows the distribution of z-scores (estimate divided by standard error). The dashed vertical line marks the critical value; estimates with z above it are affirmative, meaning significant in the favored direction (the criterion is one-sided, z > critical value, not |z|). RTMA fits its model to the not-affirmative estimates to correct for p-hacking and publication bias."
                         section={resultsText.funnelPlot.title}
                         variant="icon"
                       />

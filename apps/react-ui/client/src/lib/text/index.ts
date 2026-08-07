@@ -650,7 +650,7 @@ export const getResultsText = (
   if (isRtma) {
     plotTitle = "Z-Score Distribution";
     plotTooltip =
-      "Distribution of z-scores (estimate / standard error). The shaded region marks statistically significant estimates. RTMA uses the distribution of nonaffirmative (insignificant) estimates to correct for selection bias.";
+      "Distribution of z-scores (estimate / standard error). The dashed vertical line marks the critical value; estimates with z above it are affirmative (significant in the favored direction). RTMA fits its model to the distribution of the not-affirmative estimates to correct for selection bias.";
   } else if (isWaive) {
     plotTitle = baseResultsText.funnelPlot.title.replace(/MAIVE/g, "WAIVE");
     plotTooltip = baseResultsText.funnelPlot.tooltip.replace(/MAIVE/g, "WAIVE");

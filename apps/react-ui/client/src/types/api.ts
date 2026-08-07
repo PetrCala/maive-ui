@@ -112,6 +112,21 @@ type RTMAResults = {
   // is opposite the pooled estimate. Optional because runs stored before the
   // backend started returning the field have no value for it.
   warnings?: string[];
+  // Fields below are optional for the same stored-run reason (#481).
+  // Posterior medians; the posterior is often skewed, so the mode alone
+  // (reported as mu/tau) can sit near the edge of its own interval.
+  muMedian?: number;
+  tauMedian?: number;
+  // Naive inverse-variance (fixed-effect) pooled mean of the analyzed
+  // estimates, with no truncation correction.
+  unadjustedMean?: number;
+  // Level of the equal-tailed credible intervals in muCI and tauCI.
+  ciLevel?: number;
+  // Estimates analyzed after the se > 0 filter, the affirmative share of
+  // them, and the uploaded rows removed by that filter.
+  k?: number;
+  affirmativeCount?: number;
+  droppedRows?: number;
 };
 
 type PingResponse = {

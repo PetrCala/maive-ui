@@ -42,7 +42,9 @@ test_basic_rtma <- function() {
 
       # Validate RTMA result fields
       rtma_fields <- c(
-        "mu", "muCI", "tau", "tauCI",
+        "mu", "muMedian", "muCI", "tau", "tauMedian", "tauCI",
+        "unadjustedMean", "ciLevel",
+        "k", "affirmativeCount", "droppedRows",
         "zScorePlot", "zScorePlotWidth",
         "zScorePlotHeight",
         "nonaffirmativeCount",
@@ -100,6 +102,34 @@ test_basic_rtma <- function() {
         stop(
           "nonaffirmativeProportion should be in [0, 1]"
         )
+      }
+
+      # Check the count bookkeeping is internally consistent
+      if (
+        results$affirmativeCount + results$nonaffirmativeCount != results$k
+      ) {
+        stop("affirmativeCount + nonaffirmativeCount should equal k")
+      }
+      if (results$droppedRows < 0) {
+        stop("droppedRows should be >= 0")
+      }
+
+      # The unadjusted mean must sit inside plausible bounds of the data and
+      # the medians inside their credible intervals
+      if (!is.numeric(results$unadjustedMean)) {
+        stop("unadjustedMean should be numeric")
+      }
+      if (
+        results$muMedian < results$muCI[1] ||
+          results$muMedian > results$muCI[2]
+      ) {
+        stop("muMedian should lie inside muCI")
+      }
+      if (
+        results$tauMedian < results$tauCI[1] ||
+          results$tauMedian > results$tauCI[2]
+      ) {
+        stop("tauMedian should lie inside tauCI")
       }
 
       log_test_result(

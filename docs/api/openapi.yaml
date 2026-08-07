@@ -778,9 +778,16 @@ components:
         result object 1:1 (`rtma_model.R`, `run_rtma_model`).
       required:
         - mu
+        - muMedian
         - muCI
         - tau
+        - tauMedian
         - tauCI
+        - unadjustedMean
+        - ciLevel
+        - k
+        - affirmativeCount
+        - droppedRows
         - nonaffirmativeCount
         - nonaffirmativeProportion
         - warnings
@@ -791,20 +798,56 @@ components:
             Posterior mode of the bias-corrected mean, on the sign convention of
             the submitted data (so a negative literature analysed with
             `favorPositive: false` returns a negative `mu`).
+        muMedian:
+          type: number
+          description: >-
+            Posterior median of the bias-corrected mean, same sign convention
+            as `mu`. The posterior is often skewed, so the median can differ
+            noticeably from the mode.
         muCI:
           type: array
           items:
             type: number
           minItems: 2
           maxItems: 2
+          description: >-
+            Equal-tailed credible interval for `mu` at `ciLevel` (posterior
+            quantiles, not an HPD interval).
         tau:
           type: number
+        tauMedian:
+          type: number
+          description: Posterior median of the heterogeneity `tau`.
         tauCI:
           type: array
           items:
             type: number
           minItems: 2
           maxItems: 2
+          description: >-
+            Equal-tailed credible interval for `tau` at `ciLevel` (posterior
+            quantiles, not an HPD interval).
+        unadjustedMean:
+          type: number
+          description: >-
+            Naive inverse-variance (fixed-effect) pooled mean of the analyzed
+            estimates with no truncation correction, for comparison with `mu`.
+        ciLevel:
+          type: number
+          description: Level of the credible intervals, echoed from the request.
+        k:
+          type: integer
+          description: >-
+            Number of estimates the model was fitted to, after dropping rows
+            with a missing or non-positive standard error.
+        affirmativeCount:
+          type: integer
+          description: >-
+            Estimates significant in the favored direction at the selection
+            threshold; `affirmativeCount + nonaffirmativeCount = k`.
+        droppedRows:
+          type: integer
+          description: Submitted rows removed by the `se > 0` filter.
         nonaffirmativeCount:
           type: integer
         nonaffirmativeProportion:
