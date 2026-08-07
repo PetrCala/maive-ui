@@ -2,6 +2,7 @@ import Head from "next/head";
 import Link from "next/link";
 import CONST from "@src/CONST";
 import CitationBox from "@components/CitationBox";
+import { API_DOCS_CITATIONS } from "@utils/citationUtils";
 import SectionHeading from "@components/SectionHeading";
 import { GoBackButton } from "@components/Buttons";
 import {
@@ -395,10 +396,15 @@ export default function ApiDocsPage() {
             <section className="space-y-4">
               <SectionHeading level="h2" text="Citation" />
               <p className="text-secondary text-sm leading-relaxed">
-                If you use MAIVE in published or reported work, please cite the
-                paper:
+                If you use this API in published or reported work, please cite
+                the paper behind the model you ran. RTMA is Mathur&apos;s
+                method; the other models are MAIVE&apos;s.
               </p>
-              <CitationBox variant="full" useBlueStyling />
+              <CitationBox
+                variant="full"
+                useBlueStyling
+                citations={API_DOCS_CITATIONS}
+              />
             </section>
           </div>
         </div>

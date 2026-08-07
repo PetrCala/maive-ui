@@ -3,6 +3,7 @@
  */
 
 import CONST from "@src/CONST";
+import { getCitationsForModel } from "@src/utils/citationUtils";
 import type { ModelParameters } from "@src/types/api";
 import type { VersionInfo } from "@src/types/reproducibility";
 
@@ -97,15 +98,15 @@ ${
   isRtma
     ? `## What is RTMA?
 
-RTMA (Right-Truncated Meta-Analysis) corrects for the joint effects of p-hacking and publication bias by fitting a truncated normal likelihood to the distribution of z-scores. It uses the \`phacking\` R package (Mathur, 2022).
+RTMA (Right-Truncated Meta-Analysis) corrects for the joint effects of p-hacking and publication bias by fitting a truncated normal likelihood to the distribution of z-scores. It uses the \`phacking\` R package (Mathur & Braginsky, 2023).
 
 **Learn more:**
 - **phacking package:** [CRAN](https://cran.r-project.org/package=phacking)
-- **Paper:** Mathur, M.B. (2022). Sensitivity analysis for p-hacking in meta-analyses. *OSF Preprints*.
+- **Paper:** Mathur, M.B. (2024). P-hacking in meta-analyses: A formalization and new meta-analytic methods. *Research Synthesis Methods*, 15(3), 483-499. [doi.org/10.1002/jrsm.1701](${CONST.LINKS.RTMA.PAPER})
 - **MAIVE App:** [${CONST.LINKS.MAIVE.WEBSITE}](${CONST.LINKS.MAIVE.WEBSITE})`
     : `## What is MAIVE?
 
-MAIVE (Meta-Analysis for Identifying Variability and Errors) is a statistical tool for detecting spurious precision in meta-analysis data. It helps identify potential data quality issues that may affect the validity of meta-analytic findings.
+MAIVE (Meta-Analysis Instrumental Variable Estimator) is a statistical tool for detecting spurious precision in meta-analysis data. It helps identify potential data quality issues that may affect the validity of meta-analytic findings.
 
 **Learn more:**
 - **Paper:** [Nature Communications](${CONST.LINKS.MAIVE.PAPER})
@@ -300,17 +301,20 @@ source("funnel_plot.R")
 
 ## Citation
 
-If you use MAIVE in your research, please cite:
+If you use ${analysisType} in your research, please cite:
 
-\`\`\`bibtex
-@article{maive2025,
-  title={MAIVE: Meta-Analysis for Identifying Variability and Errors},
-  author={[Authors]},
-  journal={Nature Communications},
-  year={2025},
-  doi={10.1038/s41467-025-63261-0}
-}
-\`\`\`
+${getCitationsForModel(parameters.modelType)
+  .map((citation) =>
+    [
+      citation.role ? `**${citation.role}:**` : null,
+      "```bibtex",
+      citation.formats.bibtex,
+      "```",
+    ]
+      .filter(Boolean)
+      .join("\n"),
+  )
+  .join("\n\n")}
 
 ## Support and Questions
 
@@ -435,8 +439,16 @@ To ensure perfect reproducibility:
 
 CITATION
 --------
-If you use MAIVE in your research, please cite:
-  DOI: 10.1038/s41467-025-63261-0
+If you use ${parameters.modelType === "RTMA" ? "RTMA" : "MAIVE"} in your research, please cite:
+
+${getCitationsForModel(parameters.modelType)
+  .map((citation) =>
+    citation.role
+      ? `${`${citation.role}:`.padEnd(13)}${citation.formats.plain}`
+      : `  ${citation.formats.plain}`,
+  )
+  .join("\n")}
+
   URL: ${CONST.LINKS.MAIVE.WEBSITE}
 
 SUPPORT

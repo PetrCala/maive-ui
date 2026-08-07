@@ -27,6 +27,12 @@ const CONST = {
       CRAN: "https://cran.r-project.org/web/packages/MAIVE/index.html",
       GITHUB: `https://github.com/${GH_REPO_PACKAGE_ORG}`,
     },
+    RTMA: {
+      // Mathur (2024), Research Synthesis Methods: the published RTMA paper.
+      // Cite this, not the OSF preprint it superseded.
+      PAPER: "https://doi.org/10.1002/jrsm.1701",
+      PHACKING_CRAN: "https://doi.org/10.32614/CRAN.package.phacking",
+    },
     APP_GITHUB: {
       HOMEPAGE: `https://github.com/${GH_OWNER}/${GH_REPO_UI}`,
       ISSUES: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/issues`,

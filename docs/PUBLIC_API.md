@@ -290,11 +290,25 @@ codes and every schema referenced above.
 
 ## Citation
 
-If you use MAIVE in published or reported work, please cite:
+If you use this API in published or reported work, please cite the paper
+behind the model you ran.
+
+For MAIVE, WAIVE, and WLS runs:
 
 > Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious
 > precision in meta-analysis of observational research. Nature
 > Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0
+
+For RTMA runs, cite the method and the software implementing it (the MAIVE
+app is the application layer):
+
+> Mathur, M. B. (2024). P-hacking in meta-analyses: A formalization and new
+> meta-analytic methods. Research Synthesis Methods, 15(3), 483-499.
+> https://doi.org/10.1002/jrsm.1701
+
+> Mathur, M., & Braginsky, M. (2023). phacking: Sensitivity Analysis for
+> p-Hacking in Meta-Analyses. R package version 0.2.1.
+> https://doi.org/10.32614/CRAN.package.phacking
 
 ## See also
 
