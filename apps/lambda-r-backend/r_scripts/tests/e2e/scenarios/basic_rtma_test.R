@@ -46,7 +46,8 @@ test_basic_rtma <- function() {
         "zScorePlot", "zScorePlotWidth",
         "zScorePlotHeight",
         "nonaffirmativeCount",
-        "nonaffirmativeProportion"
+        "nonaffirmativeProportion",
+        "warnings"
       )
 
       missing <- setdiff(

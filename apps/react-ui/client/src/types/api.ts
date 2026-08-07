@@ -108,6 +108,10 @@ type RTMAResults = {
   zScorePlotHeight: number;
   nonaffirmativeCount: number;
   nonaffirmativeProportion: number;
+  // Conditions raised while fitting, most importantly a favored direction that
+  // is opposite the pooled estimate. Optional because runs stored before the
+  // backend started returning the field have no value for it.
+  warnings?: string[];
 };
 
 type PingResponse = {

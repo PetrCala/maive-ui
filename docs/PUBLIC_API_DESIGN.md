@@ -233,8 +233,20 @@ plus `funnelPlot`/`funnelPlotWidth`/`funnelPlotHeight` only with
 Same envelope; parameters (all optional): `favorPositive` (default `true`),
 `alphaSelect` (`0.05`), `ciLevel` (`0.95`), `winsorize` (`0`). The internal
 `parallelize` / `timeoutSeconds` knobs are **not** exposed. Response: `mu`,
-`muCI`, `tau`, `tauCI`, `nonaffirmativeCount`, `nonaffirmativeProportion`
-(+ `zScorePlot*` with `?include=plot`).
+`muCI`, `tau`, `tauCI`, `nonaffirmativeCount`, `nonaffirmativeProportion`,
+`warnings` (+ `zScorePlot*` with `?include=plot`).
+
+`mu` and `muCI` are reported on the sign convention of the submitted data:
+`phacking_meta()` fits on `-yi` when `favorPositive` is `false`, and
+`run_rtma_model()` maps the result back so a negative literature analysed with
+`favorPositive: false` returns a negative `mu`. `tau` is a scale parameter and is
+unaffected.
+
+`warnings` is an array of strings, empty on a clean fit. It carries the
+conditions `phacking_meta()` raises, most importantly a favored direction
+opposite the pooled estimate, plus an explicit flag when every estimate is
+nonaffirmative, in which case nothing was truncated and `mu` is not corrected for
+p-hacking.
 
 ### 6.5 Async: `POST /v1/runs`, `GET /v1/runs/{jobId}`
 
