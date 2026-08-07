@@ -104,8 +104,7 @@ export default function OptionRenderer({
 
         if (option.key === "modelType" && isRtmaOnlyData) {
           dropdownOptions = dropdownOptions.filter(
-            (dropdownOption) =>
-              dropdownOption.value === CONST.MODEL_TYPES.RTMA,
+            (dropdownOption) => dropdownOption.value === CONST.MODEL_TYPES.RTMA,
           );
         }
 
