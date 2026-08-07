@@ -104,6 +104,7 @@ terraform/stacks/prod-runtime/kill_switch.zip
 notes/
 **/*.pdf
 **/*.png
+!docs/screenshots/*.png
 **/*.bak
 
 # Claude Code — local & ephemeral (never commit). Shared config such as
