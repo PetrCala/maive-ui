@@ -9,7 +9,6 @@ import type {
   ModelResults,
   PingResponse,
   ApiConfig,
-  ApiError,
 } from "./api";
 import type DataArray from "./data";
 import type {
@@ -28,7 +27,6 @@ type EstimateType = DeepValueOf<typeof CONST.MODEL_TYPES> | "Unknown";
 
 export type {
   ApiConfig,
-  ApiError,
   DataArray,
   SubsampleFilterCondition,
   SubsampleFilterConditionNode,

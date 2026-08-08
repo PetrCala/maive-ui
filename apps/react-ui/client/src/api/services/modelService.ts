@@ -50,9 +50,12 @@ export class ModelService {
         },
       );
     } catch (error: unknown) {
-      throw new Error(
-        `Failed to run model: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      // Preserve the original error (e.g. ApiRequestError with its status/code,
+      // or an AbortError) instead of burying it behind a generic message.
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to run model.");
     }
   }
 
@@ -87,9 +90,10 @@ export class ModelService {
         },
       );
     } catch (error: unknown) {
-      throw new Error(
-        `Failed to run RTMA model: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to run RTMA model.");
     }
   }
 
@@ -114,9 +118,10 @@ export class ModelService {
         },
       );
     } catch (error: unknown) {
-      throw new Error(
-        `Failed to fetch runs: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to fetch runs.");
     }
   }
 
@@ -153,9 +158,10 @@ export class ModelService {
         },
       );
     } catch (error: unknown) {
-      throw new Error(
-        `Failed to submit run: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to submit run.");
     }
   }
 
@@ -176,9 +182,10 @@ export class ModelService {
         },
       );
     } catch (error: unknown) {
-      throw new Error(
-        `Failed to fetch run: ${error instanceof Error ? error.message : "Unknown error"}`,
-      );
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to fetch run.");
     }
   }
 }

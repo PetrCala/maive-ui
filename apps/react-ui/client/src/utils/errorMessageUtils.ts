@@ -1,3 +1,5 @@
+import { ApiRequestError } from "@api/utils/http";
+
 /**
  * Removes ANSI escape codes and other terminal formatting artifacts from error messages.
  *
@@ -18,4 +20,32 @@ export function cleanCliErrorMessage(input: string): string {
 
   // If a layer prepended a generic server prefix, keep only the meaningful MAIVE message.
   return withoutCliMarkers.replace(/^internal server error:\s*/i, "");
+}
+
+const RATE_LIMIT_MESSAGE =
+  "The server is busy right now. Please wait a few seconds and try again.";
+const UNKNOWN_ERROR_MESSAGE =
+  "An unexpected error occurred while running the model.";
+
+/**
+ * Builds the message shown to the user for a failed run, distinguishing a
+ * rate limit (429, either from the edge or the R backend's concurrency cap)
+ * from other failures instead of collapsing both into one generic message.
+ * A structured API error's message (from the `{ error: { code, message } }`
+ * envelope or its legacy equivalent) is preserved as-is; only a genuinely
+ * unrecognized throw falls back to a generic message.
+ */
+export function getUserFacingRunErrorMessage(error: unknown): string {
+  if (error instanceof ApiRequestError && error.status === 429) {
+    return RATE_LIMIT_MESSAGE;
+  }
+  if (error instanceof TypeError) {
+    // fetch() rejects with a TypeError for network failures (offline, DNS,
+    // CORS, connection reset) rather than resolving with a response.
+    return "Network error: please check your connection and try again.";
+  }
+  if (error instanceof Error) {
+    return cleanCliErrorMessage(error.message);
+  }
+  return UNKNOWN_ERROR_MESSAGE;
 }

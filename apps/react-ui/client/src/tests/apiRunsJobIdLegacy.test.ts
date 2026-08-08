@@ -76,6 +76,27 @@ describe("legacy /api/runs/[jobId] (unchanged behavior)", () => {
     expect(res.body).toEqual({ error: "Run not found or expired." });
   });
 
+  it("always includes an errorMessage for a failed run, even if the store has none", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({
+      Item: {
+        jobId: "abc",
+        status: "failed",
+        modelType: "MAIVE",
+      },
+    });
+    const { default: handler } = await import("@src/pages/api/runs/[jobId]");
+    const req = createMockReq({ method: "GET", query: { jobId: "abc" } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const body = res.body as { status: string; errorMessage?: string };
+    expect(body.status).toBe("failed");
+    expect(body.errorMessage).toBeTruthy();
+  });
+
   it("returns `result` as the raw stored string (not parsed)", async () => {
     setConfigured();
     const storedResult = JSON.stringify({

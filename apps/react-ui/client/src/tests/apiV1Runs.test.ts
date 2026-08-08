@@ -338,4 +338,22 @@ describe("GET /api/v1/runs (batch status)", () => {
       },
     ]);
   });
+
+  it("fills in an errorMessage for a failed run the store has none for", async () => {
+    setConfigured();
+    const responses: Record<string, unknown[]> = {};
+    responses["runs-table"] = [
+      { jobId: "a", status: "failed", modelType: "MAIVE" },
+    ];
+    ddbSendMock.mockResolvedValue({ Responses: responses });
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({ method: "GET", query: { ids: "a" } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const body = res.body as Array<{ errorMessage?: string }>;
+    expect(body[0].errorMessage).toBeTruthy();
+  });
 });

@@ -141,6 +141,49 @@ describe("GET /api/v1/runs/[jobId]", () => {
     expect(body.result).toEqual(storedResult);
   });
 
+  it("always includes an errorMessage for a failed run, even if the store has none", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({
+      Item: {
+        jobId: "abc",
+        status: "failed",
+        modelType: "MAIVE",
+        // No errorMessage stored (see #491: the store must not surface a
+        // terminal failure with nothing for the caller to act on).
+      },
+    });
+    const { default: handler } = await import("@src/pages/api/v1/runs/[jobId]");
+    const req = createMockReq({ method: "GET", query: { jobId: "abc" } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const body = res.body as { status: string; errorMessage?: string };
+    expect(body.status).toBe("failed");
+    expect(body.errorMessage).toBeTruthy();
+  });
+
+  it("preserves a stored errorMessage for a failed run instead of the fallback", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({
+      Item: {
+        jobId: "abc",
+        status: "timedout",
+        modelType: "RTMA",
+        errorMessage: "RTMA timed out after 480 seconds.",
+      },
+    });
+    const { default: handler } = await import("@src/pages/api/v1/runs/[jobId]");
+    const req = createMockReq({ method: "GET", query: { jobId: "abc" } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    const body = res.body as { errorMessage?: string };
+    expect(body.errorMessage).toBe("RTMA timed out after 480 seconds.");
+  });
+
   it("strips zScorePlot fields for RTMA results", async () => {
     setConfigured();
     const storedResult = {
