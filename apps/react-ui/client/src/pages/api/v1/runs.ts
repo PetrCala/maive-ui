@@ -99,7 +99,7 @@ const handler = async (
     return sendApiError(
       res,
       "payload_too_large",
-      "Dataset is too large to queue for async processing (~200KB limit). Use the synchronous endpoint (POST /v1/run-model or /v1/run-rtma) instead.",
+      "Dataset is too large to queue for async processing (~900KB limit). Use the synchronous endpoint (POST /v1/run-model or /v1/run-rtma) instead.",
     );
   }
 

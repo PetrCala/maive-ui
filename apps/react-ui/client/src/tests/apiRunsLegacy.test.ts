@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { createMockReq, createMockRes } from "@tests/helpers/nextApiMocks";
+import { MAX_QUEUE_BODY_BYTES } from "@api/server/runsService";
 
 const { ddbSendMock, sqsSendMock } = vi.hoisted(() => ({
   ddbSendMock: vi.fn(),
@@ -61,13 +62,37 @@ describe("legacy /api/runs (unchanged behavior)", () => {
     expect(res.body).toEqual({ error: "Async runs are not configured." });
   });
 
-  it("returns 200 { tooLarge: true } for an oversized submission", async () => {
+  it("queues a submission between the 200 KiB and ~900 KiB budget instead of falling back", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const { default: handler } = await import("@src/pages/api/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: {
+        // Above the old 200 KiB cap, comfortably under the ~900 KiB budget.
+        data: "x".repeat(500 * 1024),
+        parameters: {},
+        modelType: "MAIVE",
+      },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("jobId");
+    expect(ddbSendMock).toHaveBeenCalledTimes(1);
+    expect(sqsSendMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns 200 { tooLarge: true } for a submission just above the ~900 KiB budget", async () => {
     setConfigured();
     const { default: handler } = await import("@src/pages/api/runs");
     const req = createMockReq({
       method: "POST",
       body: {
-        data: "x".repeat(300 * 1024),
+        data: "x".repeat(MAX_QUEUE_BODY_BYTES + 1024),
         parameters: {},
         modelType: "MAIVE",
       },

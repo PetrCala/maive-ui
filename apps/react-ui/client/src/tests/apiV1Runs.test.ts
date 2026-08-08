@@ -103,6 +103,7 @@ describe("POST /api/v1/runs", () => {
   it("413s with payload_too_large for an oversized submission (not the legacy tooLarge signal)", async () => {
     setConfigured();
     const { default: handler } = await import("@src/pages/api/v1/runs");
+    // Comfortably above the ~900 KiB budget.
     const bigData = Array.from({ length: 4 }, (_, i) => ({
       effect: 0.1 + i,
       se: 0.1,
@@ -116,6 +117,29 @@ describe("POST /api/v1/runs", () => {
 
     expect(res.statusCode).toBe(413);
     expect(res.body).toMatchObject({ error: { code: "payload_too_large" } });
+  });
+
+  it("queues a submission between the 200 KiB and ~900 KiB budget instead of 413ing", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    // Above the old 200 KiB cap, comfortably under the ~900 KiB budget.
+    const midData = Array.from({ length: 4 }, (_, i) => ({
+      effect: 0.1 + i,
+      se: 0.1,
+      n_obs: 10,
+      study_id: "x".repeat(100 * 1024),
+    }));
+    const req = createMockReq({ method: "POST", body: { data: midData } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toHaveProperty("jobId");
+    expect(ddbSendMock).toHaveBeenCalledTimes(1);
+    expect(sqsSendMock).toHaveBeenCalledTimes(1);
   });
 
   it("applies CONFIG.DEFAULT_MODEL_PARAMETERS defaults and derives shouldUseInstrumenting when parameters/modelType are omitted", async () => {
