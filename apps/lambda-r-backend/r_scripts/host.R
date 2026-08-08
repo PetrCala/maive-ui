@@ -113,4 +113,35 @@ pr$setErrorHandler(function(req, res, err) {
   list(error = "500 - Internal server error")
 })
 
+# ---- PRELOAD PHACKING (issue #483, section 1) -----------------------------
+# rtma_model.R:5 runs `library(phacking)` at source() time, and index.R /
+# api_v1.R source() it on every RTMA request. Loading the namespace costs
+# ~11s, and ragg's first text render separately warms a font cache. Without
+# this, whichever request happens to be the first RTMA call served by a given
+# Lambda container pays both costs. Preload here, once per container, before
+# plumber starts listening, so no request pays them.
+#
+# Trade-off: every container now pays this preload, including ones that end
+# up serving only MAIVE requests, so a cold MAIVE-only container also waits
+# behind it. A scheduled /health keep-warm ping (also proposed in #483) would
+# avoid this by keeping containers warm instead of letting them go cold; that
+# is left as a follow-up, not implemented here.
+cli::cli_alert_info("Preloading phacking and warming ragg font cache...")
+preload_start <- Sys.time()
+
+tryCatch(
+  {
+    # nolint start: undesirable_function_linter.
+    source("rtma_model.R")
+    # nolint end: undesirable_function_linter.
+    render_z_density_plot(yi = c(-2, -1, 0, 1, 2), vi = c(1, 1, 1, 1, 1))
+  },
+  error = function(e) {
+    cli::cli_alert_danger("Phacking preload failed: {conditionMessage(e)}")
+  }
+)
+
+preload_elapsed <- round(as.numeric(Sys.time() - preload_start, units = "secs"), 2)
+cli::cli_alert_success("Phacking preload finished in {preload_elapsed}s")
+
 pr$run(host = R_HOST, port = R_PORT)
