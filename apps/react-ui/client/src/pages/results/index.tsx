@@ -633,7 +633,7 @@ export default function ResultsPage() {
                         />
                       </Tooltip>
                       <InterpretationButton
-                        interpretationText="The figure shows the distribution of z-scores (estimate divided by standard error). The dashed vertical line marks the critical value; estimates with z above it are affirmative, meaning significant in the favored direction (the criterion is one-sided, z > critical value, not |z|). RTMA fits its model to the not-affirmative estimates to correct for p-hacking and publication bias."
+                        interpretationText="The figure shows the distribution of z-scores in the favored direction (estimate divided by standard error, sign-flipped when the favored direction is negative). The dashed vertical line marks the critical value; estimates with z above it are affirmative, meaning significant in the favored direction (the criterion is one-sided, z > critical value, not |z|). RTMA fits its model to the not-affirmative estimates to correct for p-hacking and publication bias."
                         section={resultsText.funnelPlot.title}
                         variant="icon"
                       />
