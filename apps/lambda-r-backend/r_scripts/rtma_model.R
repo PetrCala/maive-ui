@@ -9,18 +9,46 @@ RTMA_PLOT_RES <- 120
 
 #' Render a z-score density plot and return it as a base64-encoded PNG data URI
 #'
-#' @param yi Numeric vector of point estimates
+#' phacking::z_density() has no favor_positive argument: it always draws the
+#' dashed critical line at +tcrit. phacking_meta() internally does
+#' `if (!favor_positive) yi <- -yi` before computing its
+#' affirm <- (yi / sei) > tcrit split, so the affirmative/nonaffirmative
+#' counts reported alongside this plot are on that flipped scale. Apply the
+#' same flip here, otherwise a negative favored direction draws a density
+#' that sits on the opposite side of the fixed critical line from the counts
+#' next to it (#486). The axis is relabeled with the sign convention in use
+#' so a mirrored plot cannot be mistaken for the raw z-score.
+#'
+#' @param yi Numeric vector of point estimates, in the caller's original sign
 #' @param vi Numeric vector of estimated variances
+#' @param favor_positive Whether the favored direction is positive
 #' @param alpha_select Significance threshold (default 0.05)
 #' @param res Plot resolution in pixels per inch
 #' @return A list with data_uri, width_px, height_px
-render_z_density_plot <- function(yi, vi, alpha_select = 0.05, res = RTMA_PLOT_RES) {
+render_z_density_plot <- function(yi, vi, favor_positive = TRUE, alpha_select = 0.05, res = RTMA_PLOT_RES) {
   width_px <- res * 7
   height_px <- res * 7
 
+  plot_yi <- if (favor_positive) yi else -yi
+  # One fixed label regardless of favor_positive: the flip above means
+  # "positive" always denotes the favored direction on this axis, whichever
+  # way the caller's raw yi points. Stating that plainly is both the sign
+  # convention the issue asked for and (unlike echoing "yi" vs "-yi") keeps
+  # the rendered plot identical for a dataset and its favorPositive-mirrored
+  # counterpart, which is exactly the invariant this fix restores.
+  axis_label <- "Z-score (positive = favored direction)"
+
   tmp <- tempfile(fileext = ".png")
   ragg::agg_png(tmp, width = width_px, height = height_px, res = res)
-  p <- phacking::z_density(yi = yi, vi = vi, alpha_select = alpha_select)
+  p <- phacking::z_density(yi = plot_yi, vi = vi, alpha_select = alpha_select)
+  # z_density() sets the x scale's name explicitly (scale_x_continuous(name=
+  # "Z-score", ...)), which labs()/xlab() cannot override: an explicit scale
+  # name always wins over plot-level labs. Set it on the scale directly.
+  for (i in seq_along(p$scales$scales)) {
+    if ("x" %in% p$scales$scales[[i]]$aesthetics) {
+      p$scales$scales[[i]]$name <- axis_label
+    }
+  }
   print(p)
   dev.off()
 
@@ -42,8 +70,11 @@ render_z_density_plot <- function(yi, vi, alpha_select = 0.05, res = RTMA_PLOT_R
 #'
 #' @param data JSON string of the uploaded data (same convention as run_maive_model)
 #' @param parameters JSON string of RTMA parameters
+#' @param include_plot Whether to render the z-score density plot. Skipping it
+#'   saves the ragg render (and ~50KB of response) when the caller has no use
+#'   for it, e.g. the default /v1 response before `?include=plot` (#483).
 #' @return A list of RTMA results
-run_rtma_model <- function(data, parameters) {
+run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   # Parse JSON inputs
   df <- jsonlite::fromJSON(data)
   params <- jsonlite::fromJSON(parameters)
@@ -275,12 +306,18 @@ run_rtma_model <- function(data, parameters) {
     "dropped rows: {dropped_rows}"
   ))
 
-  # Generate z-score density plot
-  z_plot <- render_z_density_plot(
-    yi = yi,
-    vi = vi,
-    alpha_select = alpha_select
-  )
+  # Generate z-score density plot, unless the caller has already said it will
+  # discard it (#483 section 3).
+  z_plot <- if (include_plot) {
+    render_z_density_plot(
+      yi = yi,
+      vi = vi,
+      favor_positive = favor_positive,
+      alpha_select = alpha_select
+    )
+  } else {
+    NULL
+  }
 
   results <- list(
     mu = mu_est,
@@ -297,15 +334,27 @@ run_rtma_model <- function(data, parameters) {
     k = k,
     affirmativeCount = k_affirmative,
     droppedRows = dropped_rows,
-    zScorePlot = z_plot$data_uri,
-    zScorePlotWidth = z_plot$width_px,
-    zScorePlotHeight = z_plot$height_px,
     nonaffirmativeCount = k_nonaffirmative,
     nonaffirmativeProportion = nonaffirmative_proportion,
     # I() so the unboxed-JSON serializer keeps this an array even when a single
     # warning was raised; callers can always treat it as a list of strings.
     warnings = I(rtma_warnings)
   )
+
+  if (include_plot) {
+    # Spliced in after droppedRows to match the field order this response has
+    # always had; list(zScorePlot = NULL, ...) above would keep the keys
+    # present with a null value instead of omitting them.
+    results <- append(
+      results,
+      list(
+        zScorePlot = z_plot$data_uri,
+        zScorePlotWidth = z_plot$width_px,
+        zScorePlotHeight = z_plot$height_px
+      ),
+      after = which(names(results) == "droppedRows")
+    )
+  }
 
   results
 }
