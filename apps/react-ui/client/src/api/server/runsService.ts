@@ -48,6 +48,28 @@ export const getSqsClient = (): SQSClient | undefined => {
   return sqsClient;
 };
 
+// Statuses that mean the run did not produce a usable result. The orchestrator
+// (apps/orchestrator/src/index.ts) always writes an errorMessage alongside
+// these, but a caller (this route, or a future writer) should never have to
+// rely on that being true elsewhere: a failed/timed-out run with nothing in
+// errorMessage leaves the caller (including a `/v1` API consumer scripting
+// against `run.errorMessage`) with no way to know what happened.
+const FAILURE_STATUSES: ReadonlySet<RunStatus> = new Set<RunStatus>([
+  "failed",
+  "timedout",
+]);
+const FALLBACK_FAILURE_MESSAGE =
+  "The run failed, but no error details were recorded. Please try again.";
+
+const withFailureFallback = <
+  T extends { status: RunStatus; errorMessage?: string },
+>(
+  item: T,
+): T =>
+  FAILURE_STATUSES.has(item.status) && !item.errorMessage
+    ? { ...item, errorMessage: FALLBACK_FAILURE_MESSAGE }
+    : item;
+
 export type RunsStoreConfig = {
   ddb: DynamoDBDocumentClient;
   tableName: string;
@@ -120,18 +142,20 @@ export const batchGetRunStatuses = async (
   );
 
   const items = out.Responses?.[tableName] ?? [];
-  return items.map((item) => ({
-    jobId: item.jobId as string,
-    status: item.status as RunStatus,
-    modelType: item.modelType as GetRunResponse["modelType"],
-    errorMessage: (item.errorMessage as string | undefined) ?? undefined,
-    runDurationMs:
-      typeof item.runDurationMs === "number" ? item.runDurationMs : undefined,
-    runTimestamp:
-      typeof item.submittedAt === "number"
-        ? new Date(item.submittedAt).toISOString()
-        : undefined,
-  }));
+  return items.map((item) =>
+    withFailureFallback({
+      jobId: item.jobId as string,
+      status: item.status as RunStatus,
+      modelType: item.modelType as GetRunResponse["modelType"],
+      errorMessage: (item.errorMessage as string | undefined) ?? undefined,
+      runDurationMs:
+        typeof item.runDurationMs === "number" ? item.runDurationMs : undefined,
+      runTimestamp:
+        typeof item.submittedAt === "number"
+          ? new Date(item.submittedAt).toISOString()
+          : undefined,
+    }),
+  );
 };
 
 export type RunItem = {
@@ -171,7 +195,7 @@ export const getRunItem = async (
     return undefined;
   }
 
-  return Item as RunItem;
+  return withFailureFallback(Item as RunItem);
 };
 
 export type SubmitRunParams = {

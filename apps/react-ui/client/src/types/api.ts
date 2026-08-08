@@ -175,13 +175,6 @@ type ApiConfig = {
   signal?: AbortSignal;
 };
 
-// Error types
-type ApiError = {
-  message: string;
-  status?: number;
-  code?: string;
-};
-
 export type {
   ModelParameters,
   ModelRequest,
@@ -191,7 +184,6 @@ export type {
   RTMAResults,
   PingResponse,
   ApiConfig,
-  ApiError,
   ApiResponse,
   RunStatus,
   SubmitRunResponse,

@@ -1,4 +1,31 @@
-import type { ApiConfig, ApiError } from "@src/types";
+import type { ApiConfig } from "@src/types";
+
+/**
+ * Error thrown for a non-2xx HTTP response. Carries the response's status
+ * code and, when the backend returned a structured error envelope
+ * (`{ error: { code, message } }`, used by the public `/v1` API) or the
+ * legacy `{ error: string }` / `{ message: string }` shape, the parsed
+ * message and code. Being a real `Error` subclass, it survives the
+ * `error instanceof Error` check in `httpRequest` below instead of being
+ * replaced with a generic message, and callers can branch on `status`/`code`
+ * (e.g. to show tailored guidance for a 429) instead of losing that
+ * information.
+ */
+export class ApiRequestError extends Error {
+  readonly status: number;
+
+  readonly code?: string;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.code = code;
+    // Keeps `instanceof ApiRequestError` working after transpilation, which
+    // can otherwise break the prototype chain for classes extending Error.
+    Object.setPrototypeOf(this, ApiRequestError.prototype);
+  }
+}
 
 /**
  * Create an AbortController for request timeout
@@ -11,33 +38,41 @@ function createTimeoutController(timeout: number): AbortController {
   return controller;
 }
 
+type ErrorResponseBody = {
+  message?: string;
+  error?: string | { code?: string; message?: string };
+};
+
 /**
  * Handle HTTP response and throw errors if needed
  * @param response - Fetch response
  * @returns Response if successful
- * @throws Error if response is not ok
+ * @throws ApiRequestError if response is not ok
  */
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
     let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    let errorCode: string | undefined;
 
     try {
-      const errorData = (await response.json()) as {
-        message?: string;
-        error?: string;
-      };
-      errorMessage = errorData.message ?? errorData.error ?? errorMessage;
+      const errorData = (await response.json()) as ErrorResponseBody;
+
+      if (errorData.error && typeof errorData.error === "object") {
+        // Structured `/v1` envelope: { error: { code, message } }
+        errorMessage = errorData.error.message ?? errorMessage;
+        errorCode = errorData.error.code;
+      } else {
+        // Legacy shape: { error: string } or { message: string }
+        errorMessage =
+          errorData.message ??
+          (typeof errorData.error === "string" ? errorData.error : undefined) ??
+          errorMessage;
+      }
     } catch {
       // If we can't parse the error response, use the default message
     }
 
-    const error: ApiError = {
-      message: errorMessage,
-      status: response.status,
-    };
-
-    // eslint-disable-next-line @typescript-eslint/no-throw-literal
-    throw error;
+    throw new ApiRequestError(errorMessage, response.status, errorCode);
   }
 
   return response.json() as Promise<T>;

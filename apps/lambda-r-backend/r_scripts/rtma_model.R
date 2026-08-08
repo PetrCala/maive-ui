@@ -188,7 +188,7 @@ run_rtma_model <- function(data, parameters) {
         grepl("elapsed time limit", err_message, fixed = TRUE)) {
         cli::cli_abort(c(
           "RTMA timed out after {timeout_sec} seconds.",
-          "i" = "This dataset makes the sampler diverge. Try winsorizing outliers or reducing the number of estimates."
+          "i" = "The run exceeded its time budget before finishing; this does not necessarily mean it diverged. Try winsorizing outliers or reducing the number of estimates."
         ))
       }
       cli::cli_alert_danger(paste("RTMA error:", err_message))

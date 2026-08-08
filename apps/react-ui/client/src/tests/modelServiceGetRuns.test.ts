@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { modelService } from "@api/services/modelService";
+import { ApiRequestError } from "@api/utils/http";
 
 describe("modelService.getRuns", () => {
   beforeEach(() => {
@@ -31,13 +32,15 @@ describe("modelService.getRuns", () => {
     expect(String(fetchSpy.mock.calls[0][0])).toBe("/api/runs?ids=a,b");
   });
 
-  it("throws a descriptive error when the endpoint fails", async () => {
+  it("preserves the backend's message and status instead of a generic wrapper", async () => {
     vi.spyOn(globalThis, "fetch").mockResolvedValue(
       new Response(JSON.stringify({ error: "boom" }), { status: 500 }),
     );
 
-    await expect(modelService.getRuns(["a"])).rejects.toThrow(
-      /Failed to fetch runs/,
-    );
+    const error = await modelService.getRuns(["a"]).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ApiRequestError);
+    expect((error as ApiRequestError).status).toBe(500);
+    expect((error as Error).message).toBe("boom");
   });
 });
