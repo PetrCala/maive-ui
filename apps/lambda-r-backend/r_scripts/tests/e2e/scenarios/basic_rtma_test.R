@@ -1,4 +1,149 @@
 # Basic RTMA Test Scenario
+#
+# Also covers two regressions fixed alongside this scenario:
+#   * #486: phacking::z_density() always draws its dashed critical line at
+#     +tcrit, so run_rtma_model() must flip the plotted yi to match
+#     phacking_meta()'s internal favor_positive handling. Otherwise the plot
+#     disagrees with the affirmative/nonaffirmative counts reported beside it
+#     whenever the favored direction is negative.
+#   * #483 (section 3): run_rtma_model()'s include_plot argument must
+#     actually skip the ragg render, not just have /v1 discard the fields
+#     after the fact.
+
+#' Build RTMA parameter JSON, defaulting to the basic test's settings
+#' @param favor_positive Value for the favorPositive parameter
+#' @return JSON string of parameters
+basic_rtma_params <- function(favor_positive = TRUE) {
+  params_to_json(list(
+    modelType = "RTMA",
+    favorPositive = favor_positive,
+    alphaSelect = 0.05,
+    ciLevel = 0.95,
+    winsorize = 0
+  ))
+}
+
+#' Check that the z-score plot stays in sync with the favored direction
+#'
+#' phacking::z_density() has no favor_positive argument, so run_rtma_model()
+#' must flip the yi it plots exactly like phacking_meta() flips the yi it
+#' fits on. A dataset and its exact sign-mirror, fit with the correspondingly
+#' mirrored favorPositive, therefore feed z_density() the identical (yi, vi)
+#' pair either way, so a correct implementation renders a byte-identical
+#' plot for both and reports the same affirmative/nonaffirmative split.
+check_rtma_plot_direction <- function() {
+  cat("Checking RTMA plot direction awareness...\n")
+
+  positive_data <- generate_rtma_test_data()
+  negative_data <- positive_data
+  negative_data$bs <- -negative_data$bs
+
+  positive_response <- test_run_rtma(
+    df_to_json(positive_data), basic_rtma_params(TRUE)
+  )
+  negative_response <- test_run_rtma(
+    df_to_json(negative_data), basic_rtma_params(FALSE)
+  )
+
+  positive_results <- positive_response$data
+  negative_results <- negative_response$data
+
+  if (
+    is.null(positive_results$zScorePlot) || positive_results$zScorePlot == "" ||
+      is.null(negative_results$zScorePlot) || negative_results$zScorePlot == ""
+  ) {
+    stop("Direction check: both the original and mirrored runs should return a zScorePlot")
+  }
+
+  if (positive_results$zScorePlot != negative_results$zScorePlot) {
+    stop(paste(
+      "Direction check: a dataset and its favorPositive-mirrored counterpart",
+      "should render an identical z-score plot (both feed z_density() the",
+      "same yi/vi); the plot has drifted out of sync with the favored",
+      "direction again"
+    ))
+  }
+
+  if (positive_results$affirmativeCount != negative_results$affirmativeCount) {
+    stop("Direction check: mirrored runs should report the same affirmativeCount")
+  }
+  if (positive_results$nonaffirmativeCount != negative_results$nonaffirmativeCount) {
+    stop("Direction check: mirrored runs should report the same nonaffirmativeCount")
+  }
+
+  invisible(TRUE)
+}
+
+#' Check that include_plot actually gates the plot, not just /v1 field stripping
+#'
+#' Requests the same dataset through /v1/run-rtma with and without
+#' `?include=plot` and checks that the only difference between the two
+#' response schemas is the presence of the three plot fields.
+check_rtma_include_plot_gating <- function() {
+  cat("Checking RTMA include_plot gating via /v1/run-rtma...\n")
+
+  # Default n: generate_rtma_test_data() is tuned so roughly two thirds of the
+  # estimates are nonaffirmative and the fit is well identified. A smaller,
+  # ad hoc n here previously left tau poorly identified, which let the sampler
+  # wander into a pathologically deep tree and stall this check for minutes.
+  gating_data <- generate_rtma_test_data()
+  body <- list(data = df_to_v1_rows(gating_data))
+
+  default_response <- v1_post_json("/v1/run-rtma", body, timeout = 300)
+  if (httr::status_code(default_response) != 200) {
+    stop(paste(
+      "Gating check: default /v1/run-rtma request failed with status",
+      httr::status_code(default_response)
+    ))
+  }
+  default_body <- v1_parse_body(default_response)
+
+  plotted_response <- v1_post_json(
+    "/v1/run-rtma", body,
+    query = list(include = "plot"), timeout = 300
+  )
+  if (httr::status_code(plotted_response) != 200) {
+    stop(paste(
+      "Gating check: ?include=plot /v1/run-rtma request failed with status",
+      httr::status_code(plotted_response)
+    ))
+  }
+  plotted_body <- v1_parse_body(plotted_response)
+
+  plot_fields <- c("zScorePlot", "zScorePlotWidth", "zScorePlotHeight")
+
+  present_without_include <- intersect(plot_fields, names(default_body))
+  if (length(present_without_include) > 0) {
+    stop(paste(
+      "Gating check: default response should omit plot fields, found:",
+      paste(present_without_include, collapse = ", ")
+    ))
+  }
+
+  missing_with_include <- setdiff(plot_fields, names(plotted_body))
+  if (length(missing_with_include) > 0) {
+    stop(paste(
+      "Gating check: ?include=plot response should carry plot fields, missing:",
+      paste(missing_with_include, collapse = ", ")
+    ))
+  }
+  if (is.null(plotted_body$zScorePlot) || plotted_body$zScorePlot == "") {
+    stop("Gating check: ?include=plot response should have a non-empty zScorePlot")
+  }
+
+  non_plot_fields_match <- setequal(
+    setdiff(names(default_body), plot_fields),
+    setdiff(names(plotted_body), plot_fields)
+  )
+  if (!non_plot_fields_match) {
+    stop(paste(
+      "Gating check: responses should carry the same non-plot fields",
+      "regardless of include_plot, differing only in the plot fields"
+    ))
+  }
+
+  invisible(TRUE)
+}
 
 #' Test basic RTMA functionality
 #' @return Test results
@@ -131,6 +276,12 @@ test_basic_rtma <- function() {
       ) {
         stop("tauMedian should lie inside tauCI")
       }
+
+      # #486: plot must stay in sync with the favored direction
+      check_rtma_plot_direction()
+
+      # #483 section 3: include_plot must actually gate the render
+      check_rtma_include_plot_gating()
 
       log_test_result(
         test_name, "PASS",
