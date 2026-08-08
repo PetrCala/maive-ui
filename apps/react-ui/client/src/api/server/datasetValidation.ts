@@ -35,9 +35,12 @@ const findKeyCaseInsensitive = (
 
 /**
  * Resolves the effect/se/n_obs/study_id columns from the first row: by
- * canonical name when `effect`, `se`, and `n_obs` are all present; otherwise
- * positionally, taking the first 3-4 keys in order (D5). Positional fallback
- * also covers RTMA's 2-column (effect, se) shape.
+ * canonical name whenever `effect` and `se` are both present, picking up
+ * `n_obs`/`study_id` by name too when they're there; otherwise positionally,
+ * taking the first 3-4 keys in order (D5). Positional fallback also covers
+ * RTMA's 2-column (effect, se) shape when neither key is named (#488: an
+ * earlier version required `n_obs` too, so a named-but-swapped RTMA payload
+ * always fell through to positional resolution).
  */
 export const resolveColumns = (
   rows: Array<Record<string, unknown>>,
@@ -52,7 +55,7 @@ export const resolveColumns = (
   const nObsKey = findKeyCaseInsensitive(first, "n_obs");
   const studyIdKey = findKeyCaseInsensitive(first, "study_id");
 
-  if (effectKey && seKey && nObsKey) {
+  if (effectKey && seKey) {
     return {
       effect: effectKey,
       se: seKey,
@@ -74,6 +77,33 @@ export const resolveColumns = (
     byName: false,
   };
 };
+
+/**
+ * Reorders each row into canonical column order (effect, se, n_obs?,
+ * study_id?) per `resolveColumns`' resolution. The async queue path (design
+ * D8) hands rows to the orchestrator, which posts them to the legacy R
+ * routes that read columns positionally rather than by name; canonicalizing
+ * here before queuing keeps that positional read in sync with whatever this
+ * validator resolved by name (#488), rather than the two paths silently
+ * relying on two different resolution rules.
+ */
+export const canonicalizeRows = (
+  rows: Array<Record<string, unknown>>,
+  columns: ResolvedColumns,
+): Array<Record<string, unknown>> =>
+  rows.map((row) => {
+    const canonical: Record<string, unknown> = {
+      effect: row[columns.effect],
+      se: row[columns.se],
+    };
+    if (columns.nObs) {
+      canonical.n_obs = row[columns.nObs];
+    }
+    if (columns.studyId) {
+      canonical.study_id = row[columns.studyId];
+    }
+    return canonical;
+  });
 
 const isFiniteNumber = (value: unknown): boolean => {
   if (typeof value === "number") {

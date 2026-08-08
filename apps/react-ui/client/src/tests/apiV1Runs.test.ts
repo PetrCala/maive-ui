@@ -43,6 +43,15 @@ type PutCall = {
 const getLastPutCall = (): PutCall =>
   ddbSendMock.mock.calls[ddbSendMock.mock.calls.length - 1][0] as PutCall;
 
+type SendMessageCall = { input: { MessageBody: string } };
+
+const getLastQueuedMessage = (): Record<string, unknown> => {
+  const call = sqsSendMock.mock.calls[
+    sqsSendMock.mock.calls.length - 1
+  ][0] as SendMessageCall;
+  return JSON.parse(call.input.MessageBody) as Record<string, unknown>;
+};
+
 beforeEach(() => {
   ENV_KEYS.forEach((key) => {
     savedEnv[key] = process.env[key];
@@ -226,6 +235,55 @@ describe("POST /api/v1/runs", () => {
       ciLevel: 0.95,
       winsorize: 0,
     });
+  });
+
+  it("queues RTMA rows in canonical column order even when effect/se keys are swapped (#488)", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: {
+        // Same repro shape as the issue: `se` named first, `effect` second.
+        // The orchestrator posts queued rows to the legacy positional
+        // /run-rtma route, so this must land in the queue as effect-then-se
+        // regardless of the submitted key order.
+        data: [
+          { se: 0.12, effect: -0.4 },
+          { se: 0.08, effect: 0.25 },
+        ],
+        modelType: "RTMA",
+      },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const queued = getLastQueuedMessage();
+    expect(queued.data).toEqual([
+      { effect: -0.4, se: 0.12 },
+      { effect: 0.25, se: 0.08 },
+    ]);
+  });
+
+  it("leaves already-canonical MAIVE rows unchanged in the queued message", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: { data: validMaiveData },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const queued = getLastQueuedMessage();
+    expect(queued.data).toEqual(validMaiveData);
   });
 
   it("405s with method_not_allowed for unsupported methods", async () => {
