@@ -571,15 +571,13 @@ api_v1_run_rtma <- function(req, res, include = "") {
     df <- api_v1_validate_rtma_data(body$data)
     params <- api_v1_default_rtma_parameters(body$parameters)
 
-    results <- run_rtma_model( # nolint: object_usage_linter.
+    # Rendering is gated on include_plot itself (#483 section 3), so the
+    # response already omits the plot fields when they were not requested;
+    # no post-hoc stripping needed here (contrast with /v1/run-model above).
+    run_rtma_model( # nolint: object_usage_linter.
       jsonlite::toJSON(df, dataframe = "rows", digits = NA),
-      jsonlite::toJSON(params, auto_unbox = TRUE, digits = NA)
+      jsonlite::toJSON(params, auto_unbox = TRUE, digits = NA),
+      include_plot = api_v1_include_plot(include)
     )
-
-    if (api_v1_include_plot(include)) {
-      results
-    } else {
-      api_v1_strip_plot_fields(results, API_V1_RTMA_PLOT_FIELDS)
-    }
   })
 }
