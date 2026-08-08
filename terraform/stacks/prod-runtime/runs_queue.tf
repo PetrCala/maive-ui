@@ -6,13 +6,15 @@
 resource "aws_sqs_queue" "runs_dlq" {
   name                      = "${var.project}-runs-dlq"
   message_retention_seconds = 1209600 # 14 days
+  max_message_size          = 1048576 # 1 MiB (SQS max since Aug 2025, was 256KB)
   tags                      = { Project = var.project }
 }
 
 resource "aws_sqs_queue" "runs" {
   name                       = "${var.project}-runs"
-  visibility_timeout_seconds = 660   # > R Lambda timeout (600s) + overhead
-  message_retention_seconds  = 86400 # 1 day
+  visibility_timeout_seconds = 660     # > R Lambda timeout (600s) + overhead
+  message_retention_seconds  = 86400   # 1 day
+  max_message_size           = 1048576 # 1 MiB (SQS max since Aug 2025, was 256KB)
   redrive_policy = jsonencode({
     deadLetterTargetArn = aws_sqs_queue.runs_dlq.arn
     maxReceiveCount     = 1

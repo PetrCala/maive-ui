@@ -345,7 +345,7 @@ export const ERROR_CODES: ErrorCodeRow[] = [
     code: "payload_too_large",
     status: "413",
     meaning:
-      "The dataset is too large to queue (roughly 200KB of JSON). Use a synchronous endpoint instead.",
+      "The dataset is too large to queue (roughly 900KB of JSON). Use a synchronous endpoint instead.",
   },
   {
     code: "rate_limited",

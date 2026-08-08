@@ -20,9 +20,11 @@ export const runsTableName = process.env.RUNS_TABLE_NAME;
 export const runsQueueUrl = process.env.RUNS_QUEUE_URL;
 
 export const TTL_SECONDS = CONST.RUNS.TTL_SECONDS; // 48h pickup buffer
-// Keep the SQS message under the 256KB hard limit; larger datasets fall back
-// to the synchronous path (which posts directly to the R Lambda).
-export const MAX_QUEUE_BODY_BYTES = 200 * 1024;
+// SQS raised its hard message-size limit to 1 MiB in August 2025 (was 256KB).
+// Budget ~900 KiB of that for the message body, leaving headroom for the
+// envelope (jobId, modelType, parameters); larger datasets fall back to the
+// synchronous path (which posts directly to the R Lambda).
+export const MAX_QUEUE_BODY_BYTES = 900 * 1024;
 export const MAX_BATCH_IDS = 100; // DynamoDB BatchGetItem caps at 100 keys
 
 let ddbDocClient: DynamoDBDocumentClient | undefined;

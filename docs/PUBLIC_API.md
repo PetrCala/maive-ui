@@ -276,7 +276,7 @@ Two independent guardrails apply, load-bearing in this order:
 
 Both are documented starting points and may be tuned based on observed load
 Treat any `429` as "retry with backoff," not a hard quota. Datasets that
-are too large to queue asynchronously (roughly 200KB of JSON) get `413
+are too large to queue asynchronously (roughly 900KB of JSON) get `413
 payload_too_large` pointing you at the synchronous endpoint instead.
 
 All errors share one envelope:

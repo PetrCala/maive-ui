@@ -394,7 +394,7 @@ components:
               message: "Method Not Allowed"
     PayloadTooLarge:
       description: >-
-        The dataset is too large to queue (SQS message budget, ~200KB). Use
+        The dataset is too large to queue (SQS message budget, ~900KB). Use
         the synchronous endpoint instead.
       content:
         application/json:
