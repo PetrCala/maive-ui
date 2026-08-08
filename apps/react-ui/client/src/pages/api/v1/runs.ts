@@ -9,7 +9,11 @@ import {
   submitRun,
 } from "@api/server/runsService";
 import { resolveRunParameters } from "@api/server/modelParameterDefaults";
-import { validateDataset } from "@api/server/datasetValidation";
+import {
+  canonicalizeRows,
+  resolveColumns,
+  validateDataset,
+} from "@api/server/datasetValidation";
 import { sendApiError, type ApiErrorBody } from "@api/server/errorEnvelope";
 
 // Public re-skin of `/api/runs` (design D8, §6.5): same DynamoDB/SQS
@@ -87,12 +91,24 @@ const handler = async (
     return sendApiError(res, "validation_error", validationError.message);
   }
 
+  // Queue rows in canonical column order, not as originally submitted: the
+  // orchestrator posts queued rows to the legacy R routes, which read
+  // columns positionally, so this must match the column resolution
+  // validateDataset just used above (#488).
+  const rows = data as Array<Record<string, unknown>>;
+  const columns = resolveColumns(rows);
+  const canonicalData = columns ? canonicalizeRows(rows, columns) : data;
+
   const submission = await submitRun(
     store.ddb,
     queue.sqs,
     store.tableName,
     queue.queueUrl,
-    { data, parameters: resolved.parameters, modelType: resolved.modelType },
+    {
+      data: canonicalData,
+      parameters: resolved.parameters,
+      modelType: resolved.modelType,
+    },
   );
 
   if (submission.outcome === "too_large") {

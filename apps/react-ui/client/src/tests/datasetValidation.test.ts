@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   MAX_ROWS,
+  canonicalizeRows,
   resolveColumns,
   validateDataset,
 } from "@api/server/datasetValidation";
@@ -67,6 +68,62 @@ describe("resolveColumns", () => {
 
   it("returns null for an empty row", () => {
     expect(resolveColumns([{}])).toBeNull();
+  });
+
+  it("resolves a 2-column RTMA payload by name even with keys in swapped order (#488)", () => {
+    // Same shape as the issue's repro: `se` is the first key, `effect` the
+    // second, and `n_obs` is absent (RTMA is a 2-column model). Requiring
+    // `n_obs` before trusting the names used to force this through the
+    // positional branch, which read `se`'s values as `effect` and vice versa.
+    const columns = resolveColumns([{ se: 0.12, effect: -0.4 }]);
+    expect(columns).toEqual({
+      effect: "effect",
+      se: "se",
+      nObs: undefined,
+      studyId: undefined,
+      byName: true,
+    });
+  });
+});
+
+const resolveColumnsOrThrow = (rows: Array<Record<string, unknown>>) => {
+  const columns = resolveColumns(rows);
+  if (!columns) {
+    throw new Error("expected resolveColumns to resolve columns");
+  }
+  return columns;
+};
+
+describe("canonicalizeRows", () => {
+  it("reorders swapped effect/se keys into canonical column order (#488)", () => {
+    const rows = [
+      { se: 0.12, effect: -0.4 },
+      { se: 0.08, effect: 0.25 },
+    ];
+    const columns = resolveColumnsOrThrow(rows);
+    expect(columns.byName).toBe(true);
+    expect(canonicalizeRows(rows, columns)).toEqual([
+      { effect: -0.4, se: 0.12 },
+      { effect: 0.25, se: 0.08 },
+    ]);
+  });
+
+  it("is a no-op reshuffle for already-canonical MAIVE rows", () => {
+    const rows = [
+      { effect: 0.1, se: 0.2, n_obs: 10, study_id: "A" },
+      { effect: 0.3, se: 0.1, n_obs: 20, study_id: "B" },
+    ];
+    const columns = resolveColumnsOrThrow(rows);
+    expect(canonicalizeRows(rows, columns)).toEqual(rows);
+  });
+
+  it("keeps positional resolution's column order for non-canonical names", () => {
+    const rows = [{ b: 0.5, s: 0.1, n: 100, study: "A" }];
+    const columns = resolveColumnsOrThrow(rows);
+    expect(columns.byName).toBe(false);
+    expect(canonicalizeRows(rows, columns)).toEqual([
+      { effect: 0.5, se: 0.1, n_obs: 100, study_id: "A" },
+    ]);
   });
 });
 
@@ -221,5 +278,17 @@ describe("validateDataset: RTMA", () => {
       { effect: 0.2, se: -1 },
     ];
     expect(validateDataset(data, "RTMA")?.message).toMatch(/se.*positive/);
+  });
+
+  it("does not misfire the se-positivity check when effect/se keys are swapped (#488)", () => {
+    // Same repro shape as the issue: `se` named first, `effect` second, with
+    // a negative effect value. Before the fix, positional fallback read the
+    // `effect` values as `se` and tripped this check even though every real
+    // `se` value is positive.
+    const data = [
+      { se: 0.12, effect: -0.4 },
+      { se: 0.08, effect: 0.25 },
+    ];
+    expect(validateDataset(data, "RTMA")).toBeNull();
   });
 });
