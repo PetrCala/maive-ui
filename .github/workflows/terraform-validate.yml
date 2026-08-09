@@ -1,0 +1,102 @@
+name: Terraform Validate
+
+on:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-validate.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-validate-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Mirrors the versions pinned by the plan job in release.yml.
+  TF_VERSION: 1.12.0
+  TG_VERSION: 0.62.1
+  # Both terragrunt.hcl files resolve these through get_env at parse time, so they
+  # must be present or terragrunt fails before it reaches terraform. Validation is a
+  # static check that never contacts AWS, so dummy values are enough here.
+  TF_VAR_account_id: "000000000000"
+  TF_VAR_region: eu-central-1
+  TF_VAR_project: maive
+  TF_VAR_email: ci@example.com
+  TF_VAR_image_tag: ci
+
+jobs:
+  fmt:
+    name: Terraform Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          terraform_wrapper: false
+
+      # Runs on a clean checkout, before any terragrunt run can drop generated
+      # backend.tf, versions.tf or provider.tf files into the stack directories.
+      - name: Check formatting
+        run: terraform fmt -check -recursive terraform/
+
+  validate:
+    name: Validate ${{ matrix.stack }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        stack:
+          - prod-runtime
+          - prod-foundation
+    defaults:
+      run:
+        working-directory: terraform/stacks/${{ matrix.stack }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+          # Terragrunt shells out to the terraform binary on PATH, so the wrapper
+          # script that this action installs by default has to be disabled.
+          terraform_wrapper: false
+
+      - name: Set up Terragrunt
+        run: |
+          curl -sSLo /usr/local/bin/terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x /usr/local/bin/terragrunt
+          terragrunt --version
+
+      # Terragrunt owns the hashicorp/aws version pin: it lives in the generate
+      # "versions" block of each stack's terragrunt.hcl, not in the committed .tf
+      # files. Running terragrunt here writes versions.tf (plus backend.tf and
+      # provider.tf) into the stack directory so the rest of the job works against
+      # the pinned provider. A bare terraform init in the stack directory would
+      # resolve the newest provider instead and miss version specific errors.
+      #
+      # "version" is used because it is the cheapest terragrunt command that renders
+      # the generate blocks without touching remote state. Terragrunt 0.62.1 tries to
+      # create the S3 state bucket during "terragrunt init" even when -backend=false
+      # is forwarded to terraform, which needs AWS credentials that pull requests do
+      # not have.
+      - name: Render terragrunt generated files
+        run: terragrunt version --terragrunt-no-auto-init --terragrunt-non-interactive
+
+      # -backend=false installs the pinned providers without configuring the S3
+      # backend, so no AWS credentials are needed.
+      - name: Initialize providers without backend
+        run: terraform init -backend=false -input=false
+
+      # Auto init is disabled so terragrunt validates against the providers installed
+      # above instead of re-running init and reaching for the S3 backend.
+      - name: Validate
+        run: terragrunt validate --terragrunt-no-auto-init --terragrunt-non-interactive
