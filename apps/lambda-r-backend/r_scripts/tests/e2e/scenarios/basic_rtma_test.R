@@ -145,6 +145,78 @@ check_rtma_include_plot_gating <- function() {
   invisible(TRUE)
 }
 
+#' Check the convergence diagnostics block (#480)
+#'
+#' phacking_meta() computes all of these and run_rtma_model() used to discard
+#' them, which left a failed fit and a clean fit looking identical in the
+#' response.
+#'
+#' The bounds below check that each field is the quantity it claims to be, not
+#' that this particular fit is a good one. r_hat and n_eff sit in disjoint
+#' ranges, so a check phrased this way still fails loudly if the two are ever
+#' swapped or read off the wrong tibble column, while leaving the suite free to
+#' use a fixture whose chains mix imperfectly. This fixture is one: its mu
+#' r_hat is around 1.03, which is exactly the kind of run that used to be
+#' reported as a clean number.
+#'
+#' @param results Parsed RTMA results object
+#' @return TRUE invisibly
+check_rtma_diagnostics <- function(results) {
+  cat("Checking RTMA convergence diagnostics...\n")
+
+  diagnostics <- results$diagnostics
+  if (!is.list(diagnostics)) {
+    stop("diagnostics should be an object")
+  }
+
+  missing <- setdiff(
+    c("optimConverged", "rHat", "nEff", "divergences"),
+    names(diagnostics)
+  )
+  if (length(missing) > 0) {
+    stop(paste(
+      "Missing RTMA diagnostics fields:",
+      paste(missing, collapse = ", ")
+    ))
+  }
+
+  # The mode this response reports comes out of that optimisation, so a FALSE
+  # here would mean the fixture's headline estimate is unusable.
+  if (!isTRUE(diagnostics$optimConverged)) {
+    stop(paste(
+      "optimConverged should be TRUE on this fixture; the reported mode comes",
+      "from that optimisation, so anything else means either the mode is",
+      "unusable or the flag is being read from the wrong place"
+    ))
+  }
+
+  # Per-parameter, because the sampler can mix well for one and badly for the
+  # other and a single number would hide which.
+  for (param in c("mu", "tau")) {
+    r_hat <- diagnostics$rHat[[param]]
+    if (!is.numeric(r_hat) || length(r_hat) != 1 || r_hat < 1 || r_hat > 2) {
+      stop(sprintf(
+        "rHat$%s should be a single number in [1, 2], got %s",
+        param, paste(r_hat, collapse = ", ")
+      ))
+    }
+
+    n_eff <- diagnostics$nEff[[param]]
+    if (!is.numeric(n_eff) || length(n_eff) != 1 || n_eff <= 10) {
+      stop(sprintf(
+        "nEff$%s should be a single number above 10, got %s",
+        param, paste(n_eff, collapse = ", ")
+      ))
+    }
+  }
+
+  if (!is.numeric(diagnostics$divergences) || diagnostics$divergences < 0) {
+    stop("divergences should be a non-negative count")
+  }
+
+  invisible(TRUE)
+}
+
 #' Test basic RTMA functionality
 #' @return Test results
 test_basic_rtma <- function() {
@@ -194,7 +266,8 @@ test_basic_rtma <- function() {
         "zScorePlotHeight",
         "nonaffirmativeCount",
         "nonaffirmativeProportion",
-        "warnings"
+        "warnings",
+        "diagnostics"
       )
 
       missing <- setdiff(
@@ -276,6 +349,9 @@ test_basic_rtma <- function() {
       ) {
         stop("tauMedian should lie inside tauCI")
       }
+
+      # #480: the diagnostics that say whether any of the above is trustworthy
+      check_rtma_diagnostics(results)
 
       # #486: plot must stay in sync with the favored direction
       check_rtma_plot_direction()

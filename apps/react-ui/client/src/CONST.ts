@@ -132,6 +132,21 @@ const CONST = {
       TEXT: "Bootstrap",
     },
   },
+  // Thresholds the results page uses to decide when an RTMA fit is worth
+  // warning about (#480). See getRtmaDiagnosticWarnings in
+  // src/utils/rtmaDiagnostics.ts for how each one is applied.
+  RTMA_DIAGNOSTICS: {
+    // Above this, the chains have not converged on the same distribution.
+    // 1.01 is the current Stan recommendation (Vehtari et al., 2021).
+    MAX_R_HAT: 1.01,
+    // phacking runs 4 chains, and the usual guidance is at least 100
+    // effectively independent draws per chain.
+    MIN_N_EFF: 400,
+    // RTMA is fitted only to the not-affirmative estimates, so this, not k, is
+    // the sample size the model actually has. Below this the posterior is
+    // driven mostly by the prior.
+    MIN_NONAFFIRMATIVE_COUNT: 10,
+  },
   LARGE_DATASET_ROW_THRESHOLD: 500,
   MOCK_DATA_ROWS_MIN: 9, // At least 3 studies with 3 observations each
   MOCK_DATA_ROWS_MAX: 200,

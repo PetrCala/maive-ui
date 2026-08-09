@@ -68,6 +68,26 @@ Plots (`funnelPlot`, `zScorePlot`, and their width/height companions) are
 programmatic callers. Add `?include=plot` to any run or poll request to embed
 them.
 
+## RTMA convergence diagnostics
+
+Every RTMA response carries a `diagnostics` object. Check it before using the
+numbers beside it: `mu` and `tau` are modes from an optimisation that runs
+separately from the sampler, so they can fail on their own while the credible
+intervals stay sound. A `null` means the value could not be read off the fit,
+which is not the same as the fit being healthy.
+
+| Field | Type | Notes |
+|---|---|---|
+| `diagnostics.optimConverged` | boolean \| null | Whether the optimisation behind the reported modes converged. `false` means `mu` and `tau` are meaningless while `muCI` and `tauCI`, being posterior quantiles, stay valid |
+| `diagnostics.rHat` | `{mu, tau}`: number \| null | Gelman-Rubin statistic per parameter; above 1.01 the chains have not converged on the same distribution |
+| `diagnostics.nEff` | `{mu, tau}`: number \| null | Effective posterior sample size per parameter; the sampler runs four chains, so below roughly 400 the summaries rest on few independent draws |
+| `diagnostics.divergences` | integer \| null | Divergent transitions; any at all mean part of the posterior went unexplored, so the intervals can be biased even at a healthy `rHat` |
+
+There is no standard error for `mu`, on purpose. The `se` column `phacking`
+reports internally is the Monte Carlo error of the posterior mean, not the
+posterior standard deviation, and the two differ by more than an order of
+magnitude on ordinary data. Use `muCI` for uncertainty.
+
 ## Examples: synchronous run
 
 ### curl

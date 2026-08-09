@@ -140,6 +140,46 @@ export const RTMA_PARAMETERS: ParameterRow[] = [
   },
 ];
 
+export type ResponseFieldRow = {
+  field: string;
+  type: string;
+  notes: string;
+};
+
+/**
+ * The `diagnostics` block on an RTMA response.
+ *
+ * Documented as its own table because these are the fields that decide whether
+ * the rest of the response means anything, and a caller reading only `mu` has
+ * no way to tell a converged fit from a failed one.
+ */
+export const RTMA_DIAGNOSTIC_FIELDS: ResponseFieldRow[] = [
+  {
+    field: "diagnostics.optimConverged",
+    type: "boolean | null",
+    notes:
+      "Whether the optimisation that produces the reported modes converged. It runs separately from the sampler, so false means mu and tau are meaningless while muCI and tauCI, being posterior quantiles, stay valid.",
+  },
+  {
+    field: "diagnostics.rHat",
+    type: "{ mu, tau }: number | null",
+    notes:
+      "Gelman-Rubin statistic per parameter. Above 1.01 the chains have not converged on the same distribution.",
+  },
+  {
+    field: "diagnostics.nEff",
+    type: "{ mu, tau }: number | null",
+    notes:
+      "Effective posterior sample size per parameter. The sampler runs four chains, so below roughly 400 the summaries rest on few independent draws.",
+  },
+  {
+    field: "diagnostics.divergences",
+    type: "integer | null",
+    notes:
+      "Divergent transitions. Any at all mean part of the posterior went unexplored, so the intervals can be biased even at a healthy rHat.",
+  },
+];
+
 export type CodeSample = {
   language: string;
   label: string;

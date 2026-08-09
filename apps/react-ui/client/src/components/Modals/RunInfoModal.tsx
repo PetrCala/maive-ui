@@ -10,6 +10,12 @@ import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
 import RunDetails from "@src/components/RunDetails";
 import type { DetailItem } from "@src/components/RunDetails";
 import SectionHeading from "@src/components/SectionHeading";
+import {
+  formatDivergences,
+  formatNEff,
+  formatOptimConverged,
+  formatRHat,
+} from "@utils/rtmaDiagnostics";
 import BaseModal from "./BaseModal";
 import { FaDownload } from "react-icons/fa";
 
@@ -52,22 +58,66 @@ export default function RunInfoModal({
   // draw that produced them (#479). No other model reports one.
   const seedText = TEXT.rtma.seed;
   const rtmaSeed = rtmaResults?.seed;
-  const extraRunDetails: DetailItem[] = isRtmaModel
+  const seedDetail: DetailItem =
+    typeof rtmaSeed === "number"
+      ? {
+          label: seedText.label,
+          value: rtmaSeed,
+          show: true,
+          tooltip: seedText.tooltip,
+        }
+      : {
+          label: seedText.label,
+          value: seedText.unknownValue,
+          show: true,
+          tooltip: seedText.unknownTooltip,
+        };
+
+  // RTMA only: the raw convergence diagnostics behind the results (#480). The
+  // results summary turns the bad values into warnings; these rows are the
+  // numbers themselves, for a reader who wants to judge a borderline fit.
+  const diagnosticsText = TEXT.rtma.diagnostics;
+  const diagnostics = rtmaResults?.diagnostics;
+  const diagnosticDetails: DetailItem[] = diagnostics
     ? [
-        typeof rtmaSeed === "number"
-          ? {
-              label: seedText.label,
-              value: rtmaSeed,
-              show: true,
-              tooltip: seedText.tooltip,
-            }
-          : {
-              label: seedText.label,
-              value: seedText.unknownValue,
-              show: true,
-              tooltip: seedText.unknownTooltip,
-            },
+        {
+          label: diagnosticsText.optimConverged.label,
+          value: formatOptimConverged(diagnostics.optimConverged),
+          show: true,
+          tooltip: diagnosticsText.optimConverged.tooltip,
+        },
+        {
+          label: diagnosticsText.rHat.label,
+          value: `${formatRHat(diagnostics.rHat.mu)} / ${formatRHat(diagnostics.rHat.tau)}`,
+          show: true,
+          tooltip: diagnosticsText.rHat.tooltip,
+        },
+        {
+          label: diagnosticsText.nEff.label,
+          value: `${formatNEff(diagnostics.nEff.mu)} / ${formatNEff(diagnostics.nEff.tau)}`,
+          show: true,
+          tooltip: diagnosticsText.nEff.tooltip,
+        },
+        {
+          label: diagnosticsText.divergences.label,
+          value: formatDivergences(diagnostics.divergences),
+          show: true,
+          tooltip: diagnosticsText.divergences.tooltip,
+        },
       ]
+    : [
+        // Absence is reported explicitly: a run with no diagnostics block is
+        // not a run that converged, it is a run that never said.
+        {
+          label: diagnosticsText.unavailableLabel,
+          value: diagnosticsText.unavailableValue,
+          show: true,
+          tooltip: diagnosticsText.unavailableTooltip,
+        },
+      ];
+
+  const extraRunDetails: DetailItem[] = isRtmaModel
+    ? [seedDetail, ...diagnosticDetails]
     : [];
 
   const getParameterDisplayName = (key: keyof ModelParameters): string => {

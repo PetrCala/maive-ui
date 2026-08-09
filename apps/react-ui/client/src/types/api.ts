@@ -98,6 +98,33 @@ type RTMAParameters = {
   winsorize: number;
 };
 
+// Per-parameter sampler diagnostics. The sampler can mix well for mu and
+// badly for tau, so these are reported separately rather than collapsed into
+// a single worst case.
+type RTMAParameterDiagnostic = {
+  mu: number | null;
+  tau: number | null;
+};
+
+// Whether an RTMA fit can be trusted at all. `null` on any field means the
+// backend could not read that diagnostic off the fit, which is not the same as
+// the diagnostic being fine.
+type RTMADiagnostics = {
+  // Whether the mle_params() optimisation converged. This is the optimisation
+  // that produces the reported mode (mu and tau), so a false here means those
+  // point estimates are meaningless while the credible intervals, which are
+  // posterior quantiles, are unaffected.
+  optimConverged: boolean | null;
+  // Gelman-Rubin convergence statistic; above 1.01 the chains disagree.
+  rHat: RTMAParameterDiagnostic;
+  // Effective sample size: how many independent draws the posterior summaries
+  // are effectively based on.
+  nEff: RTMAParameterDiagnostic;
+  // Divergent transitions. Any at all mean the sampler could not explore part
+  // of the posterior, so the intervals can be biased even at a healthy r_hat.
+  divergences: number | null;
+};
+
 type RTMAResults = {
   mu: number;
   muCI: [number, number];
@@ -131,6 +158,10 @@ type RTMAResults = {
   k?: number;
   affirmativeCount?: number;
   droppedRows?: number;
+  // Convergence diagnostics for the fit (#480). Optional for the same
+  // stored-run reason: runs from before the backend returned them cannot say
+  // whether they converged, so their absence must not read as "all clear".
+  diagnostics?: RTMADiagnostics;
 };
 
 type PingResponse = {
@@ -186,6 +217,8 @@ export type {
   ModelResults,
   RTMAParameters,
   RTMAResults,
+  RTMADiagnostics,
+  RTMAParameterDiagnostic,
   PingResponse,
   ApiConfig,
   ApiResponse,

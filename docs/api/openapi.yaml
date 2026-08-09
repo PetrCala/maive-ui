@@ -801,6 +801,7 @@ components:
         - nonaffirmativeCount
         - nonaffirmativeProportion
         - warnings
+        - diagnostics
       properties:
         mu:
           type: number
@@ -877,6 +878,8 @@ components:
             most important one reports a favored direction opposite the pooled
             estimate, which means nothing was truncated and `mu` is not actually
             corrected for p-hacking.
+        diagnostics:
+          $ref: "#/components/schemas/RTMADiagnostics"
         zScorePlot:
           type: string
           description: 'Base64-encoded PNG data URI. Only present with `?include=plot`.'
@@ -886,6 +889,61 @@ components:
         zScorePlotHeight:
           type: number
           description: Only present with `?include=plot`.
+
+    RTMAParameterDiagnostic:
+      type: object
+      description: >-
+        A sampler diagnostic reported separately for each parameter, because
+        the chains can mix well for one and badly for the other. `null` means
+        the backend could not read the value off the fit, which is not the same
+        as the diagnostic being healthy.
+      required: [mu, tau]
+      properties:
+        mu:
+          type: number
+          nullable: true
+        tau:
+          type: number
+          nullable: true
+
+    RTMADiagnostics:
+      type: object
+      description: >-
+        Convergence diagnostics for the fit that produced the results above.
+        Without them a failed fit and a clean fit are indistinguishable in this
+        response.
+      required: [optimConverged, rHat, nEff, divergences]
+      properties:
+        optimConverged:
+          type: boolean
+          nullable: true
+          description: >-
+            Whether the `mle_params()` optimisation converged. That
+            optimisation runs separately from the sampler and is what produces
+            the reported modes `mu` and `tau`, so `false` means those two point
+            estimates are meaningless while `muCI` and `tauCI`, which are
+            posterior quantiles, remain valid. `null` means the value could not
+            be read.
+        rHat:
+          allOf:
+            - $ref: "#/components/schemas/RTMAParameterDiagnostic"
+          description: >-
+            Gelman-Rubin convergence statistic per parameter. Above 1.01 the
+            chains have not converged on the same distribution.
+        nEff:
+          allOf:
+            - $ref: "#/components/schemas/RTMAParameterDiagnostic"
+          description: >-
+            Effective posterior sample size per parameter. The sampler runs
+            four chains, so values below roughly 400 mean the summaries rest on
+            few effectively independent draws.
+        divergences:
+          type: integer
+          nullable: true
+          description: >-
+            Divergent transitions in the sampler. Any at all mean part of the
+            posterior went unexplored, so the credible intervals can be biased
+            even at a healthy `rHat`. `null` means the value could not be read.
 
     RunStatus:
       type: string

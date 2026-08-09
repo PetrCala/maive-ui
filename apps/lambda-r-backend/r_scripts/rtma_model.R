@@ -272,7 +272,12 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   cli::cli_code(capture.output(str(rtma_res, max.level = 2)))
 
   # Extract mu and tau from $stats tibble
-  # $stats has columns: param, mode, median, mean, se, ci_lower, ci_upper, ...
+  # $stats has columns: param, mode, median, mean, se, ci_lower, ci_upper,
+  # n_eff, r_hat. Note that `se` is phacking's rename of rstan's se_mean, the
+  # Monte Carlo error of the posterior mean, not the posterior SD: on the app's
+  # demo dataset it is 0.046 against a posterior SD of 1.248. It is deliberately
+  # not reported; the credible interval is the dispersion measure this response
+  # carries (#480).
   stats <- rtma_res$stats
   mu_row <- stats[stats$param == "mu", ]
   tau_row <- stats[stats$param == "tau", ]
@@ -295,6 +300,42 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
     mu_median <- -mu_median
     mu_ci <- c(-mu_ci[2], -mu_ci[1])
   }
+
+  # Convergence diagnostics (#480). phacking_meta() computes all of these and
+  # run_rtma_model() used to drop every one, so a failed fit and a clean fit
+  # returned responses that looked identical.
+  #
+  # Unknown is reported as a logical NA, which the unboxed-JSON serializer
+  # writes as null: a diagnostic that cannot be read should say so rather than
+  # take a valid analysis down with it, and null is distinguishable from a real
+  # value in a way that a substituted number would not be.
+  diagnostic_value <- function(row, column) {
+    if (!column %in% names(row)) {
+      return(NA)
+    }
+    value <- as.numeric(row[[column]])
+    if (length(value) != 1 || is.na(value)) NA else value
+  }
+
+  # The sharpest of the four: mu above is the mode from a separate mle_params()
+  # optimisation rather than a posterior summary, so an optimisation that failed
+  # leaves the headline point estimate meaningless while the credible interval,
+  # a posterior quantile, is untouched. Nothing else in this response tells the
+  # two cases apart.
+  optim_converged <- if (is.null(rtma_res$values$optim_converged)) {
+    NA
+  } else {
+    isTRUE(rtma_res$values$optim_converged)
+  }
+
+  # Divergent transitions come off the Stan fit rather than the $stats tibble.
+  # Any at all mean the sampler could not explore part of the posterior, so the
+  # intervals can be wrong even when r_hat looks healthy. Guarded because $fits
+  # is whatever phacking chose to hand metabias.
+  divergences <- tryCatch(
+    as.integer(rstan::get_num_divergent(rtma_res$fits)),
+    error = function(e) NA
+  )
 
   # Nonaffirmative (insignificant) estimates
   k <- rtma_res$values$k
@@ -343,7 +384,11 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
     "tau CI: [{round(tau_ci[1], 4)}, {round(tau_ci[2], 4)}]",
     "unadjusted FE mean: {round(unadjusted_mean, 4)}",
     "k_nonaffirmative: {k_nonaffirmative} / {k} ({round(nonaffirmative_proportion * 100, 1)}%)",
-    "dropped rows: {dropped_rows}"
+    "dropped rows: {dropped_rows}",
+    "optim converged: {optim_converged}",
+    "r_hat: mu {diagnostic_value(mu_row, 'r_hat')}, tau {diagnostic_value(tau_row, 'r_hat')}",
+    "n_eff: mu {diagnostic_value(mu_row, 'n_eff')}, tau {diagnostic_value(tau_row, 'n_eff')}",
+    "divergent transitions: {divergences}"
   ))
 
   # Generate z-score density plot, unless the caller has already said it will
@@ -381,7 +426,24 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
     nonaffirmativeProportion = nonaffirmative_proportion,
     # I() so the unboxed-JSON serializer keeps this an array even when a single
     # warning was raised; callers can always treat it as a list of strings.
-    warnings = I(rtma_warnings)
+    warnings = I(rtma_warnings),
+    # Whether the numbers above can be trusted at all (#480). Appended rather
+    # than grouped with the estimates they qualify so the field order every
+    # existing caller reads stays exactly as it was. r_hat and n_eff are
+    # per-parameter because the sampler can mix well for one and badly for the
+    # other, and a single worst-case number would hide which.
+    diagnostics = list(
+      optimConverged = optim_converged,
+      rHat = list(
+        mu = diagnostic_value(mu_row, "r_hat"),
+        tau = diagnostic_value(tau_row, "r_hat")
+      ),
+      nEff = list(
+        mu = diagnostic_value(mu_row, "n_eff"),
+        tau = diagnostic_value(tau_row, "n_eff")
+      ),
+      divergences = divergences
+    )
   )
 
   if (include_plot) {

@@ -5,6 +5,10 @@ import Alert from "@components/Alert";
 import Tooltip from "@components/Tooltip";
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
+import {
+  getRtmaDiagnosticWarnings,
+  isRtmaModeUnreliable,
+} from "@utils/rtmaDiagnostics";
 
 type RTMAResultsSummaryProps = {
   results: RTMAResults;
@@ -36,15 +40,31 @@ export default function RTMAResultsSummary({
   const ciPercent = Math.round((results.ciLevel ?? 0.95) * 100);
   const intervalNote = `The interval is the equal-tailed ${ciPercent}% credible interval (posterior quantiles; phacking does not compute HPD intervals).`;
 
+  // Both modes below come from an mle_params() optimisation that runs
+  // separately from the sampler. When it fails, those two numbers are the only
+  // part of the result it damaged, so they are withheld rather than shown next
+  // to intervals that are still sound (#480).
+  const modeUnreliable = isRtmaModeUnreliable(results);
+  const withheldModeNote = (mode: number, median?: number): string =>
+    `mode ${formatNumber(mode)} withheld: its optimisation did not converge${
+      median != null ? `; posterior median ${formatNumber(median)}` : ""
+    }`;
+  const withheldModeTooltip = `The optimisation that produces the mode did not converge for this run, so only the interval is shown. ${intervalNote}`;
+
   const metrics: Metric[] = [
     {
       label: "Corrected Effect (μ)",
-      value: `${formatNumber(results.mu)} ${formatCI(results.muCI)}`,
-      subValue:
-        results.muMedian != null
+      value: modeUnreliable
+        ? formatCI(results.muCI)
+        : `${formatNumber(results.mu)} ${formatCI(results.muCI)}`,
+      subValue: modeUnreliable
+        ? withheldModeNote(results.mu, results.muMedian)
+        : results.muMedian != null
           ? `median ${formatNumber(results.muMedian)}`
           : undefined,
-      tooltip: `Posterior mode of the bias-corrected mean effect from the right-truncated meta-analysis. ${intervalNote} The posterior can be skewed, so the median is shown alongside the mode.`,
+      tooltip: modeUnreliable
+        ? withheldModeTooltip
+        : `Posterior mode of the bias-corrected mean effect from the right-truncated meta-analysis. ${intervalNote} The posterior can be skewed, so the median is shown alongside the mode.`,
     },
     ...(results.unadjustedMean != null
       ? [
@@ -58,12 +78,17 @@ export default function RTMAResultsSummary({
       : []),
     {
       label: "Heterogeneity (τ)",
-      value: `${formatNumber(results.tau)} ${formatCI(results.tauCI)}`,
-      subValue:
-        results.tauMedian != null
+      value: modeUnreliable
+        ? formatCI(results.tauCI)
+        : `${formatNumber(results.tau)} ${formatCI(results.tauCI)}`,
+      subValue: modeUnreliable
+        ? withheldModeNote(results.tau, results.tauMedian)
+        : results.tauMedian != null
           ? `median ${formatNumber(results.tauMedian)}`
           : undefined,
-      tooltip: `Posterior mode of the between-study standard deviation (heterogeneity). ${intervalNote}`,
+      tooltip: modeUnreliable
+        ? withheldModeTooltip
+        : `Posterior mode of the between-study standard deviation (heterogeneity). ${intervalNote}`,
     },
     {
       label: "Not Affirmative Estimates",
@@ -87,7 +112,14 @@ export default function RTMAResultsSummary({
       : []),
   ];
 
-  const warnings = results.warnings ?? [];
+  // Conditions the backend raised while fitting, followed by the ones derived
+  // from the diagnostics it reported. Diagnostic warnings come second because
+  // a wrong favored direction (the usual backend warning) invalidates the run
+  // outright, whereas these qualify numbers that are otherwise meaningful.
+  const warnings = [
+    ...(results.warnings ?? []),
+    ...getRtmaDiagnosticWarnings(results),
+  ];
   const droppedRows = results.droppedRows ?? 0;
 
   return (

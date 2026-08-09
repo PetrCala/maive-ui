@@ -456,6 +456,32 @@ const TEXT = {
       unknownTooltip:
         "This run predates seeded RTMA sampling, so its credible intervals cannot be reproduced exactly. Rerun the model to get a seeded result.",
     },
+    diagnostics: {
+      optimConverged: {
+        label: "Mode Optimisation",
+        tooltip:
+          "Whether the optimisation that produces the reported modes converged. It runs separately from the sampler, so a failure leaves the modes meaningless while the credible intervals, which are posterior quantiles, stay sound.",
+      },
+      rHat: {
+        label: "R-hat (μ / τ)",
+        tooltip:
+          "Gelman-Rubin convergence statistic for each parameter. Above 1.01 the chains have not converged on the same distribution and no summary of them can be trusted.",
+      },
+      nEff: {
+        label: "Effective Draws (μ / τ)",
+        tooltip:
+          "Number of effectively independent posterior draws behind each parameter's summaries. The sampler runs four chains, so anything below roughly 400 means the estimates and intervals rest on very little.",
+      },
+      divergences: {
+        label: "Divergent Transitions",
+        tooltip:
+          "Iterations where the sampler could not follow the geometry of the posterior. Any at all mean part of the posterior went unexplored, so the intervals can be biased even when everything else looks healthy.",
+      },
+      unavailableLabel: "Convergence Diagnostics",
+      unavailableValue: "Not recorded",
+      unavailableTooltip:
+        "This run predates RTMA convergence diagnostics, so there is no way to tell whether its fit converged. Rerun the model to get them.",
+    },
   },
   waive: {
     dropdownLabel: "WAIVE (Experimental)",

@@ -5,6 +5,7 @@ import TEXT from "@src/lib/text";
 import type {
   ModelParameters,
   ModelResults,
+  RTMADiagnostics,
   RTMAResults,
 } from "@src/types/api";
 
@@ -60,6 +61,20 @@ const withoutSeed = (results: RTMAResults): RTMAResults => {
   return legacy;
 };
 
+/** A run stored before the backend started reporting convergence diagnostics */
+const withoutDiagnostics = (results: RTMAResults): RTMAResults => {
+  const legacy = { ...results };
+  delete legacy.diagnostics;
+  return legacy;
+};
+
+const healthyDiagnostics: RTMADiagnostics = {
+  optimConverged: true,
+  rHat: { mu: 1.0028, tau: 1.0012 },
+  nEff: { mu: 1419.93, tau: 1548.37 },
+  divergences: 0,
+};
+
 const rtmaResults: RTMAResults = {
   mu: 0.12,
   muCI: [0.07, 0.31],
@@ -72,7 +87,20 @@ const rtmaResults: RTMAResults = {
   nonaffirmativeProportion: 0.65,
   warnings: [],
   seed: 4242,
+  diagnostics: healthyDiagnostics,
 };
+
+/**
+ * Read the value shown next to a run-detail label.
+ *
+ * Values like "Yes" also appear in the Run Settings grid below, so a bare
+ * getByText would be ambiguous; this pins the assertion to the labelled row.
+ */
+const detailValue = (label: string): string =>
+  screen
+    .getByText(`${label}:`)
+    .parentElement?.textContent?.replace(`${label}:`, "")
+    .trim() ?? "";
 
 const renderModal = (
   parameters: ModelParameters,
@@ -109,5 +137,40 @@ describe("RunInfoModal", () => {
     renderModal(maiveParameters, null);
 
     expect(screen.queryByText("Sampler Seed:")).not.toBeInTheDocument();
+  });
+
+  it("reports the convergence diagnostics behind an RTMA fit", () => {
+    renderModal(rtmaParameters, rtmaResults);
+
+    expect(detailValue("Mode Optimisation")).toBe("Yes");
+    expect(detailValue("R-hat (μ / τ)")).toBe("1.003 / 1.001");
+    expect(detailValue("Effective Draws (μ / τ)")).toBe("1,420 / 1,548");
+    expect(detailValue("Divergent Transitions")).toBe("0");
+  });
+
+  it("says a failed optimisation failed rather than hiding it", () => {
+    renderModal(rtmaParameters, {
+      ...rtmaResults,
+      diagnostics: { ...healthyDiagnostics, optimConverged: false },
+    });
+
+    expect(detailValue("Mode Optimisation")).toBe("No");
+  });
+
+  it("says so when an RTMA run predates convergence diagnostics", () => {
+    renderModal(rtmaParameters, withoutDiagnostics(rtmaResults));
+
+    // Absence must not read as "converged fine".
+    expect(detailValue("Convergence Diagnostics")).toBe("Not recorded");
+    expect(screen.queryByText("Mode Optimisation:")).not.toBeInTheDocument();
+  });
+
+  it("shows no diagnostics for models that do not sample", () => {
+    renderModal(maiveParameters, null);
+
+    expect(screen.queryByText("Mode Optimisation:")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Convergence Diagnostics:"),
+    ).not.toBeInTheDocument();
   });
 });

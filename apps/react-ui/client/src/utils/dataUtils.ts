@@ -1,5 +1,6 @@
 import TEXT, { getResultsText } from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
+import type { RTMAResults } from "@src/types/api";
 import CONST from "@src/CONST";
 import type { DataInfo } from "@src/types/data";
 import {
@@ -518,6 +519,65 @@ export const exportComprehensiveResults = (
   const newFilename = `${baseName}_${modelSlug}_results${salt}.xlsx`;
 
   XLSX.writeFile(workbook, newFilename);
+};
+
+/**
+ * Build the rows of the RTMA results CSV export
+ *
+ * Optional rows cover fields the backend only started returning later, so an
+ * older stored run exports what it has instead of a column of "undefined".
+ * The diagnostics rows are the point of the exercise (#480): a mode exported
+ * without its `optimConverged` flag looks exactly like a mode that converged.
+ *
+ * `stats$se` from phacking is deliberately absent. It is `se_mean`, the Monte
+ * Carlo error of the posterior mean rather than the posterior SD, and on the
+ * demo dataset the two differ by a factor of 27. The credible interval bounds
+ * below are the dispersion this export reports.
+ *
+ * @param results - The RTMA results to export
+ * @returns Rows of [metric, value], header first
+ */
+export const buildRtmaResultsCsvRows = (
+  results: RTMAResults,
+): Array<[string, string]> => {
+  const optionalRows: Array<[string, string]> = [];
+  const addOptional = (label: string, value: unknown): void => {
+    if (value != null) {
+      optionalRows.push([label, String(value)]);
+    }
+  };
+
+  addOptional("mu Posterior Median", results.muMedian);
+  addOptional("tau Posterior Median", results.tauMedian);
+  addOptional("Unadjusted Mean (Fixed Effect)", results.unadjustedMean);
+  addOptional("CI Level", results.ciLevel);
+  addOptional("Sampler Seed", results.seed);
+  addOptional("Estimates Used (k)", results.k);
+  addOptional("Affirmative Count", results.affirmativeCount);
+  addOptional("Dropped Rows", results.droppedRows);
+
+  const diagnostics = results.diagnostics;
+  if (diagnostics) {
+    addOptional("Mode Optimisation Converged", diagnostics.optimConverged);
+    addOptional("R-hat (mu)", diagnostics.rHat.mu);
+    addOptional("R-hat (tau)", diagnostics.rHat.tau);
+    addOptional("Effective Draws (mu)", diagnostics.nEff.mu);
+    addOptional("Effective Draws (tau)", diagnostics.nEff.tau);
+    addOptional("Divergent Transitions", diagnostics.divergences);
+  }
+
+  return [
+    ["Metric", "Value"],
+    ["Corrected Effect (mu)", String(results.mu)],
+    ["mu CI Lower", String(results.muCI[0])],
+    ["mu CI Upper", String(results.muCI[1])],
+    ["Heterogeneity (tau)", String(results.tau)],
+    ["tau CI Lower", String(results.tauCI[0])],
+    ["tau CI Upper", String(results.tauCI[1])],
+    ["Nonaffirmative Count", String(results.nonaffirmativeCount)],
+    ["Nonaffirmative Proportion", String(results.nonaffirmativeProportion)],
+    ...optionalRows,
+  ];
 };
 
 /**
