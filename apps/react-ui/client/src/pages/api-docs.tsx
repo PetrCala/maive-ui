@@ -15,6 +15,7 @@ import {
   ERROR_ENVELOPE_EXAMPLE,
   MINIMAL_REQUEST_EXAMPLE,
   MODEL_PARAMETERS,
+  RTMA_DIAGNOSTIC_FIELDS,
   RTMA_PARAMETERS,
   SYNC_EXAMPLES,
 } from "@components/ApiDocs";
@@ -291,6 +292,70 @@ export default function ApiDocsPage() {
                 base64 PNG of roughly 50KB that most callers do not need. Add{" "}
                 <code className={CODE_CLASSES}>?include=plot</code> to any run
                 or poll request to embed them.
+              </p>
+            </section>
+
+            <section className="space-y-4">
+              <SectionHeading
+                level="h2"
+                text="RTMA convergence diagnostics"
+                description="Whether an RTMA result means anything at all."
+              />
+              <p className="text-secondary text-sm leading-relaxed">
+                Every RTMA response carries a{" "}
+                <code className={CODE_CLASSES}>diagnostics</code> object. Check
+                it before using the numbers beside it:{" "}
+                <code className={CODE_CLASSES}>mu</code> and{" "}
+                <code className={CODE_CLASSES}>tau</code> are modes from an
+                optimisation that runs separately from the sampler, so they can
+                fail on their own while the credible intervals stay sound. A{" "}
+                <code className={CODE_CLASSES}>null</code> means the value could
+                not be read off the fit, which is not the same as the fit being
+                healthy.
+              </p>
+              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                <table className="w-full border-collapse">
+                  <caption className="sr-only">
+                    RTMA response diagnostics fields
+                  </caption>
+                  <thead className="bg-gray-50 dark:bg-gray-800/60">
+                    <tr>
+                      <th scope="col" className={TABLE_HEAD_CELL_CLASSES}>
+                        Field
+                      </th>
+                      <th scope="col" className={TABLE_HEAD_CELL_CLASSES}>
+                        Type
+                      </th>
+                      <th scope="col" className={TABLE_HEAD_CELL_CLASSES}>
+                        Notes
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {RTMA_DIAGNOSTIC_FIELDS.map((row) => (
+                      <tr
+                        key={row.field}
+                        className="border-t border-gray-200 dark:border-gray-700"
+                      >
+                        <td className={TABLE_CELL_CLASSES}>
+                          <code className={CODE_CLASSES}>{row.field}</code>
+                        </td>
+                        <td className={TABLE_CELL_CLASSES}>{row.type}</td>
+                        <td className={TABLE_CELL_CLASSES}>{row.notes}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <p className="text-secondary text-sm leading-relaxed">
+                The response has no standard error for{" "}
+                <code className={CODE_CLASSES}>mu</code> on purpose. The{" "}
+                <code className={CODE_CLASSES}>se</code> column that{" "}
+                <code className={CODE_CLASSES}>phacking</code> reports
+                internally is the Monte Carlo error of the posterior mean, not
+                the posterior standard deviation, and the two differ by more
+                than an order of magnitude on ordinary data. Use{" "}
+                <code className={CODE_CLASSES}>muCI</code> for uncertainty.
               </p>
             </section>
 

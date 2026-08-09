@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import RTMAResultsSummary from "@components/RTMAResultsSummary";
-import type { RTMAResults } from "@src/types/api";
+import type { RTMADiagnostics, RTMAResults } from "@src/types/api";
 
 const baseResults: RTMAResults = {
   mu: 5.171,
@@ -16,6 +16,14 @@ const baseResults: RTMAResults = {
   warnings: [],
 };
 
+/** A fit with nothing wrong with it */
+const healthyDiagnostics: RTMADiagnostics = {
+  optimConverged: true,
+  rHat: { mu: 1.001, tau: 1.002 },
+  nEff: { mu: 1420, tau: 1548 },
+  divergences: 0,
+};
+
 const fullResults: RTMAResults = {
   ...baseResults,
   muMedian: 5.233,
@@ -25,6 +33,27 @@ const fullResults: RTMAResults = {
   k: 74,
   affirmativeCount: 7,
   droppedRows: 2,
+  diagnostics: healthyDiagnostics,
+};
+
+const withDiagnostics = (overrides: Partial<RTMADiagnostics>): RTMAResults => ({
+  ...fullResults,
+  diagnostics: { ...healthyDiagnostics, ...overrides },
+});
+
+/**
+ * Alert copy is split across emphasis spans, so a single getByText cannot see
+ * a whole message. Match against each alert's joined text instead.
+ */
+const alertTexts = (): string[] =>
+  screen.queryAllByRole("alert").map((alert) => alert.textContent ?? "");
+
+const expectAlertMatching = (pattern: RegExp): void => {
+  expect(alertTexts().filter((text) => pattern.test(text))).not.toHaveLength(0);
+};
+
+const expectNoAlertMatching = (pattern: RegExp): void => {
+  expect(alertTexts().filter((text) => pattern.test(text))).toHaveLength(0);
 };
 
 describe("RTMAResultsSummary", () => {
@@ -85,5 +114,113 @@ describe("RTMAResultsSummary", () => {
     );
 
     expect(screen.getByText("Favored direction check")).toBeInTheDocument();
+  });
+
+  it("stays quiet when every diagnostic is healthy", () => {
+    render(<RTMAResultsSummary results={fullResults} />);
+
+    expectNoAlertMatching(/converge|divergent|R-hat|effective sample size/i);
+    expect(screen.getByText("5.171 [4.500, 5.900]")).toBeInTheDocument();
+  });
+
+  it("warns and withholds the mode when its optimisation did not converge", () => {
+    render(
+      <RTMAResultsSummary
+        results={withDiagnostics({ optimConverged: false })}
+      />,
+    );
+
+    expectAlertMatching(
+      /optimisation behind the reported mode did not converge/i,
+    );
+    // The mode is the only number the failed optimisation produced, so it must
+    // not still be sitting there as the headline estimate.
+    expect(screen.queryByText("5.171 [4.500, 5.900]")).not.toBeInTheDocument();
+    expect(screen.getByText("[4.500, 5.900]")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /mode 5\.171 withheld: its optimisation did not converge/,
+      ),
+    ).toBeInTheDocument();
+    // tau's mode comes from the same optimisation and goes the same way.
+    expect(screen.getByText("[0.900, 1.600]")).toBeInTheDocument();
+  });
+
+  it("warns when r_hat is above 1.01", () => {
+    render(
+      <RTMAResultsSummary
+        results={withDiagnostics({ rHat: { mu: 1.043, tau: 1.002 } })}
+      />,
+    );
+
+    expectAlertMatching(/R-hat is 1\.043 for μ, above the 1\.01/);
+    // tau is inside the threshold, so it must not be named as an offender.
+    expectNoAlertMatching(/1\.002 for τ/);
+  });
+
+  it("names both parameters when both r_hats are above the threshold", () => {
+    render(
+      <RTMAResultsSummary
+        results={withDiagnostics({ rHat: { mu: 1.043, tau: 1.021 } })}
+      />,
+    );
+
+    expectAlertMatching(/R-hat is 1\.043 for μ and 1\.021 for τ/);
+  });
+
+  it("warns on divergent transitions", () => {
+    render(
+      <RTMAResultsSummary results={withDiagnostics({ divergences: 12 })} />,
+    );
+
+    expectAlertMatching(/12 divergent transitions/);
+  });
+
+  it("warns when the effective sample size is low", () => {
+    render(
+      <RTMAResultsSummary
+        results={withDiagnostics({ nEff: { mu: 312, tau: 1548 } })}
+      />,
+    );
+
+    expectAlertMatching(/effective sample size is 312 for μ, below the 400/);
+  });
+
+  it("warns when RTMA had very few not-affirmative estimates to fit", () => {
+    render(
+      <RTMAResultsSummary
+        results={{
+          ...fullResults,
+          nonaffirmativeCount: 4,
+          nonaffirmativeProportion: 0.05,
+        }}
+      />,
+    );
+
+    expectAlertMatching(/fitted to only 4 not-affirmative estimates/);
+  });
+
+  it("treats an unreadable diagnostic as unknown rather than healthy", () => {
+    render(
+      <RTMAResultsSummary
+        results={withDiagnostics({
+          optimConverged: null,
+          rHat: { mu: null, tau: null },
+          nEff: { mu: null, tau: null },
+          divergences: null,
+        })}
+      />,
+    );
+
+    // Nothing is known to be wrong, so nothing is claimed to be wrong; the
+    // mode is still shown because no failed optimisation was reported.
+    expectNoAlertMatching(/converge|divergent|R-hat|effective sample size/i);
+    expect(screen.getByText("5.171 [4.500, 5.900]")).toBeInTheDocument();
+  });
+
+  it("raises no diagnostic warnings for a run stored before diagnostics existed", () => {
+    render(<RTMAResultsSummary results={baseResults} />);
+
+    expectNoAlertMatching(/converge|divergent|R-hat|effective sample size/i);
   });
 });

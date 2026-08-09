@@ -14,6 +14,7 @@ import InterpretationButton from "@components/InterpretationButton";
 import TEXT, { getResultsText } from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
+  buildRtmaResultsCsvRows,
   exportComprehensiveResults,
   downloadImageAsJpg,
 } from "@utils/dataUtils";
@@ -394,70 +395,8 @@ export default function ResultsPage() {
       }
 
       if (isRtmaModel && parsedRtmaResults) {
-        // RTMA-specific export: simple CSV with results summary. The optional
-        // rows cover fields the backend only returns since #481; older stored
-        // runs simply omit them.
-        const optionalRows: string[][] = [];
-        if (parsedRtmaResults.muMedian != null) {
-          optionalRows.push([
-            "mu Posterior Median",
-            String(parsedRtmaResults.muMedian),
-          ]);
-        }
-        if (parsedRtmaResults.tauMedian != null) {
-          optionalRows.push([
-            "tau Posterior Median",
-            String(parsedRtmaResults.tauMedian),
-          ]);
-        }
-        if (parsedRtmaResults.unadjustedMean != null) {
-          optionalRows.push([
-            "Unadjusted Mean (Fixed Effect)",
-            String(parsedRtmaResults.unadjustedMean),
-          ]);
-        }
-        if (parsedRtmaResults.ciLevel != null) {
-          optionalRows.push(["CI Level", String(parsedRtmaResults.ciLevel)]);
-        }
-        if (parsedRtmaResults.seed != null) {
-          optionalRows.push(["Sampler Seed", String(parsedRtmaResults.seed)]);
-        }
-        if (parsedRtmaResults.k != null) {
-          optionalRows.push([
-            "Estimates Used (k)",
-            String(parsedRtmaResults.k),
-          ]);
-        }
-        if (parsedRtmaResults.affirmativeCount != null) {
-          optionalRows.push([
-            "Affirmative Count",
-            String(parsedRtmaResults.affirmativeCount),
-          ]);
-        }
-        if (parsedRtmaResults.droppedRows != null) {
-          optionalRows.push([
-            "Dropped Rows",
-            String(parsedRtmaResults.droppedRows),
-          ]);
-        }
-        const rows = [
-          ["Metric", "Value"],
-          ["Corrected Effect (mu)", String(parsedRtmaResults.mu)],
-          ["mu CI Lower", String(parsedRtmaResults.muCI[0])],
-          ["mu CI Upper", String(parsedRtmaResults.muCI[1])],
-          ["Heterogeneity (tau)", String(parsedRtmaResults.tau)],
-          ["tau CI Lower", String(parsedRtmaResults.tauCI[0])],
-          ["tau CI Upper", String(parsedRtmaResults.tauCI[1])],
-          [
-            "Nonaffirmative Count",
-            String(parsedRtmaResults.nonaffirmativeCount),
-          ],
-          [
-            "Nonaffirmative Proportion",
-            String(parsedRtmaResults.nonaffirmativeProportion),
-          ],
-          ...optionalRows,
-        ];
+        // RTMA-specific export: simple CSV with results summary.
+        const rows = buildRtmaResultsCsvRows(parsedRtmaResults);
         const csv = rows.map((r) => r.join(",")).join("\n");
         const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
         const url = URL.createObjectURL(blob);
