@@ -161,7 +161,7 @@ export function generateTestsInterpretation(
       strength === "weak" ? "required" : "optional but recommended";
 
     sentences.push(
-      `The instrument is ${strengthText} (first-stage F-statistic = ${formatNumber(firstStageFStatistic)}), implying that the Anderson–Rubin confidence interval is ${ciRequirement}.`,
+      `The instrument is ${strengthText} (first-stage F-statistic = ${formatNumber(firstStageFStatistic)}), implying that the Anderson-Rubin confidence interval is ${ciRequirement}.`,
     );
   }
 
@@ -174,7 +174,7 @@ export function generateTestsInterpretation(
     const hausmanNA = isHausmanTestNA(hausmanTest);
     if (hausmanNA) {
       sentences.push(
-        "The Hausman test is undefined because IV variance < OLS variance — estimators are nearly identical, so this test is not informative.",
+        "The Hausman test is undefined because IV variance < OLS variance; estimators are nearly identical, so this test is not informative.",
       );
     } else {
       const { rejectsNull } = hausmanTest;

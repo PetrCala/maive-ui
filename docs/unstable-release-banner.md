@@ -6,8 +6,8 @@ This document explains how to control the unstable release warning banner for th
 
 The banner is powered by two AWS Systems Manager (SSM) Parameter Store values that are created during Terraform deploys:
 
-- `/${var.project}/ui/unstable_banner_enabled` – determines whether the banner appears.
-- `/${var.project}/ui/unstable_banner_message` – text shown in the banner when it is enabled.
+- `/${var.project}/ui/unstable_banner_enabled`: determines whether the banner appears.
+- `/${var.project}/ui/unstable_banner_message`: text shown in the banner when it is enabled.
 
 Terraform seeds the parameters with safe defaults:
 

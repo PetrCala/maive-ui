@@ -1,4 +1,4 @@
-# Async Model Runs — Design & Implementation Plan
+# Async Model Runs: Design & Implementation Plan
 
 **Status:** Proposed (scope locked, pre-implementation)
 **Date:** 2026-06-04
@@ -55,7 +55,7 @@ This aligns with the direction agreed in #441 ("async/background runs now").
   triggered in `apps/react-ui/client/src/pages/model/index.tsx`.
 - **Results are passed entirely via URL query params**
   (`apps/react-ui/client/src/pages/results/index.tsx` reads `?results=&parameters=`),
-  including the ~50 KB base64 plot — producing enormous, fragile URLs. **No run is
+  including the ~50 KB base64 plot, producing enormous, fragile URLs. **No run is
   persisted server-side.**
 - **No async/queue infra exists** (no SQS, no app DynamoDB, no S3 results bucket). The
   only DynamoDB is the Terraform state-lock table. **No user accounts.**
@@ -71,7 +71,7 @@ This aligns with the direction agreed in #441 ("async/background runs now").
 | D2 | **Result storage: DynamoDB-only, full result (~50 KB) stored inline; 48 h TTL.** No S3. | Result fits well under DynamoDB's 400 KB item limit. One store, minimal footprint. S3 reserved only if a payload ever exceeds ~400 KB. |
 | D3 | **Durable history is client-side** (IndexedDB for result payloads, localStorage for the lightweight job list). The DynamoDB item is only a **48 h pickup buffer**. | Matches "persist it in the client's session"; minimizes server persistence. |
 | D4 | **No auto-retry for runs that executed** (`maxReceiveCount=1` → DLQ; user re-runs explicitly). **Amended 2026-07-17:** HTTP 429 from the R backend *is* retried in-process with bounded backoff. | MCMC is nondeterministic (a retry yields a different result) and pathological datasets just re-time-out, doubling cost, but both rationales only apply to runs that actually ran. A 429 means the reserved-concurrency cap (see PUBLIC_API_DESIGN.md D2) refused the invocation and no analysis happened, so retrying is deterministic-safe and free. Without the carve-out, a burst of synchronous traffic saturating the cap marks queued runs permanently `failed` instead of letting them wait for a slot. |
-| D5 | **Keep the synchronous path as a flagged fallback** — and as the route for datasets too large to queue. | Instant rollback lever; avoids needing S3 input plumbing in Phase 1 (large datasets bypass the queue). |
+| D5 | **Keep the synchronous path as a flagged fallback**, and as the route for datasets too large to queue. | Instant rollback lever; avoids needing S3 input plumbing in Phase 1 (large datasets bypass the queue). |
 | D6 | **Runs list is per-browser** (no accounts). `jobId` is an opaque bearer token; results readable by anyone holding the id. | No identity system exists; same sharing model as today's shareable results URL. |
 | D7 | **Status delivery via short polling** (status-only reads; full result fetched once when terminal). No SSE/WebSocket. | Simple; fast handlers; avoids Lambda/Cloudflare long-connection issues. |
 | D8 | **Dark launch behind `CONFIG.ASYNC_RUNS_ENABLED`** (off by default, like `RTMA_ENABLED`). | Ship without exposure; flip on after verification; flip off to roll back. |
@@ -91,10 +91,10 @@ This aligns with the direction agreed in #441 ("async/background runs now").
 ```
 
 **Why the orchestrator (D1), rejected alternatives:**
-- *SQS event source directly on the R Lambda* — would require replacing the Lambda Web
+- *SQS event source directly on the R Lambda*: would require replacing the Lambda Web
   Adapter with a native R runtime loop and re-plumbing request parsing in the rstan
   image. Too invasive/risky.
-- *Submit endpoint async-`Invoke`s the R Lambda* — same HTTP-handler-vs-raw-event
+- *Submit endpoint async-`Invoke`s the R Lambda*: same HTTP-handler-vs-raw-event
   mismatch, and no clean place to persist terminal status; loses SQS visibility/DLQ.
 
 ## 6. Data model
@@ -118,30 +118,30 @@ This aligns with the direction agreed in #441 ("async/background runs now").
 (`succeeded` / `failed` / `timedout`). The R 480 s-guard error maps to `timedout`.
 
 **Client stores:**
-- `localStorage` — `runsStore` (Zustand `persist`): list of `{jobId, modelType, dataId, submittedAt}`.
-- `IndexedDB` — cache of fetched result payloads (durable history; localStorage is too small for ~50 KB plots).
+- `localStorage`: `runsStore` (Zustand `persist`), list of `{jobId, modelType, dataId, submittedAt}`.
+- `IndexedDB`: cache of fetched result payloads (durable history; localStorage is too small for ~50 KB plots).
 
 ## 7. API surface (Next.js routes in the UI Lambda)
 
 All handlers are fast (DDB/SQS calls), so the UI Lambda's 30 s cap is irrelevant.
 
-- `POST /api/runs` — body `{ data, parameters, dataId, modelType }`. Generate `jobId`,
+- `POST /api/runs`: body `{ data, parameters, dataId, modelType }`. Generate `jobId`,
   write DDB `queued`, send SQS message, return `{ jobId }`. If `data` exceeds the SQS
   body budget (~200 KB), return a signal to use the **synchronous fallback** (D5).
-- `GET /api/runs/{jobId}` — DDB GetItem with a **status-only projection** for polling;
+- `GET /api/runs/{jobId}`: DDB GetItem with a **status-only projection** for polling;
   returns the full `result` once `status` is terminal.
-- *(Phase 2)* `GET /api/runs?ids=...` — DDB BatchGetItem of statuses for the history list.
+- *(Phase 2)* `GET /api/runs?ids=...`: DDB BatchGetItem of statuses for the history list.
 
-## 8. Phase 1 — MVP "fire-and-poll" (scope)
+## 8. Phase 1: MVP "fire-and-poll" (scope)
 
-**Terraform — `prod-runtime`** (suggested new files `runs_store.tf`, `runs_queue.tf`, `orchestrator_lambda.tf`):
-- [ ] `aws_dynamodb_table.runs` — PK `jobId`, `PAY_PER_REQUEST`, TTL on `ttl`.
+**Terraform, `prod-runtime`** (suggested new files `runs_store.tf`, `runs_queue.tf`, `orchestrator_lambda.tf`):
+- [ ] `aws_dynamodb_table.runs`: PK `jobId`, `PAY_PER_REQUEST`, TTL on `ttl`.
 - [ ] `aws_sqs_queue.runs` (visibility ~660 s) + `aws_sqs_queue.runs_dlq` (redrive `maxReceiveCount=1`).
 - [ ] `aws_lambda_function.orchestrator` (Node 20, zip) + IAM role/policy (SQS consume, DDB update/get) + `aws_lambda_event_source_mapping` (SQS, `maximum_concurrency` capped) + log group + DLQ-depth alarm.
 - [ ] Set `lambda_r_backend_reserved_concurrency` to a real cap (start ~5).
 - [ ] Extend `ui_lambda.tf`: env (`RUNS_TABLE_NAME`, `RUNS_QUEUE_URL`) + IAM (DDB get/put/batchGet/query, SQS send).
 
-**Terraform — `prod-foundation`** (manual apply, must precede the runtime apply):
+**Terraform, `prod-foundation`** (manual apply, must precede the runtime apply):
 - [ ] Extend `gha_terraform_policy` (`iam.tf`): add `sqs:*`; broaden DynamoDB to include `Query`, `UpdateItem`, `BatchGetItem`, `BatchWriteItem`, `Scan`.
 
 **Orchestrator Lambda (Node 20, zip):**
@@ -158,7 +158,7 @@ All handlers are fast (DDB/SQS calls), so the UI Lambda's 30 s cap is irrelevant
 
 **Outcome:** submit → don't block → return to *this* run; mega-URL problem fixed.
 
-## 9. Phase 2 — runs queue/history, compare, notifications (later)
+## 9. Phase 2: runs queue/history, compare, notifications (later)
 
 - [ ] **Runs/History page**: list the browser's runs with live status (batch endpoint), filter, re-open.
 - [ ] **Compare view**: select 2+ succeeded runs, render side-by-side (reuse `ResultsSummary` / `RTMAResultsSummary`).
@@ -182,41 +182,41 @@ All handlers are fast (DDB/SQS calls), so the UI Lambda's 30 s cap is irrelevant
 - **New:** results persist server-side for up to **48 h** (today nothing persists).
   Mitigations: DynamoDB item is private (reachable only via the UI Lambda routes),
   random opaque `jobId`, 48 h TTL auto-delete.
-- The **input dataset is not persisted at rest** — it travels only in the transient
+- The **input dataset is not persisted at rest**; it travels only in the transient
   (encrypted, auto-deleted on consume) SQS message.
-- `jobId` is a **bearer token**: anyone with it can read that run for 48 h — same
+- `jobId` is a **bearer token**: anyone with it can read that run for 48 h, the same
   exposure model as today's shareable results URL. Document in user-facing privacy notes.
 - Clearing browser data loses the local history list (accepted, per D3/D6); results
   not yet fetched by the client are lost after the 48 h server TTL (accepted).
 
 ## 12. Cost
 
-New infra is negligible — **async adds no model compute**; the R Lambda runs as much
+New infra is negligible; **async adds no model compute**, and the R Lambda runs as much
 as today. Approximate (on-demand; eu-central-1 ~a few % above us-east-1):
 
-- **Per run (new infra only):** ~$0.0003–0.0005 (orchestrator idle-wait dominates; DDB/SQS/UI-poll are sub-cent).
-- **Idle baseline:** ~$0.05–0.20 / month (mostly SQS event-source long-polling).
-- **At volume:** ~$0.5–1 / month at 1k runs; ~$3–5 / month at 10k runs. Low volume is largely covered by AWS free tiers (effectively $0).
-- The dominant cost remains the **pre-existing** R compute (~$0.001–0.002 / run at 2 GB).
+- **Per run (new infra only):** ~$0.0003 to $0.0005 (orchestrator idle-wait dominates; DDB/SQS/UI-poll are sub-cent).
+- **Idle baseline:** ~$0.05 to $0.20 / month (mostly SQS event-source long-polling).
+- **At volume:** ~$0.5 to $1 / month at 1k runs; ~$3 to $5 / month at 10k runs. Low volume is largely covered by AWS free tiers (effectively $0).
+- The dominant cost remains the **pre-existing** R compute (~$0.001 to $0.002 / run at 2 GB).
 - **Not in scope, but flagged:** keep-warm / provisioned concurrency (speed track) would
   cost ~$22 / month per always-warm 2 GB instance.
 
 ## 13. Rollout plan
 
-1. Build Phase 1 on a fresh branch, **behind `ASYNC_RUNS_ENABLED` (off)** — ships dark.
+1. Build Phase 1 on a fresh branch, **behind `ASYNC_RUNS_ENABLED` (off)**; ships dark.
 2. Open PR(s); review.
-3. **Manually apply `prod-foundation`** (IAM additions) — must precede the runtime apply.
+3. **Manually apply `prod-foundation`** (IAM additions); must precede the runtime apply.
 4. Merge with `release` label → CI applies `prod-runtime` (creates DDB/SQS/orchestrator, updates UI Lambda).
 5. Flip `ASYNC_RUNS_ENABLED` on → smoke-test (submit, navigate away, return, verify history/result).
 6. Monitor DLQ-depth alarm + CloudWatch.
-7. **Rollback:** flip the flag off — the synchronous path remains fully functional.
+7. **Rollback:** flip the flag off; the synchronous path remains fully functional.
 
 ## 14. Risks & open questions
 
-- **Orchestrator idle double-billing** while R runs — minor at 256 MB.
+- **Orchestrator idle double-billing** while R runs, minor at 256 MB.
 - **Result > 400 KB** (e.g., higher-resolution plots) → would need the S3 escape hatch (§15).
-- **Un-fetched run expires after 48 h** on a device that never synced — accepted trade-off.
-- **Concurrency cap** (~5) is a starting guess — tune from observed load/cost.
+- **Un-fetched run expires after 48 h** on a device that never synced: accepted trade-off.
+- **Concurrency cap** (~5) is a starting guess; tune from observed load/cost.
 - **R backend log verbosity** (debug-level, verbose `cli` output) is pre-existing; worth
   trimming someday to control CloudWatch ingestion, but out of scope here.
 

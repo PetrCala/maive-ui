@@ -239,7 +239,7 @@ const TEXT = {
       requiredColumns:
         "Please include columns for **effect estimates** and **standard errors**. **Sample sizes** are required for every model except RTMA (study IDs are optional).",
       numberFormats:
-        "Effect estimates and standard errors can include decimal points or commas—MAIVE will interpret both.",
+        "Effect estimates and standard errors can include decimal points or commas; MAIVE will interpret both.",
       extraColumns:
         "Extra columns are welcome! You'll be able to ignore them during column mapping.",
     },
@@ -255,7 +255,7 @@ const TEXT = {
       studyId: "Study ID (optional)",
     },
     helperText:
-      "Each column can only be mapped once. The Sample size field is required for every model except RTMA; without it, only RTMA will be available. The Study ID field is optional — leave it blank if you don't have study-level clustering.",
+      "Each column can only be mapped once. The Sample size field is required for every model except RTMA; without it, only RTMA will be available. The Study ID field is optional: leave it blank if you don't have study-level clustering.",
     continueButton: "Continue to validation",
     autoMappingNotice:
       "We've pre-selected columns where the headers looked familiar. Feel free to adjust before continuing.",
@@ -363,7 +363,7 @@ const TEXT = {
     computeAndersonRubin: {
       label: "Compute Anderson-Rubin Confidence Interval",
       tooltip:
-        "The Anderson–Rubin confidence interval is robust to weak instruments (when sample size poorly predicts precision). It should be reported when the first-stage F-statistic is below 10.",
+        "The Anderson-Rubin confidence interval is robust to weak instruments (when sample size poorly predicts precision). It should be reported when the first-stage F-statistic is below 10.",
       warning:
         "May increase processing time. For the corrected mean (intercept), intervals can be wide because the instrument identifies the slope, not the intercept. In some cases (e.g. high heterogeneity in standard errors), AR intervals may return NA.",
     },
@@ -417,7 +417,7 @@ const TEXT = {
     winsorize: {
       label: "Winsorization (%)",
       tooltip:
-        "Reduces the influence of extreme outliers by replacing values beyond symmetric percentile bounds with the corresponding boundary values. Select the winsorization percentage (0–5%) to apply to effect sizes and standard errors.",
+        "Reduces the influence of extreme outliers by replacing values beyond symmetric percentile bounds with the corresponding boundary values. Select the winsorization percentage (0 to 5%) to apply to effect sizes and standard errors.",
       selectedLabel: "Selected winsorization",
     },
     shouldUseInstrumenting: {
@@ -511,7 +511,7 @@ const TEXT = {
       "Adjust your meta-analysis for publication bias, p-hacking, and spurious precision using MAIVE. Explore the methodology and access the resources that power the estimator.",
     overview: {
       title: "Overview",
-      text: `MAIVE (Meta-Analysis Instrumental Variable Estimator) adjusts for publication bias and p-hacking while correcting for “spurious precision” — over-optimistic standard errors that arise when researchers choose methods or models that under-report true uncertainty.
+      text: `MAIVE (Meta-Analysis Instrumental Variable Estimator) adjusts for publication bias and p-hacking while correcting for “spurious precision”: over-optimistic standard errors that arise when researchers choose methods or models that under-report true uncertainty.
       By using an instrumental-variable based on the inverse sample size, MAIVE **reduces biases due to p-hacking** while leaving publication-bias corrections (e.g. PET-PEESE) intact.
       It is most useful for observational research, where standard errors are easiest to game and inverse-variance weights can back-fire. For experimental research, it presents a useful robustness check.`,
     },
@@ -556,7 +556,7 @@ const TEXT = {
       text: [
         {
           head: "Observational Evidence",
-          text: "Economics, psychology, education, medical research — any field where research design can drive reported precision.",
+          text: "Economics, psychology, education, medical research: any field where research design can drive reported precision.",
         },
         {
           head: "Policy Analysis",

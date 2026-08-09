@@ -31,7 +31,7 @@ const handler = async (
     return res.status(503).json({ error: "Async runs are not configured." });
   }
 
-  // GET /api/runs?ids=a,b,c — batch status lookup for the My Runs list / watcher.
+  // GET /api/runs?ids=a,b,c: batch status lookup for the My Runs list / watcher.
   if (req.method === "GET") {
     const ids = parseIdsParam(req.query.ids, MAX_BATCH_IDS);
     if (ids.length === 0) {

@@ -8,7 +8,7 @@ MAIVE (Meta-Analysis Instrumental Variable Estimator) is a tool for detecting sp
 
 - **React UI** (Next.js 14): Interactive frontend for data upload, analysis, and visualization
 - **R Backend** (Plumber): Statistical analysis service running MAIVE algorithms
-- **AWS Infrastructure**: Fully serverless — both the UI and the R backend run as AWS Lambda functions exposed via Lambda Function URLs, fronted by Cloudflare (CDN/TLS/WAF)
+- **AWS Infrastructure**: Fully serverless. Both the UI and the R backend run as AWS Lambda functions exposed via Lambda Function URLs, fronted by Cloudflare (CDN/TLS/WAF)
 
 ## Citation
 
@@ -99,7 +99,7 @@ Browser ──► Cloudflare ──► UI Lambda Function URL (Next.js)
 - The Next.js UI runs on AWS Lambda via a container image using the [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter), exposed through a Lambda Function URL.
 - Cloudflare fronts the UI for CDN/TLS/WAF. A Cloudflare Worker rewrites the `Host`/SNI to the `.on.aws` origin, because Lambda Function URLs reject a foreign `Host` header.
 - The R backend is a separate public Lambda Function URL (authorization `NONE`, CORS `*`).
-- The heavy `/run-model` analysis call goes **directly from the browser to the R Lambda Function URL** — it does not pass through the Next.js server. The browser obtains the R URL from the `/api/runtime-config` route (exposed as `window.RUNTIME_CONFIG`), served at request time.
+- The heavy `/run-model` analysis call goes **directly from the browser to the R Lambda Function URL**; it does not pass through the Next.js server. The browser obtains the R URL from the `/api/runtime-config` route (exposed as `window.RUNTIME_CONFIG`), served at request time.
 - Lightweight Next.js API routes (e.g. `/api/runtime-config`, `/api/ping`, `/api/get-version-info`) still run server-side inside the UI Lambda.
 - There is no longer an ALB, ECS/Fargate cluster, or VPC public/private-subnet serving path.
 
@@ -147,7 +147,7 @@ The heavy analysis request goes directly from the browser to the R Lambda; light
 3. **R processing**: The R Lambda executes the MAIVE analysis.
 4. **Response**: Results return directly to the browser.
 
-**Lightweight routes (server-side, inside the UI Lambda):** `/api/runtime-config`, `/api/ping`, `/api/get-version-info`, etc. These run in the Next.js server context. The same `modelService`/`pingService` code is isomorphic — see `getRApiUrl()` for how the R URL is resolved on the client vs. the server.
+**Lightweight routes (server-side, inside the UI Lambda):** `/api/runtime-config`, `/api/ping`, `/api/get-version-info`, etc. These run in the Next.js server context. The same `modelService`/`pingService` code is isomorphic: see `getRApiUrl()` for how the R URL is resolved on the client vs. the server.
 
 ### State Management
 
@@ -426,7 +426,7 @@ R_PORT=8787
 ### Production
 
 ```bash
-# React UI (UI Lambda) — the public R Lambda Function URL.
+# React UI (UI Lambda): the public R Lambda Function URL.
 # The /api/runtime-config route reads this and exposes it to the browser
 # (window.RUNTIME_CONFIG), since the browser calls /run-model directly.
 R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws

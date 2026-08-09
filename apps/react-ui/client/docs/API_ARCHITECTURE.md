@@ -20,7 +20,7 @@ Browser ──► Cloudflare (CDN/TLS/WAF) ──► UI Lambda Function URL (Nex
   `.on.aws` origin because Lambda Function URLs reject a foreign `Host` header.
 - **R backend** is a public Lambda Function URL (authorization `NONE`, CORS `*`).
 - The **`/run-model`** analysis request goes straight from the browser to the R
-  Lambda — it no longer proxies through a Next.js API route.
+  Lambda; it no longer proxies through a Next.js API route.
 
 ## How It Works
 
@@ -54,24 +54,24 @@ return await httpPost<ModelResponse>(`${getRApiUrl()}/run-model`, requestData, {
 
 ### Isomorphic Services (`/src/api/services/`)
 
-- **`modelService.ts`** — POSTs analysis requests to the R backend. In the
+- **`modelService.ts`**: POSTs analysis requests to the R backend. In the
   browser this hits the R Lambda Function URL directly.
-- **`pingService.ts`** — connectivity check against the R backend.
+- **`pingService.ts`**: connectivity check against the R backend.
 
 ### Next.js API Routes (`/src/pages/api/`)
 
 Lightweight routes that run server-side inside the UI Lambda:
 
-- **`/api/runtime-config`** — exposes the R backend URL to the browser
-- **`/api/ping`** — connectivity testing
-- **`/api/get-version-info`**, **`/api/system-status`** — metadata
+- **`/api/runtime-config`**: exposes the R backend URL to the browser
+- **`/api/ping`**: connectivity testing
+- **`/api/get-version-info`**, **`/api/system-status`**: metadata
 
 > The previous **`/api/run-model`** proxy route has been removed.
 
 ## Environment Configuration
 
 ```bash
-# Production (UI Lambda) — public R Lambda Function URL exposed to the browser
+# Production (UI Lambda): public R Lambda Function URL exposed to the browser
 R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws
 # NEXT_PUBLIC_R_API_URL is also honored (takes precedence if set)
 

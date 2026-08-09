@@ -90,7 +90,7 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
         if (cancelled) {
           return;
         }
-        // Transient errors (network blip, brief 404 right after submit) — keep
+        // Transient errors (network blip, brief 404 right after submit): keep
         // polling; a persistent failure is caught by the MAX_POLL_MS guard.
         setErrorMessage(
           error instanceof Error
@@ -126,10 +126,10 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
         setIsPolling(false);
         return;
       }
-      // No durable result and the run is past the 48h server TTL — its record is
-      // gone, so polling would only spin until MAX_POLL_MS. Mark it expired and
-      // stop. (The cache check above still wins, so an immutable cached result
-      // always renders regardless of age.)
+      // No durable result and the run is past the 48h server TTL, so its record
+      // is gone and polling would only spin until MAX_POLL_MS. Mark it expired
+      // and stop. (The cache check above still wins, so an immutable cached
+      // result always renders regardless of age.)
       const entry = useRunsStore
         .getState()
         .runsList.find((run) => run.jobId === jobId);

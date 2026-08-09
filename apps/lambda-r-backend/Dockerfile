@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────
-# APP IMAGE — tiny, reusing pre-baked R library base
+# APP IMAGE: tiny, reusing pre-baked R library base
 # ─────────────────────────────────────────────────────────
 
 ARG PROJECT_NAME

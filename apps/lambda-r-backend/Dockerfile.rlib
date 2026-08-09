@@ -1,5 +1,5 @@
 # ─────────────────────────────────────────────────────────
-# R LIBRARY BASE (Amazon Linux 2023)  — pre-baked libs
+# R LIBRARY BASE (Amazon Linux 2023): pre-baked libs
 # Produces: rlib:al2023-r4.4.1-maive-<hash>
 # ─────────────────────────────────────────────────────────
 
