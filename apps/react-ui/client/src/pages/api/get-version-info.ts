@@ -12,6 +12,7 @@ import type { VersionInfo } from "@src/types/reproducibility";
  * - MAIVE R package tag
  * - Git commit hash
  * - R version
+ * - phacking version (the RTMA implementation)
  * - Current timestamp
  */
 
@@ -55,11 +56,19 @@ function getVersionInfo(): VersionInfo {
   const rVersion =
     process.env.R_VERSION ?? CONST.REPRODUCIBILITY.DEFAULTS.R_VERSION;
 
+  // phacking version, pinned at image build time in r-packages.txt. The default
+  // mirrors that pin (a test fails if the two drift), so an RTMA package always
+  // names the implementation it ran under and can reinstall exactly that one.
+  const phackingVersion =
+    process.env.PHACKING_VERSION ??
+    CONST.REPRODUCIBILITY.DEFAULTS.PHACKING_VERSION;
+
   cachedVersionInfo = {
     uiVersion,
     maiveTag,
     gitCommitHash,
     rVersion,
+    phackingVersion,
     timestamp: new Date().toISOString(),
   };
 

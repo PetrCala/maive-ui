@@ -386,6 +386,12 @@ export function generateVersionManifest(
   parameters: ModelParameters,
 ): string {
   const timestamp = versionInfo.timestamp;
+  // RTMA is fitted by phacking rather than by the MAIVE package, so its version
+  // is the one that has to be recorded for an RTMA run to be reproducible.
+  const isRtma = parameters.modelType === "RTMA";
+  const phackingLine = isRtma
+    ? `\nphacking R Package:      ${versionInfo.phackingVersion}`
+    : "";
 
   return `MAIVE Analysis Reproducibility Package - Version Manifest
 ============================================================
@@ -396,7 +402,7 @@ SOFTWARE VERSIONS
 -----------------
 MAIVE UI Version:        ${versionInfo.uiVersion}
 MAIVE R Package:         ${versionInfo.maiveTag}
-R Version:               ${versionInfo.rVersion}
+R Version:               ${versionInfo.rVersion}${phackingLine}
 Git Commit Hash:         ${versionInfo.gitCommitHash}
 
 GITHUB REFERENCES
@@ -426,7 +432,9 @@ Winsorize:               ${parameters.winsorize}%
 PACKAGE DEPENDENCIES
 --------------------
 Required R packages:
-  - MAIVE (${versionInfo.maiveTag})
+  - MAIVE (${versionInfo.maiveTag})${
+    isRtma ? `\n  - phacking (${versionInfo.phackingVersion})` : ""
+  }
   - jsonlite
   - base64enc
   - metafor
@@ -445,7 +453,11 @@ This package contains:
 
 To ensure perfect reproducibility:
   - Use R version ${versionInfo.rVersion} or compatible
-  - Install MAIVE package version ${versionInfo.maiveTag}
+  - Install MAIVE package version ${versionInfo.maiveTag}${
+    isRtma
+      ? `\n  - Install phacking package version ${versionInfo.phackingVersion} (run_analysis.R does this)`
+      : ""
+  }
   - Run from the same working directory as the extracted files
   - For bootstrap methods, results may vary slightly due to randomness
 

@@ -50,7 +50,9 @@ RUN if [ -n "${GITHUB_PAT:-}" ]; then \
 # Install pak (fast installer)
 RUN R -q -e "install.packages('pak', repos='https://cran.rstudio.com')"
 
-# Install CRAN packages from list
+# Install CRAN packages from list. Entries may carry a pak version ref
+# (pkg@version); phacking is pinned that way so a rebuilt image keeps shipping
+# the RTMA implementation the exported reproducibility packages name (#489).
 COPY r_scripts/r-packages.txt /tmp/r-packages.txt
 RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 

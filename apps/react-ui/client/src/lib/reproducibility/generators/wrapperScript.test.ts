@@ -8,6 +8,7 @@ const versionInfo: VersionInfo = {
   maiveTag: "0.2.5",
   gitCommitHash: "abc1234",
   rVersion: "4.4.1",
+  phackingVersion: "0.2.1",
   timestamp: "2026-01-01T00:00:00.000Z",
 };
 
@@ -77,5 +78,22 @@ describe("generateWrapperScript", () => {
     expect(script).not.toContain(
       "abs(results$effectEstimate - expected$effectEstimate) < tolerance",
     );
+  });
+
+  it("feeds the model full-precision input on the local re-run", () => {
+    // The rounding above is a property of the API *response*. The input must
+    // not be rounded on the way back in: jsonlite::toJSON() writes 4 decimal
+    // places by default, which alters small standard errors before the refit
+    // and defeats the point of an app that detects spurious precision (#489).
+    // The backend serializes its own input with digits = NA (api_v1.R).
+    const script = generateWrapperScript(versionInfo, parameters, results, 60);
+
+    expect(script).toContain(
+      'jsonlite::toJSON(data, dataframe = "rows", digits = NA)',
+    );
+    expect(script).toContain(
+      "jsonlite::toJSON(parameters, auto_unbox = TRUE, digits = NA)",
+    );
+    expect(script).not.toContain('jsonlite::toJSON(data, dataframe = "rows")');
   });
 });
