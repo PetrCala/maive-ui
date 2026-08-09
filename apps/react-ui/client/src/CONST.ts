@@ -53,13 +53,19 @@ const CONST = {
 
   REPRODUCIBILITY: {
     DEFAULTS: {
+      // Nothing in the repo records the R version the image was built with, so
+      // get-version-info needs a literal to fall back to.
       R_VERSION: "4.4.1",
-      MAIVE_TAG: "0.0.3.4",
       // Must equal the version pinned in
       // apps/lambda-r-backend/r_scripts/r-packages.txt, which is what the
       // backend image actually installs. phackingVersionPin.test.ts fails the
       // build if the two drift apart.
       PHACKING_VERSION: "0.2.1",
+      // No MAIVE tag default here, deliberately. The tag is committed to
+      // package.json (`maiveTag`) by scripts/set-maive-tag.sh alongside
+      // release.yml, and get-version-info reads it from there. A third copy
+      // would be one more thing to keep in sync, and a stale one silently pins
+      // reproducibility packages to a MAIVE version the backend cannot run.
     },
   },
 

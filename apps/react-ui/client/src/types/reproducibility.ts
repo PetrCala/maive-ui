@@ -8,7 +8,7 @@
 export type VersionInfo = {
   /** UI application version from package.json (e.g., "0.3.17-0") */
   uiVersion: string;
-  /** MAIVE R package tag/version (e.g., "0.0.3.4") */
+  /** MAIVE R package tag/version (e.g., "v0.2.2") */
   maiveTag: string;
   /** Git commit hash of the deployed code */
   gitCommitHash: string;
