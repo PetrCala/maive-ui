@@ -17,9 +17,10 @@ ENV MAKEFLAGS="-j2"
 ENV R_REMOTES_NO_ERRORS_FROM_WARNINGS=true
 ENV R_INSTALL_STAGED=false
 
-# Build deps (headers + toolchain) and ensure libcurl (not minimal)
+# Build deps (headers + toolchain) and ensure libcurl (not minimal).
+# cmake is required by RcppParallel 6.x, which configures TBB through it.
 RUN dnf -y update && dnf -y install \
-    gcc gcc-c++ gcc-gfortran make \
+    gcc gcc-c++ gcc-gfortran make cmake \
     tar gzip wget which \
     perl perl-core \
     zlib-devel bzip2 bzip2-devel xz xz-devel pcre2-devel \
