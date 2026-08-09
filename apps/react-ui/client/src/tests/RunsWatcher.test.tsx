@@ -68,7 +68,7 @@ describe("RunsWatcher", () => {
 
   it("flips a run gone from the backend and past the TTL to expired", async () => {
     // Submitted beyond the 48h TTL and absent from the batch response (its
-    // record has expired) — the watcher marks it expired, without notifying.
+    // record has expired), the watcher marks it expired, without notifying.
     useRunsStore.getState().addRun({
       jobId: "old-1",
       modelType: "RTMA",

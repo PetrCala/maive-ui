@@ -132,7 +132,7 @@ export const batchGetRunStatuses = async (
       RequestItems: {
         [tableName]: {
           Keys: ids.map((id) => ({ jobId: id })),
-          // Status-only projection (no heavy `result`) — the list/watcher
+          // Status-only projection (no heavy `result`): the list/watcher
           // only needs status; the full result is fetched per-run elsewhere.
           ProjectionExpression:
             "jobId, #status, modelType, errorMessage, runDurationMs, submittedAt",
@@ -227,7 +227,7 @@ export const submitRun = async (
     parameters: params.parameters,
   });
 
-  // Too large to queue via SQS — caller falls back to the synchronous path.
+  // Too large to queue via SQS; caller falls back to the synchronous path.
   if (Buffer.byteLength(messageBody, "utf8") > MAX_QUEUE_BODY_BYTES) {
     return { outcome: "too_large" };
   }

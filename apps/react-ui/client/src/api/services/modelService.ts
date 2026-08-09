@@ -129,7 +129,7 @@ export class ModelService {
    * Submit a model run to the async queue (non-blocking).
    * Calls the same-origin UI Lambda route, which persists a queued job and
    * enqueues it for the orchestrator, returning a jobId. Returns
-   * `{ tooLarge: true }` when the dataset is too large to queue — the caller
+   * `{ tooLarge: true }` when the dataset is too large to queue; the caller
    * should then fall back to the synchronous runModel/runRTMA path.
    * @param data - The data to process
    * @param parameters - Model or RTMA parameters

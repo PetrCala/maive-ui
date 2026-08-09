@@ -17,12 +17,12 @@ type RunLoadingProps = {
 const COPY: Record<RunLoadingPhase, { title: string; subtitle: string }> = {
   submitting: {
     title: "Queueing your analysis…",
-    subtitle: "One moment — we're setting things up.",
+    subtitle: "One moment, we're setting things up.",
   },
   running: {
     title: "Your analysis is running…",
     subtitle:
-      "You're free to leave this page — it keeps running in the background and will appear under My Runs.",
+      "You're free to leave this page. It keeps running in the background and will appear under My Runs.",
   },
   blocking: {
     title: "Running your analysis…",
@@ -46,7 +46,7 @@ export default function RunLoading({
   const { title } = COPY[phase];
   const subtitle =
     phase === "blocking" && showWarmupHint
-      ? "Still working — the first run can take a little longer while the analysis engine warms up."
+      ? "Still working. The first run can take a little longer while the analysis engine warms up."
       : COPY[phase].subtitle;
 
   return (

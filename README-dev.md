@@ -111,8 +111,8 @@ bun run cloud:lambda-url
 
 After running `bun run cloud:status`, you'll see:
 
-- **Frontend (React UI)**: the UI Lambda Function URL (`ui_lambda_url`) — fronted by Cloudflare in production
-- **Backend (AWS Lambda)**: the R backend Function URL (`lambda_r_backend_url`) — public access
+- **Frontend (React UI)**: the UI Lambda Function URL (`ui_lambda_url`), fronted by Cloudflare in production
+- **Backend (AWS Lambda)**: the R backend Function URL (`lambda_r_backend_url`), public access
 
 ### Example Output
 
@@ -297,7 +297,7 @@ When merging a release PR:
 
 - **Security**: Cloudflare WAF in front of the UI Lambda; R backend is a public Function URL (auth `NONE`, CORS `*`)
 - **Architecture**: Internet → Cloudflare (CDN/TLS/WAF) → UI Lambda Function URL; browser → R Lambda Function URL (direct, for analysis)
-- **Best for**: Production — serverless, scales to zero when idle
+- **Best for**: Production (serverless, scales to zero when idle)
 
 # Commit message formatting
 

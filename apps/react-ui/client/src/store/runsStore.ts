@@ -4,7 +4,7 @@ import { persist } from "zustand/middleware";
 
 /**
  * A lightweight record of a submitted async run, tracked per-browser.
- * The heavy result payload is NOT stored here — it lives in DynamoDB (48h TTL)
+ * The heavy result payload is NOT stored here; it lives in DynamoDB (48h TTL)
  * and is fetched by jobId when a run is opened. (Durable client-side result
  * caching via IndexedDB is a Phase 2 enhancement.)
  */

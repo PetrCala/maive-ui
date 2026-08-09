@@ -265,7 +265,7 @@ export default function ResultsPage() {
     }
   }, [exportErrorMessage]);
 
-  // Lateral nav back to the run history — only meaningful when this page was
+  // Lateral nav back to the run history, only meaningful when this page was
   // opened for a specific async run (jobId present, i.e. from My Runs).
   const allRunsLink = jobId ? (
     <Link
@@ -276,7 +276,7 @@ export default function ResultsPage() {
     </Link>
   ) : null;
 
-  // Async run still in flight (or terminal-but-unavailable) — show a loading /
+  // Async run still in flight (or terminal-but-unavailable): show a loading /
   // error state while polling, instead of the "no results" view.
   if (jobId && !results) {
     const runExpired = runStatus.status === "expired";

@@ -162,7 +162,7 @@ export default function Home() {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-blue-400 opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-blue-500" />
                   </span>
-                  {`${activeRunCount} run${activeRunCount === 1 ? "" : "s"} in progress — view My Runs`}
+                  {`${activeRunCount} run${activeRunCount === 1 ? "" : "s"} in progress: view My Runs`}
                 </>
               ) : (
                 `View My Runs (${runsList.length})`

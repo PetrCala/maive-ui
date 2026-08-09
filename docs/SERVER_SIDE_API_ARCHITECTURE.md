@@ -51,7 +51,7 @@ through a Lambda Function URL.
 - The R backend is a separate **public** Lambda Function URL with authorization
   `NONE` and CORS `*`, so the browser can call it cross-origin.
 - The heavy `/run-model` analysis request is sent **directly from the browser**
-  to the R Lambda Function URL — it does not pass through the Next.js server.
+  to the R Lambda Function URL; it does not pass through the Next.js server.
 
 ## How the Browser Finds the R Backend
 
@@ -104,9 +104,9 @@ return await httpPost<ModelResponse>(`${getRApiUrl()}/run-model`, requestData, {
 The UI Lambda still hosts lightweight Next.js API routes that execute in the
 Next.js server context, e.g.:
 
-- `/api/runtime-config` — exposes the R backend URL to the browser
-- `/api/ping` — connectivity check
-- `/api/get-version-info`, `/api/system-status` — metadata
+- `/api/runtime-config`: exposes the R backend URL to the browser
+- `/api/ping`: connectivity check
+- `/api/get-version-info`, `/api/system-status`: metadata
 
 The previous `/api/run-model` proxy has been **removed**.
 
@@ -132,7 +132,7 @@ The previous `/api/run-model` proxy has been **removed**.
 
 ## Trade-offs
 
-- **Simplicity / cost:** no ALB, ECS cluster, or NAT — just two Lambdas and a
+- **Simplicity / cost:** no ALB, ECS cluster, or NAT, just two Lambdas and a
   CDN. Scales to zero when idle.
 - **CORS:** the R Lambda is public and CORS-open, so browsers can call it
   directly. There is no private-subnet isolation; protection comes from

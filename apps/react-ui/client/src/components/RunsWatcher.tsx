@@ -27,7 +27,7 @@ const isTerminal = (status: RunStatus) => TERMINAL_STATUSES.includes(status);
  * App-level watcher (renders nothing). While the per-browser runs list has any
  * non-terminal run, it polls their status via the batch endpoint, updates the
  * store (so the My Runs list reflects live status from anywhere in the app),
- * and fires a browser notification when a run transitions to terminal — with an
+ * and fires a browser notification when a run transitions to terminal, with an
  * in-app alert fallback. Inert when CONFIG.ASYNC_RUNS_ENABLED is false.
  */
 export default function RunsWatcher() {
@@ -36,7 +36,7 @@ export default function RunsWatcher() {
   const updateRunStatus = useRunsStore((state) => state.updateRunStatus);
   const { showAlert } = useGlobalAlert();
 
-  // Stable key of the runs still in flight — drives the polling effect.
+  // Stable key of the runs still in flight; drives the polling effect.
   const pendingIdsKey = runsList
     .filter((run) => !isTerminal(run.status))
     .map((run) => run.jobId)
@@ -98,7 +98,7 @@ export default function RunsWatcher() {
         // terminal "expired" status. Done in a separate pass (not driven by the
         // response) so it never fires a "run finished" notification. The age
         // guard means a run only transiently absent from a throttled batch
-        // response is not falsely expired — a younger missing run keeps polling
+        // response is not falsely expired: a younger missing run keeps polling
         // until its record reappears or it genuinely ages out.
         const returnedIds = new Set(runs.map((run) => run.jobId));
         const now = Date.now();
@@ -111,7 +111,7 @@ export default function RunsWatcher() {
           }
         });
       } catch {
-        // transient (network/throttle) — keep polling
+        // transient (network/throttle); keep polling
       }
 
       if (!cancelled) {

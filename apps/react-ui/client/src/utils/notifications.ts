@@ -12,7 +12,7 @@ export const requestNotificationPermission = (): void => {
     return;
   }
   void Notification.requestPermission().catch(() => {
-    // ignore — we fall back to in-app alerts
+    // ignore; we fall back to in-app alerts
   });
 };
 
@@ -35,8 +35,8 @@ export const notifyRunComplete = ({
   if (!isSupported() || Notification.permission !== "granted") {
     return false;
   }
-  // "expired" is assigned locally to stale runs, not a completion event — never
-  // surface it as a notification.
+  // "expired" is assigned locally to stale runs, not a completion event, so
+  // never surface it as a notification.
   if (status === "expired") {
     return false;
   }
@@ -45,7 +45,7 @@ export const notifyRunComplete = ({
     ? `${modelType} run finished`
     : `${modelType} run ${status === "timedout" ? "timed out" : "failed"}`;
   const body = succeeded
-    ? "Your analysis is ready — open it from My Runs."
+    ? "Your analysis is ready. Open it from My Runs."
     : "Open My Runs for details.";
   try {
     const notification = new Notification(title, { body, tag: jobId });

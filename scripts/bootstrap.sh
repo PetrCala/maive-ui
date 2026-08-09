@@ -160,7 +160,7 @@ else
       --region "$AWS_REGION" \
       >/dev/null
   else
-    echo "❗ Skipping tagging — table does not exist."
+    echo "❗ Skipping tagging: table does not exist."
     exit 1
   fi
 fi

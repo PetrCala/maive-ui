@@ -124,12 +124,12 @@ describe("legacy /api/runs (unchanged behavior)", () => {
     });
   });
 
-  it("queues a valid submission and returns 200 { jobId } — no dataset shape enforced", async () => {
+  it("queues a valid submission and returns 200 { jobId } with no dataset shape enforced", async () => {
     setConfigured();
     ddbSendMock.mockResolvedValue({});
     sqsSendMock.mockResolvedValue({});
     const { default: handler } = await import("@src/pages/api/runs");
-    // Only 1 row / missing n_obs — the legacy route never validated shape.
+    // Only 1 row / missing n_obs; the legacy route never validated shape.
     const req = createMockReq({
       method: "POST",
       body: {

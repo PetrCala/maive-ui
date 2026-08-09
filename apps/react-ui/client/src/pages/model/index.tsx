@@ -150,7 +150,7 @@ export default function ModelPage() {
 
       // Durable fallback: the in-memory cache is lost on a page reload (the
       // persisted store keeps only the dataId), so recover from IndexedDB
-      // before giving up — otherwise the run would submit with empty data.
+      // before giving up. Otherwise the run would submit with empty data.
       if (!data && dataId) {
         const cached = await getCachedUploadedData(dataId);
         if (cached) {
@@ -195,7 +195,7 @@ export default function ModelPage() {
       console.error("Error loading data:", error);
       if (isMountedRef.current) {
         showAlert(
-          "We couldn't find your data — it isn't kept after a page reload. Please upload it again or re-run the demo.",
+          "We couldn't find your data. It isn't kept after a page reload, so please upload it again or re-run the demo.",
           "error",
         );
         router.push("/upload");
@@ -729,11 +729,11 @@ export default function ModelPage() {
 
   const handleRunModel = useCallback(() => {
     void (async () => {
-      // Never submit an empty-data run — without this the backend fails with a
+      // Never submit an empty-data run; without this the backend fails with a
       // confusing "Data must have exactly 3 or 4 columns. Found 0 columns."
       if (!uploadedData || uploadedData.data.length === 0) {
         showAlert(
-          "Your data isn't loaded — please upload it again or re-run the demo.",
+          "Your data isn't loaded. Please upload it again or re-run the demo.",
           "error",
         );
         return;
@@ -769,8 +769,8 @@ export default function ModelPage() {
               : parameters;
 
           // Best-effort: if the async submit fails (e.g. the queue/table isn't
-          // configured — 503 locally — or a transient error), degrade to the
-          // synchronous path below rather than failing the whole run. A user
+          // configured, giving a 503 locally, or a transient error), degrade to
+          // the synchronous path below rather than failing the whole run. A user
           // abort is re-thrown so the outer handler can report it.
           let submission: SubmitRunResponse | null = null;
           try {

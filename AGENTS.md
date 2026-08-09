@@ -7,7 +7,7 @@ The interface lives in `apps/react-ui/client`, a Next 14 + TypeScript app using 
 
 ## Build, Test, and Development Commands
 
-For UI work rely on `npm run ui:dev` (Next dev server with hot reload), `npm run ui:test` (Vitest + Testing Library), and `npm run ui:lint` (ESLint + Prettier). Analytics changes can be verified with `npm run lambda:test` or the focused R suite `npm run r:test-e2e`. When TypeScript or lint rules are updated, run `npm run ui:lint -- --fix` to keep the tree consistent. Infrastructure scripts exist but deployment, container orchestration, and registry management are handled separately—coordinate with the maintainer before invoking them.
+For UI work rely on `npm run ui:dev` (Next dev server with hot reload), `npm run ui:test` (Vitest + Testing Library), and `npm run ui:lint` (ESLint + Prettier). Analytics changes can be verified with `npm run lambda:test` or the focused R suite `npm run r:test-e2e`. When TypeScript or lint rules are updated, run `npm run ui:lint -- --fix` to keep the tree consistent. Infrastructure scripts exist but deployment, container orchestration, and registry management are handled separately. Coordinate with the maintainer before invoking them.
 
 ## Coding Style & Naming Conventions
 
