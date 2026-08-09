@@ -122,6 +122,10 @@ type RTMAResults = {
   unadjustedMean?: number;
   // Level of the equal-tailed credible intervals in muCI and tauCI.
   ciLevel?: number;
+  // RNG seed the sampler ran under. The credible intervals are posterior
+  // quantiles, so they depend on it; runs stored before the backend pinned a
+  // seed (#479) have no value and are not exactly reproducible.
+  seed?: number;
   // Estimates analyzed after the se > 0 filter, the affirmative share of
   // them, and the uploaded rows removed by that filter.
   k?: number;

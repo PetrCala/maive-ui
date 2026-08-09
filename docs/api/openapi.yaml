@@ -564,6 +564,15 @@ components:
           type: number
           description: Winsorization percentage applied to effect sizes and standard errors. 0 disables it.
           default: 0
+        seed:
+          type: integer
+          minimum: 1
+          default: 2025
+          description: >-
+            RNG seed for the sampler. The credible intervals are posterior
+            quantiles, so they depend on it: the same data and seed return the
+            same numbers, and varying it is how you check that an interval is
+            Monte Carlo stable. Always echoed back in the response.
 
     RunModelRequest:
       type: object
@@ -785,6 +794,7 @@ components:
         - tauCI
         - unadjustedMean
         - ciLevel
+        - seed
         - k
         - affirmativeCount
         - droppedRows
@@ -835,6 +845,12 @@ components:
         ciLevel:
           type: number
           description: Level of the credible intervals, echoed from the request.
+        seed:
+          type: integer
+          description: >-
+            RNG seed the sampler ran under, echoed from the request or the
+            default when none was sent. Re-running with the same data and seed
+            reproduces these numbers exactly.
         k:
           type: integer
           description: >-

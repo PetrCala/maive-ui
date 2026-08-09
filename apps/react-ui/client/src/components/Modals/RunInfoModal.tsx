@@ -8,6 +8,7 @@ import TEXT from "@src/lib/text";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
 import RunDetails from "@src/components/RunDetails";
+import type { DetailItem } from "@src/components/RunDetails";
 import SectionHeading from "@src/components/SectionHeading";
 import BaseModal from "./BaseModal";
 import { FaDownload } from "react-icons/fa";
@@ -45,6 +46,30 @@ export default function RunInfoModal({
   resultsText,
 }: RunInfoModalProps) {
   const isRtmaModel = parameters.modelType === CONST.MODEL_TYPES.RTMA;
+
+  // RTMA only: the credible intervals are posterior quantiles from a seeded
+  // sampler, so the seed is what makes the reported numbers traceable to the
+  // draw that produced them (#479). No other model reports one.
+  const seedText = TEXT.rtma.seed;
+  const rtmaSeed = rtmaResults?.seed;
+  const extraRunDetails: DetailItem[] = isRtmaModel
+    ? [
+        typeof rtmaSeed === "number"
+          ? {
+              label: seedText.label,
+              value: rtmaSeed,
+              show: true,
+              tooltip: seedText.tooltip,
+            }
+          : {
+              label: seedText.label,
+              value: seedText.unknownValue,
+              show: true,
+              tooltip: seedText.unknownTooltip,
+            },
+      ]
+    : [];
+
   const getParameterDisplayName = (key: keyof ModelParameters): string => {
     return TEXT.model[key].label;
   };
@@ -117,6 +142,7 @@ export default function RunInfoModal({
             runDuration={runDuration}
             runTimestamp={runTimestamp}
             dataInfo={dataInfo}
+            extraDetails={extraRunDetails}
           />
         </section>
 

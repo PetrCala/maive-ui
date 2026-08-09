@@ -419,6 +419,9 @@ export default function ResultsPage() {
         if (parsedRtmaResults.ciLevel != null) {
           optionalRows.push(["CI Level", String(parsedRtmaResults.ciLevel)]);
         }
+        if (parsedRtmaResults.seed != null) {
+          optionalRows.push(["Sampler Seed", String(parsedRtmaResults.seed)]);
+        }
         if (parsedRtmaResults.k != null) {
           optionalRows.push([
             "Estimates Used (k)",

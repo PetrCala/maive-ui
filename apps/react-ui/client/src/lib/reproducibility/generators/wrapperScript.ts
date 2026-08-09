@@ -11,8 +11,33 @@
  */
 
 import CONST from "@src/CONST";
-import type { ModelParameters, ModelResults } from "@src/types/api";
+import type {
+  ModelParameters,
+  ModelResults,
+  RTMAResults,
+} from "@src/types/api";
 import type { VersionInfo, WinsorizeInfo } from "@src/types/reproducibility";
+
+/**
+ * Seed written into an RTMA script when the run itself carries none.
+ *
+ * Mirrors RTMA_DEFAULT_SEED in apps/lambda-r-backend/r_scripts/rtma_model.R.
+ * Only reached for runs stored before the backend pinned a seed (#479); those
+ * numbers cannot be reproduced by any seed, so the script says so rather than
+ * pretending this one recreates them.
+ */
+const RTMA_FALLBACK_SEED = 2025;
+
+/**
+ * Reads the seed the RTMA sampler actually ran under, if the run recorded one.
+ *
+ * RTMA results travel through the export path typed as ModelResults (the two
+ * shapes share the same slot), so the seed has to be read off the RTMA view.
+ */
+export function getRtmaSeed(results: ModelResults): number | null {
+  const seed = (results as unknown as RTMAResults).seed;
+  return typeof seed === "number" && Number.isFinite(seed) ? seed : null;
+}
 
 /**
  * Generates winsorization details section for the R script
@@ -45,8 +70,13 @@ function generateWinsorizeSection(
 
 /**
  * Generates the parameters configuration section
+ *
+ * @param rtmaSeed - Seed to pin the RTMA sampler to (RTMA runs only)
  */
-function generateParametersSection(parameters: ModelParameters): string {
+function generateParametersSection(
+  parameters: ModelParameters,
+  rtmaSeed?: number,
+): string {
   if (parameters.modelType === "RTMA") {
     return `
 # RTMA analysis parameters (exactly as configured in the web application)
@@ -55,7 +85,13 @@ parameters <- list(
   favorPositive = ${parameters.favorPositive ? "TRUE" : "FALSE"},
   alphaSelect = 0.05,
   ciLevel = 0.95,
-  winsorize = ${parameters.winsorize}
+  winsorize = ${parameters.winsorize},
+  # RNG seed the sampler runs under. phacking::phacking_meta() takes no seed
+  # argument, so run_rtma_model() calls set.seed() with this value immediately
+  # before fitting. The credible intervals are posterior quantiles and move
+  # between runs without it, so this is what makes the numbers below
+  # reproducible.
+  seed = ${rtmaSeed ?? RTMA_FALLBACK_SEED}
 )
 
 cat("\\nAnalysis Configuration:\\n")
@@ -64,6 +100,7 @@ cat("  Favor Positive:", ifelse(parameters$favorPositive, "Yes", "No"), "\\n")
 cat("  Alpha Select:", parameters$alphaSelect, "\\n")
 cat("  CI Level:", parameters$ciLevel, "\\n")
 cat("  Winsorize:", parameters$winsorize, "%\\n")
+cat("  Seed:", parameters$seed, "\\n")
 `;
   }
 
@@ -179,14 +216,24 @@ if (effect_match && se_match && egger_match) {
 
 /**
  * Generates RTMA-specific wrapper R script
+ *
+ * @param recordedSeed - Seed the original run reported, or null when the run
+ *   predates seeded RTMA sampling and cannot be reproduced exactly
  */
 function generateRtmaWrapperScript(
   versionInfo: VersionInfo,
   parameters: ModelParameters,
   numRows: number,
+  recordedSeed: number | null,
   winsorizeInfo?: WinsorizeInfo,
 ): string {
   const timestamp = new Date().toISOString();
+  const seed = recordedSeed ?? RTMA_FALLBACK_SEED;
+  const seedHeaderNote =
+    recordedSeed === null
+      ? `# Seed:            ${seed} (default; the original run recorded no seed,
+#                  so its credible intervals cannot be reproduced exactly)`
+      : `# Seed:            ${seed}`;
 
   return `#!/usr/bin/env Rscript
 #
@@ -199,6 +246,7 @@ function generateRtmaWrapperScript(
 # Method:          RTMA (Mathur, 2024)
 # Git Commit:      ${versionInfo.gitCommitHash}
 # R Version:       ${versionInfo.rVersion}
+${seedHeaderNote}
 #
 # This script reproduces the RTMA analysis performed in the
 # MAIVE web application (${CONST.LINKS.MAIVE.WEBSITE}).
@@ -295,7 +343,7 @@ ${generateWinsorizeSection(winsorizeInfo)}
 # ============================================================
 
 cat("\\nConfiguring analysis parameters...\\n")
-${generateParametersSection(parameters)}
+${generateParametersSection(parameters, seed)}
 
 # ============================================================
 # 5. RUN ANALYSIS
@@ -304,6 +352,13 @@ ${generateParametersSection(parameters)}
 cat("\\n========================================\\n")
 cat("Running RTMA analysis...\\n")
 cat("========================================\\n\\n")
+
+# Seed here as well as in parameters$seed above. rtma_model.R is bundled from
+# the backend commit this analysis ran on, and versions from before RTMA runs
+# were seeded ignore parameters$seed entirely. Nothing between this line and
+# phacking_meta() draws from the RNG, so the sampler starts from the same state
+# either way, and the section below reports which path took effect.
+set.seed(parameters$seed)
 
 # Run the analysis using the same function as the web backend
 # Note: run_rtma_model expects JSON strings (designed for Plumber backend)
@@ -337,6 +392,23 @@ cat("tau (mode):  ", sprintf("%.6f", results$tau), "\\n")
 cat("tau (median):", sprintf("%.6f", results$tauMedian), "\\n")
 cat("tau CI:      ", sprintf("[%.6f, %.6f]", results$tauCI[1], results$tauCI[2]),
     sprintf("(equal-tailed, level %.2f)", results$ciLevel), "\\n")
+
+cat("\\n=== REPRODUCIBILITY ===\\n")
+cat("Seed requested:  ", parameters$seed, "\\n")
+if (is.null(results$seed)) {
+  cat("\\u26a0 The bundled rtma_model.R reports no seed, so it predates seeded RTMA runs.\\n")
+  cat("  The set.seed() call above still pins this run, but repeat it to confirm.\\n")
+} else if (!isTRUE(all.equal(as.numeric(results$seed), as.numeric(parameters$seed)))) {
+  cat("\\u26a0 The fit ran under seed", results$seed, "instead of", parameters$seed, "\\n")
+} else {
+  cat("\\u2713 The fit ran under the requested seed\\n")
+}${
+    recordedSeed === null
+      ? `
+cat("\\u26a0 The original web-app run recorded no seed, so its credible intervals\\n")
+cat("  cannot be reproduced exactly. This run is pinned and repeatable from here on.\\n")`
+      : ""
+  }
 
 cat("\\n=== ESTIMATES ===\\n")
 cat("Used (k):        ", results$k, "\\n")
@@ -415,6 +487,7 @@ export function generateWrapperScript(
       versionInfo,
       parameters,
       numRows,
+      getRtmaSeed(results),
       winsorizeInfo,
     );
   }

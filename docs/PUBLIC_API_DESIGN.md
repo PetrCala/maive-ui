@@ -231,10 +231,19 @@ plus `funnelPlot`/`funnelPlotWidth`/`funnelPlotHeight` only with
 ### 6.4 `POST /v1/run-rtma`: synchronous RTMA
 
 Same envelope; parameters (all optional): `favorPositive` (default `true`),
-`alphaSelect` (`0.05`), `ciLevel` (`0.95`), `winsorize` (`0`). The internal
-`parallelize` / `timeoutSeconds` knobs are **not** exposed. Response: `mu`,
-`muCI`, `tau`, `tauCI`, `nonaffirmativeCount`, `nonaffirmativeProportion`,
-`warnings` (+ `zScorePlot*` with `?include=plot`).
+`alphaSelect` (`0.05`), `ciLevel` (`0.95`), `winsorize` (`0`), `seed` (`2025`).
+The internal `parallelize` / `timeoutSeconds` knobs are **not**
+exposed. Response: `mu`, `muCI`, `tau`, `tauCI`, `seed`,
+`nonaffirmativeCount`, `nonaffirmativeProportion`, `warnings` (+ `zScorePlot*`
+with `?include=plot`).
+
+`seed` is exposed where `parallelize` / `timeoutSeconds` are not, because those
+two only change how the fit is executed while the seed changes the numbers that
+come back: `phacking_meta()` takes no seed, so an unseeded fit returns a
+different credible interval on every call for identical input (#479). The
+sampler is seeded immediately before the fit and the seed used is always echoed
+in the response, so a caller can reproduce a result exactly, or vary the seed
+deliberately to check that an interval is Monte Carlo stable.
 
 `mu` and `muCI` are reported on the sign convention of the submitted data:
 `phacking_meta()` fits on `-yi` when `favorPositive` is `false`, and

@@ -7,6 +7,30 @@ library(phacking)
 
 RTMA_PLOT_RES <- 120
 
+# Default RNG seed for the RTMA sampler.
+#
+# phacking::phacking_meta() takes no seed argument, so RStan draws a fresh one on
+# every call. The mode comes from a deterministic mle_params() optimisation and
+# is stable, but the credible interval is a posterior quantile and moves between
+# runs on identical input, which reports Monte Carlo noise as statistical
+# uncertainty (#479). Seeding immediately before the fit makes the whole result
+# bit-identical across repeats.
+#
+# The value is arbitrary; what matters is that it is fixed, reported back in the
+# response, and overridable through params$seed so a caller can vary it
+# deliberately (e.g. to check that an interval is Monte Carlo stable).
+#
+# It is not entirely free of consequences, though. On a weakly identified dataset
+# the sampler's trajectory depends on where it starts, so some seeds send it into
+# a pathologically deep tree and the fit runs for minutes instead of seconds: on
+# the e2e "precise estimates" fixture that happens for 20250101 and 2026, and on
+# the near-degenerate /v1 fixture for 42 and 8454. Unseeded runs took that gamble
+# on every call, so this is not a new failure mode, but a fixed seed makes it
+# deterministic, so this value was timed against every RTMA fixture in the e2e
+# suite (all fits under 8 seconds). Any dataset can still be unlucky, which is
+# what the wall-clock limit below is for.
+RTMA_DEFAULT_SEED <- 2025L
+
 #' Render a z-score density plot and return it as a base64-encoded PNG data URI
 #'
 #' phacking::z_density() has no favor_positive argument: it always draws the
@@ -172,12 +196,22 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   # Wall-clock budget kept below the Lambda function timeout so a degenerate
   # dataset returns a clear error instead of being hard-killed mid-request.
   timeout_sec <- if (!is.null(params$timeoutSeconds)) as.numeric(params$timeoutSeconds) else 480
+  # Sampler seed; see RTMA_DEFAULT_SEED above for why it must be pinned.
+  seed <- if (!is.null(params$seed)) {
+    suppressWarnings(as.integer(params$seed))
+  } else {
+    RTMA_DEFAULT_SEED
+  }
+  if (length(seed) != 1 || is.na(seed)) {
+    cli::cli_abort("The seed parameter must be a single integer.")
+  }
 
   cli::cli_h2("RTMA parameters:")
   cli::cli_bullets(c(
     "favor_positive: {favor_positive}",
     "alpha_select: {alpha_select}",
     "ci_level: {ci_level}",
+    "seed: {seed}",
     "parallelize: {parallelize}",
     "timeout_sec: {timeout_sec}"
   ))
@@ -198,14 +232,20 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   setTimeLimit(elapsed = timeout_sec, transient = TRUE)
   rtma_res <- tryCatch(
     withCallingHandlers(
-      phacking::phacking_meta(
-        yi = yi,
-        vi = vi,
-        favor_positive = favor_positive,
-        alpha_select = alpha_select,
-        ci_level = ci_level,
-        parallelize = parallelize
-      ),
+      {
+        # Seeded here rather than at the top of the function: nothing between
+        # this line and phacking_meta() touches the RNG, so this is exactly the
+        # state the sampler starts from.
+        set.seed(seed)
+        phacking::phacking_meta(
+          yi = yi,
+          vi = vi,
+          favor_positive = favor_positive,
+          alpha_select = alpha_select,
+          ci_level = ci_level,
+          parallelize = parallelize
+        )
+      },
       warning = function(w) {
         rtma_warnings <<- c(rtma_warnings, conditionMessage(w))
         invokeRestart("muffleWarning")
@@ -331,6 +371,9 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
     # level (phacking does not compute HPD intervals); echoed back so displays
     # can state the level instead of implying 95%.
     ciLevel = ci_level,
+    # The RNG seed the sampler ran under, so the numbers above are traceable to
+    # the draw that produced them and can be reproduced exactly (#479).
+    seed = seed,
     k = k,
     affirmativeCount = k_affirmative,
     droppedRows = dropped_rows,

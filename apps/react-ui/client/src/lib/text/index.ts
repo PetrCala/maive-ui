@@ -448,6 +448,14 @@ const TEXT = {
   },
   rtma: {
     dropdownLabel: "RTMA",
+    seed: {
+      label: "Sampler Seed",
+      tooltip:
+        "Random seed the RTMA sampler ran under. The credible intervals are posterior quantiles, so they depend on it; the same data and seed reproduce the same numbers exactly.",
+      unknownValue: "Not recorded",
+      unknownTooltip:
+        "This run predates seeded RTMA sampling, so its credible intervals cannot be reproduced exactly. Rerun the model to get a seeded result.",
+    },
   },
   waive: {
     dropdownLabel: "WAIVE (Experimental)",

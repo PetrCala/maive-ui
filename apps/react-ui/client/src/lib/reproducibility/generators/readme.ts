@@ -9,8 +9,13 @@ import type { VersionInfo } from "@src/types/reproducibility";
 
 /**
  * Converts model parameters to a readable markdown table
+ *
+ * @param rtmaSeed - Seed the RTMA sampler ran under, when the run recorded one
  */
-function generateParameterTable(parameters: ModelParameters): string {
+function generateParameterTable(
+  parameters: ModelParameters,
+  rtmaSeed?: number | null,
+): string {
   const rows =
     parameters.modelType === "RTMA"
       ? [
@@ -19,6 +24,12 @@ function generateParameterTable(parameters: ModelParameters): string {
           ["Alpha Select", "0.05"],
           ["CI Level", "0.95"],
           ["Winsorize Percentage", `${parameters.winsorize}%`],
+          [
+            "Sampler Seed",
+            rtmaSeed == null
+              ? "not recorded (run predates seeded RTMA sampling)"
+              : String(rtmaSeed),
+          ],
         ]
       : [
           ["Model Type", parameters.modelType],
@@ -64,6 +75,7 @@ export function generateReadme(
   versionInfo: VersionInfo,
   parameters: ModelParameters,
   numRows: number,
+  rtmaSeed?: number | null,
 ): string {
   const timestamp = new Date(versionInfo.timestamp).toLocaleString("en-US", {
     year: "numeric",
@@ -74,7 +86,7 @@ export function generateReadme(
     timeZoneName: "short",
   });
 
-  const parameterTable = generateParameterTable(parameters);
+  const parameterTable = generateParameterTable(parameters, rtmaSeed);
 
   const isRtma = parameters.modelType === "RTMA";
   const title = isRtma
