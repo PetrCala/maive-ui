@@ -2,23 +2,26 @@
 
 import type { DataInfo } from "@src/types/data";
 
-type RunDetailsProps = {
-  runDuration?: number;
-  runTimestamp?: Date;
-  dataInfo?: DataInfo;
-};
-
-type DetailItem = {
+export type DetailItem = {
   label: string;
   value: string | number;
   show: boolean;
   tooltip?: string;
 };
 
+type RunDetailsProps = {
+  runDuration?: number;
+  runTimestamp?: Date;
+  dataInfo?: DataInfo;
+  /** Model-specific rows appended after the data details (e.g. the RTMA seed) */
+  extraDetails?: DetailItem[];
+};
+
 export default function RunDetails({
   runDuration,
   runTimestamp,
   dataInfo,
+  extraDetails = [],
 }: RunDetailsProps) {
   const formatDuration = (ms?: number): string => {
     if (!ms) {
@@ -106,7 +109,7 @@ export default function RunDetails({
       ]
     : [];
 
-  const allDetails = [...runDetails, ...dataDetails];
+  const allDetails = [...runDetails, ...dataDetails, ...extraDetails];
   const visibleDetails = allDetails.filter((detail) => detail.show);
 
   // Split details into two columns for better layout

@@ -133,6 +133,11 @@ export const RTMA_PARAMETERS: ParameterRow[] = [
     values: "number (percent, 0 disables)",
     defaultValue: "0",
   },
+  {
+    name: "seed",
+    values: "integer (sampler seed, echoed in the response)",
+    defaultValue: "2025",
+  },
 ];
 
 export type CodeSample = {

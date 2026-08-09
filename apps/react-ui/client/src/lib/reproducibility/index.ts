@@ -13,7 +13,7 @@ import type { VersionInfo, WinsorizeInfo } from "@src/types/reproducibility";
 import type { DataArray } from "@src/types";
 
 import { fetchRCodeBundle } from "./githubFetcher";
-import { generateWrapperScript } from "./generators/wrapperScript";
+import { generateWrapperScript, getRtmaSeed } from "./generators/wrapperScript";
 import { generateReadme, generateVersionManifest } from "./generators/readme";
 import { convertDataToCSV } from "./csvConverter";
 import { validateExportData, estimatePackageSize } from "./validator";
@@ -82,7 +82,12 @@ export async function generateReproducibilityPackage(
 
   // 4. Generate README
   console.log("Generating README...");
-  const readme = generateReadme(versionInfo, parameters, dataLength);
+  const readme = generateReadme(
+    versionInfo,
+    parameters,
+    dataLength,
+    parameters.modelType === "RTMA" ? getRtmaSeed(results) : null,
+  );
 
   // 5. Generate version manifest
   console.log("Generating version manifest...");

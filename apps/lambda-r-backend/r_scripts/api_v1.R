@@ -404,6 +404,33 @@ api_v1_winsorize_parameter <- function(params) {
   value
 }
 
+#' Validate the RTMA sampler seed (a positive integer), or NULL when absent
+#'
+#' Returns NULL rather than a default so the caller can leave the parameter out
+#' entirely and let run_rtma_model() apply RTMA_DEFAULT_SEED, keeping one
+#' definition of the default.
+api_v1_seed_parameter <- function(params) {
+  value <- params$seed
+  if (is.null(value)) {
+    return(NULL)
+  }
+  is_positive_integer <- is.numeric(value) &&
+    length(value) == 1 &&
+    !is.na(value) &&
+    value >= 1 &&
+    value <= .Machine$integer.max &&
+    abs(value - round(value)) < .Machine$double.eps^0.5
+  if (!is_positive_integer) {
+    api_v1_abort_validation(
+      sprintf(
+        "Invalid seed value: must be a positive integer no larger than %d.",
+        .Machine$integer.max
+      )
+    )
+  }
+  as.integer(round(value))
+}
+
 #' Validate a parameter that must lie strictly between 0 and 1
 api_v1_unit_interval_parameter <- function(params, name, default) {
   value <- params[[name]]
@@ -459,19 +486,31 @@ api_v1_default_maive_parameters <- function(parameters) {
 #' Apply RTMA parameter defaults per design D6
 #'
 #' The internal parallelize/timeoutSeconds knobs are deliberately not exposed;
-#' run_rtma_model falls back to its own safe defaults for them.
+#' run_rtma_model falls back to its own safe defaults for them. `seed` is not in
+#' that category: those two only affect how the fit is executed, while the seed
+#' determines the numbers that come back, so a caller who wants to re-run a
+#' response exactly, or to vary the seed and check that an interval is Monte
+#' Carlo stable, has to be able to set it. It is left out of the list when the
+#' caller omits it, so run_rtma_model()'s RTMA_DEFAULT_SEED stays the single
+#' definition of the default; the response echoes whichever seed was used.
 #'
 #' @param parameters The `parameters` field of the request body (may be NULL)
 #' @return Complete parameter list for run_rtma_model()
 api_v1_default_rtma_parameters <- function(parameters) {
   params <- api_v1_parameters_object(parameters)
 
-  list(
+  defaults <- list(
     favorPositive = api_v1_flag_parameter(params, "favorPositive", TRUE),
     alphaSelect = api_v1_unit_interval_parameter(params, "alphaSelect", 0.05),
     ciLevel = api_v1_unit_interval_parameter(params, "ciLevel", 0.95),
     winsorize = api_v1_winsorize_parameter(params)
   )
+
+  seed <- api_v1_seed_parameter(params)
+  if (!is.null(seed)) {
+    defaults$seed <- seed
+  }
+  defaults
 }
 
 #' Check whether ?include=plot was requested (design D7)

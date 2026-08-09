@@ -39,6 +39,7 @@ source(file.path(script_dir, "scenarios/publication_bias_test.R"))
 source(file.path(script_dir, "scenarios/edge_cases_test.R"))
 source(file.path(script_dir, "scenarios/basic_rtma_test.R"))
 source(file.path(script_dir, "scenarios/rtma_direction_test.R"))
+source(file.path(script_dir, "scenarios/rtma_seed_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
 
 # Define available test scenarios
@@ -109,6 +110,11 @@ AVAILABLE_SCENARIOS <- list(
     name = "RTMA Favored Direction Test",
     description = "Test that RTMA respects the favored direction and flags a wrong one",
     function_name = "test_rtma_direction"
+  ),
+  "rtma-seed" = list(
+    name = "RTMA Seed Reproducibility Test",
+    description = "Test that identical input and seed reproduce identical RTMA results",
+    function_name = "test_rtma_seed"
   ),
 
   # Public /v1 API scenarios
@@ -382,11 +388,22 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   }
   test_count <- test_count + 1
 
-  # RTMA favored direction runs last: it fits three more RTMA models, and every
-  # extra fit in this long-lived process makes the rstan sampler more likely to
-  # wedge on a later one. Keeping it at the end leaves every other scenario with
-  # the same process state it had before this test existed.
-  cat("\n8. Running RTMA favored direction test...\n")
+  # The two scenarios below run last: between them they fit seven more RTMA
+  # models, and every extra fit in this long-lived process makes the rstan
+  # sampler more likely to wedge on a later one. Keeping them at the end leaves
+  # every other scenario with the same process state it had before they existed.
+  cat("\n8. Running RTMA seed reproducibility test...\n")
+  rtma_seed_result <- test_rtma_seed()
+  all_results$rtma_seed <- rtma_seed_result
+  if (rtma_seed_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ RTMA seed reproducibility test passed\n")
+  } else {
+    cat("   ✗ RTMA seed reproducibility test failed:", rtma_seed_result$error, "\n")
+  }
+  test_count <- test_count + 1
+
+  cat("\n9. Running RTMA favored direction test...\n")
   rtma_direction_result <- test_rtma_direction()
   all_results$rtma_direction <- rtma_direction_result
   if (rtma_direction_result$status == "PASS") {

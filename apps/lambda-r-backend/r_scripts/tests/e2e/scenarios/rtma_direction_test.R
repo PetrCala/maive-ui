@@ -124,9 +124,10 @@ test_rtma_direction <- function() {
         )
       )
 
-      # 2. The two fits mirror each other. Sampling is unseeded, so compare with
-      # a tolerance well above Monte Carlo noise but far below the sign error
-      # this guards against (which doubles the magnitude).
+      # 2. The two fits mirror each other. Both now run under the same pinned
+      # seed (#479), but they are still separate fits, so compare with a
+      # tolerance well above Monte Carlo noise but far below the sign error this
+      # guards against (which doubles the magnitude).
       mu_tolerance <- 0.25 * abs(positive_results$mu)
       # Interval bounds are posterior quantiles, so the long tail carries far
       # more Monte Carlo noise than the mode. Scale their tolerance to the
