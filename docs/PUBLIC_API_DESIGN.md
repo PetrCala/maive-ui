@@ -91,10 +91,11 @@ are a **prerequisite**, not a nice-to-have.
   status + result (48 h TTL). Poll via `GET /api/runs/{jobId}`; batch status
   via `GET /api/runs?ids=`. `jobId` is an opaque bearer token (locked decision
   D6 of the async design).
-- **Edge**: Cloudflare fronts the *UI* domains only (`maive.eu`,
-  `spuriousprecision.com`), with a Worker rewriting Host/SNI to the `.on.aws`
-  origin. The R Function URL is **not** behind Cloudflare; the browser calls
-  it directly. Cloudflare caps proxied origin responses at ~100 s.
+- **Edge**: Cloudflare fronts the *UI* domains only (`easymeta.org`, the
+  canonical one, and `maive.eu`; `spuriousprecision.com` redirects to
+  `easymeta.org`), with a Worker rewriting Host/SNI to the `.on.aws` origin.
+  The R Function URL is **not** behind Cloudflare; the browser calls it
+  directly. Cloudflare caps proxied origin responses at ~100 s.
 - **Costs**: ~$0.001-0.002 of Lambda compute per typical run; pathological
   runs bounded by the R-side 480 s guard (RTMA) / 600 s Lambda timeout.
 
@@ -446,12 +447,13 @@ until Phase 3.
 - **Column resolution by name (D5)** adds one behavior divergence from legacy
   (which is purely positional). Contained to `/v1`; property-tested in the e2e
   scenario.
-- **Hostname mirroring:** ~~also expose `api.spuriousprecision.com`?~~
-  **Decided:** no. `api.maive.eu` is the single canonical hostname; one
-  hostname keeps docs and rate-limit scoping simple (and on the Free plan the
-  zone gets only one rate-limit rule anyway). `easymeta.org` is GoDaddy
-  domain-forwarding, not a Cloudflare zone, so it could not host an API
-  hostname without moving its DNS first.
+- **Hostname mirroring:** ~~also expose `api.spuriousprecision.com` or
+  `api.easymeta.org`?~~ **Decided:** no. `api.maive.eu` is the single
+  canonical hostname; one hostname keeps docs and rate-limit scoping simple
+  (and on the Free plan each zone gets only one rate-limit rule anyway).
+  `easymeta.org` becoming the canonical *UI* address does not change this:
+  `maive.eu` stays the infrastructure zone, and moving the API hostname would
+  invalidate every published example for no benefit.
 - **Result-shape stability:** `/v1` freezes field names that today mirror
   internal R naming (`petpeese_selected`, `is_quadratic_fit`, …). Accepted;
   they're already the de-facto contract for the UI and reproducibility
