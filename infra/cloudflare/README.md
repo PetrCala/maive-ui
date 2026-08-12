@@ -38,23 +38,24 @@ All three zones sit in the same account and share the nameserver pair
 
 ### Status of the `easymeta.org` migration
 
-As of 2026-08-12 the migration described in
-[#487](https://github.com/PetrCala/maive-ui/issues/487) is **half done**. The
-Cloudflare side is fully configured; the nameservers have **not** been flipped,
-so `easymeta.org` still resolves to GoDaddy and 301s to
-`https://www.spuriousprecision.com`.
+On 2026-08-12 the nameservers for `easymeta.org` were changed at GoDaddy to
+`fonzie.ns.cloudflare.com` / `jessica.ns.cloudflare.com`, completing the
+delegation half of [#487](https://github.com/PetrCala/maive-ui/issues/487).
 
-Done (all reversible by deleting the zone):
+Done:
 
 - zone created, empty, with Cloudflare's DNS scan deliberately skipped so the
   GoDaddy forwarding A records were never imported;
 - proxied apex and `www` CNAMEs at the UI Function URL;
+- ACM validation CNAME and `_dmarc` TXT carried over by hand from the GoDaddy
+  zone (see the pre-migration table below for why this was not optional);
 - `easymeta.org/*` and `www.easymeta.org/*` routed to `ui-origin-proxy`;
 - its own rate-limit rule, mirroring the other two zones;
-- Always Use HTTPS on, matching the other two zones.
+- Always Use HTTPS on, matching the other two zones;
+- nameservers flipped at the registrar.
 
-Not done: the GoDaddy nameserver flip, and the `spuriousprecision.com`
-redirect that follows it.
+Not done: the `spuriousprecision.com` redirect, which waits until
+`easymeta.org` is confirmed serving.
 
 See [Migrating `easymeta.org`](#migrating-easymetaorg) for the remaining steps
 and the recorded pre-change state.
@@ -171,31 +172,62 @@ to `ui-origin-proxy`. Same leftover ACM validation record and same stale
 |---|---|---|---|
 | `easymeta.org` | CNAME | UI Function URL host | yes |
 | `www` | CNAME | UI Function URL host | yes |
+| `_da5c38ca…` | CNAME | `…xlfgrmvvlj.acm-validations.aws` | no |
+| `_dmarc` | TXT | `v=DMARC1; p=quarantine; adkim=r; aspf=r; rua=…` | no |
 
 **No wildcard, deliberately.** The other two zones have one, and it is the
 reason an unrouted subdomain there hangs instead of failing cleanly. There is
 no need to repeat that here.
 
+The last two records were **carried over from GoDaddy** at the flip rather than
+created here. Cloudflare's DNS scan was skipped at zone creation, so nothing
+was imported automatically and each record had to be re-added deliberately.
+Copying the ACM validation record matters: without it the certificate stops
+validating and fails silently at renewal, months later. Both other zones carry
+their own equivalent, so this is the house pattern.
+
+Deliberately **not** carried over: the two forwarding `A` records (that is the
+behaviour being replaced), the GoDaddy `NS`/`SOA` records, and
+`_domainconnect` (GoDaddy-specific, inert once the domain is delegated away).
+
 ### `easymeta.org` (GoDaddy, pre-migration)
 
-Recorded 2026-08-11, before any change, so it can be restored:
+Read out of the GoDaddy DNS panel on 2026-08-12, immediately before the flip,
+so it can be restored. All ten records:
+
+| Name | Type | Content | TTL |
+|---|---|---|---|
+| `@` | A | `15.197.225.128` | 1h |
+| `@` | A | `3.33.251.168` | 1h |
+| `www` | A | `15.197.225.128` | 1h |
+| `www` | A | `3.33.251.168` | 1h |
+| `@` | NS | `ns01.domaincontrol.com.` | 1h |
+| `@` | NS | `ns02.domaincontrol.com.` | 1h |
+| `@` | SOA | `ns01.domaincontrol.com. dns.jomax.net. 2026071500 28800 7200 604800 600` | 1h |
+| `_da5c38cad52303857d09dd735c695589` | CNAME | `_7dcc5b282b0acf41393327a2b7050f0c.xlfgrmvvlj.acm-validations.aws.` | 600s |
+| `_domainconnect` | CNAME | `_domainconnect.gd.domaincontrol.com.` | 1h |
+| `_dmarc` | TXT | `v=DMARC1; p=quarantine; adkim=r; aspf=r; rua=mailto:dmarc_rua@onsecureserver.net;` | 1h |
+
+Registrar and domain state:
 
 | | |
 |---|---|
-| Registrar | GoDaddy.com, LLC. **Not** in the `cala.p@seznam.cz` GoDaddy account, which holds no domains at all; presumably T. Havranek's, matching the Cloudflare account |
-| Registry expiry | **2026-08-30** |
+| Registrar | GoDaddy.com, LLC, under T. Havranek's account, matching the Cloudflare account. Reachable by delegate access; the `cala.p@seznam.cz` account holds no domains at all |
+| Registry expiry | 2026-08-30, **auto-renew on**, EUR 21.99/yr |
 | Registrar locks | `clientUpdateProhibited`, `clientTransferProhibited`, `clientDeleteProhibited`, `clientRenewProhibited` |
-| Nameservers | `ns01.domaincontrol.com`, `ns02.domaincontrol.com` |
-| SOA | `ns01.domaincontrol.com. dns.jomax.net. 2026071500 28800 7200 604800 600` |
-| A (apex and `www`) | `3.33.251.168`, `15.197.225.128` (GoDaddy forwarding front end) |
-| AAAA / MX / TXT / CAA | none |
-| DNSSEC | **not enabled** (no `DS` at the parent), so a nameserver move is safe |
+| DNSSEC | **not enabled** (no `DS` at any of three public resolvers), so a nameserver move is safe |
 | Forwarding | 301 to `https://www.spuriousprecision.com`, on both `http` and `https`, apex and `www` |
 
-`clientUpdateProhibited` is part of GoDaddy's standard domain lock. Whether it
-has to be lifted before the nameservers can be changed depends on whether the
-change is made through GoDaddy's own UI; budget for it as a possible extra
-step rather than a surprise mid-flip.
+> [!WARNING]
+> An earlier revision of this table said "AAAA / MX / TXT / CAA: none". That was
+> wrong, and it was derived from probing the domain from outside rather than
+> reading the zone. The `_dmarc` TXT and the ACM validation CNAME were both
+> missed, because an external probe only finds the names it thinks to ask for.
+> **Read the registrar's own zone listing before migrating a domain.**
+
+`clientUpdateProhibited` is part of GoDaddy's standard domain lock. In the event
+it did **not** have to be lifted: the nameserver form in GoDaddy's own UI is
+unaffected by it, and delegate access was sufficient to make the change.
 
 The forwarder answers `HEAD` with **405 Method Not Allowed** and an empty body,
 and answers `GET` with a 68-byte
