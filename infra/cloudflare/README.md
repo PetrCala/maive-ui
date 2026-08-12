@@ -31,19 +31,33 @@ that fails loudly, which is easy to miss when adding a domain.
 |---|---|---|---|
 | `maive.eu` | `921f07a73f48aa3e80ac2cead44f76ec` | Free | Infrastructure zone: serves the app, hosts `api.maive.eu`, and is the fallback front door |
 | `spuriousprecision.com` | `104e1921be01913c74cc03e3d2bfda74` | Free | Serves the app; being turned into a redirect to `easymeta.org` |
-| `easymeta.org` | not yet a Cloudflare zone | n/a | **Canonical** address once migrated; today still GoDaddy domain forwarding |
+| `easymeta.org` | `9cc1c18ae7cc9143320233d10fc78c87` | Free | **Canonical** address once migrated; zone created but still `initializing` |
 
-Both existing zones sit in the same account and share the nameserver pair
+All three zones sit in the same account and share the nameserver pair
 `fonzie.ns.cloudflare.com` / `jessica.ns.cloudflare.com`.
 
 ### Status of the `easymeta.org` migration
 
-As of 2026-08-11 the migration described in
-[#487](https://github.com/PetrCala/maive-ui/issues/487) is **not done**:
-`easymeta.org` still resolves to GoDaddy and 301s to
-`https://www.spuriousprecision.com`. See
-[Migrating `easymeta.org`](#migrating-easymetaorg) below for the runbook and
-the recorded pre-change state.
+As of 2026-08-12 the migration described in
+[#487](https://github.com/PetrCala/maive-ui/issues/487) is **half done**. The
+Cloudflare side is fully configured; the nameservers have **not** been flipped,
+so `easymeta.org` still resolves to GoDaddy and 301s to
+`https://www.spuriousprecision.com`.
+
+Done (all reversible by deleting the zone):
+
+- zone created, empty, with Cloudflare's DNS scan deliberately skipped so the
+  GoDaddy forwarding A records were never imported;
+- proxied apex and `www` CNAMEs at the UI Function URL;
+- `easymeta.org/*` and `www.easymeta.org/*` routed to `ui-origin-proxy`;
+- its own rate-limit rule, mirroring the other two zones;
+- Always Use HTTPS on, matching the other two zones.
+
+Not done: the GoDaddy nameserver flip, and the `spuriousprecision.com`
+redirect that follows it.
+
+See [Migrating `easymeta.org`](#migrating-easymetaorg) for the remaining steps
+and the recorded pre-change state.
 
 ### API token scope
 
@@ -51,28 +65,45 @@ the recorded pre-change state.
 token (`$CLOUDFLARE_API_TOKEN` or `~/.config/cloudflare/maive_token`). Its
 actual scope, probed 2026-08-11, is narrower than "the account":
 
-| Operation | Result |
-|---|---|
-| List zones | works |
-| `maive.eu` DNS / rulesets / Worker routes, read | works |
-| Account Worker scripts, read + write | works |
-| Zone settings, read (any zone) | denied (9109) |
-| `spuriousprecision.com` anything | denied (10000) |
-| Create a zone | denied (`com.cloudflare.api.account.zone.create`) |
+The token is the user token `dns-automation`, owned by the `cala.p@seznam.cz`
+login. Its permissions are:
 
-So the token is effectively **`maive.eu` plus account Workers Scripts**. Work
-on any other zone needs the token re-scoped first; the failure mode is a bare
-`Authentication error` with code 10000, which reads like a bad token rather
-than a missing grant.
+| Scope | Group | Level |
+|---|---|---|
+| Account | Workers Scripts | Edit |
+| Zone | Zone | Read |
+| Zone | DNS | Edit |
+| Zone | Workers Routes | Edit |
+| Zone | Zone WAF | Edit (this is what covers rate-limit rules) |
+
+Account resources: both `Cala.p@seznam.cz's Account` and
+`T.havranek@gmail.com's Account`. Zone resources: **all zones from
+T.havranek@gmail.com's Account**.
+
+Two things it deliberately cannot do, both worked around rather than granted:
+
+- **Create a zone** (`com.cloudflare.api.account.zone.create`). Add sites in
+  the dashboard instead; it is a broader grant than anything else here needs.
+- **Edit zone settings** (Always Use HTTPS, SSL mode, and the certificate-pack
+  API). Do those in the dashboard too.
+
+Until 2026-08-12 the zone resource was `Specific zone: maive.eu`, which is why
+`spuriousprecision.com` was never documented: the token simply could not read
+it. If a call fails with a bare `Authentication error` code 10000, suspect
+resource scoping rather than a bad token. A zone created *after* a
+zone-scoped token is issued is not covered by it, which is the reason for the
+account-wide setting.
 
 ## Workers
 
 | Script | Source | Routes |
 |---|---|---|
-| `ui-origin-proxy` | [`workers/ui-origin-proxy.js`](workers/ui-origin-proxy.js) | `maive.eu/*`, `www.maive.eu/*`, and (inferred, see below) the `spuriousprecision.com` hostnames |
+| `ui-origin-proxy` | [`workers/ui-origin-proxy.js`](workers/ui-origin-proxy.js) | `maive.eu/*`, `www.maive.eu/*`, `spuriousprecision.com/*`, `www.spuriousprecision.com/*`, `easymeta.org/*`, `www.easymeta.org/*` |
 | `api-origin-proxy` | [`workers/api-origin-proxy.js`](workers/api-origin-proxy.js) | `api.maive.eu/*` |
 
-The account contains exactly these two Worker scripts.
+The account contains exactly these two Worker scripts. `ui-origin-proxy` is
+hostname-agnostic: it rewrites whatever host it receives to the fixed origin,
+so adding a hostname is purely a matter of adding a route.
 
 `api-origin-proxy` path-routes between the two Lambda origins and whitelists
 only the documented `/v1` endpoints (everything else 404s, keeping the legacy
@@ -120,23 +151,30 @@ surprising if you hit it.
 
 ### Zone `spuriousprecision.com`
 
-**Not fully inventoried.** The shared token cannot read this zone (see [API
-token scope](#api-token-scope)), so the record set and route patterns below are
-what could be established from outside:
+Inventoried 2026-08-12, once the token could read it. It mirrors `maive.eu`
+almost exactly:
 
-- Verified: apex and `www` both resolve to Cloudflare anycast addresses
-  (`104.21.70.108`, `172.67.222.222`) and return `200` with `server:
-  cloudflare`, `x-powered-by: Next.js`, and `x-amzn-*` headers whose
-  `Lineage` matches the one `maive.eu` returns. Both hostnames therefore reach
-  the same UI Lambda through Cloudflare.
-- Inferred: they do so via `ui-origin-proxy`. A proxied record alone cannot
-  reach a Function URL (see [Why a Worker at all](#why-a-worker-at-all)), and
-  the account holds only two Worker scripts, of which only `ui-origin-proxy`
-  targets the UI origin.
-- Unknown: the exact records (apex flattened CNAME vs A, whether a wildcard
-  exists) and the exact Worker route patterns.
+| Record | Type | Content | Proxied |
+|---|---|---|---|
+| `spuriousprecision.com` | CNAME | UI Function URL host | yes |
+| `www` | CNAME | UI Function URL host | yes |
+| `*` | CNAME | UI Function URL host | yes |
+| `_144a1a6b…` | CNAME | `…xlfgrmvvlj.acm-validations.aws` | no |
 
-Fill this in the next time the token can read the zone.
+Worker routes `spuriousprecision.com/*` and `www.spuriousprecision.com/*`, both
+to `ui-origin-proxy`. Same leftover ACM validation record and same stale
+`ns.wedos.*` apex NS records as `maive.eu`; both are inert.
+
+### Zone `easymeta.org`
+
+| Record | Type | Content | Proxied |
+|---|---|---|---|
+| `easymeta.org` | CNAME | UI Function URL host | yes |
+| `www` | CNAME | UI Function URL host | yes |
+
+**No wildcard, deliberately.** The other two zones have one, and it is the
+reason an unrouted subdomain there hangs instead of failing cleanly. There is
+no need to repeat that here.
 
 ### `easymeta.org` (GoDaddy, pre-migration)
 
@@ -175,15 +213,19 @@ Terraform), per `PUBLIC_API_DESIGN.md` D2.
 
 ### Zone `spuriousprecision.com`
 
-Unknown; the token cannot read the zone's rulesets. Once it redirects rather
-than serves, a rate-limit rule there matters much less.
+- Ruleset `7f1cd1cb9a184c30b04a345b64b7bedc`, rule `07341b176aa84bb1a30755d0adde2d01`
+- Expression: `(http.host eq "spuriousprecision.com" or http.host eq "www.spuriousprecision.com")`
+- Same shape: `block`, 100 requests / 10s per `(ip.src, cf.colo.id)`
 
 ### Zone `easymeta.org`
 
-Does not exist yet. When the zone is created it **must** get its own
-rate-limit rule mirroring the `maive.eu` one before it starts serving.
-Otherwise the canonical hostname is the cheap unmetered path to the same
-Lambdas, which defeats the rule on `maive.eu`.
+- Ruleset `22e8bfe243e44a8fba4681ae089c784d`, rule `536d815293d1482b8beb2b6b66dfe39f`
+- Expression: `(http.host eq "easymeta.org" or http.host eq "www.easymeta.org")`
+- Same shape: `block`, 100 requests / 10s per `(ip.src, cf.colo.id)`
+
+Added before the zone was delegated, on purpose. A serving hostname without a
+rate-limit rule is the cheap unmetered path to the same Lambdas and defeats the
+rules on the other two zones.
 
 ## Migrating `easymeta.org`
 
@@ -217,13 +259,32 @@ Steps, in this order, because only step 5 is hard to reverse:
    Function URL host, add `easymeta.org/*` and `www.easymeta.org/*` routes to
    `ui-origin-proxy`, add the zone's rate-limit rule, and enable Always Use
    HTTPS.
-4. Verify **before** delegating, against the assigned Cloudflare IPs:
-   `curl --resolve easymeta.org:443:<cf-ip> https://easymeta.org/`. This
-   exercises the real edge path without touching public DNS. A hang here means
-   the Worker route is missing. Do not proceed until this returns the app.
+4. Verifying before delegating **does not work**, and the reason is structural
+   rather than a config error. Cloudflare does not serve a zone at the edge
+   until it is `active`, and a zone only becomes active once it sees the
+   nameserver delegation. Pre-delegation,
+   `curl --resolve easymeta.org:443:<cf-ip> https://easymeta.org/` fails the
+   TLS handshake, because Universal SSL is not issued for a pending zone, and
+   the same request on port 80 returns **409**, which is byte-for-byte what
+   Cloudflare returns for a domain it has never heard of. Measured 2026-08-12,
+   with two controls: `maive.eu` through the identical `--resolve` technique
+   returns `200`, and an invented domain through the same edge IP returns the
+   same `409`. So the 409 says "zone not active", not "config broken", and
+   there is no pre-flight that distinguishes a correct config from a broken one.
+
+   What can be checked instead is config equivalence against the two zones
+   known to work: same origin, same Worker script, same route shape, same
+   rate-limit shape. That is an argument, not a test. Weigh it against the
+   rollback cost before flipping.
 5. Flip the nameservers at GoDaddy to the pair Cloudflare assigns, then poll
    until the zone reports `active`. DNSSEC is off, so no extra step is needed,
    but re-check that before flipping. Propagation is not instant.
+
+   **Expect a window where HTTPS is broken.** Universal SSL is only ordered
+   once the zone goes active, so between activation and certificate issuance
+   `https://easymeta.org` will fail to handshake. Today the domain works, so
+   this is a real if short regression, and it is the main argument for doing
+   the flip at a quiet hour rather than mid-week daytime.
 6. Only once `easymeta.org` is confirmed serving, switch
    `spuriousprecision.com` to a 301 redirect (Single Redirects,
    `http_request_dynamic_redirect` phase) and drop its `ui-origin-proxy`
