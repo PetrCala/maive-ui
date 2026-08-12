@@ -442,7 +442,7 @@ R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws
 - **Version bumping**: Add `v-build`, `v-patch`, `v-minor`, or `v-major` labels
 - **Automation**: Use `npm run release` to open release PR, `npm run mergePR` to merge
 - **Infrastructure**: Defer to maintainer for `cloud:*` and `images:*` commands
-- **Quarterly releases**: Automated releases on Jan 1, Apr 1, Jul 1, Oct 1
+- **Quarterly releases**: `quarterly-release.yml` opens a version-bump PR on Jan 1, Apr 1, Jul 1, Oct 1. It only bumps `package.json`; it never applies the `release` label, so merging it does not deploy anything on its own
 
 ## Common Issues
 
