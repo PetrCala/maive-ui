@@ -438,7 +438,7 @@ R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws
 
 ## Deployment Notes
 
-- **Release workflow**: PRs to `release` branch trigger `release.yml` GitHub Actions
+- **Release workflow**: there is no `release` branch. `release.yml` triggers on any PR merged into `master` that carries the `release` label; the merge itself starts the build and deploy
 - **Version bumping**: Add `v-build`, `v-patch`, `v-minor`, or `v-major` labels
 - **Automation**: Use `npm run release` to open release PR, `npm run mergePR` to merge
 - **Infrastructure**: Defer to maintainer for `cloud:*` and `images:*` commands
