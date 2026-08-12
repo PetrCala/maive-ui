@@ -38,9 +38,15 @@ All three zones sit in the same account and share the nameserver pair
 
 ### Status of the `easymeta.org` migration
 
-On 2026-08-12 the nameservers for `easymeta.org` were changed at GoDaddy to
-`fonzie.ns.cloudflare.com` / `jessica.ns.cloudflare.com`, completing the
-delegation half of [#487](https://github.com/PetrCala/maive-ui/issues/487).
+As of 2026-08-12, `easymeta.org` and `www.easymeta.org` serve the app through
+Cloudflare. Verified from the edge: HTTP/2 `200` on both, `HEAD` `200` (the
+`405` the GoDaddy forwarder returned is gone), `cf-ray` present,
+`/api/runtime-config` exposing the R backend URL, and a real `POST /run-model`
+returning an effect estimate and a funnel plot. `maive.eu`, `www.maive.eu`,
+`api.maive.eu/v1/health` and both `spuriousprecision.com` hostnames were
+re-checked and are unaffected.
+
+The delegation caused a ~30 minute outage on the way; see "Incident" below.
 
 Done:
 
@@ -299,9 +305,27 @@ Steps, in this order, because only step 5 is hard to reverse:
    Function URL host, add `easymeta.org/*` and `www.easymeta.org/*` routes to
    `ui-origin-proxy`, add the zone's rate-limit rule, and enable Always Use
    HTTPS.
-4. Verifying before delegating **does not work**, and the reason is structural
-   rather than a config error. Cloudflare does not serve a zone at the edge
-   until it is `active`, and a zone only becomes active once it sees the
+4. **Confirm the zone is actually provisioned before going near the
+   registrar.** This step was skipped on 2026-08-12 and caused an outage; see
+   "Incident" below. Check all three:
+
+   ```bash
+   # status must NOT be "initializing", and modified_on must differ from created_on
+   cf GET "/zones/$ZONE" | python3 -c "import json,sys; r=json.load(sys.stdin)['result']; print(r['status'], r['created_on'], r['modified_on'])"
+
+   # the assigned nameservers must actually answer for the zone (NOERROR, not REFUSED)
+   dig easymeta.org SOA @fonzie.ns.cloudflare.com | grep status:
+   ```
+
+   A zone can hold DNS records, Worker routes and rate-limit rules over the API
+   while never having been loaded onto Cloudflare's DNS edge. In that state its
+   own nameservers answer `REFUSED`. Delegating to them takes the domain down.
+   If the dashboard redirects the zone to `/select-plan`, onboarding is
+   incomplete and the zone is in exactly this state.
+
+5. Verifying the *config* before delegating **does not work**, and the reason is
+   structural rather than a config error. Cloudflare does not serve a zone at the
+   edge until it is `active`, and a zone only becomes active once it sees the
    nameserver delegation. Pre-delegation,
    `curl --resolve easymeta.org:443:<cf-ip> https://easymeta.org/` fails the
    TLS handshake, because Universal SSL is not issued for a pending zone, and
@@ -316,14 +340,66 @@ Steps, in this order, because only step 5 is hard to reverse:
    known to work: same origin, same Worker script, same route shape, same
    rate-limit shape. That is an argument, not a test. Weigh it against the
    rollback cost before flipping.
-5. Flip the nameservers at GoDaddy to `fonzie.ns.cloudflare.com` and
+
+   Note the distinction from step 4: whether the *configuration* is correct
+   cannot be tested in advance, but whether the *zone exists on the edge* can
+   be, and that is the failure that actually bit.
+6. Copy across every record the registrar's zone holds that is not being
+   deliberately replaced. Read them from the registrar's own DNS panel, not by
+   probing the domain from outside; an external probe only finds the names you
+   already thought to ask for. For this domain that meant an ACM validation
+   `CNAME` and a `_dmarc` `TXT`, both of which an external probe missed.
+7. Flip the nameservers at GoDaddy to `fonzie.ns.cloudflare.com` and
    `jessica.ns.cloudflare.com`, then poll until the zone reports `active`.
    DNSSEC is off, so no extra step is needed, but re-check that before
    flipping. Propagation is not instant.
 
    **This needs the GoDaddy account that actually holds the domain**, which is
-   not the `cala.p@seznam.cz` one; see the table above. Expect to have to
-   clear `clientUpdateProhibited` as well.
+   not the `cala.p@seznam.cz` one; see the table above. In the event,
+   `clientUpdateProhibited` did not block the change and delegate access was
+   sufficient.
+8. Universal SSL is only ordered once the zone is `active`. Expect a gap where
+   the hostname resolves to Cloudflare but fails the TLS handshake. On
+   2026-08-12 that gap was about two minutes (active 08:45:43, certificate
+   serving 08:47:56), but it is not guaranteed to be short.
+
+   Separately, the registrar's old `A` records stay in resolver caches for
+   their TTL (1 hour here). During that window some clients get Cloudflare and
+   some get the registrar's parking page, so testing from one machine is
+   misleading. Pin to the edge to test the real path:
+
+   ```bash
+   CFIP=$(dig +short easymeta.org A @fonzie.ns.cloudflare.com | head -1)
+   curl -sS -o /dev/null --resolve "easymeta.org:443:$CFIP" \
+     -w "%{http_code} %{http_version}\n" https://easymeta.org/
+   ```
+
+### Incident, 2026-08-12
+
+Delegating to a zone that was never provisioned took `easymeta.org` down for
+roughly 30 minutes.
+
+The zone was created in the dashboard on 2026-08-12 at 07:28, but the add-site
+flow was never completed past the plan-selection step. It sat at status
+`initializing` with `activated_on: null` and `modified_on` equal to
+`created_on`. API writes for DNS records, Worker routes and the rate-limit rule
+all succeeded against it, which made it look configured. It was not on the DNS
+edge: `fonzie`/`jessica` answered `REFUSED` for the zone.
+
+The nameservers were flipped at 08:09 and the registry picked them up at 08:14,
+pointing the domain at nameservers that disowned it. Public resolvers returned
+`SERVFAIL`; clients with cached records got the registrar's parking page,
+because the GoDaddy forwarding stopped the moment DNS authority moved.
+
+Recovery was to finish the onboarding: select the Free plan, confirm the DNS
+records, click through to activation. Status went `initializing` to `pending`
+to `active` at 08:45:43, and Universal SSL issued at 08:47:56.
+
+Two things would have caught this before the flip, and both are now step 4:
+the zone status, and whether the assigned nameservers actually answer for the
+zone. The status was recorded in this file as `initializing` beforehand and
+read as ordinary pending state; the dashboard's repeated redirect to
+`/select-plan` was the same signal and was read as a UI quirk.
 
    **Expect a window where HTTPS is broken.** Universal SSL is only ordered
    once the zone goes active, so between activation and certificate issuance
