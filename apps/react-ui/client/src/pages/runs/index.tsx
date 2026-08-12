@@ -107,9 +107,17 @@ export default function RunsPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - My Runs`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="mx-auto w-full max-w-3xl">
-          <div className="mb-1 flex items-center justify-between">
-            <SectionHeading level="h1" text="My Runs" />
+        <div className="page-shell page-shell-narrow">
+          <div className="page-header flex items-start justify-between gap-4">
+            <SectionHeading
+              level="h1"
+              text="My Runs"
+              description={
+                runsList.length > 0
+                  ? "Runs are saved on this device only."
+                  : undefined
+              }
+            />
             {runsList.length > 0 && (
               <ActionButton
                 variant="secondary"
@@ -120,12 +128,6 @@ export default function RunsPage() {
               </ActionButton>
             )}
           </div>
-
-          {runsList.length > 0 && (
-            <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
-              Runs are saved on this device only.
-            </p>
-          )}
 
           {anyComparable && (
             <div className="mb-4 flex flex-wrap items-center justify-between gap-2">

@@ -152,8 +152,8 @@ export default function ComparePage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Compare Runs`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="mx-auto w-full max-w-7xl">
-          <div className="mb-4 flex items-center justify-between">
+        <div className="page-shell page-shell-full">
+          <div className="page-header flex items-center justify-between gap-4">
             <SectionHeading level="h1" text="Compare Runs" />
             <ActionButton
               variant="secondary"

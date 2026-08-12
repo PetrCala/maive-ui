@@ -256,7 +256,11 @@ export default function ResultsPage() {
     if (runExpired) {
       body = (
         <div className="text-center">
-          <SectionHeading level="h1" text="Run expired" className="mb-4" />
+          <SectionHeading
+            level="h1"
+            text="Run expired"
+            className="page-header"
+          />
           <p className="mb-6 text-gray-600 dark:text-gray-300">
             Results are only kept for 48 hours after a run is submitted, so this
             run is no longer available. Please run the analysis again.
@@ -272,7 +276,11 @@ export default function ResultsPage() {
     } else if (runFailed) {
       body = (
         <div className="text-center">
-          <SectionHeading level="h1" text="Run failed" className="mb-4" />
+          <SectionHeading
+            level="h1"
+            text="Run failed"
+            className="page-header"
+          />
           <p className="mb-6 text-gray-600 dark:text-gray-300">
             {runStatus.errorMessage ??
               "The analysis did not complete. Please try again."}
@@ -310,7 +318,7 @@ export default function ResultsPage() {
             <SectionHeading
               level="h1"
               text="No results available"
-              className="mb-4"
+              className="page-header"
             />
             <GoBackButton
               href="/upload"
@@ -493,17 +501,20 @@ export default function ResultsPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Results`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="max-w-4xl w-full space-y-8 px-2 sm:px-0">
-          <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 mb-8">
+        <div className="page-shell page-stack">
+          <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700">
             {allRunsLink && <div className="mb-4">{allRunsLink}</div>}
-            <SectionHeading level="h1" text="Model Results" className="mb-6" />
+            <SectionHeading
+              level="h1"
+              text="Model Results"
+              className="page-header"
+            />
 
             <div className="space-y-6">
               {isWaiveModel && (
                 <Alert
                   message={TEXT.waive.cautionNote}
                   type={CONST.ALERT_TYPES.WARNING}
-                  className="mt-0"
                 />
               )}
               {activeFilterSummary ? (
@@ -658,7 +669,7 @@ export default function ResultsPage() {
             />
           )}
 
-          <div className="flex flex-col gap-6 mt-8 lg:flex-row">
+          <div className="flex flex-col gap-6 lg:flex-row">
             {/* Left Column - Current Run Actions */}
             <div className="flex flex-col gap-4 flex-1">
               <div className="flex items-center gap-2 mb-2">

@@ -153,13 +153,13 @@ export default function UploadPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Upload Data`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="max-w-4xl w-full px-2 sm:px-0">
+        <div className="page-shell">
           <GoBackButton href="/" text="Back to Home" />
           <div className="card p-6 sm:p-8">
             <SectionHeading
               level="h1"
               text={TEXT.upload.title}
-              className="mb-6"
+              className="page-header"
             />
             <div className="mb-6">
               <p className="text-secondary mb-2">{TEXT.upload.description}</p>

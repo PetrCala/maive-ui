@@ -1010,192 +1010,195 @@ export default function ValidationPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Validation`}</title>
       </Head>
       <main className="content-page-container">
-        <div className="max-w-4xl w-full px-2 sm:px-0">
+        <div className="page-shell">
           <GoBackButton href={backLink} text="Back to Upload" />
 
-          <div className="card p-6 sm:p-8 space-y-4">
-            <SectionHeading level="h1" text={TEXT.validation.title} />
-            <p className="text-secondary">{TEXT.validation.description}</p>
-            <p className="text-muted text-sm">{TEXT.validation.helperText}</p>
-          </div>
-
-          {loading ? (
-            <div className="card p-6 sm:p-8 mt-6 text-center">
-              <p className="text-secondary">{TEXT.validation.loading}</p>
+          <div className="page-stack">
+            <div className="card p-6 sm:p-8 space-y-4">
+              <SectionHeading level="h1" text={TEXT.validation.title} />
+              <p className="text-secondary">{TEXT.validation.description}</p>
+              <p className="text-muted text-sm">{TEXT.validation.helperText}</p>
             </div>
-          ) : !uploadedData ? (
-            <div className="card p-6 sm:p-8 mt-6 space-y-4 text-center">
-              <SectionHeading
-                level="h2"
-                text={TEXT.validation.missingDataTitle}
-              />
-              <p className="text-secondary">
-                {TEXT.validation.missingDataMessage}
-              </p>
-              <ActionButton
-                onClick={() => {
-                  router.push("/upload");
-                }}
-                variant="primary"
-                className="mx-auto w-full sm:w-auto"
-              >
-                Back to Upload
-              </ActionButton>
-            </div>
-          ) : (
-            <div className="space-y-6 mt-6">
-              <div className="card p-6 sm:p-8 space-y-6">
-                <div>
-                  <SectionHeading
-                    level="h2"
-                    text={TEXT.mapping.title}
-                    icon={<FaTable />}
-                    description={TEXT.mapping.description}
-                    className="mb-2"
-                  />
-                  <p className="text-muted text-sm">
-                    {TEXT.mapping.helperText}
-                  </p>
-                </div>
 
-                {autoMappingApplied && (
-                  <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-900 dark:text-blue-100">
-                    {TEXT.mapping.autoMappingNotice}
-                  </div>
-                )}
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {(
-                    Object.keys(TEXT.mapping.fieldLabels) as Array<
-                      keyof typeof TEXT.mapping.fieldLabels
-                    >
-                  ).map((fieldKey) => {
-                    const label = TEXT.mapping.fieldLabels[fieldKey];
-                    const isRequired = REQUIRED_FIELDS.includes(
-                      fieldKey as keyof ColumnMapping,
-                    );
-
-                    return (
-                      <div key={fieldKey} className="flex flex-col">
-                        <label className="text-sm font-medium text-secondary mb-2">
-                          {label}
-                          {isRequired ? (
-                            <span className="text-red-500">*</span>
-                          ) : null}
-                        </label>
-                        <select
-                          className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
-                          value={mapping[fieldKey as keyof MappingState] ?? ""}
-                          onChange={(event) =>
-                            handleMappingChange(
-                              fieldKey as keyof MappingState,
-                              event.target.value,
-                            )
-                          }
-                        >
-                          <option value="">
-                            {isRequired ? "Select a column" : "Leave unmapped"}
-                          </option>
-                          {availableColumns.map((column) => (
-                            <option
-                              key={column}
-                              value={column}
-                              disabled={
-                                mapping[fieldKey as keyof MappingState] !==
-                                  column && usedColumns.has(column)
-                              }
-                            >
-                              {column}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {CONFIG.SHOULD_SHOW_RAW_DATA_PREVIEW && (
-                  <DataPreview
-                    title={TEXT.mapping.rawPreviewTitle}
-                    headers={availableColumns}
-                    rows={rawPreviewRows}
-                  />
-                )}
-
-                <div className="space-y-4">
-                  <DataPreview
-                    title={TEXT.mapping.mappedPreviewTitle}
-                    description={TEXT.mapping.mappedPreviewDescription}
-                    headers={mappedPreviewHeaders}
-                    rows={mappedPreviewRows}
-                    emptyMessage={TEXT.mapping.validationIncomplete}
-                  />
-                  {normalizedData.length > 0 &&
-                    CONFIG.SHOULD_SHOW_DF_ROWS_INFO && (
-                      <RowInfoComponent
-                        rowCount={normalizedData.length}
-                        showFirstRows={normalizedData.length > 5}
-                        rowCountToShow={5}
-                      />
-                    )}
-                </div>
+            {loading ? (
+              <div className="card p-6 sm:p-8 text-center">
+                <p className="text-secondary">{TEXT.validation.loading}</p>
               </div>
+            ) : !uploadedData ? (
+              <div className="card p-6 sm:p-8 space-y-4 text-center">
+                <SectionHeading
+                  level="h2"
+                  text={TEXT.validation.missingDataTitle}
+                />
+                <p className="text-secondary">
+                  {TEXT.validation.missingDataMessage}
+                </p>
+                <ActionButton
+                  onClick={() => {
+                    router.push("/upload");
+                  }}
+                  variant="primary"
+                  className="mx-auto w-full sm:w-auto"
+                >
+                  Back to Upload
+                </ActionButton>
+              </div>
+            ) : (
+              <div className="page-stack">
+                <div className="card p-6 sm:p-8 space-y-6">
+                  <div>
+                    <SectionHeading
+                      level="h2"
+                      text={TEXT.mapping.title}
+                      icon={<FaTable />}
+                      description={TEXT.mapping.description}
+                      className="mb-2"
+                    />
+                    <p className="text-muted text-sm">
+                      {TEXT.mapping.helperText}
+                    </p>
+                  </div>
 
-              <SubsampleFilterCard
-                isEnabled={isFilterEnabled}
-                onToggle={handleFilterToggle}
-                columns={availableColumns}
-                rootGroup={filterGroup}
-                onRootGroupChange={setFilterGroup}
-                matchedRowCount={filterEvaluation.displayMatchedRowCount}
-                totalRowCount={filterEvaluation.totalRowCount}
-                statusMessage={filterEvaluation.statusMessage}
-              />
+                  {autoMappingApplied && (
+                    <div className="rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 p-4 text-sm text-blue-900 dark:text-blue-100">
+                      {TEXT.mapping.autoMappingNotice}
+                    </div>
+                  )}
 
-              <div className="card p-6 sm:p-8 space-y-4">
-                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {(
+                      Object.keys(TEXT.mapping.fieldLabels) as Array<
+                        keyof typeof TEXT.mapping.fieldLabels
+                      >
+                    ).map((fieldKey) => {
+                      const label = TEXT.mapping.fieldLabels[fieldKey];
+                      const isRequired = REQUIRED_FIELDS.includes(
+                        fieldKey as keyof ColumnMapping,
+                      );
+
+                      return (
+                        <div key={fieldKey} className="flex flex-col">
+                          <label className="text-sm font-medium text-secondary mb-2">
+                            {label}
+                            {isRequired ? (
+                              <span className="text-red-500">*</span>
+                            ) : null}
+                          </label>
+                          <select
+                            className="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900/40 text-gray-900 dark:text-gray-100 p-2 focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/40"
+                            value={
+                              mapping[fieldKey as keyof MappingState] ?? ""
+                            }
+                            onChange={(event) =>
+                              handleMappingChange(
+                                fieldKey as keyof MappingState,
+                                event.target.value,
+                              )
+                            }
+                          >
+                            <option value="">
+                              {isRequired
+                                ? "Select a column"
+                                : "Leave unmapped"}
+                            </option>
+                            {availableColumns.map((column) => (
+                              <option
+                                key={column}
+                                value={column}
+                                disabled={
+                                  mapping[fieldKey as keyof MappingState] !==
+                                    column && usedColumns.has(column)
+                                }
+                              >
+                                {column}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {CONFIG.SHOULD_SHOW_RAW_DATA_PREVIEW && (
+                    <DataPreview
+                      title={TEXT.mapping.rawPreviewTitle}
+                      headers={availableColumns}
+                      rows={rawPreviewRows}
+                    />
+                  )}
+
+                  <div className="space-y-4">
+                    <DataPreview
+                      title={TEXT.mapping.mappedPreviewTitle}
+                      description={TEXT.mapping.mappedPreviewDescription}
+                      headers={mappedPreviewHeaders}
+                      rows={mappedPreviewRows}
+                      emptyMessage={TEXT.mapping.validationIncomplete}
+                    />
+                    {normalizedData.length > 0 &&
+                      CONFIG.SHOULD_SHOW_DF_ROWS_INFO && (
+                        <RowInfoComponent
+                          rowCount={normalizedData.length}
+                          showFirstRows={normalizedData.length > 5}
+                          rowCountToShow={5}
+                        />
+                      )}
+                  </div>
+                </div>
+
+                <SubsampleFilterCard
+                  isEnabled={isFilterEnabled}
+                  onToggle={handleFilterToggle}
+                  columns={availableColumns}
+                  rootGroup={filterGroup}
+                  onRootGroupChange={setFilterGroup}
+                  matchedRowCount={filterEvaluation.displayMatchedRowCount}
+                  totalRowCount={filterEvaluation.totalRowCount}
+                  statusMessage={filterEvaluation.statusMessage}
+                />
+
+                <div className="card p-6 sm:p-8 space-y-6">
                   <SectionHeading
                     level="h2"
                     text={TEXT.validation.resultsTitle}
                     icon={<FaCheckCircle />}
                     description={TEXT.validation.resultsDescription}
-                    className="mb-2"
                   />
+
+                  {!mappingComplete || !validationResult ? (
+                    <Alert
+                      type={CONST.ALERT_TYPES.INFO}
+                      message={TEXT.mapping.validationIncomplete}
+                    />
+                  ) : (
+                    <div className="space-y-3">
+                      {validationResult.messages.map((item, index) => (
+                        <Alert
+                          key={`${item.type}-${index}`}
+                          type={item.type}
+                          message={item.message}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                  <ActionButton
+                    ref={continueButtonRef}
+                    onClick={handleContinue}
+                    variant="primary"
+                    className="w-full"
+                    disabled={
+                      !validationResult?.isValid ||
+                      (filterEvaluation.hasActiveFilter &&
+                        filterEvaluation.hasNoMatches)
+                    }
+                  >
+                    {TEXT.validation.continueButton}
+                  </ActionButton>
                 </div>
-
-                {!mappingComplete || !validationResult ? (
-                  <Alert
-                    type={CONST.ALERT_TYPES.INFO}
-                    message={TEXT.mapping.validationIncomplete}
-                  />
-                ) : (
-                  <div className="space-y-3">
-                    {validationResult.messages.map((item, index) => (
-                      <Alert
-                        key={`${item.type}-${index}`}
-                        type={item.type}
-                        message={item.message}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <ActionButton
-                  ref={continueButtonRef}
-                  onClick={handleContinue}
-                  variant="primary"
-                  className="w-full"
-                  disabled={
-                    !validationResult?.isValid ||
-                    (filterEvaluation.hasActiveFilter &&
-                      filterEvaluation.hasNoMatches)
-                  }
-                >
-                  {TEXT.validation.continueButton}
-                </ActionButton>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </main>
     </>

@@ -311,6 +311,25 @@ The app uses a combination of Tailwind CSS and shared style utilities for consis
 - Dark mode support via `.dark` class prefix
 - Use these for page-level layouts and major UI elements
 
+**Page Layout Primitives** (`src/styles/globals.css`):
+
+Every content page follows the same skeleton, so vertical rhythm is decided in one place rather than per page:
+
+```jsx
+<main className="content-page-container">   {/* page gutter + background */}
+  <div className="page-shell">              {/* centred column, width modifier optional */}
+    <div className="page-header">…title, description, title-row controls…</div>
+    <div className="page-stack">…cards, alert stacks, action rows…</div>
+  </div>
+</main>
+```
+
+- `.page-shell` centres the column at 56rem. Modifiers: `.page-shell-narrow` (48rem), `.page-shell-wide` (64rem), `.page-shell-full` (80rem). **Never add horizontal padding to a shell**: the gutter belongs to `.content-page-container`, and a second gutter makes that page narrower than its neighbours.
+- `.page-header` owns the gap under a page's title block (`--page-header-gap`). Put it on the wrapper, not the heading, so the gap does not shift when a description is present.
+- `.page-stack` owns the gap between top-level blocks (`--page-block-gap`) via `> * + *`. **Do not also put `mt-*`/`mb-*` on its children** - the two stack and double the gap.
+- Inside a card, use Tailwind `space-y-*` or `gap-*`, but only one mechanism per container. Mixing `gap-6` with `mb-2` on the children is how the gaps drifted apart in the first place.
+- Prefer `SectionHeading`'s `description` prop over a hand-rolled `<p>` under the heading; it carries the right typography and internal spacing.
+
 **Form Styles** (`src/styles/formStyles.ts`):
 
 - Shared constants for form elements (inputs, selects, buttons)
@@ -322,7 +341,7 @@ The app uses a combination of Tailwind CSS and shared style utilities for consis
 
 **When to use each approach**:
 
-- **Global CSS classes**: Page containers, cards, primary/secondary buttons via ActionButton component
+- **Global CSS classes**: Page containers, page shells/headers/stacks, cards, primary/secondary buttons via ActionButton component
 - **Form style constants**: All form inputs, selects, labels, and form-specific buttons
 - **Inline Tailwind**: Layout utilities (flex, grid, spacing), one-off styling exceptions
 - **Component-specific styles**: Only when truly unique to that component
