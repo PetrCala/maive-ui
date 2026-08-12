@@ -488,6 +488,11 @@ body {
 		@apply page-container-light dark:page-container-dark;
 		padding: var(--spacing-xl) var(--spacing-md);
 		justify-content: center; /* Override the default flex-start */
+		/* The landing hero deliberately claims the whole viewport (there is no
+		   header on this page), so the footer starts below the fold and only
+		   appears once the visitor scrolls. Content pages do the opposite and
+		   size to their content - see .page-container-base. */
+		min-height: 100vh;
 	}
 
 	.content-page-container {

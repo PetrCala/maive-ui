@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "ui:dev"],
       "port": 3000
+    },
+    {
+      "name": "react-ui-prod",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["next", "start", "-p", "3001"],
+      "cwd": "apps/react-ui/client",
+      "port": 3001
     }
   ]
 }
