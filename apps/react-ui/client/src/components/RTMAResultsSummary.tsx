@@ -13,6 +13,9 @@ import {
 type RTMAResultsSummaryProps = {
   results: RTMAResults;
   showTooltips?: boolean;
+  // See the same prop on ResultsSummary: the default two-column split keys off
+  // the viewport, so pass 1 when the component itself is rendered narrow.
+  columns?: 1 | 2;
 };
 
 const formatNumber = (value: number): string =>
@@ -34,6 +37,7 @@ type Metric = {
 export default function RTMAResultsSummary({
   results,
   showTooltips = false,
+  columns = 2,
 }: RTMAResultsSummaryProps) {
   // The backend echoes the level of the equal-tailed credible intervals; runs
   // stored before it did were always fitted at the UI's fixed 0.95.
@@ -144,7 +148,13 @@ export default function RTMAResultsSummary({
           />
         </div>
       ) : null}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div
+        className={
+          columns === 1
+            ? "grid grid-cols-1 gap-4"
+            : "grid grid-cols-1 md:grid-cols-2 gap-4"
+        }
+      >
         {metrics.map((metric) => {
           const content = (
             <div>
