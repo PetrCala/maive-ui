@@ -182,12 +182,20 @@ Recorded 2026-08-11, before any change, so it can be restored:
 
 | | |
 |---|---|
+| Registrar | GoDaddy.com, LLC. **Not** in the `cala.p@seznam.cz` GoDaddy account, which holds no domains at all; presumably T. Havranek's, matching the Cloudflare account |
+| Registry expiry | **2026-08-30** |
+| Registrar locks | `clientUpdateProhibited`, `clientTransferProhibited`, `clientDeleteProhibited`, `clientRenewProhibited` |
 | Nameservers | `ns01.domaincontrol.com`, `ns02.domaincontrol.com` |
 | SOA | `ns01.domaincontrol.com. dns.jomax.net. 2026071500 28800 7200 604800 600` |
 | A (apex and `www`) | `3.33.251.168`, `15.197.225.128` (GoDaddy forwarding front end) |
 | AAAA / MX / TXT / CAA | none |
 | DNSSEC | **not enabled** (no `DS` at the parent), so a nameserver move is safe |
 | Forwarding | 301 to `https://www.spuriousprecision.com`, on both `http` and `https`, apex and `www` |
+
+`clientUpdateProhibited` is part of GoDaddy's standard domain lock. Whether it
+has to be lifted before the nameservers can be changed depends on whether the
+change is made through GoDaddy's own UI; budget for it as a possible extra
+step rather than a surprise mid-flip.
 
 The forwarder answers `HEAD` with **405 Method Not Allowed** and an empty body,
 and answers `GET` with a 68-byte
@@ -276,9 +284,14 @@ Steps, in this order, because only step 5 is hard to reverse:
    known to work: same origin, same Worker script, same route shape, same
    rate-limit shape. That is an argument, not a test. Weigh it against the
    rollback cost before flipping.
-5. Flip the nameservers at GoDaddy to the pair Cloudflare assigns, then poll
-   until the zone reports `active`. DNSSEC is off, so no extra step is needed,
-   but re-check that before flipping. Propagation is not instant.
+5. Flip the nameservers at GoDaddy to `fonzie.ns.cloudflare.com` and
+   `jessica.ns.cloudflare.com`, then poll until the zone reports `active`.
+   DNSSEC is off, so no extra step is needed, but re-check that before
+   flipping. Propagation is not instant.
+
+   **This needs the GoDaddy account that actually holds the domain**, which is
+   not the `cala.p@seznam.cz` one; see the table above. Expect to have to
+   clear `clientUpdateProhibited` as well.
 
    **Expect a window where HTTPS is broken.** Universal SSL is only ordered
    once the zone goes active, so between activation and certificate issuance
