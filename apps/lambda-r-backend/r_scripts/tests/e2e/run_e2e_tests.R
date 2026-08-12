@@ -311,7 +311,7 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     passed_count <- passed_count + 1
     cat("   ✓ Parameter combinations test passed\n")
   } else {
-    cat("   ✗ Parameter combinations test failed\n")
+    cat("   ✗ Parameter combinations test failed:", param_result$error, "\n")
   }
   test_count <- test_count + 1
 
