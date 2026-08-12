@@ -99,7 +99,7 @@ export default function Home() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Welcome`}</title>
       </Head>
       <main className="home-page-container">
-        <div className="max-w-4xl text-center animate-fade-in px-3 sm:px-0">
+        <div className="page-shell text-center animate-fade-in">
           <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-primary tracking-tight">
             {TEXT.home.title}
           </h1>

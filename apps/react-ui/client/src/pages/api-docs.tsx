@@ -100,7 +100,7 @@ export default function ApiDocsPage() {
         />
       </Head>
       <main className="content-page-container">
-        <div className="max-w-5xl w-full px-2 sm:px-0">
+        <div className="page-shell page-shell-wide">
           <GoBackButton href="/" text="Back to Home" />
 
           <div className="card p-6 sm:p-8 space-y-10">

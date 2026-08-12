@@ -77,9 +77,11 @@ export default function DemoPage() {
       </Head>
 
       <main className="content-page-container">
+        {/* No horizontal padding here: `content-page-container` already
+            provides the page gutter. */}
         <div
-          className={`flex w-full flex-1 justify-center px-4 ${
-            isLoading ? "items-start pt-16 pb-12" : "items-center py-12"
+          className={`flex w-full flex-1 justify-center ${
+            isLoading ? "items-start pt-16" : "items-center"
           }`}
         >
           {hasError ? (

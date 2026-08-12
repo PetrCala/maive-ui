@@ -1003,7 +1003,7 @@ export default function ModelPage() {
             <SectionHeading
               level="h1"
               text="No data selected"
-              className="mb-4"
+              className="page-header"
             />
             <GoBackButton
               href="/upload"
@@ -1012,7 +1012,7 @@ export default function ModelPage() {
             />
           </div>
         ) : (
-          <div className="max-w-4xl w-full">
+          <div className="page-shell">
             <GoBackButton
               href={`/validation?dataId=${dataId}`}
               text="Back to Validation"
@@ -1027,9 +1027,11 @@ export default function ModelPage() {
                   showWarmupHint={showWarmupHint}
                 />
               ) : (
-                <div className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
+                <div className="bg-white dark:bg-gray-800 p-6 sm:p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 transition-all duration-500 opacity-100 scale-100">
+                  {/* `gap-6` owns every gap in this column; children must not
+                      add margins of their own on top of it. */}
                   <div className="flex flex-col gap-6">
-                    <div className="flex items-center mb-2">
+                    <div className="flex items-center gap-4">
                       <div className="flex-grow">
                         <SectionHeading level="h1" text="Model Parameters" />
                       </div>
@@ -1037,12 +1039,10 @@ export default function ModelPage() {
                         <HelpButton modalComponent={ParametersHelpModal} />
                       )}
                     </div>
-                    <div className="mb-2">
-                      <p className="text-gray-700 dark:text-gray-300">
-                        Please select the model type and parameters you would
-                        like to use.
-                      </p>
-                    </div>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      Please select the model type and parameters you would like
+                      to use.
+                    </p>
                     <div className="space-y-6">
                       <OptionSection
                         config={modelOptionsConfig.basic}

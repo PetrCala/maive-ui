@@ -21,7 +21,9 @@ export default function App({ Component, pageProps }: AppProps) {
       <RunsWatcher />
       <div className="flex flex-col min-h-screen">
         {!isHomePage && <Header />}
-        <main className="flex-1 flex-col">
+        {/* `flex` is load-bearing: without it `flex-col` is inert and the page
+            container's `flex: 1` has no flex parent to grow into. */}
+        <main className="flex flex-1 flex-col">
           <Component {...pageProps} />
         </main>
         <Footer />
