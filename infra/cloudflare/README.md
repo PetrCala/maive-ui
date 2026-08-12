@@ -198,12 +198,21 @@ The target topology, per
 
 Steps, in this order, because only step 5 is hard to reverse:
 
-1. Re-scope the API token. Beyond today's grants it needs **Account : Zone :
-   Create**, and, on **all zones in the account** rather than just `maive.eu`:
-   **Zone : DNS : Edit**, **Zone : Workers Routes : Edit**, **Zone : Zone WAF :
-   Edit** (rate-limit rules), **Zone : Zone : Read**.
-2. Create the `easymeta.org` zone. Pending zones do not affect live DNS, so
-   this and everything through step 4 is reversible by deleting the zone.
+1. Re-scope the API token. Its **Zone Resources** must become *All zones from
+   an account* rather than the single `maive.eu` zone, and it needs **Zone :
+   DNS : Edit**, **Zone : Workers Routes : Edit**, **Zone : Zone WAF : Edit**
+   (rate-limit rules) and **Zone : Zone : Read**, alongside the existing
+   **Account : Workers Scripts : Edit**. A zone created later is not covered by
+   a token scoped to specific zones, which is why the account-wide resource
+   selection matters.
+2. Add `easymeta.org` **in the dashboard** (Add a site), not via the API. Zone
+   creation needs `com.cloudflare.api.account.zone.create`, a broader grant
+   than anything else here needs, and clicking Add a site avoids it entirely.
+   Pending zones do not affect live DNS, so this and everything through step 4
+   is reversible by deleting the zone.
+   **Delete whatever Cloudflare's DNS scan imports.** It will pick up the
+   GoDaddy forwarding A records (`3.33.251.168`, `15.197.225.128`); left in
+   place, the zone would proxy to the old forwarder after delegation.
 3. Add proxied `CNAME` records for the apex and `www` pointing at the UI
    Function URL host, add `easymeta.org/*` and `www.easymeta.org/*` routes to
    `ui-origin-proxy`, add the zone's rate-limit rule, and enable Always Use
