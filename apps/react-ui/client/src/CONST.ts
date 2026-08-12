@@ -76,6 +76,11 @@ const CONST = {
   RUNS: {
     TTL_SECONDS: 48 * 60 * 60, // 48h pickup buffer
     TTL_MS: 48 * 60 * 60 * 1000,
+    // Side-by-side comparison bounds. Two is the minimum that compares
+    // anything; three is where the columns stop being readable, since each
+    // card carries the full result summary rather than a single number.
+    COMPARE_MIN: 2,
+    COMPARE_MAX: 3,
   },
 
   MODEL_TYPES: {

@@ -22,7 +22,7 @@ import {
   deriveDataInfoFromUploadedData,
   generateDataInfo,
 } from "@utils/dataInfoUtils";
-import type { ModelParameters, ModelResults } from "@src/types";
+import type { ModelResults } from "@src/types";
 import type { RTMAResults } from "@src/types/api";
 import type { VersionInfo } from "@src/types/reproducibility";
 import CitationBox from "@src/components/CitationBox";
@@ -40,6 +40,7 @@ import {
   formatFilterSummary,
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
+import { parseRunParameters } from "@src/utils/runParameterUtils";
 import {
   generateReproducibilityPackage,
   getReproducibilityPackageFilename,
@@ -98,39 +99,7 @@ export default function ResultsPage() {
     : urlRunDuration;
   const runTimestamp = jobId ? runStatus.runTimestamp : urlRunTimestamp;
 
-  let parsedParametersJson: Partial<ModelParameters> = {};
-  if (parameters) {
-    try {
-      const parsed = JSON.parse(parameters) as unknown;
-      if (parsed && typeof parsed === "object") {
-        parsedParametersJson = parsed as Partial<ModelParameters>;
-      }
-    } catch (error) {
-      console.error("Failed to parse model parameters from URL:", error);
-    }
-  }
-
-  const parsedParameters: ModelParameters = {
-    ...CONFIG.DEFAULT_MODEL_PARAMETERS,
-    ...parsedParametersJson,
-  };
-
-  if (
-    parsedParameters.shouldUseInstrumenting === false &&
-    parsedParameters.modelType !== CONST.MODEL_TYPES.WAIVE &&
-    parsedParameters.modelType !== CONST.MODEL_TYPES.RTMA
-  ) {
-    parsedParameters.modelType = CONST.MODEL_TYPES.WLS;
-  }
-
-  if (
-    parsedParameters.modelType === CONST.MODEL_TYPES.WLS ||
-    parsedParameters.modelType === CONST.MODEL_TYPES.RTMA
-  ) {
-    parsedParameters.shouldUseInstrumenting = false;
-  } else {
-    parsedParameters.shouldUseInstrumenting = true;
-  }
+  const parsedParameters = parseRunParameters(parameters);
 
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;
