@@ -49,7 +49,7 @@ This aligns with the direction agreed in #441 ("async/background runs now").
     Lambda Web Adapter, `timeout=30s`, fronted by **Cloudflare** (~100 s origin cap).
   - **R backend Lambda** (`terraform/stacks/prod-runtime/lambda.tf`): R Plumber via
     Lambda Web Adapter, Function URL (auth NONE, CORS `*`), `timeout=600s`,
-    `memory_size=2048`. Routes in `apps/lambda-r-backend/r_scripts/index.R`.
+    `memory_size=3538` (2 vCPU). Routes in `apps/lambda-r-backend/r_scripts/index.R`.
 - **The browser calls the R Function URL directly** for runs
   (`apps/react-ui/client/src/api/services/modelService.ts` → `${getRApiUrl()}/run-model|/run-rtma`),
   triggered in `apps/react-ui/client/src/pages/model/index.tsx`.
@@ -197,9 +197,11 @@ as today. Approximate (on-demand; eu-central-1 ~a few % above us-east-1):
 - **Per run (new infra only):** ~$0.0003 to $0.0005 (orchestrator idle-wait dominates; DDB/SQS/UI-poll are sub-cent).
 - **Idle baseline:** ~$0.05 to $0.20 / month (mostly SQS event-source long-polling).
 - **At volume:** ~$0.5 to $1 / month at 1k runs; ~$3 to $5 / month at 10k runs. Low volume is largely covered by AWS free tiers (effectively $0).
-- The dominant cost remains the **pre-existing** R compute (~$0.001 to $0.002 / run at 2 GB).
+- The dominant cost remains the **pre-existing** R compute (~$0.001 to $0.002 / run). The
+  move to 3538 MB (#483) left this range alone: RTMA runs roughly twice as fast at 1.73x
+  the memory rate, so GB-s per run went slightly down, not up.
 - **Not in scope, but flagged:** keep-warm / provisioned concurrency (speed track) would
-  cost ~$22 / month per always-warm 2 GB instance.
+  cost ~$38 / month per always-warm 3.5 GB instance.
 
 ## 13. Rollout plan
 
@@ -223,5 +225,5 @@ as today. Approximate (on-demand; eu-central-1 ~a few % above us-east-1):
 ## 15. Out of scope / future
 
 - **S3 escape hatch** for >256 KB inputs and/or >400 KB results (deferred; sync path covers large inputs for now).
-- **Speed track:** cold-start mitigation (keep-warm / provisioned concurrency; check SnapStart eligibility) and a high-memory `parallelize=TRUE` re-benchmark for the slow tail.
+- **Speed track:** cold-start mitigation (keep-warm / provisioned concurrency; check SnapStart eligibility). The high-memory parallel-chain re-benchmark is done: the R backend now runs at 3538 MB (2 vCPU) and forks its Stan chains across both (#483).
 - **Accounts / cross-device history**, **email/SNS notifications**, **SSE/WebSocket push**.

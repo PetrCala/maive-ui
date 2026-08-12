@@ -485,7 +485,7 @@ api_v1_default_maive_parameters <- function(parameters) {
 
 #' Apply RTMA parameter defaults per design D6
 #'
-#' The internal parallelize/timeoutSeconds knobs are deliberately not exposed;
+#' The internal cores/timeoutSeconds knobs are deliberately not exposed;
 #' run_rtma_model falls back to its own safe defaults for them. `seed` is not in
 #' that category: those two only affect how the fit is executed, while the seed
 #' determines the numbers that come back, so a caller who wants to re-run a

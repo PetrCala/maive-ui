@@ -1,8 +1,8 @@
 # Cost circuit breaker (docs/COST_CONTROLS.md).
 #
 # The reserved-concurrency cap on the R backend bounds the *rate* of spend but
-# not the monthly total: 10 concurrent 2 GB executions pinned around the clock
-# is still ~$860/month. This is the free automatic backstop that enforces a
+# not the monthly total: 10 concurrent 3.5 GB executions pinned around the clock
+# is still ~$1,490/month. This is the free automatic backstop that enforces a
 # ceiling. When the backend throttles continuously for
 # var.cost_circuit_breaker_throttle_periods 5-minute periods (demand exceeding
 # the cap for ~30 minutes straight, a strong abuse signal with near-zero

@@ -13,14 +13,14 @@ See also `PUBLIC_API_DESIGN.md` §7 (the original abuse/cost analysis) and
 The R backend is reachable directly at its raw `*.on.aws` Function URL (the
 browser is handed that URL via `/api/runtime-config`), so Cloudflare's edge rate
 limit is a speed bump, not a wall: an attacker can hit Lambda directly. One
-request can occupy a 2 GB Lambda for up to 600 s. The controls below bound what
+request can occupy a 3.5 GB Lambda for up to 600 s. The controls below bound what
 that adds up to.
 
 ## The layers
 
 | Layer | Where | What it bounds |
 |---|---|---|
-| Reserved concurrency = 10 (R backend) | `prod-runtime/variables.tf` (`lambda_r_backend_reserved_concurrency`) | Concurrent R executions, regardless of entry path. Excess gets `429`. Bounds the *rate* of spend (~$0.12/hr per slot). |
+| Reserved concurrency = 10 (R backend) | `prod-runtime/variables.tf` (`lambda_r_backend_reserved_concurrency`) | Concurrent R executions, regardless of entry path. Excess gets `429`. Bounds the *rate* of spend (~$0.21/hr per slot). |
 | Reserved concurrency = 30 (UI) | `prod-runtime/variables.tf` (`ui_lambda_reserved_concurrency`) | UI Lambda spend and its share of the account concurrency pool. |
 | Async fan-out = 5 | `prod-runtime/orchestrator_lambda.tf` (`maximum_concurrency`) | Concurrent async runs; kept below the R cap so async never starves sync. |
 | Max dataset rows = 50,000 | R `api_v1.R` / `index.R` (`MAX_INPUT_ROWS`), UI `datasetValidation.ts` (`MAX_ROWS`) | Per-request work; caps payload-driven CPU/output amplification on every HTTP route including the raw legacy path. |
@@ -30,8 +30,16 @@ that adds up to.
 | Alarm notifications (errors/throttles/duration/DLQ) | `prod-runtime/monitoring.tf` + the alarms | Human awareness; previously these alarms notified no one. |
 
 Reserved concurrency bounds the *rate* of spend but not the *total*: 10 slots
-pinned at 2 GB around the clock is still ~$860/month. The circuit breaker is what
-turns the rate limit into an enforced ceiling.
+pinned at 3.5 GB around the clock is still ~$1,490/month. The circuit breaker is
+what turns the rate limit into an enforced ceiling.
+
+That ceiling rose by ~73% when the R backend went from 2048 MB to 3538 MB to get
+a second vCPU for RTMA's Stan chains (#483). Nothing needed retuning: the breaker
+trips on sustained *throttling*, not on a dollar figure, so it enforces the same
+concurrency ceiling at any memory size, and the $10 budget notification simply
+arrives sooner. The number that rose is the worst case, where an attacker pins
+every slot for the full 600 s. Ordinary runs got *cheaper*, because RTMA now
+finishes in roughly half the time at 1.73x the memory rate.
 
 ## The cost circuit breaker
 
