@@ -232,12 +232,12 @@ plus `funnelPlot`/`funnelPlotWidth`/`funnelPlotHeight` only with
 
 Same envelope; parameters (all optional): `favorPositive` (default `true`),
 `alphaSelect` (`0.05`), `ciLevel` (`0.95`), `winsorize` (`0`), `seed` (`2025`).
-The internal `parallelize` / `timeoutSeconds` knobs are **not**
+The internal `cores` / `timeoutSeconds` knobs are **not**
 exposed. Response: `mu`, `muCI`, `tau`, `tauCI`, `seed`,
 `nonaffirmativeCount`, `nonaffirmativeProportion`, `warnings` (+ `zScorePlot*`
 with `?include=plot`).
 
-`seed` is exposed where `parallelize` / `timeoutSeconds` are not, because those
+`seed` is exposed where `cores` / `timeoutSeconds` are not, because those
 two only change how the fit is executed while the seed changes the numbers that
 come back: `phacking_meta()` takes no seed, so an unseeded fit returns a
 different credible interval on every call for identical input (#479). The
@@ -313,7 +313,7 @@ Layered, in order of load-bearing-ness:
 
 1. **Reserved concurrency = 10 on the R Lambda** (D2; Terraform). Hard ceiling
    on concurrent compute regardless of entry path. Worst-case sustained abuse
-   ≈ 10 × 2 GB × 100% duty cycle ≈ low tens of $/day, alarmed well before that.
+   ≈ 10 × 3.5 GB × 100% duty cycle ≈ $50/day, alarmed well before that.
    The orchestrator's `maximum_concurrency=5` fits inside it, so async can
    never starve sync entirely (and vice versa is acceptable: sync overflow
    `429`s, and the UI already has the async path).
@@ -428,9 +428,9 @@ until Phase 3.
   eventual fix.
 - **Concurrency cap = 10 is a guess.** It now also throttles UI sync traffic
   at the margin; previously it was deliberately unreserved. Watch the throttle
-  alarm; tune. Each unit of concurrency is worth roughly **$0.12/hour
-  (~$86/month)** of worst-case exposure at 2 GB, so the cap is effectively the
-  ceiling on an anonymous abuse bill: ~$29/day at 10, ~$58/day at 20. Note the
+  alarm; tune. Each unit of concurrency is worth roughly **$0.21/hour
+  (~$149/month)** of worst-case exposure at 3.5 GB, so the cap is effectively the
+  ceiling on an anonymous abuse bill: ~$50/day at 10, ~$100/day at 20. Note the
   cap is **global, not per-caller**: anonymous access means there is no
   per-user quota, and the edge rule limits request *rate*, not concurrency, so
   one heavy caller can occupy all of it.

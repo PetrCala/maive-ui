@@ -35,10 +35,11 @@ resource "aws_lambda_function" "r_backend" {
   package_type = "Image"
   image_uri    = "${data.aws_ecr_repository.lambda_r_backend.repository_url}:${var.image_tag}"
 
-  # To set environment variables, use the following:
-  # environment {
-  #   variables = {}
-  # }
+  environment {
+    variables = {
+      RTMA_SAMPLING_CORES = tostring(local.lambda_r_backend_vcpus)
+    }
+  }
 
   tags = {
     Project = var.project

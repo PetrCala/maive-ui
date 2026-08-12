@@ -8,6 +8,13 @@
 #
 # The check that matters is bit-identity, not "close enough": a tolerance would
 # pass just as happily with the seed removed again.
+#
+# The same fingerprint also covers core-count invariance (#483). RTMA now runs
+# its Stan chains across however many cores the Lambda's memory size buys, and
+# that is only safe because a seeded fit gives the same draws whether the chains
+# run one at a time or all at once. If that ever stops holding, the reported
+# numbers would depend on the deployed memory size, which is the failure this
+# guards against.
 
 # Keep in sync with RTMA_DEFAULT_SEED in rtma_model.R. Asserted end to end so a
 # request that sets no seed still runs pinned, rather than silently drifting
@@ -25,10 +32,11 @@ expect_rtma_seed <- function(condition, message) {
   }
 }
 
-#' Build RTMA parameter JSON, optionally pinning the seed
+#' Build RTMA parameter JSON, optionally pinning the seed and core count
 #' @param seed Seed to request, or NULL to leave it to the backend default
+#' @param cores Sampling cores to request, or NULL for the backend default
 #' @return JSON string of parameters
-rtma_seed_params <- function(seed = NULL) {
+rtma_seed_params <- function(seed = NULL, cores = NULL) {
   params <- list(
     modelType = "RTMA",
     favorPositive = TRUE,
@@ -38,6 +46,9 @@ rtma_seed_params <- function(seed = NULL) {
   )
   if (!is.null(seed)) {
     params$seed <- seed
+  }
+  if (!is.null(cores)) {
+    params$cores <- cores
   }
   params_to_json(params)
 }
@@ -76,10 +87,11 @@ rtma_seed_differences <- function(left, right) {
 #' @param df Data frame of estimates
 #' @param seed Seed to request, or NULL for the backend default
 #' @param label Label used in progress output and failure messages
+#' @param cores Sampling cores to request, or NULL for the backend default
 #' @return Parsed results object
-run_rtma_seed_case <- function(df, seed, label) {
+run_rtma_seed_case <- function(df, seed, label, cores = NULL) {
   cat(sprintf("  %s...\n", label))
-  response <- test_run_rtma(df_to_json(df), rtma_seed_params(seed))
+  response <- test_run_rtma(df_to_json(df), rtma_seed_params(seed, cores))
 
   expect_rtma_seed(
     is.list(response) && !is.null(response$data),
@@ -182,6 +194,39 @@ check_rtma_seed_v1 <- function(df, expected) {
   invisible(TRUE)
 }
 
+#' Check that the core count changes only the speed, never the numbers (#483)
+#'
+#' Requests the same fit on 1 core and on 4 and compares the full fingerprint.
+#' 4 rather than 2 so the assertion holds at the largest core count the backend
+#' will ever use, whatever memory size it is deployed at; the value is clamped
+#' to the chain count, so a host with fewer cores oversubscribes briefly rather
+#' than changing the result.
+#'
+#' @param df Data frame of estimates
+#' @return TRUE invisibly
+check_rtma_cores_invariance <- function(df) {
+  serial <- run_rtma_seed_case(
+    df, RTMA_TEST_SEED, "same seed on 1 core", cores = 1
+  )
+  parallel <- run_rtma_seed_case(
+    df, RTMA_TEST_SEED, "same seed on 4 cores", cores = 4
+  )
+
+  differences <- rtma_seed_differences(
+    rtma_seed_fingerprint(serial),
+    rtma_seed_fingerprint(parallel)
+  )
+  expect_rtma_seed(
+    length(differences) == 0,
+    paste(
+      "Running the chains in parallel must not move the numbers;",
+      "1 core and 4 cores differ in", paste(differences, collapse = " | ")
+    )
+  )
+
+  invisible(TRUE)
+}
+
 #' Test that RTMA runs are reproducible under a pinned seed
 #' @return Test results
 test_rtma_seed <- function() {
@@ -226,10 +271,14 @@ test_rtma_seed <- function() {
       )
 
       check_rtma_seed_v1(test_data, rtma_seed_fingerprint(first))
+      check_rtma_cores_invariance(test_data)
 
       log_test_result(
         test_name, "PASS",
-        "Identical input and seed reproduce identical RTMA results"
+        paste(
+          "Identical input and seed reproduce identical RTMA results,",
+          "on any core count"
+        )
       )
 
       return(list(

@@ -31,6 +31,33 @@ RTMA_PLOT_RES <- 120
 # what the wall-clock limit below is for.
 RTMA_DEFAULT_SEED <- 2025L
 
+# Upper bound on sampling cores: rstan runs 4 chains by default and forks at
+# most one worker per chain, so nothing above this can be used.
+RTMA_MAX_SAMPLING_CORES <- 4L
+
+#' Number of cores to sample RTMA's Stan chains on
+#'
+#' rstan reads `getOption("mc.cores")` to decide how many of its 4 chains to run
+#' at once, and on Linux (and macOS) it forks with `mclapply`, so the overhead is
+#' sub-second. Sampling is ~95% of RTMA wall time, so this is the single largest
+#' lever on how long a request takes (#483).
+#'
+#' The count is read from the environment rather than detected, for two reasons.
+#' `parallel::detectCores()` reports the host's cores, not the Lambda's
+#' allocation, so it over-subscribes and the chains thrash. And the number of
+#' cores a Lambda gets is a function of its memory size (~1 vCPU per 1769 MB),
+#' which lives in terraform, not here: `RTMA_SAMPLING_CORES` is set alongside
+#' `memory_size` in prod-runtime/lambda.tf so the two cannot drift apart.
+#'
+#' Defaults to 1 (serial) when unset, so local runs and the e2e suite behave as
+#' they did before.
+#'
+#' @return A positive integer core count
+rtma_sampling_cores <- function() {
+  n <- suppressWarnings(as.integer(Sys.getenv("RTMA_SAMPLING_CORES")))
+  if (length(n) != 1 || is.na(n) || n < 1) 1L else n
+}
+
 #' Render a z-score density plot and return it as a base64-encoded PNG data URI
 #'
 #' phacking::z_density() has no favor_positive argument: it always draws the
@@ -190,9 +217,24 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   favor_positive <- if (!is.null(params$favorPositive)) isTRUE(params$favorPositive) else TRUE
   alpha_select <- if (!is.null(params$alphaSelect)) as.numeric(params$alphaSelect) else 0.05
   ci_level <- if (!is.null(params$ciLevel)) as.numeric(params$ciLevel) else 0.95
-  # Default FALSE: parallel chains add fork overhead with no speedup, and thrash
-  # on the Lambda's sub-1-vCPU allocation. Benchmarks showed no gain even on 8 cores.
-  parallelize <- if (!is.null(params$parallelize)) isTRUE(params$parallelize) else FALSE
+  # Cores to sample on; see rtma_sampling_cores() above. Overridable per request
+  # so a benchmark can compare core counts without redeploying, but not exposed
+  # through the public /v1 API (see api_v1.R).
+  cores <- if (!is.null(params$cores)) {
+    suppressWarnings(as.integer(params$cores))
+  } else {
+    rtma_sampling_cores()
+  }
+  if (length(cores) != 1 || is.na(cores) || cores < 1) {
+    cli::cli_abort("The cores parameter must be a positive integer.")
+  }
+  # The legacy /run-rtma route (index.R) hands `parameters` to this function
+  # unfiltered, and it is publicly reachable, so `cores` is caller-settable
+  # there. rstan already forks only min(chains, cores) workers, so a large
+  # value cannot fork-bomb, but clamping here means that guarantee does not
+  # depend on an rstan implementation detail. RTMA_MAX_SAMPLING_CORES is the
+  # chain count: more cores than chains buys nothing.
+  cores <- min(cores, RTMA_MAX_SAMPLING_CORES)
   # Wall-clock budget kept below the Lambda function timeout so a degenerate
   # dataset returns a clear error instead of being hard-killed mid-request.
   timeout_sec <- if (!is.null(params$timeoutSeconds)) as.numeric(params$timeoutSeconds) else 480
@@ -212,7 +254,7 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
     "alpha_select: {alpha_select}",
     "ci_level: {ci_level}",
     "seed: {seed}",
-    "parallelize: {parallelize}",
+    "cores: {cores}",
     "timeout_sec: {timeout_sec}"
   ))
 
@@ -229,13 +271,26 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   # response instead of being dropped on the floor.
   rtma_warnings <- character(0)
   start_time <- Sys.time()
+
+  # rstan takes its chain count from mc.cores, so set it here rather than
+  # passing parallelize = TRUE: that flag makes phacking call
+  # `options(mc.cores = parallel::detectCores())`, which reads the host's core
+  # count instead of the Lambda's allocation. Restored afterwards so a request
+  # cannot leave the option changed for the next one in the same container.
+  previous_mc_cores <- getOption("mc.cores")
+  on.exit(options(mc.cores = previous_mc_cores), add = TRUE)
+  options(mc.cores = cores)
+
   setTimeLimit(elapsed = timeout_sec, transient = TRUE)
   rtma_res <- tryCatch(
     withCallingHandlers(
       {
         # Seeded here rather than at the top of the function: nothing between
         # this line and phacking_meta() touches the RNG, so this is exactly the
-        # state the sampler starts from.
+        # state the sampler starts from. The seed also fixes rstan's own seed,
+        # which it draws from this RNG, so each chain's stream is determined by
+        # its chain id alone; running the chains on 1 core or 4 gives
+        # bit-identical draws (verified in #483).
         set.seed(seed)
         phacking::phacking_meta(
           yi = yi,
@@ -243,7 +298,7 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
           favor_positive = favor_positive,
           alpha_select = alpha_select,
           ci_level = ci_level,
-          parallelize = parallelize
+          parallelize = FALSE
         )
       },
       warning = function(w) {

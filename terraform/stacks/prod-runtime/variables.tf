@@ -59,9 +59,16 @@ variable "lambda_r_backend_function_base_name" {
 variable "lambda_r_backend_memory_size" {
   type        = number
   description = "Memory size in MB for the Lambda R backend function"
-  # 2048 MB ~= 1.15 vCPU. RTMA (phacking) sampling is single-threaded and
-  # CPU-bound, so a faster single core matters more than extra cores.
-  default = 2048
+  # 3538 MB = 2 x 1769, so exactly 2 vCPUs. RTMA's Stan sampling is ~95% of its
+  # wall time and rstan forks its 4 chains across whatever mc.cores says, so a
+  # second core roughly halves it (#483). The old 2048 MB was ~1.15 vCPU, which
+  # cannot overlap chains at all whatever mc.cores is set to.
+  #
+  # This is not a straight cost increase: a run that takes half as long at 1.73x
+  # the memory rate is cheaper in GB-s than it was. Raising this further only
+  # helps in steps of 1769 MB, and locals.tf derives the core count from it, so
+  # a value between steps buys memory that RTMA cannot use.
+  default = 3538
 }
 
 variable "lambda_r_backend_timeout" {
