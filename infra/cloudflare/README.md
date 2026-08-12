@@ -38,17 +38,24 @@ All three zones sit in the same account and share the nameserver pair
 
 ### Status of the `easymeta.org` migration
 
-As of 2026-08-12, `easymeta.org` and `www.easymeta.org` serve the app through
-Cloudflare. Verified from the edge: HTTP/2 `200` on both, `HEAD` `200` (the
-`405` the GoDaddy forwarder returned is gone), `cf-ray` present,
-`/api/runtime-config` exposing the R backend URL, and a real `POST /run-model`
-returning an effect estimate and a funnel plot. `maive.eu`, `www.maive.eu`,
-`api.maive.eu/v1/health` and both `spuriousprecision.com` hostnames were
-re-checked and are unaffected.
+**Complete as of 2026-08-12.** The topology in
+[#487](https://github.com/PetrCala/maive-ui/issues/487) is live:
+
+- `easymeta.org` and `www.easymeta.org` serve the app through Cloudflare;
+- `spuriousprecision.com` and `www` 301-redirect there, path and query
+  preserved;
+- `maive.eu` and `api.maive.eu` unchanged.
+
+Verified from the edge rather than through a resolver cache: HTTP/2 `200` on
+both canonical hostnames, `HEAD` `200` (the `405` the GoDaddy forwarder
+returned is gone), `cf-ray` present, `/api/runtime-config` exposing the R
+backend URL, and a real `POST /run-model` returning an effect estimate and a
+funnel plot. `http://spuriousprecision.com/` reaches the app in two hops with
+no loop.
 
 The delegation caused a ~30 minute outage on the way; see "Incident" below.
 
-Done:
+What was done, in order:
 
 - zone created, empty, with Cloudflare's DNS scan deliberately skipped so the
   GoDaddy forwarding A records were never imported;
@@ -58,13 +65,20 @@ Done:
 - `easymeta.org/*` and `www.easymeta.org/*` routed to `ui-origin-proxy`;
 - its own rate-limit rule, mirroring the other two zones;
 - Always Use HTTPS on, matching the other two zones;
-- nameservers flipped at the registrar.
+- nameservers flipped at the registrar;
+- **then**, only after the canonical hostnames were confirmed serving and
+  resolver caches had expired the old GoDaddy records, the
+  `spuriousprecision.com` redirect and the removal of its Worker routes.
 
-Not done: the `spuriousprecision.com` redirect, which waits until
-`easymeta.org` is confirmed serving.
+That last ordering is not cosmetic. While stale caches still pointed
+`easymeta.org` at the GoDaddy forwarder, the forwarder answered with a 301 to
+`spuriousprecision.com`. Had the redirect been deployed then, those clients
+would have bounced between the two hostnames in an infinite loop rather than
+merely seeing a stale page. Wait for caches before pointing the old domain at
+the new one.
 
-See [Migrating `easymeta.org`](#migrating-easymetaorg) for the remaining steps
-and the recorded pre-change state.
+See [Migrating `easymeta.org`](#migrating-easymetaorg) for the runbook and the
+recorded pre-change state.
 
 ### API token scope
 
@@ -105,7 +119,7 @@ account-wide setting.
 
 | Script | Source | Routes |
 |---|---|---|
-| `ui-origin-proxy` | [`workers/ui-origin-proxy.js`](workers/ui-origin-proxy.js) | `maive.eu/*`, `www.maive.eu/*`, `spuriousprecision.com/*`, `www.spuriousprecision.com/*`, `easymeta.org/*`, `www.easymeta.org/*` |
+| `ui-origin-proxy` | [`workers/ui-origin-proxy.js`](workers/ui-origin-proxy.js) | `maive.eu/*`, `www.maive.eu/*`, `easymeta.org/*`, `www.easymeta.org/*` |
 | `api-origin-proxy` | [`workers/api-origin-proxy.js`](workers/api-origin-proxy.js) | `api.maive.eu/*` |
 
 The account contains exactly these two Worker scripts. `ui-origin-proxy` is
@@ -168,9 +182,42 @@ almost exactly:
 | `*` | CNAME | UI Function URL host | yes |
 | `_144a1a6b…` | CNAME | `…xlfgrmvvlj.acm-validations.aws` | no |
 
-Worker routes `spuriousprecision.com/*` and `www.spuriousprecision.com/*`, both
-to `ui-origin-proxy`. Same leftover ACM validation record and same stale
-`ns.wedos.*` apex NS records as `maive.eu`; both are inert.
+**This zone no longer serves the app. It redirects.** Its two
+`ui-origin-proxy` Worker routes were deleted on 2026-08-12. The DNS records
+above stay proxied, because a Redirect Rule only runs on traffic that reaches
+Cloudflare at all.
+
+Redirect Rule, `http_request_dynamic_redirect` phase, ruleset
+`62d147fb70c64cc287ddccd75e1eea2f`:
+
+| | |
+|---|---|
+| Match | wildcard `https://*spuriousprecision.com/*` |
+| Target | `https://easymeta.org/${2}` |
+| Status | 301 |
+| Query string | preserved |
+
+The leading `*` covers the apex, `www`, and anything the wildcard DNS record
+catches, so no subdomain is left proxying to an origin that would reject it.
+`${2}` is the path capture; `${1}` is the subdomain part and is deliberately
+discarded.
+
+Deploying this rule raises a dashboard warning that the zone "may not be
+proxying traffic". It is a false positive here: apex, `www` and `*` are all
+proxied. Choose *Ignore and deploy rule anyway*, and do **not** accept the
+offer to create a new proxied DNS record.
+
+Redirect Rules run **before** Workers in Cloudflare's request pipeline, so the
+rule takes effect whether or not the Worker routes still exist. Removing them
+was cleanup, not a prerequisite.
+
+The zone keeps its own rate-limit rule. Same leftover ACM validation record and
+same stale `ns.wedos.*` apex NS records as `maive.eu`; both are inert.
+
+The API token cannot read or write this ruleset (`request is not authorized` on
+both `GET` and `POST`), so the rule was created in the dashboard. The exact
+permission group was not established; if you want this automatable, that is the
+thing to find out.
 
 ### Zone `easymeta.org`
 
@@ -406,12 +453,28 @@ read as ordinary pending state; the dashboard's repeated redirect to
    `https://easymeta.org` will fail to handshake. Today the domain works, so
    this is a real if short regression, and it is the main argument for doing
    the flip at a quiet hour rather than mid-week daytime.
-6. Only once `easymeta.org` is confirmed serving, switch
-   `spuriousprecision.com` to a 301 redirect (Single Redirects,
-   `http_request_dynamic_redirect` phase) and drop its `ui-origin-proxy`
-   routes.
-7. Re-verify all four hostnames end to end, including that `maive.eu` and
-   `api.maive.eu` are unaffected, and run a real analysis on the new domain.
+9. Only once `easymeta.org` is confirmed serving **and public resolver caches
+   have expired the registrar's old records**, switch `spuriousprecision.com`
+   to a 301 redirect (Single Redirects, `http_request_dynamic_redirect` phase)
+   and drop its `ui-origin-proxy` routes.
+
+   Both conditions matter, and the second is easy to miss. While stale caches
+   still resolve `easymeta.org` to the old forwarder, the forwarder 301s to
+   `spuriousprecision.com`; adding a redirect the other way closes the circle
+   and those clients loop forever. Wait it out, and check with several
+   resolvers rather than one, since anycast resolver nodes cache
+   independently and a single clean sample proves nothing:
+
+   ```bash
+   for r in 8.8.8.8 1.1.1.1 9.9.9.9 208.67.222.222; do
+     for h in easymeta.org www.easymeta.org; do
+       echo "$r $h $(dig +short "$h" A @$r | tr '\n' ' ')"
+     done
+   done
+   ```
+10. Re-verify all hostnames end to end, including that `maive.eu` and
+    `api.maive.eu` are unaffected, and run a real analysis on the new domain
+    rather than only checking for a homepage `200`.
 
 ## Rollback
 
@@ -422,10 +485,13 @@ read as ordinary pending state; the dashboard's repeated redirect to
 - **`easymeta.org` migration, before the nameserver flip:** delete the
   Cloudflare zone. Nothing public changed.
 - **`easymeta.org` migration, after the nameserver flip:** set the nameservers
-  at GoDaddy back to `ns01.domaincontrol.com` / `ns02.domaincontrol.com` and
-  re-enable forwarding to `https://www.spuriousprecision.com`. Allow for
-  propagation. This is why `spuriousprecision.com` should only be switched to
-  a redirect after `easymeta.org` is confirmed serving: doing both at once
-  leaves no working front door to roll back to.
-- **`spuriousprecision.com` redirect:** delete the redirect rule and restore
-  its `ui-origin-proxy` routes.
+  at GoDaddy back to `ns01.domaincontrol.com` / `ns02.domaincontrol.com`. The
+  GoDaddy zone still holds all ten original records, including the forwarding,
+  so the previous behaviour returns after propagation. **Delete the
+  `spuriousprecision.com` redirect rule first**, or the restored forwarding
+  (`easymeta.org` to `spuriousprecision.com`) plus the redirect
+  (`spuriousprecision.com` to `easymeta.org`) form a loop.
+- **`spuriousprecision.com` redirect:** delete the redirect rule from ruleset
+  `62d147fb70c64cc287ddccd75e1eea2f` and recreate its two `ui-origin-proxy`
+  routes (`spuriousprecision.com/*`, `www.spuriousprecision.com/*`). The DNS
+  records were never changed, so that alone restores it to serving the app.
