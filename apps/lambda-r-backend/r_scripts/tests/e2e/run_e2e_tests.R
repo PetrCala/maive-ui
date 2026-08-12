@@ -40,6 +40,7 @@ source(file.path(script_dir, "scenarios/edge_cases_test.R"))
 source(file.path(script_dir, "scenarios/basic_rtma_test.R"))
 source(file.path(script_dir, "scenarios/rtma_direction_test.R"))
 source(file.path(script_dir, "scenarios/rtma_seed_test.R"))
+source(file.path(script_dir, "scenarios/rtma_timeout_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
 
 # Define available test scenarios
@@ -115,6 +116,11 @@ AVAILABLE_SCENARIOS <- list(
     name = "RTMA Seed Reproducibility Test",
     description = "Test that identical input and seed reproduce identical RTMA results",
     function_name = "test_rtma_seed"
+  ),
+  "rtma-timeout" = list(
+    name = "RTMA Timeout Test",
+    description = "Test that the RTMA wall-clock budget is enforced and the server survives it",
+    function_name = "test_rtma_timeout"
   ),
 
   # Public /v1 API scenarios

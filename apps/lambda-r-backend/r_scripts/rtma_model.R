@@ -22,14 +22,42 @@ RTMA_PLOT_RES <- 120
 #
 # It is not entirely free of consequences, though. On a weakly identified dataset
 # the sampler's trajectory depends on where it starts, so some seeds send it into
-# a pathologically deep tree and the fit runs for minutes instead of seconds: on
-# the e2e "precise estimates" fixture that happens for 20250101 and 2026, and on
-# the near-degenerate /v1 fixture for 42 and 8454. Unseeded runs took that gamble
-# on every call, so this is not a new failure mode, but a fixed seed makes it
-# deterministic, so this value was timed against every RTMA fixture in the e2e
-# suite (all fits under 8 seconds). Any dataset can still be unlucky, which is
-# what the wall-clock limit below is for.
+# a pathologically deep tree: on the e2e "precise estimates" fixture that happens
+# for 20250101 and 2026, and on the near-degenerate /v1 fixture for 42 and 8454.
+# Unseeded runs took that gamble on every call, so this is not a new failure
+# mode, but a fixed seed makes it deterministic, so this value was timed against
+# every RTMA fixture in the e2e suite (all fits under 8 seconds). The treedepth
+# cap below bounds how much an unlucky (dataset, seed) pair can cost, and the
+# wall-clock limit is the backstop behind that.
 RTMA_DEFAULT_SEED <- 2025L
+
+# Stan sampler settings passed to phacking_meta()'s stan_control argument.
+#
+# adapt_delta restates phacking's own default: stan_control replaces the whole
+# default list rather than merging into it, and letting adapt_delta fall back
+# to Stan's 0.8 would change every pinned result in the app.
+#
+# max_treedepth 12 caps one NUTS iteration at 2^12 = 4096 leapfrog steps
+# against phacking's default 2^20. On well-identified data no trajectory gets
+# near either bound, so the draws are bit-identical to the default (verified
+# per fixture in docs/RTMA_PERFORMANCE.md, section 6, and re-verified against
+# this entry point on the e2e fixture, a sign-mirrored variant, and n = 300).
+# On weakly identified data the posterior grows a heavy flat shelf and some
+# trajectories do hit the cap, so draw-dependent outputs (median, credible
+# interval, r_hat, n_eff, divergence counts) move within the seed-to-seed
+# noise those fits already have; the mode, a separate deterministic
+# optimisation, does not move (verified on the Meissner demo: mode identical
+# to 15 digits, mu CI upper bound shifts 4.87 to 4.72 against a seed spread
+# measured in whole units). The payoff is the tail: a chain that wanders onto
+# the shelf saturates whatever depth is allowed, and at depth 20 that means
+# minutes per iteration, which is where the multi-minute RTMA grinds and
+# Lambda timeouts came from. At depth 12 those same fits either finish and
+# recover (r_hat near 1) or come back in seconds with r_hat far above 1 plus
+# divergences, which the diagnostics block in the response already surfaces
+# (#480). Depth 10 was measured to break otherwise-recoverable fits, so 12 is
+# the validated floor, not an arbitrary round number.
+RTMA_STAN_ADAPT_DELTA <- 0.98
+RTMA_STAN_MAX_TREEDEPTH <- 12L
 
 # Upper bound on sampling cores: rstan runs 4 chains by default and forks at
 # most one worker per chain, so nothing above this can be used.
@@ -56,6 +84,196 @@ RTMA_MAX_SAMPLING_CORES <- 4L
 rtma_sampling_cores <- function() {
   n <- suppressWarnings(as.integer(Sys.getenv("RTMA_SAMPLING_CORES")))
   if (length(n) != 1 || is.na(n) || n < 1) 1L else n
+}
+
+#' List the live descendants of a process
+#'
+#' Reads the pid -> ppid table from /proc on Linux (always present in the
+#' Lambda container) or from ps elsewhere (macOS, where local dev and the e2e
+#' suite run), then walks it transitively from `pid`. Processes that exit
+#' between the directory listing and the read are skipped.
+#'
+#' @param pid Root process id
+#' @return Integer vector of descendant pids, possibly empty
+rtma_process_descendants <- function(pid) {
+  table <- tryCatch(
+    {
+      if (dir.exists("/proc")) {
+        pids <- list.files("/proc", pattern = "^[0-9]+$")
+        ppids <- vapply(pids, function(p) {
+          status <- tryCatch(
+            readLines(file.path("/proc", p, "status"), warn = FALSE),
+            error = function(e) character(0)
+          )
+          line <- grep("^PPid:", status, value = TRUE)
+          if (length(line) == 1) as.integer(sub("^PPid:\\s*", "", line)) else NA_integer_
+        }, integer(1))
+        data.frame(pid = as.integer(pids), ppid = ppids)
+      } else {
+        lines <- suppressWarnings(
+          system2("ps", c("-Ao", "pid=,ppid="), stdout = TRUE, stderr = FALSE)
+        )
+        fields <- strsplit(trimws(lines), "\\s+")
+        fields <- fields[lengths(fields) == 2]
+        data.frame(
+          pid = as.integer(vapply(fields, `[[`, "", 1)),
+          ppid = as.integer(vapply(fields, `[[`, "", 2))
+        )
+      }
+    },
+    error = function(e) NULL
+  )
+  if (is.null(table) || nrow(table) == 0) {
+    return(integer(0))
+  }
+  table <- table[!is.na(table$pid) & !is.na(table$ppid), ]
+  found <- integer(0)
+  frontier <- as.integer(pid)
+  repeat {
+    kids <- setdiff(table$pid[table$ppid %in% frontier], c(found, as.integer(pid)))
+    if (length(kids) == 0) {
+      return(found)
+    }
+    found <- c(found, kids)
+    frontier <- kids
+  }
+}
+
+#' Kill a fit child and every Stan worker it forked
+#'
+#' Killing just the child is not enough: with mc.cores > 1 it forks up to
+#' RTMA_MAX_SAMPLING_CORES workers, SIGKILL skips R's mc.cleanup, and an
+#' orphaned worker mid-grind keeps burning the container's CPU with no parent
+#' left to stop it. So enumerate the tree while the child is still alive (once
+#' it is dead its orphans reparent to init and can no longer be found by a
+#' ppid walk), then SIGKILL the whole snapshot, and rescan a few times in case
+#' a fork raced the scan. In practice workers fork once at sampling start and
+#' the first pass is complete.
+#'
+#' @param pid Process id of the fit child
+#' @return NULL, invisibly
+rtma_kill_fit_tree <- function(pid) {
+  pid <- as.integer(pid)
+  for (attempt in seq_len(5L)) {
+    targets <- c(rtma_process_descendants(pid), pid)
+    alive <- targets[vapply(
+      targets,
+      function(p) isTRUE(tools::pskill(p, 0L)),
+      logical(1)
+    )]
+    if (length(alive) == 0) {
+      return(invisible(NULL))
+    }
+    for (p in alive) {
+      tools::pskill(p, tools::SIGKILL)
+    }
+    Sys.sleep(0.05)
+  }
+  invisible(NULL)
+}
+
+#' Run the RTMA fit under a wall-clock budget that is actually enforced
+#'
+#' setTimeLimit cannot do this job. R checks elapsed limits only at R-level
+#' interrupt points; a grinding Stan chain does not return to R until it
+#' finishes, and with forked chains the parent blocks in the worker-collect
+#' loop instead, which is no better: measured overshoot was minutes past a
+#' 15 second budget either way (docs/RTMA_PERFORMANCE.md, section 4). So on
+#' unix the fit runs in a forked child that this process can kill: poll for
+#' the result, and at the deadline kill the child plus its Stan workers and
+#' raise the timeout error the contract documents, as a classed condition so
+#' the caller can tell it from a fit failure.
+#'
+#' Warnings raised inside the child (phacking's direction warning, rstan's
+#' convergence warnings) do not cross the process boundary on their own, so
+#' fit_call collects them and ships them back next to the fit.
+#'
+#' On Windows, where R cannot fork, the fit runs in-process under setTimeLimit
+#' with the old elapsed-time heuristic: a best-effort budget on a dev-only
+#' platform.
+#'
+#' @param fit_call Zero-argument function that runs the fit and returns
+#'   list(fit = <phacking fit>, warnings = <character vector>)
+#' @param timeout_sec Wall-clock budget in seconds
+#' @return fit_call's return value
+run_rtma_fit_bounded <- function(fit_call, timeout_sec) {
+  raise_timeout <- function() {
+    cli::cli_abort(
+      c(
+        "RTMA timed out after {timeout_sec} seconds.",
+        "i" = "The run exceeded its time budget before finishing; this does not necessarily mean it diverged. Try winsorizing outliers or reducing the number of estimates."
+      ),
+      class = "rtma_timeout_error"
+    )
+  }
+
+  if (.Platform$OS.type != "unix") {
+    start_time <- Sys.time()
+    setTimeLimit(elapsed = timeout_sec, transient = TRUE)
+    on.exit(setTimeLimit(), add = TRUE)
+    return(tryCatch(
+      fit_call(),
+      error = function(e) {
+        setTimeLimit() # clear so error reporting is not itself interrupted
+        elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
+        if (elapsed >= timeout_sec * 0.95 ||
+          grepl("elapsed time limit", conditionMessage(e), fixed = TRUE)) {
+          raise_timeout()
+        }
+        stop(e)
+      }
+    ))
+  }
+
+  job <- parallel::mcparallel(fit_call())
+  deadline <- Sys.time() + timeout_sec
+  collected <- NULL
+  repeat {
+    remaining <- as.numeric(difftime(deadline, Sys.time(), units = "secs"))
+    if (remaining <= 0) {
+      break
+    }
+    # Wait in slices of at most a second so the deadline is honoured to about
+    # that resolution regardless of how long the fit runs.
+    collected <- parallel::mccollect(job, wait = FALSE, timeout = min(1, remaining))
+    if (!is.null(collected)) {
+      break
+    }
+  }
+
+  if (is.null(collected)) {
+    rtma_kill_fit_tree(job$pid)
+    # Reap the killed child so it does not linger as a zombie for the life of
+    # the container. mccollect warns that the job delivered no result, which
+    # is exactly what a kill looks like, so the warning carries no information.
+    suppressWarnings(
+      tryCatch(
+        parallel::mccollect(job, wait = FALSE, timeout = 1),
+        error = function(e) NULL
+      )
+    )
+    raise_timeout()
+  }
+
+  out <- collected[[1]]
+  if (inherits(out, "try-error")) {
+    # The child's own error, forwarded by mccollect. Re-raise the original
+    # condition so the message reaches the caller exactly as phacking wrote it.
+    condition <- attr(out, "condition")
+    if (!is.null(condition)) {
+      stop(condition)
+    }
+    # "{err_text}" keeps cli from glue-interpolating the child's message.
+    err_text <- as.character(out)
+    cli::cli_abort("{err_text}")
+  }
+  if (is.null(out)) {
+    # Exited without a result or an error: killed from outside the request,
+    # e.g. by the kernel OOM killer. Named explicitly because unlike a timeout
+    # it is not fixable by shrinking the dataset's runtime.
+    cli::cli_abort("The RTMA fit process died before returning a result.")
+  }
+  out
 }
 
 #' Render a z-score density plot and return it as a base64-encoded PNG data URI
@@ -237,7 +455,16 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   cores <- min(cores, RTMA_MAX_SAMPLING_CORES)
   # Wall-clock budget kept below the Lambda function timeout so a degenerate
   # dataset returns a clear error instead of being hard-killed mid-request.
-  timeout_sec <- if (!is.null(params$timeoutSeconds)) as.numeric(params$timeoutSeconds) else 480
+  # Validated like cores above: the legacy route hands parameters through
+  # unfiltered, and run_rtma_fit_bounded() needs a real positive number.
+  timeout_sec <- if (!is.null(params$timeoutSeconds)) {
+    suppressWarnings(as.numeric(params$timeoutSeconds))
+  } else {
+    480
+  }
+  if (length(timeout_sec) != 1 || !is.finite(timeout_sec) || timeout_sec <= 0) {
+    cli::cli_abort("The timeoutSeconds parameter must be a positive number.")
+  }
   # Sampler seed; see RTMA_DEFAULT_SEED above for why it must be pinned.
   seed <- if (!is.null(params$seed)) {
     suppressWarnings(as.integer(params$seed))
@@ -258,39 +485,39 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
     "timeout_sec: {timeout_sec}"
   ))
 
-  # Run RTMA via phacking package, bounded by a wall-clock limit. Pathological
-  # datasets can make the sampler's tree depth explode to effectively unbounded
-  # runtimes; the limit converts that into a clean failure instead of a hang.
-  # The time-limit interrupt fires inside phacking, which re-throws it as an
-  # opaque message, so timeout is detected by elapsed time rather than message.
+  # Run RTMA via phacking package inside run_rtma_fit_bounded(), which is what
+  # enforces timeout_sec: pathological datasets can make the sampler's tree
+  # depth explode, and RTMA_STAN_MAX_TREEDEPTH above bounds how bad one
+  # iteration can get while the fork supervision bounds the fit as a whole.
   #
   # phacking_meta() also signals conditions the caller must see, above all
   # "Favored direction is opposite of the pooled estimate.", which means the fit
   # truncated nothing and the returned mu is effectively uncorrected. tryCatch
-  # only handles errors, so warnings are collected here and returned in the
-  # response instead of being dropped on the floor.
-  rtma_warnings <- character(0)
-  start_time <- Sys.time()
+  # only handles errors, so the fit closure collects warnings and returns them
+  # next to the fit; on unix they are raised in the fit child and would not
+  # reach this process any other way.
 
   # rstan takes its chain count from mc.cores, so set it here rather than
   # passing parallelize = TRUE: that flag makes phacking call
   # `options(mc.cores = parallel::detectCores())`, which reads the host's core
-  # count instead of the Lambda's allocation. Restored afterwards so a request
-  # cannot leave the option changed for the next one in the same container.
+  # count instead of the Lambda's allocation. The fit child inherits the option
+  # through the fork. Restored afterwards so a request cannot leave the option
+  # changed for the next one in the same container.
   previous_mc_cores <- getOption("mc.cores")
   on.exit(options(mc.cores = previous_mc_cores), add = TRUE)
   options(mc.cores = cores)
 
-  setTimeLimit(elapsed = timeout_sec, transient = TRUE)
-  rtma_res <- tryCatch(
-    withCallingHandlers(
+  rtma_fit_call <- function() {
+    fit_warnings <- character(0)
+    fit <- withCallingHandlers(
       {
         # Seeded here rather than at the top of the function: nothing between
         # this line and phacking_meta() touches the RNG, so this is exactly the
-        # state the sampler starts from. The seed also fixes rstan's own seed,
-        # which it draws from this RNG, so each chain's stream is determined by
-        # its chain id alone; running the chains on 1 core or 4 gives
-        # bit-identical draws (verified in #483).
+        # state the sampler starts from, whether this closure runs in the fit
+        # child (unix) or in-process (the Windows fallback). The seed also
+        # fixes rstan's own seed, which it draws from this RNG, so each chain's
+        # stream is determined by its chain id alone; running the chains on 1
+        # core or 4 gives bit-identical draws (verified in #483).
         set.seed(seed)
         phacking::phacking_meta(
           yi = yi,
@@ -298,30 +525,39 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
           favor_positive = favor_positive,
           alpha_select = alpha_select,
           ci_level = ci_level,
+          stan_control = list(
+            adapt_delta = RTMA_STAN_ADAPT_DELTA,
+            max_treedepth = RTMA_STAN_MAX_TREEDEPTH
+          ),
           parallelize = FALSE
         )
       },
       warning = function(w) {
-        rtma_warnings <<- c(rtma_warnings, conditionMessage(w))
+        fit_warnings <<- c(fit_warnings, conditionMessage(w))
         invokeRestart("muffleWarning")
       }
-    ),
+    )
+    list(fit = fit, warnings = fit_warnings)
+  }
+
+  fit_out <- tryCatch(
+    run_rtma_fit_bounded(rtma_fit_call, timeout_sec),
     error = function(e) {
-      setTimeLimit() # clear so error reporting is not itself interrupted
-      elapsed <- as.numeric(difftime(Sys.time(), start_time, units = "secs"))
-      err_message <- conditionMessage(e)
-      if (elapsed >= timeout_sec * 0.95 ||
-        grepl("elapsed time limit", err_message, fixed = TRUE)) {
-        cli::cli_abort(c(
-          "RTMA timed out after {timeout_sec} seconds.",
-          "i" = "The run exceeded its time budget before finishing; this does not necessarily mean it diverged. Try winsorizing outliers or reducing the number of estimates."
-        ))
+      # The bounded runner's timeout already carries the documented user-facing
+      # message; re-raise it untouched. The inherits() check must live inside
+      # this one handler: a handler is disestablished while it runs, so its own
+      # stop() propagates outward, whereas a separate classed handler's
+      # re-raise is caught by this sibling and wrapped after all.
+      if (inherits(e, "rtma_timeout_error")) {
+        stop(e)
       }
+      err_message <- conditionMessage(e)
       cli::cli_alert_danger(paste("RTMA error:", err_message))
       cli::cli_abort(paste("RTMA analysis failed:", err_message))
     }
   )
-  setTimeLimit() # clear the limit for the rest of the request (plot, response)
+  rtma_res <- fit_out$fit
+  rtma_warnings <- fit_out$warnings
 
   cli::cli_h2("RTMA results structure:")
   cli::cli_code(capture.output(str(rtma_res, max.level = 2)))
