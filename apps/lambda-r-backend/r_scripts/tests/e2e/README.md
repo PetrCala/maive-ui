@@ -211,6 +211,8 @@ Each successful API call should return:
 
 4. **Port Conflicts**: If port 8787 is in use, start the API on a different port and use `--api-url`
 
+5. **Slow Requests Timing Out**: Requests default to a 30 second budget (`E2E_API_TIMEOUT`, in seconds). Most model fits answer in well under a second, but `standardErrorTreatment = "bootstrap"` refits the model 500 times and takes roughly 20 seconds, so scenarios exercising it set their own longer per-request timeout. Raise `E2E_API_TIMEOUT` rather than lowering it if a slow machine starts reporting timeouts.
+
 ### Debug Mode
 
 To run tests with more detailed output, modify the `verbose` parameter:
