@@ -8,9 +8,24 @@ not sourced by the production path.
 
 Benchmarks were run on an Apple M2 (8 GB, macOS, R 4.5.1, phacking 0.2.1,
 rstan 2.32.7). Absolute numbers on the production Lambda (Amazon Linux 2023,
-x86_64, 2048 MB, ~1.15 vCPU) will differ; the structure of where time and
-memory go carries over. Every wall-clock claim below is the median of repeated
-runs unless stated otherwise; seeds are always pinned and reported.
+x86_64) will differ; the structure of where time and memory go carries over.
+Every wall-clock claim below is the median of repeated runs unless stated
+otherwise; seeds are always pinned and reported.
+
+While this report was being written, #515 landed: the R Lambda went from
+2048 MB (~1.15 vCPU) to 3538 MB (exactly 2 vCPU) and the four Stan chains
+now fork across the allocation via `mc.cores`, with an e2e test asserting
+that 1 core and 4 cores give bit-identical draws. All benchmark numbers in
+this report are serial (one chain at a time), which is what the production
+configuration was when they were measured. They remain the right basis for
+analysis: parallel chains divide the happy-path wall clock (measured on this
+host: 2.6 s serial, 1.8 s on 2 cores, 1.3 s on 4, identical results to six
+decimals) but change nothing per chain, so every per-stage, scaling, memory,
+and pathology finding carries over. Where #515 changes a conclusion, the
+text says so inline; the short version is that it fixes the happy-path
+multiplier and leaves the tail findings (sections 4, 6, 7) untouched,
+because a grinding chain bounds the wall clock no matter how many cores the
+other chains get.
 
 ## 1. What RTMA actually computes
 
@@ -141,8 +156,12 @@ A complete RTMA fit peaks around 335-350 MB process-wide; the fit object
 itself is under 1 MB and the 4000 retained draws are a few hundred KB. In
 other words, nearly the whole memory footprint is shared library code and
 package namespaces, dominated by the rstan/StanHeaders/RcppParallel stack;
-per-request data is noise. The 2048 MB Lambda allocation is not close to
-memory-bound; it is sized to buy CPU (Lambda couples the two).
+per-request data is noise. The Lambda allocation (3538 MB since #515,
+2048 MB before) is nowhere near memory-bound; it is sized to buy CPU
+(Lambda couples the two, and #515 sized it to exactly 2 vCPU). Forked
+chain workers share the ~286 MB library floor copy-on-write and each adds
+only its chain's working set, so parallel sampling does not change this
+picture either.
 
 Consequences:
 
@@ -192,13 +211,18 @@ The mechanism, established by evaluating the posterior exactly:
 
 Two engineering corollaries:
 
-- `setTimeLimit` cannot interrupt a grinding chain. R checks elapsed-time
-  limits at R-level interrupt points, and rstan's C++ sampling loop for a
-  chain does not return to R until the chain finishes. A 180 s budget was
-  observed to overshoot to 12+ minutes (killed externally). Production's
-  480 s budget has the same hole: a truly bad request dies as an opaque
-  Lambda 600 s hard kill, not as the clean timeout error the wrapper tries
-  to produce.
+- `setTimeLimit` cannot interrupt a grinding chain, serial or parallel. R
+  checks elapsed-time limits at R-level interrupt points. Serially, rstan's
+  C++ sampling loop for a chain does not return to R until the chain
+  finishes; a 180 s budget was observed to overshoot to 12+ minutes (killed
+  externally). Under #515's forked chains the parent process instead blocks
+  in the worker-collect loop, which is no better: re-tested on Felts with
+  seed 2025 at `mc.cores = 2`, a 15 s budget had still not fired minutes
+  later (killed externally at 180 s) while a sibling chain finished and the
+  freed worker picked up the next one around the grinding chain 1.
+  Production's 480 s budget has the same hole in both configurations: a
+  truly bad request dies as an opaque Lambda 600 s hard kill, not as the
+  clean timeout error the wrapper tries to produce.
 - Because only trajectory length explodes (per-step cost is O(k_nonaffirm)
   and k is tiny on exactly the weak datasets), capping max_treedepth bounds
   the damage multiplicatively: depth 12 caps an iteration at 2^12 = 4096
@@ -279,9 +303,18 @@ seeds across versions.
 **I. Memory reduction inside the fit** (rejected by measurement). The fit
 object is under 1 MB against a ~340 MB process; see section 3. No lever.
 
-**J. Parallel chains** (already settled). parallelize = FALSE is correct on
-the 1.15 vCPU Lambda; forked chains were benchmarked upstream of this
-session and add fork overhead for nothing.
+**J. Parallel chains** (landed as #515 while this report was in review).
+At the old 1.15 vCPU allocation parallelize = FALSE was correct: there was
+no second core, so forked chains added overhead for nothing. #515 changed
+the premise, raising the Lambda to exactly 2 vCPU and forking the chains
+via `mc.cores`, which roughly halves happy-path wall clock at bit-identical
+results (guarded by an e2e fingerprint test across core counts). This is
+the right infra-level complement to everything below: it divides the time
+the sampler needs, while R1 bounds the time a pathological chain can burn.
+The two compose; neither substitutes for the other. Note the grind economics
+worsen slightly under #515 alone: a grinding chain now wastes a 3538 MB
+allocation instead of a 2048 MB one, and parallel siblings finish early and
+idle while it grinds, so R1's case is stronger, not weaker, after it.
 
 ## 6. Validation against the reference oracle
 
@@ -399,11 +432,18 @@ sampler cannot cover.
 
 **R2. Fix the wall-clock timeout mechanism.** Effort: small-moderate.
 Risk: low. `setTimeLimit` provably cannot interrupt a grinding chain
-(section 4); with R1 in place the practical exposure shrinks a lot (worst
-observed capped run: 165 s), but the guard as written still cannot enforce
-its stated budget. Options: accept the Lambda kill as the real timeout and
-say so in the error contract, or run the fit in a child process the
-handler can actually kill.
+(section 4), and #515's forked chains do not change that: re-tested at
+`mc.cores = 2` on the Felts grind, a 15 s budget was still unhonoured when
+the run was killed externally at 180 s. With R1 in place the practical
+exposure shrinks a lot (worst observed capped run: 165 s), but the guard
+as written still cannot enforce its stated budget. Options: accept the
+Lambda kill as the real timeout and say so in the error contract, or run
+the fit in a child process the handler can actually kill. One #515-specific
+caution for the second option: the fit now forks worker processes, so the
+enforcement point must kill the whole process group, not just the fit
+process; a bare SIGKILL of the parent skips R's `mc.cleanup` and orphans
+grinding workers (verified on the bench, where the wrapper kills the
+workers explicitly and leaves nothing behind).
 
 **R3. Surface a weak-identification warning.** Effort: moderate. Risk: low
 (adds information, changes no numbers). The shelf-mass diagnostic
@@ -462,9 +502,10 @@ the sampler under-covers.
   over R1, and Felts stays broken regardless. Revisit only if R1 proves
   insufficient in production.
 - **Laplace, cmdstanr/TMB swaps, thinning, memory work inside the fit,
-  parallel chains, Stan model vectorisation for this app's N range**:
-  sections 5, 6 and 8; each rejected with numbers or dominated by the
-  options above.
+  Stan model vectorisation for this app's N range**: sections 5, 6 and 8;
+  each rejected with numbers or dominated by the options above. (Parallel
+  chains were on this list when the Lambda had 1.15 vCPU; #515 bought a
+  second core and shipped them, see candidate J.)
 
 ## 8. What was tried and did not work
 
@@ -500,9 +541,11 @@ Recorded so nobody re-runs these.
 - **`setTimeLimit` as the RTMA wall-clock guard.** Does not fire while an
   rstan chain is grinding; R only checks elapsed limits at R-level
   boundaries, which a single chain does not cross until it finishes. A
-  180 s budget overshot to 12+ minutes repeatedly on the bench. Any real
-  budget needs an external enforcement point (a subprocess kill, or the
-  Lambda timeout itself).
+  180 s budget overshot to 12+ minutes repeatedly on the bench. The #515
+  parallel path does not rescue it: the parent blocks in the worker-collect
+  loop and a 15 s budget was still unhonoured minutes later on the Felts
+  grind. Any real budget needs an external enforcement point (a subprocess
+  kill, or the Lambda timeout itself).
 - **Trimming memory inside the fit** (fewer draws, pars= subsetting,
   discarding the stanfit early): measured as pointless; every candidate
   object is under 1 MB against a ~340 MB process floor owned by shared
@@ -511,6 +554,9 @@ Recorded so nobody re-runs these.
   environment, and both are dominated by quadrature for a 2-parameter
   closed-form posterior). If the dependency-diet motivation ever matters,
   quadrature achieves it more directly by removing the sampler entirely.
-- **Parallel chains** (`parallelize = TRUE`): re-confirmed as a
-  non-starter for the 1.15 vCPU Lambda; this was already known and encoded
-  in the wrapper's default.
+- **Parallel chains at the old allocation** (`parallelize = TRUE` on
+  1.15 vCPU): re-confirmed as a non-starter; with no second core, forking
+  buys overhead. This negative was allocation-specific, not
+  method-specific: #515 later raised the Lambda to 2 vCPU and shipped
+  forked chains via `mc.cores`, which does halve the happy path there
+  (candidate J).
