@@ -24,6 +24,7 @@ that adds up to.
 | Reserved concurrency = 30 (UI) | `prod-runtime/variables.tf` (`ui_lambda_reserved_concurrency`) | UI Lambda spend and its share of the account concurrency pool. |
 | Async fan-out = 5 | `prod-runtime/orchestrator_lambda.tf` (`maximum_concurrency`) | Concurrent async runs; kept below the R cap so async never starves sync. |
 | Max dataset rows = 50,000 | R `api_v1.R` / `index.R` (`MAX_INPUT_ROWS`), UI `datasetValidation.ts` (`MAX_ROWS`) | Per-request work; caps payload-driven CPU/output amplification on every HTTP route including the raw legacy path. |
+| RTMA wall-clock budget = 480 s | R `rtma_model.R` (`timeoutSeconds`) | How long one RTMA request can hold a slot. Enforced by killing the fit's child process at the deadline, so a dataset that makes the Stan sampler grind gives the slot back at 480 s instead of running to the 600 s function timeout (#521). |
 | **Cost circuit breaker** | `prod-runtime/circuit_breaker.tf` | The **monthly total**. Auto-throttles the R backend to 0 on sustained abuse. |
 | Budget notifications ($10, 50/80/forecast) | `prod-foundation/budget.tf` | Human awareness; email backstop. |
 | Cost Anomaly Detection | `prod-foundation/cost_anomaly.tf` | Human awareness; catches deviation from baseline rather than a fixed threshold. Daily digest, on ~24h-lagged billing data. |
