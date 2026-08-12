@@ -1,6 +1,6 @@
 <div align="center">
     <h1>
-        <a href="https://spuriousprecision.com">
+        <a href="https://easymeta.org">
         MAIVE - Developer's guide
         </a>
     </h1>
@@ -141,8 +141,11 @@ TLS is terminated by **Cloudflare**, which sits in front of the UI Lambda Functi
 
 ### Domains
 
-- `maive.eu` and `spuriousprecision.com` (apex + `www`) are **proxied through Cloudflare** (orange-cloud), pointing at the UI Lambda Function URL origin.
-- `easymeta.org` **redirects** to `spuriousprecision.com` via GoDaddy domain forwarding.
+- `easymeta.org` is the **canonical** address. It and `maive.eu` (apex + `www` on both) are **proxied through Cloudflare** (orange-cloud), pointing at the UI Lambda Function URL origin.
+- `spuriousprecision.com` (apex + `www`) **301-redirects** to `easymeta.org`.
+- `api.maive.eu` is the public API hostname and is unaffected by any of the above.
+
+Each serving hostname needs a Worker route as well as a DNS record: Lambda Function URLs reject a foreign `Host` header, so a plain proxied CNAME hangs. See [`infra/cloudflare/README.md`](infra/cloudflare/README.md).
 
 ### Verifying
 
@@ -151,7 +154,7 @@ TLS is terminated by **Cloudflare**, which sits in front of the UI Lambda Functi
 bun run cloud:status
 
 # Check that a domain resolves through Cloudflare and serves the app
-curl -sI https://spuriousprecision.com | head -n 20
+curl -sI https://easymeta.org | head -n 20
 ```
 
 ## Destroying the architecture

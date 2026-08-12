@@ -31,6 +31,11 @@ type ResultsSummaryProps = {
   simpleMean?: number;
   showInterpretation?: boolean;
   showExtendedResults?: boolean;
+  // Number of columns to lay the values out in. The default two-column split
+  // uses `md:`, which keys off the viewport, so it still splits when the
+  // component itself is narrow: pass 1 when rendering inside a column that is
+  // narrower than the page (the compare grid).
+  columns?: 1 | 2;
 };
 
 export default function ResultsSummary({
@@ -46,7 +51,12 @@ export default function ResultsSummary({
   simpleMean,
   showInterpretation = true,
   showExtendedResults = false,
+  columns = 2,
 }: ResultsSummaryProps) {
+  const gridClass =
+    columns === 1
+      ? "grid grid-cols-1 gap-4"
+      : "grid grid-cols-1 md:grid-cols-2 gap-4";
   const formatIntervalString = (value: string): string => {
     const trimmed = value.trim();
 
@@ -238,11 +248,21 @@ export default function ResultsSummary({
 
   // Detailed variant for modal display
   if (layout === "vertical") {
+    if (columns === 1) {
+      return (
+        <div className="space-y-2 text-sm">
+          {visibleResults.map((item, index) =>
+            renderResultItem(item, `single-${index}`),
+          )}
+        </div>
+      );
+    }
+
     const { left, right } = splitIntoColumns(visibleResults, "vertical");
 
     return (
       <div className="space-y-2 text-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className={gridClass}>
           <div className="space-y-2">
             {left.map((item, index) => renderResultItem(item, `left-${index}`))}
           </div>
@@ -304,7 +324,7 @@ export default function ResultsSummary({
                 />
               )}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className={gridClass}>
               <div className={"space-y-4"}>
                 {left.map((item, index) => (
                   <div key={`${sectionKey}-left-${index}`}>

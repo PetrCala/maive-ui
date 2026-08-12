@@ -1,6 +1,6 @@
 <div align="center">
     <h1>
-        <a href="https://spuriousprecision.com">
+        <a href="https://easymeta.org">
         MAIVE - User Interface
         </a>
     </h1>
@@ -11,7 +11,7 @@
 
 ## 🚀 Ready to analyze your data?
 
-**Visit [the official MAIVE website](https://spuriousprecision.com) to get started!**
+**Visit [the official MAIVE website](https://easymeta.org) to get started!**
 
 Through our interactive interface, you can quickly and easily check whether your data contains spurious precision using the MAIVE estimator.
 
@@ -24,7 +24,7 @@ Through our interactive interface, you can quickly and easily check whether your
 ---
 
 <div align="center">
-    <a href="https://spuriousprecision.com" style="font-size: 1.2em; font-weight: bold; color: #007bff;">
+    <a href="https://easymeta.org" style="font-size: 1.2em; font-weight: bold; color: #007bff;">
     🔗 Go to MAIVE Website →
     </a>
 </div>

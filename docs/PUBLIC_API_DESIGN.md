@@ -91,10 +91,11 @@ are a **prerequisite**, not a nice-to-have.
   status + result (48 h TTL). Poll via `GET /api/runs/{jobId}`; batch status
   via `GET /api/runs?ids=`. `jobId` is an opaque bearer token (locked decision
   D6 of the async design).
-- **Edge**: Cloudflare fronts the *UI* domains only (`maive.eu`,
-  `spuriousprecision.com`), with a Worker rewriting Host/SNI to the `.on.aws`
-  origin. The R Function URL is **not** behind Cloudflare; the browser calls
-  it directly. Cloudflare caps proxied origin responses at ~100 s.
+- **Edge**: Cloudflare fronts the *UI* domains only (`easymeta.org`, the
+  canonical one, and `maive.eu`; `spuriousprecision.com` redirects to
+  `easymeta.org`), with a Worker rewriting Host/SNI to the `.on.aws` origin.
+  The R Function URL is **not** behind Cloudflare; the browser calls it
+  directly. Cloudflare caps proxied origin responses at ~100 s.
 - **Costs**: ~$0.001-0.002 of Lambda compute per typical run; pathological
   runs bounded by the R-side 480 s guard (RTMA) / 600 s Lambda timeout.
 
@@ -232,12 +233,12 @@ plus `funnelPlot`/`funnelPlotWidth`/`funnelPlotHeight` only with
 
 Same envelope; parameters (all optional): `favorPositive` (default `true`),
 `alphaSelect` (`0.05`), `ciLevel` (`0.95`), `winsorize` (`0`), `seed` (`2025`).
-The internal `parallelize` / `timeoutSeconds` knobs are **not**
+The internal `cores` / `timeoutSeconds` knobs are **not**
 exposed. Response: `mu`, `muCI`, `tau`, `tauCI`, `seed`,
 `nonaffirmativeCount`, `nonaffirmativeProportion`, `warnings` (+ `zScorePlot*`
 with `?include=plot`).
 
-`seed` is exposed where `parallelize` / `timeoutSeconds` are not, because those
+`seed` is exposed where `cores` / `timeoutSeconds` are not, because those
 two only change how the fit is executed while the seed changes the numbers that
 come back: `phacking_meta()` takes no seed, so an unseeded fit returns a
 different credible interval on every call for identical input (#479). The
@@ -313,7 +314,7 @@ Layered, in order of load-bearing-ness:
 
 1. **Reserved concurrency = 10 on the R Lambda** (D2; Terraform). Hard ceiling
    on concurrent compute regardless of entry path. Worst-case sustained abuse
-   ≈ 10 × 2 GB × 100% duty cycle ≈ low tens of $/day, alarmed well before that.
+   ≈ 10 × 3.5 GB × 100% duty cycle ≈ $50/day, alarmed well before that.
    The orchestrator's `maximum_concurrency=5` fits inside it, so async can
    never starve sync entirely (and vice versa is acceptable: sync overflow
    `429`s, and the UI already has the async path).
@@ -428,9 +429,9 @@ until Phase 3.
   eventual fix.
 - **Concurrency cap = 10 is a guess.** It now also throttles UI sync traffic
   at the margin; previously it was deliberately unreserved. Watch the throttle
-  alarm; tune. Each unit of concurrency is worth roughly **$0.12/hour
-  (~$86/month)** of worst-case exposure at 2 GB, so the cap is effectively the
-  ceiling on an anonymous abuse bill: ~$29/day at 10, ~$58/day at 20. Note the
+  alarm; tune. Each unit of concurrency is worth roughly **$0.21/hour
+  (~$149/month)** of worst-case exposure at 3.5 GB, so the cap is effectively the
+  ceiling on an anonymous abuse bill: ~$50/day at 10, ~$100/day at 20. Note the
   cap is **global, not per-caller**: anonymous access means there is no
   per-user quota, and the edge rule limits request *rate*, not concurrency, so
   one heavy caller can occupy all of it.
@@ -446,12 +447,13 @@ until Phase 3.
 - **Column resolution by name (D5)** adds one behavior divergence from legacy
   (which is purely positional). Contained to `/v1`; property-tested in the e2e
   scenario.
-- **Hostname mirroring:** ~~also expose `api.spuriousprecision.com`?~~
-  **Decided:** no. `api.maive.eu` is the single canonical hostname; one
-  hostname keeps docs and rate-limit scoping simple (and on the Free plan the
-  zone gets only one rate-limit rule anyway). `easymeta.org` is GoDaddy
-  domain-forwarding, not a Cloudflare zone, so it could not host an API
-  hostname without moving its DNS first.
+- **Hostname mirroring:** ~~also expose `api.spuriousprecision.com` or
+  `api.easymeta.org`?~~ **Decided:** no. `api.maive.eu` is the single
+  canonical hostname; one hostname keeps docs and rate-limit scoping simple
+  (and on the Free plan each zone gets only one rate-limit rule anyway).
+  `easymeta.org` becoming the canonical *UI* address does not change this:
+  `maive.eu` stays the infrastructure zone, and moving the API hostname would
+  invalidate every published example for no benefit.
 - **Result-shape stability:** `/v1` freezes field names that today mirror
   internal R naming (`petpeese_selected`, `is_quadratic_fit`, …). Accepted;
   they're already the de-facto contract for the UI and reproducibility

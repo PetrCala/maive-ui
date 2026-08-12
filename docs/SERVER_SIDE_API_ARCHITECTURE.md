@@ -125,10 +125,10 @@ The previous `/api/run-model` proxy has been **removed**.
 
 ## Domains
 
-- `maive.eu` and `spuriousprecision.com` (apex + `www`) are proxied through
-  Cloudflare.
-- `easymeta.org` redirects to `spuriousprecision.com` via GoDaddy domain
-  forwarding.
+- `easymeta.org` is the canonical address. It and `maive.eu` (apex + `www` on
+  both) are proxied through Cloudflare and serve the app.
+- `spuriousprecision.com` (apex + `www`) 301-redirects to `easymeta.org`.
+- `api.maive.eu` is the public API hostname.
 
 ## Trade-offs
 

@@ -33,6 +33,13 @@ const CONST = {
       PAPER: "https://doi.org/10.1002/jrsm.1701",
       PHACKING_CRAN: "https://doi.org/10.32614/CRAN.package.phacking",
     },
+    APP: {
+      // Canonical public address of this app. `spuriousprecision.com` (apex
+      // and www) redirects here; `maive.eu` also serves the app directly.
+      // Deliberately separate from LINKS.MAIVE.WEBSITE, which is the MAIVE
+      // *method's* page and is not this application.
+      WEBSITE: "https://easymeta.org",
+    },
     APP_GITHUB: {
       HOMEPAGE: `https://github.com/${GH_OWNER}/${GH_REPO_UI}`,
       ISSUES: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/issues`,
@@ -76,6 +83,11 @@ const CONST = {
   RUNS: {
     TTL_SECONDS: 48 * 60 * 60, // 48h pickup buffer
     TTL_MS: 48 * 60 * 60 * 1000,
+    // Side-by-side comparison bounds. Two is the minimum that compares
+    // anything; three is where the columns stop being readable, since each
+    // card carries the full result summary rather than a single number.
+    COMPARE_MIN: 2,
+    COMPARE_MAX: 3,
   },
 
   MODEL_TYPES: {
