@@ -1,43 +1,24 @@
-import { getRuntimeConfig } from "@src/utils/getRuntimeConfig";
-
 function sanitizeUrl(url: string) {
   return url.replace(/\/+$/, "");
 }
 
 /**
- * Get the R API URL for the current environment
- * This function works both client-side and server-side
+ * Get the R API URL. Server-only since #530: the R backend Function URL
+ * requires IAM auth, so the browser talks to same-origin /api routes and the
+ * server resolves (and signs for) the compute endpoint.
  * @returns The R API URL
  */
 export function getRApiUrl(): string {
-  // Server-side: check environment variables first
-  if (typeof window === "undefined") {
-    return sanitizeUrl(
-      process.env.NEXT_PUBLIC_R_API_URL ??
-        process.env.R_API_URL ??
-        "http://localhost:8787",
+  if (typeof window !== "undefined") {
+    throw new Error(
+      "getRApiUrl is server-only. Browser code must call the /api proxy routes instead of the R backend.",
     );
   }
 
-  // Client-side: try to get URL from runtime config
-  const { R_API_URL } = getRuntimeConfig();
-
-  if (R_API_URL) {
-    return sanitizeUrl(R_API_URL);
-  }
-
-  // Handle development fallback
-  if (process.env.NODE_ENV === "development") {
-    console.warn(
-      "R API URL not configured. Using fallback for development. " +
-        "Set NEXT_PUBLIC_DEV_R_API_URL in .env.local for custom development URL.",
-    );
-    return "http://localhost:8787";
-  }
-
-  // Production error
-  throw new Error(
-    "R API URL not configured. Please check your environment configuration.",
+  return sanitizeUrl(
+    process.env.R_API_URL ??
+      process.env.NEXT_PUBLIC_DEV_R_API_URL ??
+      "http://localhost:8787",
   );
 }
 

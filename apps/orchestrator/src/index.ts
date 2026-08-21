@@ -1,9 +1,12 @@
+import { Sha256 } from "@aws-crypto/sha256-js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
   DynamoDBDocumentClient,
   GetCommand,
   UpdateCommand,
 } from "@aws-sdk/lib-dynamodb";
+import { HttpRequest } from "@smithy/protocol-http";
+import { SignatureV4 } from "@smithy/signature-v4";
 import type { SQSEvent, SQSRecord } from "aws-lambda";
 
 const region = process.env.AWS_REGION;
@@ -32,6 +35,65 @@ const sleep = (ms: number): Promise<void> =>
     setTimeout(resolve, ms);
   });
 
+/** Region from `<id>.lambda-url.<region>.on.aws`, else the runtime's region. */
+function resolveSigningRegion(hostname: string): string {
+  const parts = hostname.split(".");
+  const lambdaUrlIndex = parts.indexOf("lambda-url");
+  if (lambdaUrlIndex !== -1 && parts.length > lambdaUrlIndex + 1) {
+    return parts[lambdaUrlIndex + 1];
+  }
+  return region ?? "eu-central-1";
+}
+
+/**
+ * Headers for a POST to the R backend. The Function URL requires IAM auth
+ * (#530), so requests to it are SigV4-signed with the execution role's
+ * credentials; non Function URL targets (local testing) stay unsigned. Signing
+ * happens per attempt because the signature covers the request date.
+ */
+async function buildRequestHeaders(
+  url: URL,
+  body: string,
+): Promise<Record<string, string>> {
+  const baseHeaders: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (!url.hostname.endsWith(".on.aws")) {
+    return baseHeaders;
+  }
+
+  const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+  if (!accessKeyId || !secretAccessKey) {
+    throw new Error(
+      "AWS credentials are not available to sign the R backend request.",
+    );
+  }
+
+  const signer = new SignatureV4({
+    service: "lambda",
+    region: resolveSigningRegion(url.hostname),
+    credentials: {
+      accessKeyId,
+      secretAccessKey,
+      sessionToken: process.env.AWS_SESSION_TOKEN,
+    },
+    sha256: Sha256,
+  });
+
+  const signed = await signer.sign(
+    new HttpRequest({
+      method: "POST",
+      protocol: url.protocol,
+      hostname: url.hostname,
+      path: url.pathname,
+      headers: { "content-type": "application/json", host: url.hostname },
+      body,
+    }),
+  );
+  return signed.headers;
+}
+
 /**
  * POST to the R backend, retrying *only* on HTTP 429.
  *
@@ -51,6 +113,7 @@ export async function postWithThrottleRetry(
   body: string,
   deadline: number,
 ): Promise<Response> {
+  const target = new URL(url);
   for (let attempt = 0; ; attempt++) {
     const remaining = deadline - Date.now();
     if (remaining <= 0) {
@@ -58,11 +121,13 @@ export async function postWithThrottleRetry(
     }
 
     // eslint-disable-next-line no-await-in-loop
+    const headers = await buildRequestHeaders(target, body);
+    // eslint-disable-next-line no-await-in-loop
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body,
-      signal: AbortSignal.timeout(remaining),
+      signal: AbortSignal.timeout(deadline - Date.now()),
     });
 
     if (response.status !== 429) {

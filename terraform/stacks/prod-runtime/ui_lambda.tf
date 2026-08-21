@@ -74,6 +74,32 @@ resource "aws_iam_role_policy_attachment" "ui_lambda_runs" {
   policy_arn = aws_iam_policy.ui_lambda_runs.arn
 }
 
+# The browser talks to the Next.js server, which SigV4-signs and forwards
+# model calls to the IAM-protected R backend Function URL (#530).
+resource "aws_iam_policy" "ui_lambda_r_invoke" {
+  name        = "${var.project}-ui-lambda-r-invoke"
+  description = "Allow the UI Lambda to invoke the IAM-protected R backend Function URL"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunctionUrl"]
+        Resource = aws_lambda_function.r_backend.arn
+        Condition = {
+          StringEquals = { "lambda:FunctionUrlAuthType" = "AWS_IAM" }
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ui_lambda_r_invoke" {
+  role       = aws_iam_role.ui_lambda.name
+  policy_arn = aws_iam_policy.ui_lambda_r_invoke.arn
+}
+
 # Explicit log group so retention is bounded (Lambda otherwise auto-creates one
 # that never expires).
 resource "aws_cloudwatch_log_group" "ui_lambda" {
@@ -94,7 +120,7 @@ resource "aws_lambda_function" "ui" {
 
   environment {
     variables = {
-      NEXT_PUBLIC_R_API_URL                = aws_lambda_function_url.r_backend.function_url
+      R_API_URL                            = aws_lambda_function_url.r_backend.function_url
       STATUS_BANNER_ENABLED_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_enabled.name
       STATUS_BANNER_MESSAGE_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_message.name
       STATUS_BANNER_AWS_REGION             = var.region

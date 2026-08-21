@@ -9,14 +9,13 @@ import type {
   SubmitRunResponse,
   GetRunResponse,
 } from "@src/types/api";
-import { getRApiUrl } from "@api/utils/config";
 import { httpGet, httpPost } from "@api/utils/http";
 
 /**
  * Service for model-related API operations.
- * Isomorphic: in the browser it calls the R backend Function URL directly
- * (URL resolved from runtime config); server-side it uses the configured
- * R_API_URL. See getRApiUrl().
+ * Client-side only: every call goes to a same-origin /api route. Synchronous
+ * runs are proxied server-side to the IAM-protected R backend Function URL
+ * (#530); the browser never talks to the compute endpoint directly.
  */
 export class ModelService {
   /**
@@ -37,18 +36,14 @@ export class ModelService {
     };
 
     try {
-      return await httpPost<ModelResponse>(
-        `${getRApiUrl()}/run-model`,
-        requestData,
-        {
-          timeout: 300000, // 5 minutes for long-running models
-          headers: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            "Content-Type": "application/json",
-          },
-          signal: abortController?.signal,
+      return await httpPost<ModelResponse>("/api/run-model", requestData, {
+        timeout: 300000, // 5 minutes for long-running models
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Content-Type": "application/json",
         },
-      );
+        signal: abortController?.signal,
+      });
     } catch (error: unknown) {
       // Preserve the original error (e.g. ApiRequestError with its status/code,
       // or an AbortError) instead of burying it behind a generic message.
@@ -77,18 +72,14 @@ export class ModelService {
     };
 
     try {
-      return await httpPost<ModelResponse>(
-        `${getRApiUrl()}/run-rtma`,
-        requestData,
-        {
-          timeout: 600000, // 10 minutes for MCMC sampling
-          headers: {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
-            "Content-Type": "application/json",
-          },
-          signal: abortController?.signal,
+      return await httpPost<ModelResponse>("/api/run-rtma", requestData, {
+        timeout: 600000, // 10 minutes for MCMC sampling
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Content-Type": "application/json",
         },
-      );
+        signal: abortController?.signal,
+      });
     } catch (error: unknown) {
       if (error instanceof Error) {
         throw error;

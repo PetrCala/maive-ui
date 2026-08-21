@@ -9,8 +9,11 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@aws-crypto/sha256-js": "^5.2.0",
     "@aws-sdk/client-dynamodb": "^3.1061.0",
     "@aws-sdk/lib-dynamodb": "^3.1061.0",
+    "@smithy/protocol-http": "^5.3.0",
+    "@smithy/signature-v4": "^5.4.6",
     "@types/aws-lambda": "^8.10.145",
     "@types/node": "^20",
     "esbuild": "^0.24.0",
