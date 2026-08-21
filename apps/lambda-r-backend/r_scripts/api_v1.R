@@ -6,10 +6,12 @@
 # The legacy routes (/run-model, /run-rtma) do not use this file and keep their
 # existing behavior. See docs/PUBLIC_API_DESIGN.md.
 
-# Request-level wall-clock bounds (#526). Sourced here, in the serving
-# process, so its helpers exist before any handler runs.
+# Request-level wall-clock bounds (#526) and structured per-request logging
+# (#532). Sourced here, in the serving process, so their helpers exist before
+# any handler runs.
 # nolint start: undesirable_function_linter.
 source("request_bounds.R")
+source("request_log.R")
 # nolint end: undesirable_function_linter.
 
 API_V1_MODEL_TYPES <- c("MAIVE", "WAIVE", "WLS")
@@ -553,8 +555,13 @@ api_v1_is_validation_message <- function(msg) {
 #' @param res Plumber response object
 #' @param endpoint Endpoint label used in log messages
 #' @param run Zero-argument function producing the success response body
-api_v1_handle <- function(res, endpoint, run) {
+#' @param log_ctx Optional request log context (#532); when given, the bounded
+#'   outcome is recorded on it so the handler's single log line carries it
+api_v1_handle <- function(res, endpoint, run, log_ctx = NULL) {
   outcome <- run_request_bounded(run, REQUEST_TIMEOUT_DEFAULT_SEC) # nolint: object_usage_linter.
+  if (!is.null(log_ctx)) {
+    request_log_note(log_ctx, outcome = request_log_outcome(outcome$status)) # nolint: object_usage_linter.
+  }
   elapsed <- round(outcome$elapsed_sec, 1)
   switch(outcome$status,
     ok = outcome$value,
@@ -626,7 +633,16 @@ api_v1_run_model <- function(req, res, include = "") {
   source("maive_model.R")
   # nolint end: undesirable_function_linter.
 
-  api_v1_handle(res, "/v1/run-model", function() {
+  # One structured JSON line per request (#532). k and method are lifted from
+  # plumber's already-parsed body in the serving process, because the bounded
+  # closure below parses in a child whose state never returns on a timeout.
+  # nolint start: object_usage_linter.
+  log_ctx <- request_log_context(req, "/v1/run-model", rtma = FALSE)
+  on.exit(request_log_emit(log_ctx), add = TRUE)
+  request_log_note_v1_body(log_ctx, req)
+  # nolint end.
+
+  api_v1_handle(res, "/v1/run-model", log_ctx = log_ctx, run = function() {
     body <- api_v1_request_body(req)
     df <- api_v1_validate_maive_data(body$data)
     params <- api_v1_default_maive_parameters(body$parameters)
@@ -657,7 +673,14 @@ api_v1_run_rtma <- function(req, res, include = "") {
   source("rtma_model.R")
   # nolint end: undesirable_function_linter.
 
-  api_v1_handle(res, "/v1/run-rtma", function() {
+  # One structured JSON line per request (#532); see api_v1_run_model().
+  # nolint start: object_usage_linter.
+  log_ctx <- request_log_context(req, "/v1/run-rtma", rtma = TRUE)
+  on.exit(request_log_emit(log_ctx), add = TRUE)
+  request_log_note_v1_body(log_ctx, req)
+  # nolint end.
+
+  api_v1_handle(res, "/v1/run-rtma", log_ctx = log_ctx, run = function() {
     body <- api_v1_request_body(req)
     df <- api_v1_validate_rtma_data(body$data)
     params <- api_v1_default_rtma_parameters(body$parameters)
