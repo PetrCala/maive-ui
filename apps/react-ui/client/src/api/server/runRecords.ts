@@ -60,6 +60,7 @@ export type RunRecord = {
   finishedAt?: number;
   runDurationMs?: number;
   errorMessage?: string;
+  errorCode?: string;
   runCount?: number;
   dedupHits?: number;
   ttl?: number;
@@ -131,7 +132,7 @@ export const computeInputHash = (
 
 export type DedupDecision =
   | { kind: "running" }
-  | { kind: "timedout"; errorMessage: string };
+  | { kind: "timedout"; errorMessage: string; errorCode?: string };
 
 /**
  * Decide whether an existing record answers a new identical submission.
@@ -163,6 +164,7 @@ export const classifyDedup = (
     return {
       kind: "timedout",
       errorMessage: record.errorMessage ?? DEDUP_TIMEOUT_FALLBACK_MESSAGE,
+      errorCode: record.errorCode,
     };
   }
   return undefined;
@@ -210,6 +212,7 @@ export const startRunRecord = async (
     "#finishedAt": "finishedAt",
     "#runDurationMs": "runDurationMs",
     "#errorMessage": "errorMessage",
+    "#errorCode": "errorCode",
   };
   const values: Record<string, unknown> = {
     ":inputHash": params.inputHash,
@@ -246,7 +249,7 @@ export const startRunRecord = async (
     new UpdateCommand({
       TableName: tableName,
       Key: { jobId: `${RUN_RECORD_KEY_PREFIX}${params.inputHash}` },
-      UpdateExpression: `${setExpr} REMOVE #finishedAt, #runDurationMs, #errorMessage`,
+      UpdateExpression: `${setExpr} REMOVE #finishedAt, #runDurationMs, #errorMessage, #errorCode`,
       ExpressionAttributeNames: names,
       ExpressionAttributeValues: values,
     }),
@@ -258,6 +261,7 @@ export type FinishRunRecordParams = {
   status: Exclude<RunRecordStatus, "running">;
   startedAt: number;
   errorMessage?: string;
+  errorCode?: string;
 };
 
 /** Record one run's terminal outcome and refresh the 30 day TTL. */
@@ -273,6 +277,7 @@ export const finishRunRecord = async (
     "#runDurationMs": "runDurationMs",
     "#ttl": "ttl",
     "#errorMessage": "errorMessage",
+    "#errorCode": "errorCode",
   };
   const values: Record<string, unknown> = {
     ":status": params.status,
@@ -283,11 +288,21 @@ export const finishRunRecord = async (
   let expr =
     "SET #status = :status, #finishedAt = :finishedAt, " +
     "#runDurationMs = :runDurationMs, #ttl = :ttl";
+  const removes: string[] = [];
   if (params.errorMessage) {
     values[":errorMessage"] = params.errorMessage;
     expr += ", #errorMessage = :errorMessage";
   } else {
-    expr += " REMOVE #errorMessage";
+    removes.push("#errorMessage");
+  }
+  if (params.errorCode) {
+    values[":errorCode"] = params.errorCode;
+    expr += ", #errorCode = :errorCode";
+  } else {
+    removes.push("#errorCode");
+  }
+  if (removes.length > 0) {
+    expr += ` REMOVE ${removes.join(", ")}`;
   }
 
   await ddb.send(

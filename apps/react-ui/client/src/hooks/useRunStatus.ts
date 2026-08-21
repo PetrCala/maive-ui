@@ -9,6 +9,7 @@ type UseRunStatusResult = {
   status: RunStatus | null;
   result: ModelResults | RTMAResults | null;
   errorMessage: string | null;
+  errorCode: string | null;
   runDurationMs: number | null;
   runTimestamp: string | null;
   isPolling: boolean;
@@ -38,6 +39,7 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
   const [status, setStatus] = useState<RunStatus | null>(null);
   const [result, setResult] = useState<ModelResults | RTMAResults | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [runDurationMs, setRunDurationMs] = useState<number | null>(null);
   const [runTimestamp, setRunTimestamp] = useState<string | null>(null);
   const [isPolling, setIsPolling] = useState<boolean>(Boolean(jobId));
@@ -65,6 +67,9 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
         updateRunStatus(jobId, run.status);
         if (run.errorMessage) {
           setErrorMessage(run.errorMessage);
+        }
+        if (run.errorCode) {
+          setErrorCode(run.errorCode);
         }
         if (typeof run.runDurationMs === "number") {
           setRunDurationMs(run.runDurationMs);
@@ -156,6 +161,7 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
     status,
     result,
     errorMessage,
+    errorCode,
     runDurationMs,
     runTimestamp,
     isPolling,

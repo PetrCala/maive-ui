@@ -23,7 +23,7 @@ export const TTL_SECONDS = CONST.RUNS.TTL_SECONDS; // 48h pickup buffer
 // SQS raised its hard message-size limit to 1 MiB in August 2025 (was 256KB).
 // Budget ~900 KiB of that for the message body, leaving headroom for the
 // envelope (jobId, modelType, parameters); larger datasets fall back to the
-// synchronous path (which posts directly to the R Lambda).
+// synchronous path (the signed /api/run-model proxy).
 export const MAX_QUEUE_BODY_BYTES = 900 * 1024;
 export const MAX_BATCH_IDS = 100; // DynamoDB BatchGetItem caps at 100 keys
 
@@ -135,7 +135,7 @@ export const batchGetRunStatuses = async (
           // Status-only projection (no heavy `result`): the list/watcher
           // only needs status; the full result is fetched per-run elsewhere.
           ProjectionExpression:
-            "jobId, #status, modelType, errorMessage, runDurationMs, submittedAt",
+            "jobId, #status, modelType, errorMessage, errorCode, runDurationMs, submittedAt",
           // eslint-disable-next-line @typescript-eslint/naming-convention
           ExpressionAttributeNames: { "#status": "status" },
         },
@@ -150,6 +150,7 @@ export const batchGetRunStatuses = async (
       status: item.status as RunStatus,
       modelType: item.modelType as GetRunResponse["modelType"],
       errorMessage: (item.errorMessage as string | undefined) ?? undefined,
+      errorCode: (item.errorCode as string | undefined) ?? undefined,
       runDurationMs:
         typeof item.runDurationMs === "number" ? item.runDurationMs : undefined,
       runTimestamp:
@@ -166,6 +167,7 @@ export type RunItem = {
   modelType?: GetRunResponse["modelType"];
   result?: string;
   errorMessage?: string;
+  errorCode?: string;
   runDurationMs?: number;
   submittedAt?: number;
 };
@@ -183,7 +185,7 @@ export const getRunItem = async (
       TableName: tableName,
       Key: { jobId },
       ProjectionExpression:
-        "jobId, #status, modelType, #result, errorMessage, runDurationMs, submittedAt",
+        "jobId, #status, modelType, #result, errorMessage, errorCode, runDurationMs, submittedAt",
       ExpressionAttributeNames: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         "#status": "status",

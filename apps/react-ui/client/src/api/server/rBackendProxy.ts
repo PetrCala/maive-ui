@@ -119,6 +119,7 @@ export async function signedRFetch(
 export type RunOutcome = {
   status: "succeeded" | "failed" | "timedout";
   errorMessage?: string;
+  errorCode?: string;
 };
 
 export type ProxyRunOptions = {
@@ -133,7 +134,10 @@ export type ProxyRunOptions = {
 
 /** Classify a legacy-contract upstream response into a run outcome. The R
  * endpoints return { data } on success or { error, message } on failure,
- * both HTTP 200; non-200s are proxy or platform failures. */
+ * both HTTP 200; non-200s are proxy or platform failures. Since #526 a failed
+ * run also carries a structured `code` ("timeout", "worker_died"); when
+ * present it decides the outcome, with the message regex kept as a fallback
+ * for payloads without one. */
 function classifyLegacyOutcome(status: number, text: string): RunOutcome {
   if (status < 200 || status >= 300) {
     return {
@@ -142,15 +146,27 @@ function classifyLegacyOutcome(status: number, text: string): RunOutcome {
     };
   }
   try {
-    const parsed = JSON.parse(text) as { error?: unknown; message?: unknown };
+    const parsed = JSON.parse(text) as {
+      error?: unknown;
+      code?: unknown;
+      message?: unknown;
+    };
     if (parsed.error) {
       const message =
         typeof parsed.message === "string" && parsed.message
           ? parsed.message
           : "Analysis failed.";
+      const errorCode =
+        typeof parsed.code === "string" && parsed.code
+          ? parsed.code
+          : undefined;
+      const timedout = errorCode
+        ? errorCode === "timeout"
+        : /timed out|timeout/i.test(message);
       return {
-        status: /timed out|timeout/i.test(message) ? "timedout" : "failed",
+        status: timedout ? "timedout" : "failed",
         errorMessage: message,
+        errorCode,
       };
     }
     return { status: "succeeded" };
@@ -280,11 +296,17 @@ export async function proxyModelRun(
       await recordDedupHit(store.ddb, store.tableName, hash).catch((error) =>
         console.error("Failed to record dedup hit", error),
       );
-      const message =
-        dedup.kind === "running"
-          ? DEDUP_RUNNING_MESSAGE
-          : `${dedup.errorMessage}${DEDUP_REPLAY_SUFFIX}`;
-      res.status(200).json({ error: true, message });
+      if (dedup.kind === "running") {
+        res.status(200).json({ error: true, message: DEDUP_RUNNING_MESSAGE });
+        return;
+      }
+      // Replay the recorded outcome, keeping its structured code so the
+      // client treats the replay exactly like the original timeout.
+      res.status(200).json({
+        error: true,
+        message: `${dedup.errorMessage}${DEDUP_REPLAY_SUFFIX}`,
+        ...(dedup.errorCode ? { code: dedup.errorCode } : {}),
+      });
       return;
     }
 
@@ -306,6 +328,7 @@ export async function proxyModelRun(
           status: outcome.status,
           startedAt,
           errorMessage: outcome.errorMessage,
+          errorCode: outcome.errorCode,
         }),
     });
   } catch (error) {

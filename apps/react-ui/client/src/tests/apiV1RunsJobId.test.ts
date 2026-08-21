@@ -184,6 +184,27 @@ describe("GET /api/v1/runs/[jobId]", () => {
     expect(body.errorMessage).toBe("RTMA timed out after 480 seconds.");
   });
 
+  it("passes a stored errorCode through alongside the errorMessage", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({
+      Item: {
+        jobId: "abc",
+        status: "timedout",
+        modelType: "RTMA",
+        errorMessage: "RTMA timed out after 480 seconds.",
+        errorCode: "timeout",
+      },
+    });
+    const { default: handler } = await import("@src/pages/api/v1/runs/[jobId]");
+    const req = createMockReq({ method: "GET", query: { jobId: "abc" } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    const body = res.body as { errorMessage?: string; errorCode?: string };
+    expect(body.errorCode).toBe("timeout");
+  });
+
   it("strips zScorePlot fields for RTMA results", async () => {
     setConfigured();
     const storedResult = {

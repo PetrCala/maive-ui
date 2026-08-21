@@ -109,12 +109,14 @@ describe("classifyDedup", () => {
         status: "timedout",
         finishedAt: now - 60_000,
         errorMessage: "The analysis timed out after 570 seconds.",
+        errorCode: "timeout",
       }),
       now,
     );
     expect(decision).toEqual({
       kind: "timedout",
       errorMessage: "The analysis timed out after 570 seconds.",
+      errorCode: "timeout",
     });
   });
 

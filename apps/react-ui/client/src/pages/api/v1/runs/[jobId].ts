@@ -83,6 +83,9 @@ const handler = async (
     if (item.errorMessage) {
       body.errorMessage = item.errorMessage;
     }
+    if (item.errorCode) {
+      body.errorCode = item.errorCode;
+    }
     if (typeof item.runDurationMs === "number") {
       body.runDurationMs = item.runDurationMs;
     }
