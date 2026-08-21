@@ -3,41 +3,42 @@
 ## Overview
 
 This document explains how the MAIVE UI talks to the R backend in the current
-**fully serverless** deployment. The application no longer runs behind an ALB
-on ECS/Fargate, and there is no VPC public/private-subnet serving path. Both the
-Next.js UI and the R-Plumber backend run as AWS Lambda functions, each exposed
-through a Lambda Function URL.
+**fully serverless** deployment. Both the Next.js UI and the R-Plumber backend
+run as AWS Lambda functions, each exposed through a Lambda Function URL. The
+R backend's Function URL requires **IAM auth** (`AWS_IAM`, no CORS): the
+browser never calls it. Every analysis request goes through a same-origin
+Next.js proxy route that SigV4-signs the upstream call.
 
-> **History:** an earlier design proxied every analysis request through Next.js
-> API routes so that an R service in a private subnet was never exposed to the
-> public internet. That VPC/ALB topology has been retired. The heavy
-> `/run-model` call now goes directly from the browser to the R Lambda.
+> **History:** the app has been through three topologies. First an R service in
+> a private subnet behind an ALB on ECS/Fargate, reached only through Next.js
+> API routes. Then a public R Function URL (auth `NONE`, CORS `*`) that the
+> browser called directly, with the URL handed out at request time via a
+> `/api/runtime-config` route and `NEXT_PUBLIC_R_API_URL`. Since #530 the
+> Function URL is IAM-protected and all calls are signed server-side; the
+> runtime-config route and `NEXT_PUBLIC_R_API_URL` are gone.
 
 ## Architecture Overview
 
 ```
-                      ┌──────────────────────────────────┐
-   ┌─────────────┐    │      Cloudflare (CDN/TLS/WAF)     │
-   │ User Browser│───►│  Worker rewrites Host/SNI to .on.aws│
-   └─────────────┘    └──────────────────────────────────┘
-        │  │                          │
-        │  │                          ▼
-        │  │              ┌────────────────────────────┐
-        │  │              │  UI Lambda Function URL      │
-        │  │              │  (Next.js via Lambda Web      │
-        │  │              │   Adapter; lightweight        │
-        │  │              │   /api/* routes)              │
-        │  │              └────────────────────────────┘
-        │  │
-        │  └─ /api/runtime-config ──► returns window.RUNTIME_CONFIG.R_API_URL
-        │
-        └──── POST /run-model (data + parameters) ──────────────┐
-                                                                ▼
-                                            ┌────────────────────────────┐
-                                            │  R Lambda Function URL       │
-                                            │  (Plumber; auth NONE,        │
-                                            │   CORS *)                    │
-                                            └────────────────────────────┘
+                      ┌──────────────────────────────────────┐
+   ┌─────────────┐    │       Cloudflare (CDN/TLS/WAF)        │
+   │ User Browser│───►│ Worker rewrites Host/SNI to .on.aws   │
+   └─────────────┘    │ api.maive.eu path-routes /v1          │
+                      └──────────────────────────────────────┘
+                                       │
+                                       ▼
+                       ┌────────────────────────────────┐
+                       │  UI Lambda Function URL          │
+                       │  (Next.js via Lambda Web Adapter)│
+                       │  /api/run-model, /api/run-rtma,  │
+                       │  /api/v1/*, /api/runs*, ...      │
+                       └────────────────────────────────┘
+                             │ SigV4-signed          ▲
+                             ▼                       │ SigV4-signed
+                       ┌────────────────────────────────┐
+                       │  R Lambda Function URL           │
+                       │  (Plumber; auth AWS_IAM, no CORS)│◄── orchestrator Lambda
+                       └────────────────────────────────┘    (async runs queue)
 ```
 
 **Key facts:**
@@ -48,67 +49,54 @@ through a Lambda Function URL.
 - Cloudflare fronts the UI for CDN, TLS, and WAF. Because Lambda Function URLs
   reject requests carrying a foreign `Host` header, a Cloudflare Worker rewrites
   the `Host`/SNI to the `.on.aws` origin.
-- The R backend is a separate **public** Lambda Function URL with authorization
-  `NONE` and CORS `*`, so the browser can call it cross-origin.
-- The heavy `/run-model` analysis request is sent **directly from the browser**
-  to the R Lambda Function URL; it does not pass through the Next.js server.
+- The R backend is a separate Lambda Function URL with authorization
+  **`AWS_IAM`** and no CORS. Only the UI Lambda's execution role and the
+  orchestrator Lambda hold `lambda:InvokeFunctionUrl` on it, and both SigV4-sign
+  their requests (#530).
+- The browser only ever talks to same-origin `/api/*` routes. Analysis requests
+  go to `/api/run-model` / `/api/run-rtma`; the Next.js server signs and
+  forwards them to the R Lambda (`src/api/server/rBackendProxy.ts`) and relays
+  the response verbatim.
+- The public `/v1` API is proxied the same way: the `api.maive.eu` Worker sends
+  `/v1/run-model`, `/v1/run-rtma` and `/v1/health` to the UI Lambda's
+  `/api/v1/*` catch-all route, which signs and forwards 1:1 to the R backend's
+  own `/v1` handlers. `/v1/runs*` is served by dedicated Next.js routes on top
+  of the async queue (DynamoDB + SQS + orchestrator).
 
-## How the Browser Finds the R Backend
+## How Requests Reach the R Backend
 
-Because the R URL is environment-specific and the UI image runs on a read-only
-filesystem (only `/tmp` is writable on Lambda), the URL is served at request
-time rather than baked into the bundle.
-
-### 1. Runtime config route
-
-```typescript
-// src/pages/api/runtime-config.ts
-export default function handler(_req: NextApiRequest, res: NextApiResponse) {
-  const rApiUrl =
-    process.env.NEXT_PUBLIC_R_API_URL ?? process.env.R_API_URL ?? "";
-
-  const body = `window.RUNTIME_CONFIG = ${JSON.stringify({ R_API_URL: rApiUrl })};\n`;
-
-  res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store");
-  res.status(200).send(body);
-}
-```
-
-### 2. Reading the config on the client
+### 1. The browser posts to a same-origin route
 
 ```typescript
-// src/utils/getRuntimeConfig.ts
-export function getRuntimeConfig(): RuntimeConfig {
-  if (typeof window === "undefined") return {} as RuntimeConfig; // SSR
-  return (window as ExtendedWindow).RUNTIME_CONFIG ?? ({} as RuntimeConfig);
-  // (in development, falls back to NEXT_PUBLIC_DEV_R_API_URL or localhost:8787)
-}
+// src/api/services/modelService.ts (isomorphic, but the browser path)
+return await httpPost<ModelResponse>("/api/run-model", requestData, { ... });
 ```
 
-### 3. Calling the R backend directly
+### 2. The route signs and forwards
 
-`modelService` is isomorphic. In the browser it resolves the R Function URL from
-the runtime config and POSTs straight to it; server-side code (the lightweight
-API routes) uses the configured env var. See `getRApiUrl()`.
+`proxyToRBackend()` (`src/api/server/rBackendProxy.ts`) fetches the R Function
+URL with SigV4 headers derived from the UI Lambda's execution-role credentials.
+Local development targets (localhost, containers) are not Function URLs and are
+called unsigned.
 
-```typescript
-// src/api/services/modelService.ts
-return await httpPost<ModelResponse>(`${getRApiUrl()}/run-model`, requestData, {
-  timeout: 300000, // 5 minutes for long-running models
-});
-```
+### 3. The R URL is server-only
 
-## What Still Runs Server-Side
+`getRApiUrl()` (`src/api/utils/config.ts`) resolves the R backend URL from
+`R_API_URL` and **throws if called in the browser**. There is no runtime config
+route and no `NEXT_PUBLIC_R_API_URL`; the compute endpoint is never exposed to
+the client. In development it falls back to `NEXT_PUBLIC_DEV_R_API_URL` or
+`http://localhost:8787`.
 
-The UI Lambda still hosts lightweight Next.js API routes that execute in the
-Next.js server context, e.g.:
+## What Runs Server-Side
 
-- `/api/runtime-config`: exposes the R backend URL to the browser
-- `/api/ping`: connectivity check
-- `/api/get-version-info`, `/api/system-status`: metadata
+All Next.js API routes execute in the UI Lambda:
 
-The previous `/api/run-model` proxy has been **removed**.
+- `/api/run-model`, `/api/run-rtma`: signed synchronous proxies to the R Lambda
+  (wrapped in the run-record/dedup layer, #529)
+- `/api/runs`, `/api/runs/{jobId}`: async run submit/poll (DynamoDB + SQS)
+- `/api/v1/*`: public API surface (signed sync proxy + async runs re-skins)
+- `/api/ping`, `/api/health`, `/api/get-version-info`, `/api/system-status`:
+  connectivity and metadata
 
 ## Environment Configuration
 
@@ -119,9 +107,8 @@ The previous `/api/run-model` proxy has been **removed**.
 
 ### Production
 
-- `R_API_URL` (or `NEXT_PUBLIC_R_API_URL`, which takes precedence) on the UI
-  Lambda holds the **public R Lambda Function URL**. The `/api/runtime-config`
-  route reads it and hands it to the browser.
+- `R_API_URL` on the UI Lambda (and the orchestrator) holds the IAM-protected
+  R Lambda Function URL. It is server-only; the browser never sees it.
 
 ## Domains
 
@@ -132,10 +119,21 @@ The previous `/api/run-model` proxy has been **removed**.
 
 ## Trade-offs
 
-- **Simplicity / cost:** no ALB, ECS cluster, or NAT, just two Lambdas and a
-  CDN. Scales to zero when idle.
-- **CORS:** the R Lambda is public and CORS-open, so browsers can call it
-  directly. There is no private-subnet isolation; protection comes from
-  Cloudflare's WAF in front of the UI and the stateless nature of the R service.
+- **Simplicity / cost:** no ALB, ECS cluster, or NAT, just two Lambdas (plus a
+  small orchestrator) and a CDN. Scales to zero when idle.
+- **Security:** the compute endpoint is not publicly invokable. Reaching it
+  requires a SigV4 signature from a role that holds `lambda:InvokeFunctionUrl`,
+  so abuse control does not depend on the URL staying obscure.
+- **Proxy in the request path:** synchronous analysis calls now ride through
+  the UI Lambda, which bills for the wait and bounds the call at
+  `PROXY_FETCH_TIMEOUT_MS` (170 s, just under the UI Lambda's 180 s timeout).
+  Long-running work belongs on the async queue, which the orchestrator drives
+  with the R backend's full background budget.
+- **Edge cap on proxied sync runs:** requests that arrive through Cloudflare
+  (the app domains and `api.maive.eu`) are subject to its ~100 s origin
+  response cap. A sync `/v1` run that outlives it gets an HTML 504 from
+  Cloudflare while the Lambda finishes (and bills) behind it, so the backend's
+  structured timeout payload never reaches the caller. The docs steer `/v1`
+  users to the async endpoints for anything that might run long.
 - **Cold starts:** Lambda cold starts can make the first analysis run slow; the
   UI shows a "warming up" hint during slow model runs.
