@@ -445,6 +445,11 @@ const TEXT = {
         "Assumes that publication bias and p-hacking favor positive (right-tailed) results. Set to No if the literature in question favors negative results instead.",
     },
     runModel: "Run Model",
+    largeRtma: {
+      queuedInfo:
+        "Large dataset detected. The p-hacking correction is running in the background; you can keep working and check My Runs for the result.",
+      syncUnavailable: `This dataset is too large for the interactive p-hacking correction (over ${CONST.RTMA_SYNC_ROW_LIMIT} rows), and background processing is currently unavailable. The run was not submitted; please try again later.`,
+    },
   },
   rtma: {
     dropdownLabel: "RTMA",

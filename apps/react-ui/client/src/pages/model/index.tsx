@@ -24,6 +24,7 @@ import type { ModelParameters } from "@src/types";
 import type { RTMAParameters, SubmitRunResponse } from "@src/types/api";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasNObsColumn, hasStudyIdColumn } from "@src/utils/dataUtils";
+import { isTooLargeForSyncRun } from "@src/utils/runGating";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
 import { getUserFacingRunErrorMessage } from "@src/utils/errorMessageUtils";
@@ -739,6 +740,14 @@ export default function ModelPage() {
         return;
       }
 
+      // #528: above CONST.RTMA_SYNC_ROW_LIMIT rows the interactive p-hacking
+      // correction cannot finish before the Lambda timeout, so the run must
+      // go through the background queue and never the synchronous fallback.
+      const mustRunInBackground = isTooLargeForSyncRun(
+        parameters.modelType,
+        uploadedData.data.length,
+      );
+
       const isAsyncRun = CONFIG.ASYNC_RUNS_ENABLED && !shouldUseMockResults();
       setLoadingPhase(isAsyncRun ? "submitting" : "blocking");
       setLoading(true);
@@ -795,6 +804,10 @@ export default function ModelPage() {
           }
 
           if (submission?.jobId && !submission.tooLarge) {
+            if (mustRunInBackground) {
+              // Tell the user why this run went to the background path.
+              showAlert(TEXT.model.largeRtma.queuedInfo, "info", 8000);
+            }
             addRun({
               jobId: submission.jobId,
               modelType: parameters.modelType,
@@ -833,6 +846,17 @@ export default function ModelPage() {
           // fall through to the synchronous path below, where the user must
           // stay on the page while the run completes.
           setLoadingPhase("blocking");
+        }
+
+        // #528: never fire a synchronous request we know cannot finish. When
+        // the background path could not take the run, stop here instead.
+        if (mustRunInBackground) {
+          if (isMountedRef.current) {
+            showAlert(TEXT.model.largeRtma.syncUnavailable, "error", 8000);
+            setLoading(false);
+            setHasRunModel(false);
+          }
+          return;
         }
 
         let result: { data?: unknown; error?: string; message?: string };
