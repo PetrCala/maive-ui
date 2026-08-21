@@ -1,20 +1,26 @@
 # Cost controls & denial-of-wallet protection
 
-MAIVE runs on a fully serverless, anonymous, publicly reachable stack (two
-Lambda Function URLs with `authorization_type = "NONE"`). Expected spend at the
-site's real traffic is a few cents a month. This document describes the controls
-that bound worst-case spend when someone deliberately tries to run up the bill.
+MAIVE runs on a fully serverless, anonymous stack: a publicly reachable UI
+Lambda Function URL (Next.js) and an R backend Lambda Function URL with
+authorization **`AWS_IAM`** and no CORS, reached only via SigV4-signed requests
+from the Next.js proxy routes (`/api/run-model`, `/api/run-rtma`, `/api/v1`)
+and the orchestrator (#530). Expected spend at the site's real traffic is a few
+cents a month. This document describes the controls that bound worst-case spend
+when someone deliberately tries to run up the bill.
 
 See also `PUBLIC_API_DESIGN.md` §7 (the original abuse/cost analysis) and
 `SERVER_SIDE_API_ARCHITECTURE.md` (topology).
 
 ## Threat: denial of wallet
 
-The R backend is reachable directly at its raw `*.on.aws` Function URL (the
-browser is handed that URL via `/api/runtime-config`), so Cloudflare's edge rate
-limit is a speed bump, not a wall: an attacker can hit Lambda directly. One
-request can occupy a 3.5 GB Lambda for up to 600 s. The controls below bound what
-that adds up to.
+The R backend is not publicly invokable: reaching it requires a SigV4
+signature from a role that holds `lambda:InvokeFunctionUrl` (#530). But the UI
+Lambda's Function URL is public, and its proxy routes sign and forward analysis
+requests to the R backend, so anyone who can POST to `/api/run-model`,
+`/api/run-rtma`, or the public `/v1` API can still drive R compute. Cloudflare's
+edge rate limit is a speed bump, not a wall: an attacker can bypass it by
+hitting the UI Lambda's raw `*.on.aws` URL. One request can occupy a 3.5 GB
+Lambda for up to 600 s. The controls below bound what that adds up to.
 
 ## The layers
 
