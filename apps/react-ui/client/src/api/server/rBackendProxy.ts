@@ -3,6 +3,20 @@ import { HttpRequest } from "@smithy/protocol-http";
 import { SignatureV4 } from "@smithy/signature-v4";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getRApiUrl } from "@api/utils/config";
+import { getRunsStoreConfig } from "@api/server/runsService";
+import {
+  DEDUP_REPLAY_SUFFIX,
+  DEDUP_RUNNING_MESSAGE,
+  classifyDedup,
+  computeInputHash,
+  countRowsFromJson,
+  finishRunRecord,
+  getRunRecord,
+  methodFromParameters,
+  modelTypeFromParameters,
+  recordDedupHit,
+  startRunRecord,
+} from "@api/server/runRecords";
 
 // Server-only proxy to the R backend. The Function URL requires IAM auth
 // (#530), so every request from the Next.js server is SigV4-signed with the
@@ -41,12 +55,18 @@ function resolveRegion(hostname: string): string {
  */
 export async function signedRFetch(
   path: string,
-  init: { method: string; body?: string; signal?: AbortSignal },
+  init: {
+    method: string;
+    body?: string;
+    signal?: AbortSignal;
+    headers?: Record<string, string>;
+  },
 ): Promise<Response> {
   const url = new URL(`${getRApiUrl()}${path}`);
   const headers: Record<string, string> = {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     "content-type": "application/json",
+    ...(init.headers ?? {}),
   };
 
   if (!isFunctionUrlHost(url.hostname)) {
@@ -96,6 +116,66 @@ export async function signedRFetch(
   });
 }
 
+export type RunOutcome = {
+  status: "succeeded" | "failed" | "timedout";
+  errorMessage?: string;
+};
+
+export type ProxyRunOptions = {
+  // Forwarded to the R backend as x-maive-input-hash so its structured
+  // request log line (#532) can be joined with the run record (#529).
+  inputHash?: string;
+  // Called with the classified terminal outcome before the response is
+  // relayed. Errors thrown here are swallowed: recording must never break
+  // the run.
+  onOutcome?: (outcome: RunOutcome) => Promise<void>;
+};
+
+/** Classify a legacy-contract upstream response into a run outcome. The R
+ * endpoints return { data } on success or { error, message } on failure,
+ * both HTTP 200; non-200s are proxy or platform failures. */
+function classifyLegacyOutcome(status: number, text: string): RunOutcome {
+  if (status < 200 || status >= 300) {
+    return {
+      status: "failed",
+      errorMessage: `R backend returned HTTP ${status}`,
+    };
+  }
+  try {
+    const parsed = JSON.parse(text) as { error?: unknown; message?: unknown };
+    if (parsed.error) {
+      const message =
+        typeof parsed.message === "string" && parsed.message
+          ? parsed.message
+          : "Analysis failed.";
+      return {
+        status: /timed out|timeout/i.test(message) ? "timedout" : "failed",
+        errorMessage: message,
+      };
+    }
+    return { status: "succeeded" };
+  } catch {
+    return {
+      status: "failed",
+      errorMessage: "R backend returned an unparseable response.",
+    };
+  }
+}
+
+async function notifyOutcome(
+  options: ProxyRunOptions | undefined,
+  outcome: RunOutcome,
+): Promise<void> {
+  if (!options?.onOutcome) {
+    return;
+  }
+  try {
+    await options.onOutcome(outcome);
+  } catch (error) {
+    console.error("Failed to record run outcome", error);
+  }
+}
+
 /**
  * Forward an API-route request to the R backend and relay the response
  * verbatim (status, content type and body), so both the legacy internal
@@ -105,12 +185,14 @@ export async function signedRFetch(
  * @param path - R backend path to forward to, e.g. "/run-model"
  * @param envelope - Error shape for proxy-level failures: the legacy internal
  *   `{ error: true, message }` or the /v1 `{ error: { code, message } }`
+ * @param options - Optional run-record integration (#529)
  */
 export async function proxyToRBackend(
   req: NextApiRequest,
   res: NextApiResponse,
   path: string,
   envelope: "legacy" | "v1" = "legacy",
+  options?: ProxyRunOptions,
 ): Promise<void> {
   const sendProxyError = (status: number, message: string) => {
     if (envelope === "v1") {
@@ -126,8 +208,13 @@ export async function proxyToRBackend(
       method: req.method ?? "GET",
       body: hasBody ? JSON.stringify(req.body) : undefined,
       signal: AbortSignal.timeout(PROXY_FETCH_TIMEOUT_MS),
+      headers: options?.inputHash
+        ? // eslint-disable-next-line @typescript-eslint/naming-convention
+          { "x-maive-input-hash": options.inputHash }
+        : undefined,
     });
     const text = await upstream.text();
+    await notifyOutcome(options, classifyLegacyOutcome(upstream.status, text));
     res
       .status(upstream.status)
       .setHeader(
@@ -137,10 +224,98 @@ export async function proxyToRBackend(
       .send(text);
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") {
+      await notifyOutcome(options, {
+        status: "timedout",
+        errorMessage: "The analysis request timed out at the proxy.",
+      });
       sendProxyError(504, "The analysis request timed out at the proxy.");
       return;
     }
     console.error(`Failed to proxy ${path} to the R backend`, error);
+    await notifyOutcome(options, {
+      status: "failed",
+      errorMessage: "Failed to reach the analysis backend.",
+    });
     sendProxyError(502, "Failed to reach the analysis backend.");
+  }
+}
+
+/**
+ * Synchronous model run with the run-record layer (#529) wrapped around the
+ * plain proxy: dedup identical in-flight or recently timed out inputs, then
+ * persist one record (input hash, k, method, outcome, duration, timestamps)
+ * per executed run. Recording is strictly best effort; when the runs table is
+ * not configured or any record operation fails, the request degrades to the
+ * plain proxy behavior.
+ * @param req - Incoming Next.js API request (legacy contract body)
+ * @param res - Outgoing Next.js API response
+ * @param path - R backend path, "/run-model" or "/run-rtma"
+ */
+export async function proxyModelRun(
+  req: NextApiRequest,
+  res: NextApiResponse,
+  path: string,
+): Promise<void> {
+  const store = getRunsStoreConfig();
+  const body = (req.body ?? {}) as { data?: unknown; parameters?: unknown };
+  if (!store || typeof body.data !== "string") {
+    return proxyToRBackend(req, res, path);
+  }
+
+  let inputHash: string | undefined;
+  try {
+    const hash = computeInputHash(path, body.data, body.parameters);
+    inputHash = hash;
+    const existing = await getRunRecord(store.ddb, store.tableName, hash);
+    const dedup = classifyDedup(existing, Date.now());
+    if (dedup) {
+      console.log(
+        JSON.stringify({
+          event: "runDedupHit",
+          endpoint: path,
+          inputHash: hash,
+          kind: dedup.kind,
+        }),
+      );
+      await recordDedupHit(store.ddb, store.tableName, hash).catch((error) =>
+        console.error("Failed to record dedup hit", error),
+      );
+      const message =
+        dedup.kind === "running"
+          ? DEDUP_RUNNING_MESSAGE
+          : `${dedup.errorMessage}${DEDUP_REPLAY_SUFFIX}`;
+      res.status(200).json({ error: true, message });
+      return;
+    }
+
+    const startedAt = Date.now();
+    await startRunRecord(store.ddb, store.tableName, {
+      inputHash: hash,
+      endpoint: path,
+      sourceJobId: "sync",
+      k: countRowsFromJson(body.data),
+      method: methodFromParameters(body.parameters),
+      modelType: modelTypeFromParameters(body.parameters),
+    });
+
+    return await proxyToRBackend(req, res, path, "legacy", {
+      inputHash: hash,
+      onOutcome: (outcome) =>
+        finishRunRecord(store.ddb, store.tableName, {
+          inputHash: hash,
+          status: outcome.status,
+          startedAt,
+          errorMessage: outcome.errorMessage,
+        }),
+    });
+  } catch (error) {
+    console.error("Run record layer failed; proxying without it", error);
+    return proxyToRBackend(
+      req,
+      res,
+      path,
+      "legacy",
+      inputHash ? { inputHash } : undefined,
+    );
   }
 }

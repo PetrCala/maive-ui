@@ -56,8 +56,15 @@ resource "aws_iam_policy" "ui_lambda_runs" {
     Version = "2012-10-17"
     Statement = [
       {
-        Effect   = "Allow"
-        Action   = ["dynamodb:GetItem", "dynamodb:BatchGetItem", "dynamodb:PutItem"]
+        Effect = "Allow"
+        # UpdateItem: the sync model proxy upserts per-input run records with
+        # atomic counters (#529).
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:BatchGetItem",
+          "dynamodb:PutItem",
+          "dynamodb:UpdateItem",
+        ]
         Resource = aws_dynamodb_table.runs.arn
       },
       {
