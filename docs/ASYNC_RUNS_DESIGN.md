@@ -52,13 +52,17 @@ This aligns with the direction agreed in #441 ("async/background runs now").
 
 - **Fully serverless.** Two container Lambdas, each with a Function URL:
   - **UI Lambda** (`terraform/stacks/prod-runtime/ui_lambda.tf`): Next.js via the AWS
-    Lambda Web Adapter, `timeout=30s`, fronted by **Cloudflare** (~100 s origin cap).
+    Lambda Web Adapter, `timeout=30s` at design time, fronted by **Cloudflare**
+    (~100 s origin cap).
   - **R backend Lambda** (`terraform/stacks/prod-runtime/lambda.tf`): R Plumber via
-    Lambda Web Adapter, Function URL (auth NONE, CORS `*`), `timeout=600s`,
+    Lambda Web Adapter, Function URL (auth NONE, CORS `*` at design time; since
+    #530 auth `AWS_IAM`, no CORS, SigV4-signed callers only), `timeout=600s`,
     `memory_size=3538` (2 vCPU). Routes in `apps/lambda-r-backend/r_scripts/index.R`.
-- **The browser calls the R Function URL directly** for runs
-  (`apps/react-ui/client/src/api/services/modelService.ts` → `${getRApiUrl()}/run-model|/run-rtma`),
-  triggered in `apps/react-ui/client/src/pages/model/index.tsx`.
+- **At design time the browser called the R Function URL directly** for runs.
+  Since #530 it posts to the same-origin `/api/run-model` / `/api/run-rtma`
+  proxy routes, which SigV4-sign and forward
+  (`apps/react-ui/client/src/api/server/rBackendProxy.ts`); `getRApiUrl()` is
+  server-only.
 - **Results are passed entirely via URL query params**
   (`apps/react-ui/client/src/pages/results/index.tsx` reads `?results=&parameters=`),
   including the ~50 KB base64 plot, producing enormous, fragile URLs. **No run is
@@ -116,6 +120,7 @@ This aligns with the direction agreed in #441 ("async/background runs now").
 | `dataId` | S | links to the browser's local dataset (not the data itself) |
 | `result` | S (JSON) | full result incl. base64 plot; set on success (~50 KB) |
 | `errorMessage` | S | set on failure |
+| `errorCode` | S | structured code from the R backend's error payload (`timeout`, `worker_died`; #526), when it sent one; surfaced by `GET /api/runs/{jobId}` so clients can key off it instead of the status heuristic |
 | `submittedAt` / `startedAt` / `finishedAt` | N | epoch ms |
 | `runDurationMs` | N | for display |
 | `ttl` | N | epoch seconds = `finishedAt`/`submittedAt` + 48 h (DDB auto-delete) |

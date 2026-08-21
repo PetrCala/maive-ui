@@ -20,11 +20,14 @@ integration into their own pipelines) currently have two options: click through
 the UI, or download a reproducibility package and run R locally. Neither works
 for programmatic access from Python/Stata/CI pipelines.
 
-The key realization: **the API already exists and is already public.** The R
-Plumber backend runs behind a Lambda Function URL with `authorization_type =
-"NONE"` and CORS `*` (`terraform/stacks/prod-runtime/lambda.tf`), and the
-browser already POSTs to it directly. What is missing is not a service; it is
-**productization**:
+The key realization at the time: **the API already exists and is already
+public.** The R Plumber backend ran behind a Lambda Function URL with
+`authorization_type = "NONE"` and CORS `*`
+(`terraform/stacks/prod-runtime/lambda.tf`), and the browser POSTed to it
+directly. (**Superseded by #530:** the Function URL now requires IAM auth and
+every caller signs with SigV4; `api.maive.eu` is the only public entry point.
+See SERVER_SIDE_API_ARCHITECTURE.md.) What was missing was not a service; it
+was **productization**:
 
 - a **stable, branded URL** (today: an obscure `.on.aws` hostname that changes
   if the Function URL is ever recreated),
@@ -69,13 +72,14 @@ are a **prerequisite**, not a nice-to-have.
 - Changing the statistical/compute path or the R model code.
 - SLA/uptime commitments.
 
-## 3. Current state (as-is)
+## 3. Current state (as-is at design time; auth topology since changed by #530)
 
 - **R backend Lambda** (`apps/lambda-r-backend/r_scripts/`): Plumber via the
-  AWS Lambda Web Adapter; Function URL auth `NONE`, CORS `*`; `timeout=600s`,
-  `memory_size=2048`, **no reserved concurrency** (deliberately unreserved so
-  synchronous browser calls are never throttled; see comment in
-  `orchestrator_lambda.tf`).
+  AWS Lambda Web Adapter; Function URL auth `NONE`, CORS `*` (since #530:
+  auth `AWS_IAM`, no CORS; only the UI Lambda and the orchestrator can invoke
+  it, via SigV4); `timeout=600s`, `memory_size=2048`, **no reserved
+  concurrency** at the time (deliberately unreserved so synchronous browser
+  calls were never throttled; Phase 2 set the cap to 10).
 - **Existing routes** (`r_scripts/index.R`): `GET /echo`, `GET /health`,
   `GET /ping`, `POST /run-model`, `POST /run-rtma`. The POST routes take two
   fields, `data` and `parameters`, **each a JSON-encoded string**, because
@@ -94,8 +98,11 @@ are a **prerequisite**, not a nice-to-have.
 - **Edge**: Cloudflare fronts the *UI* domains only (`easymeta.org`, the
   canonical one, and `maive.eu`; `spuriousprecision.com` redirects to
   `easymeta.org`), with a Worker rewriting Host/SNI to the `.on.aws` origin.
-  The R Function URL is **not** behind Cloudflare; the browser calls it
-  directly. Cloudflare caps proxied origin responses at ~100 s.
+  At design time the R Function URL was **not** behind Cloudflare and the
+  browser called it directly; since #530 the browser posts to same-origin
+  `/api/run-model` / `/api/run-rtma` and the Next.js server signs and forwards
+  (`src/api/server/rBackendProxy.ts`). Cloudflare caps proxied origin
+  responses at ~100 s.
 - **Costs**: ~$0.001-0.002 of Lambda compute per typical run; pathological
   runs bounded by the R-side 480 s guard (RTMA) / 600 s Lambda timeout.
 
@@ -111,7 +118,7 @@ are a **prerequisite**, not a nice-to-have.
 | D6 | **All parameters optional with documented defaults** (matching the UI's `CONFIG.DEFAULT_MODEL_PARAMETERS`); `shouldUseInstrumenting` is derived from `modelType` unless explicitly set. | A minimal valid request is just `{"data": [...]}`. Internal parameters shouldn't be required knowledge; WLS-vs-MAIVE instrumenting coupling is app logic the server should own. |
 | D7 | **Plots excluded by default; opt-in via `?include=plot`.** | The base64 funnel/z-density PNG is ~50 KB, noise for programmatic callers. Applies to sync responses and async result fetches alike. |
 | D8 | **Async API = thin `/v1/runs` routes on the UI Lambda wrapping the existing DDB/SQS machinery.** `result` is returned as a parsed JSON object; oversized submissions get `413` (not the internal `{tooLarge: true}` signal). `jobId` stays an opaque bearer token with 48 h TTL. | The queue/orchestrator/store already exist and are proven; the public surface is a re-skin with public-grade semantics. No new AWS infra. |
-| D9 | **Branded hostname `api.maive.eu`, path-routed by the Cloudflare Worker: `/v1/runs*` → UI Lambda origin, everything else `/v1/*` → R Lambda origin.** | One hostname for the whole API surface. A subdomain (vs `maive.eu/api/...`) gets its own WAF/rate-limit scoping and avoids entangling with the Next.js `/api/*` namespace. The Worker already does Host/SNI rewriting for the UI; this reuses the pattern. |
+| D9 | **Branded hostname `api.maive.eu`, path-routed by the Cloudflare Worker: `/v1/runs*` → UI Lambda origin, everything else `/v1/*` → R Lambda origin.** **Amended by #530:** with the R Function URL behind IAM auth the Worker routes *all* `/v1/*` to the UI Lambda, whose `/api/v1/*` catch-all signs and forwards the sync endpoints to the R backend 1:1. | One hostname for the whole API surface. A subdomain (vs `maive.eu/api/...`) gets its own WAF/rate-limit scoping and avoids entangling with the Next.js `/api/*` namespace. The Worker already does Host/SNI rewriting for the UI; this reuses the pattern. |
 | D10 | **OpenAPI 3 spec in-repo (`docs/api/openapi.yaml`) is the source of truth for the contract.** | Reviewable, versionable, lint-able; can later be served/rendered by the UI without redefinition. |
 
 ## 5. Target architecture
@@ -120,31 +127,32 @@ are a **prerequisite**, not a nice-to-have.
                        Cloudflare (api.maive.eu)
                        WAF + per-IP rate limits
                                 │
-              Worker routes by path, rewrites Host/SNI
-                ┌───────────────┴────────────────┐
-   /v1/run-model, /v1/run-rtma,          /v1/runs, /v1/runs/{jobId}
-   /v1/health   (sync)                   (async submit / poll)
-                │                                 │
-                ▼                                 ▼
-   R Lambda Function URL                 UI Lambda Function URL
-   (Plumber; reserved                    (Next.js routes; fast DDB/SQS
-    concurrency = 10)                     handlers)
-                ▲                                 │ SQS
-                │      POST /run-model|/run-rtma  ▼
-                └────────────── orchestrator Lambda (existing, max 5)
-                                          │
-                                     DynamoDB `maive-runs`
-                                     (result, 48 h TTL)
+              Worker rewrites Host/SNI to the UI origin
+                                │
+                                ▼
+                   UI Lambda Function URL (Next.js)
+     /api/v1/run-model, /api/v1/run-rtma,      /api/v1/runs,
+     /api/v1/health (signed sync proxy)        /api/v1/runs/{jobId}
+                │                                 │ SQS
+                │ SigV4                           ▼
+                ▼                        orchestrator Lambda (max 5)
+   R Lambda Function URL  ◄──SigV4────────────────┘
+   (Plumber; auth AWS_IAM;                        │
+    reserved concurrency = 10)               DynamoDB `maive-runs`
+                                             (result, 48 h TTL)
 ```
 
-- **Sync** (`/v1/run-model`, `/v1/run-rtma`): request → R Lambda → response in
-  one round trip. Subject to Cloudflare's ~100 s proxy cap, fine for typical
-  runs (~15-60 s incl. cold start), documented as unsuitable for long runs.
+- **Sync** (`/v1/run-model`, `/v1/run-rtma`): request → UI Lambda (signed
+  proxy) → R Lambda → response in one round trip. Subject to Cloudflare's
+  ~100 s proxy cap, fine for typical runs (~15-60 s incl. cold start),
+  documented as unsuitable for long runs (see §11 for what the caller sees
+  when the cap hits).
 - **Async** (`/v1/runs`): submit returns `{jobId}` immediately; poll until a
   terminal status; fetch the result once. No long-lived connections; immune to
   the edge cap; the path to recommend by default in the docs.
-- The raw `.on.aws` Function URLs keep working (the UI depends on them). The
-  docs only advertise `api.maive.eu`.
+- The raw `.on.aws` Function URLs still exist, but since #530 the R one only
+  answers SigV4-signed calls from the UI Lambda and the orchestrator. The docs
+  only advertise `api.maive.eu`.
 
 ## 6. The `/v1` contract
 
@@ -273,7 +281,8 @@ endpoint (D8).
   "modelType": "MAIVE", "runDurationMs": 41210,
   "runTimestamp": "2026-07-08T12:34:56Z",
   "result": { … },            // present once status is terminal-successful; parsed object
-  "errorMessage": "…"         // present on failed/timedout
+  "errorMessage": "…",        // present on failed/timedout
+  "errorCode": "timeout"      // structured backend code (#526), when the backend sent one
 }
 ```
 
@@ -326,10 +335,13 @@ Layered, in order of load-bearing-ness:
    alarm on R-Lambda throttles (signal that the cap is being hit, abuse or
    organic growth).
 
-Explicitly rejected: locking the Function URL to Cloudflare-only via a
-Worker-injected shared-secret header. It would force the UI's direct browser
-calls through Cloudflare too, inheriting the ~100 s cap and breaking long
-synchronous UI runs. Revisit only if bypass abuse is actually observed (§12).
+Explicitly rejected at design time: locking the Function URL to
+Cloudflare-only via a Worker-injected shared-secret header, because it would
+have forced the UI's then-direct browser calls through Cloudflare too,
+inheriting the ~100 s cap. #530 solved the same problem differently: the
+Function URL now requires IAM auth, so there is no bypass route to protect
+against, and the reserved-concurrency cap remains the spend ceiling for
+traffic arriving through the branded hostname.
 
 ## 8. Privacy & security
 
@@ -420,8 +432,13 @@ until Phase 3.
 ## 11. Risks & open questions
 
 - **Sync × edge cap:** a sync run slower than ~100 s dies at Cloudflare while
-  the Lambda finishes (and bills). Mitigation: docs steer to async by default;
-  sync is positioned for small/typical datasets.
+  the Lambda finishes (and bills). Known tradeoff, accepted: the caller gets
+  an **HTML 504 from Cloudflare**, not JSON, because the edge gives up before
+  the backend's structured timeout payload (`code: "timeout"`, #526) can
+  arrive; clients must be prepared for a non-JSON error body on `/v1` sync
+  calls. Mitigation: docs steer to async by default; sync is positioned for
+  small/typical datasets, and the async path always delivers the structured
+  error.
 - **Large + slow gap:** datasets >200 KB can't queue (SQS) and, if also slow,
   can't reliably finish through the edge. Accepted for v1 (raw sync against a
   long-lived connection still works below 6 MB when called without Cloudflare);
