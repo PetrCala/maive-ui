@@ -21,7 +21,7 @@ variable "services" {
 
 variable "log_retention_days" {
   type    = number
-  default = 3
+  default = 30
 }
 
 variable "github_repo" {
