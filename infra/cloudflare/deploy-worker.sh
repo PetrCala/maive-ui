@@ -48,11 +48,11 @@ response="$(curl -sS -X PUT "$API/accounts/$ACCOUNT_ID/workers/scripts/$SCRIPT_N
   -F "metadata={\"main_module\":\"worker.js\",\"compatibility_date\":\"$COMPAT_DATE\"};type=application/json" \
   -F "worker.js=@$SRC;type=application/javascript+module;filename=worker.js")"
 
-if printf '%s' "$response" | grep -q '"success":true'; then
+if printf '%s' "$response" | jq -e '.success == true' >/dev/null 2>&1; then
   echo "Deployed $SCRIPT_NAME."
   echo "Verify: curl -s https://api.maive.eu/v1/health"
 else
   echo "Deploy failed:" >&2
-  printf '%s\n' "$response" | python3 -m json.tool 2>/dev/null || printf '%s\n' "$response"
+  printf '%s\n' "$response" | jq . 2>/dev/null || printf '%s\n' "$response"
   exit 1
 fi

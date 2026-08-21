@@ -111,12 +111,6 @@ variable "lambda_r_backend_reserved_concurrency" {
   default     = 10
 }
 
-variable "lambda_r_backend_log_retention_days" {
-  type        = number
-  description = "Number of days to retain Lambda R backend CloudWatch logs"
-  default     = 30
-}
-
 variable "cost_circuit_breaker_enabled" {
   description = <<-EOT
     When true, sustained throttling of the R backend automatically trips the
