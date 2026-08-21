@@ -27,6 +27,7 @@ that adds up to.
 | Request wall-clock budget = 120 s default, 570 s max | R `request_bounds.R` (`timeoutSeconds`) | How long any model request can hold a slot. The whole handler runs in a forked child the server kills at the deadline, Stan workers and bootstrap forks included, and the caller gets a structured `code: "timeout"` error instead of a dropped connection (#526). Interactive requests (UI, public `/v1`) get the 120 s default; the async orchestrator requests the 570 s maximum, still under the 600 s function timeout. |
 | RTMA fit budget = request budget minus 10 s | R `rtma_model.R` (`RTMA_FIT_HEADROOM_SEC`) | The RTMA fit's own child-process kill, kept inside the request budget so the fit-specific timeout message reaches the caller before the request-level backstop fires (#521, #526). Standalone use (reproducibility packages) keeps the old 480 s default. |
 | **Cost circuit breaker** | `prod-runtime/circuit_breaker.tf` | The **monthly total**. Auto-throttles the R backend to 0 on sustained abuse. |
+| Daily GB-seconds alarm (13,000 GB-s/day) | `prod-runtime/circuit_breaker.tf` (`lambda_daily_gb_seconds_budget`) | The **daily compute total**, measured in the free tier's own unit (400k GB-s/month, so ~1/30 per day). Metric math over Sum(Duration) x memory across the Lambdas; publishes to the circuit-breaker topic, so it pages and (when enabled) trips the breaker (#533). |
 | Budget notifications ($10, 50/80/forecast) | `prod-foundation/budget.tf` | Human awareness; email backstop. |
 | Cost Anomaly Detection | `prod-foundation/cost_anomaly.tf` | Human awareness; catches deviation from baseline rather than a fixed threshold. Daily digest, on ~24h-lagged billing data. |
 | Alarm notifications (errors/throttles/duration/DLQ) | `prod-runtime/monitoring.tf` + the alarms | Human awareness; previously these alarms notified no one. |
@@ -57,6 +58,12 @@ R backend throttling (sustained) → CloudWatch alarm → SNS → kill-switch La
   (default 6 ≈ 30 min). Throttling only happens when demand exceeds the
   reserved-concurrency cap, so sustained throttling is a strong abuse signal with
   a near-zero false-positive rate for a low-traffic site.
+- **Second trigger (daily compute budget):** the `-lambda-daily-gb-seconds`
+  alarm publishes to the same topic when total Lambda compute across the day
+  crosses `lambda_daily_gb_seconds_budget` (default 13,000 GB-s, ~1/30 of the
+  400k GB-s monthly free tier). The Aug 15 incident burned ~139k GB-s in a day
+  without tripping the saturation alarm: a spend spike that never saturates the
+  concurrency cap for 30 straight minutes is invisible to it (#533).
 - **Action:** the kill-switch Lambda (`apps/kill-switch/index.mjs`) sets the R
   backend's reserved concurrency to 0. Every further invocation then throttles
   (`429`) and compute spend stops. The worst-case bleed before it trips is ~30

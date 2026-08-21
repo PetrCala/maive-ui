@@ -156,3 +156,72 @@ resource "aws_lambda_permission" "cost_circuit_breaker_sns" {
   principal     = "sns.amazonaws.com"
   source_arn    = aws_sns_topic.cost_circuit_breaker.arn
 }
+
+# Daily compute budget alarm (#533). The $10 monthly budget never fired during
+# the Aug 15 incident because free-tier compute overage is a usage limit, not
+# dollars: ~139k GB-s burned in a day and the first signal was an AWS email a
+# day later. This alarm watches the actual usage metric: total GB-seconds per
+# day across the Lambdas, computed with metric math as Sum(Duration) x memory
+# for each function. It publishes to the circuit-breaker topic, so crossing the
+# budget emails the operator and, when the breaker is enabled, also trips the
+# auto-shutoff above. With a one-day period CloudWatch evaluates the partial
+# day's sum as it accumulates, so the alarm fires mid-spike rather than at
+# midnight. Three metrics plus free math expressions, within the 10 always-free
+# alarm metrics.
+resource "aws_cloudwatch_metric_alarm" "lambda_daily_gb_seconds" {
+  alarm_name          = "${var.project}-lambda-daily-gb-seconds"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  threshold           = var.lambda_daily_gb_seconds_budget
+  treat_missing_data  = "notBreaching"
+  alarm_description   = "Daily Lambda compute exceeded the GB-seconds budget; cost circuit breaker trips."
+  alarm_actions       = [aws_sns_topic.cost_circuit_breaker.arn]
+  # No ok_actions, for the same reason as the saturation alarm above.
+
+  metric_query {
+    id          = "gbs"
+    expression  = "(r * ${aws_lambda_function.r_backend.memory_size} + ui * ${aws_lambda_function.ui.memory_size} + orch * ${aws_lambda_function.orchestrator.memory_size}) / 1024 / 1000"
+    label       = "Lambda GB-seconds per day"
+    return_data = true
+  }
+
+  metric_query {
+    id = "r"
+    metric {
+      metric_name = "Duration"
+      namespace   = "AWS/Lambda"
+      period      = 86400
+      stat        = "Sum"
+      dimensions = {
+        FunctionName = aws_lambda_function.r_backend.function_name
+      }
+    }
+  }
+
+  metric_query {
+    id = "ui"
+    metric {
+      metric_name = "Duration"
+      namespace   = "AWS/Lambda"
+      period      = 86400
+      stat        = "Sum"
+      dimensions = {
+        FunctionName = aws_lambda_function.ui.function_name
+      }
+    }
+  }
+
+  metric_query {
+    id = "orch"
+    metric {
+      metric_name = "Duration"
+      namespace   = "AWS/Lambda"
+      period      = 86400
+      stat        = "Sum"
+      dimensions = {
+        FunctionName = aws_lambda_function.orchestrator.function_name
+      }
+    }
+  }
+}
