@@ -160,6 +160,11 @@ const CONST = {
     MIN_NONAFFIRMATIVE_COUNT: 10,
   },
   LARGE_DATASET_ROW_THRESHOLD: 500,
+  // Above this many rows (k), an RTMA run is gated out of the synchronous
+  // request path (#528): the interactive p-hacking correction cannot finish
+  // before the Lambda timeout at that size, so the run must go through the
+  // background queue, and when queuing is unavailable it is not submitted.
+  RTMA_SYNC_ROW_LIMIT: 100,
   MOCK_DATA_ROWS_MIN: 9, // At least 3 studies with 3 observations each
   MOCK_DATA_ROWS_MAX: 200,
   // NOTE: Update the descriptive copy in apps/lambda-r-backend/r_scripts/funnel_plot.R (ADJUSTED_POINT_MIN_SCALE) when this value changes.
