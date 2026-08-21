@@ -71,10 +71,24 @@ variable "lambda_r_backend_memory_size" {
   # second core roughly halves it (#483). The old 2048 MB was ~1.15 vCPU, which
   # cannot overlap chains at all whatever mc.cores is set to.
   #
-  # This is not a straight cost increase: a run that takes half as long at 1.73x
-  # the memory rate is cheaper in GB-s than it was. Raising this further only
-  # helps in steps of 1769 MB, and locals.tf derives the core count from it, so
-  # a value between steps buys memory that RTMA cannot use.
+  # Measured in production at 2048 / 3538 / 5308 MB on the representative e2e
+  # RTMA job (n = 40) and a large one (n = 300), three warm runs each, billed
+  # duration and GB-s from the Lambda REPORT lines (#537):
+  #
+  #   n = 40:  2048 MB 6.4 s / 12.7 GB-s | 3538 MB 5.2 s / 17.8 GB-s
+  #            | 5308 MB 4.2 s / 21.6 GB-s
+  #   n = 300: 2048 MB 48.0 s / 95.9 GB-s | 3538 MB 26.2 s / 90.7 GB-s
+  #            | 5308 MB 24.3 s / 126.0 GB-s
+  #
+  # 3538 stays the winner. On sampling-heavy jobs it is the cheapest in GB-s
+  # and nearly as fast as 5308: a third vCPU cannot speed up 4 chains (waves
+  # of 3 + 1 still make 2 waves) yet bills 1.5x the rate. 2048 is marginally
+  # cheaper only on small jobs where fixed overhead dominates, and doubles the
+  # wall time of large jobs, which is exactly the timeout exposure behind the
+  # Aug 15 incident. Max memory used peaked at 1.3 GB, so no setting here is
+  # memory-bound. Raising this only helps in steps of 1769 MB, and locals.tf
+  # derives the core count from it, so a value between steps buys memory that
+  # RTMA cannot use.
   default = 3538
 }
 
