@@ -34,7 +34,7 @@ variable "ui_lambda_timeout" {
 variable "ui_lambda_log_retention_days" {
   type        = number
   description = "Number of days to retain UI Lambda CloudWatch logs"
-  default     = 3
+  default     = 30
 }
 
 variable "ui_lambda_reserved_concurrency" {
@@ -93,7 +93,7 @@ variable "lambda_r_backend_reserved_concurrency" {
 variable "lambda_r_backend_log_retention_days" {
   type        = number
   description = "Number of days to retain Lambda R backend CloudWatch logs"
-  default     = 3
+  default     = 30
 }
 
 variable "cost_circuit_breaker_enabled" {
