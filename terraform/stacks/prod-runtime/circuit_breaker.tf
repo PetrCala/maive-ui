@@ -225,3 +225,31 @@ resource "aws_cloudwatch_metric_alarm" "lambda_daily_gb_seconds" {
     }
   }
 }
+
+# Hourly error-storm alarm (#534). On Aug 15 the R backend threw 67 timeout
+# errors over the day with nothing watching them; each one burned a full
+# Lambda-kill timeout of compute. The fast per-5-minute errors alarm in
+# lambda.tf is a single-failure FYI; this one catches the sustained storm: more
+# than var.lambda_r_backend_hourly_error_threshold errors in an hour publishes
+# to the circuit-breaker topic, which emails the operator and, when the breaker
+# is enabled, also trips the auto-shutoff above. One standard-resolution metric
+# alarm, within the 10 always-free alarm metrics.
+resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_error_storm" {
+  alarm_name          = "${local.lambda_r_backend_function_name}-error-storm"
+  comparison_operator = "GreaterThanThreshold"
+  evaluation_periods  = 1
+  datapoints_to_alarm = 1
+  metric_name         = "Errors"
+  namespace           = "AWS/Lambda"
+  period              = 3600
+  statistic           = "Sum"
+  threshold           = var.lambda_r_backend_hourly_error_threshold
+  treat_missing_data  = "notBreaching"
+  alarm_description   = "R backend errors exceeded the hourly threshold; cost circuit breaker trips."
+  alarm_actions       = [aws_sns_topic.cost_circuit_breaker.arn]
+  # No ok_actions, for the same reason as the saturation alarm above.
+
+  dimensions = {
+    FunctionName = aws_lambda_function.r_backend.function_name
+  }
+}

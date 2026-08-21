@@ -131,3 +131,14 @@ variable "lambda_daily_gb_seconds_budget" {
   type        = number
   default     = 13000
 }
+
+variable "lambda_r_backend_hourly_error_threshold" {
+  description = <<-EOT
+    Number of R backend errors per hour above which the error-storm alarm
+    publishes to the cost circuit breaker topic (#534). The Aug 15 incident
+    produced 67 timeout errors over a day with nothing watching them; a healthy
+    hour has zero, so anything past a handful is a storm, not noise.
+  EOT
+  type        = number
+  default     = 5
+}
