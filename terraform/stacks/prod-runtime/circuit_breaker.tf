@@ -7,8 +7,10 @@
 # var.cost_circuit_breaker_throttle_periods 5-minute periods (demand exceeding
 # the cap for ~30 minutes straight, a strong abuse signal with near-zero
 # false-positive rate for a low-traffic site), a CloudWatch alarm publishes to
-# SNS, which invokes a Lambda that sets the backend's reserved concurrency to 0.
-# All further compute then throttles (429) until an operator restores the cap.
+# SNS, which invokes a Lambda that degrades the backend's reserved concurrency
+# to var.cost_circuit_breaker_degraded_concurrency (default 2, never 0) and
+# enables the unstable banner. Demand beyond the degraded cap throttles (429)
+# and spend stays bounded until an operator restores the cap.
 #
 # This is the free equivalent of AWS Budgets Actions (which is a paid feature):
 # CloudWatch alarm -> SNS -> Lambda, entirely within AWS free tiers.
@@ -48,9 +50,10 @@ resource "aws_cloudwatch_metric_alarm" "lambda_r_backend_saturation" {
   treat_missing_data  = "notBreaching"
   alarm_description   = "R backend throttling continuously; cost circuit breaker trips."
   alarm_actions       = [aws_sns_topic.cost_circuit_breaker.arn]
-  # No ok_actions: after a trip the backend sits at 0 concurrency, so a quiet
-  # spell returns the alarm to OK while the service is still deliberately off.
-  # Recovery is an explicit operator action, not an automated "recovered" email.
+  # No ok_actions: after a trip the backend sits at the degraded concurrency,
+  # so a quiet spell returns the alarm to OK while the service is still
+  # deliberately degraded. Recovery is an explicit operator action, not an
+  # automated "recovered" email.
 
   dimensions = {
     FunctionName = aws_lambda_function.r_backend.function_name
@@ -88,12 +91,12 @@ resource "aws_iam_role_policy_attachment" "kill_switch_basic" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# The kill switch only needs to throttle the R backend to 0. Scoped to that one
-# function ARN.
+# The kill switch only needs to lower the R backend's concurrency cap and flip
+# the two unstable-banner parameters. Scoped to exactly those ARNs.
 resource "aws_iam_policy" "kill_switch" {
   count       = local.circuit_breaker_count
   name        = "${var.project}-cost-circuit-breaker-policy"
-  description = "Allow the cost circuit breaker to set reserved concurrency on the R backend"
+  description = "Allow the cost circuit breaker to degrade the R backend and enable the unstable banner"
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -102,6 +105,14 @@ resource "aws_iam_policy" "kill_switch" {
         Effect   = "Allow"
         Action   = ["lambda:PutFunctionConcurrency"]
         Resource = aws_lambda_function.r_backend.arn
+      },
+      {
+        Effect = "Allow"
+        Action = ["ssm:PutParameter"]
+        Resource = [
+          aws_ssm_parameter.ui_unstable_banner_enabled.arn,
+          aws_ssm_parameter.ui_unstable_banner_message.arn,
+        ]
       }
     ]
   })
@@ -133,7 +144,11 @@ resource "aws_lambda_function" "kill_switch" {
 
   environment {
     variables = {
-      PROTECTED_FUNCTIONS = aws_lambda_function.r_backend.function_name
+      PROTECTED_FUNCTIONS           = aws_lambda_function.r_backend.function_name
+      DEGRADED_CONCURRENCY          = tostring(var.cost_circuit_breaker_degraded_concurrency)
+      BANNER_ENABLED_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_enabled.name
+      BANNER_MESSAGE_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_message.name
+      BANNER_MESSAGE                = "MAIVE is under unusually high load and running with reduced capacity. Analyses may be slow or unavailable. Please try again later."
     }
   }
 

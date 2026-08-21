@@ -26,7 +26,7 @@ that adds up to.
 | Max dataset rows = 50,000 | R `api_v1.R` / `index.R` (`MAX_INPUT_ROWS`), UI `datasetValidation.ts` (`MAX_ROWS`) | Per-request work; caps payload-driven CPU/output amplification on every HTTP route including the raw legacy path. |
 | Request wall-clock budget = 120 s default, 570 s max | R `request_bounds.R` (`timeoutSeconds`) | How long any model request can hold a slot. The whole handler runs in a forked child the server kills at the deadline, Stan workers and bootstrap forks included, and the caller gets a structured `code: "timeout"` error instead of a dropped connection (#526). Interactive requests (UI, public `/v1`) get the 120 s default; the async orchestrator requests the 570 s maximum, still under the 600 s function timeout. |
 | RTMA fit budget = request budget minus 10 s | R `rtma_model.R` (`RTMA_FIT_HEADROOM_SEC`) | The RTMA fit's own child-process kill, kept inside the request budget so the fit-specific timeout message reaches the caller before the request-level backstop fires (#521, #526). Standalone use (reproducibility packages) keeps the old 480 s default. |
-| **Cost circuit breaker** | `prod-runtime/circuit_breaker.tf` | The **monthly total**. Auto-throttles the R backend to 0 on sustained abuse. |
+| **Cost circuit breaker** | `prod-runtime/circuit_breaker.tf` | The **monthly total**. Auto-degrades the R backend to a reserved concurrency of 2 on sustained abuse and turns on the unstable banner. |
 | Daily GB-seconds alarm (13,000 GB-s/day) | `prod-runtime/circuit_breaker.tf` (`lambda_daily_gb_seconds_budget`) | The **daily compute total**, measured in the free tier's own unit (400k GB-s/month, so ~1/30 per day). Metric math over Sum(Duration) x memory across the Lambdas; publishes to the circuit-breaker topic, so it pages and (when enabled) trips the breaker (#533). |
 | Budget notifications ($10, 50/80/forecast) | `prod-foundation/budget.tf` | Human awareness; email backstop. |
 | Cost Anomaly Detection | `prod-foundation/cost_anomaly.tf` | Human awareness; catches deviation from baseline rather than a fixed threshold. Daily digest, on ~24h-lagged billing data. |
@@ -50,7 +50,8 @@ The free equivalent of AWS Budgets Actions (a paid feature). Wiring:
 
 ```
 R backend throttling (sustained) → CloudWatch alarm → SNS → kill-switch Lambda
-                                                              → PutFunctionConcurrency(R backend, 0)
+                                                              → PutFunctionConcurrency(R backend, 2)
+                                                              → PutParameter(unstable_banner_*, on)
 ```
 
 - **Trigger:** the `-saturation` alarm fires when the R backend throttles
@@ -64,36 +65,45 @@ R backend throttling (sustained) → CloudWatch alarm → SNS → kill-switch La
   400k GB-s monthly free tier). The Aug 15 incident burned ~139k GB-s in a day
   without tripping the saturation alarm: a spend spike that never saturates the
   concurrency cap for 30 straight minutes is invisible to it (#533).
-- **Action:** the kill-switch Lambda (`apps/kill-switch/index.mjs`) sets the R
-  backend's reserved concurrency to 0. Every further invocation then throttles
-  (`429`) and compute spend stops. The worst-case bleed before it trips is ~30
-  min × 10 slots ≈ well under $1 per episode.
+- **Action:** the kill-switch Lambda (`apps/kill-switch/index.mjs`) degrades
+  rather than kills. It lowers the R backend's reserved concurrency to
+  `cost_circuit_breaker_degraded_concurrency` (default 2, never 0), so the
+  service stays usable while demand beyond the two slots throttles (`429`) and
+  the spend rate drops to ~$0.42/hr worst case. It also flips the
+  `/maive/ui/unstable_banner_*` SSM parameters so the UI shows users a
+  reduced-capacity notice (see `unstable-release-banner.md`). The worst-case
+  bleed before it trips is ~30 min × 10 slots ≈ well under $1 per episode.
 - **Notification:** the same alarm emails `var.email` (via the circuit-breaker
-  SNS topic), so an operator knows the service was shut off.
+  SNS topic), so an operator knows the service was degraded.
 - **Toggle:** `cost_circuit_breaker_enabled` (default `true`). When `false`, the
-  condition still emails but no automatic shutoff happens.
+  condition still emails but no automatic degradation happens.
 
 ### Recovery (deliberate, never automatic)
 
-When the breaker trips, analysis is down (the site's pages still load; runs
-return `429`). Recovery is a conscious operator action, after confirming the
-abusive traffic has stopped (e.g. blocked at Cloudflare):
+When the breaker trips, analysis runs at reduced capacity (two concurrent
+slots; excess runs return `429`) and the UI shows the unstable banner. Recovery
+is a conscious operator action, after confirming the abusive traffic has
+stopped (e.g. blocked at Cloudflare):
 
 1. Confirm the source of load has stopped.
 2. Restore the cap, either:
    - `cd terraform/stacks/prod-runtime && terragrunt apply` (resets reserved
-     concurrency to `lambda_r_backend_reserved_concurrency`), or
+     concurrency to `lambda_r_backend_reserved_concurrency` and turns the
+     banner back off), or
    - Lambda console → `maive-lambda-r-backend` → Configuration → Concurrency →
-     set reserved concurrency back to 10.
+     set reserved concurrency back to 10, then set the
+     `/maive/ui/unstable_banner_enabled` SSM parameter back to `false`.
 
-Note: because the Lambda sets concurrency out of band, Terraform state shows
-drift (it wants 10, actual is 0) until the next apply reconciles it. That is
-expected.
+Note: because the Lambda sets concurrency and the banner out of band, Terraform
+state shows drift (it wants 10 and a disabled banner, actual is 2 and enabled)
+until the next apply reconciles it. That is expected.
 
 ## What this does and does not guarantee
 
-- **Does:** stop runaway compute automatically and bound each abuse episode to
-  well under a dollar. Keep expected spend in the cents.
+- **Does:** cut runaway compute automatically to a trickle (two slots,
+  ~$0.42/hr worst case) and bound each abuse episode to well under a dollar
+  before the trip plus the degraded rate until an operator steps in. Keep
+  expected spend in the cents.
 - **Does not:** give a hard, instant monthly cap. AWS has no native "stop at
   $X." All spend-based signals (budgets, anomaly detection) lag AWS billing data
   by up to a day, which is why the primary automatic control keys off the
