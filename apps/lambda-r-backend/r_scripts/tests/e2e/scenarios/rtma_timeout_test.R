@@ -93,14 +93,26 @@ test_rtma_timeout <- function() {
           RTMA_TIMEOUT_BUDGET_SEC
         )
       )
+      # code is the machine-readable half of the structured payload (#526);
+      # the UI keys off it rather than parsing the message.
+      expect_rtma_timeout(
+        identical(timed_out$response$code, "timeout"),
+        paste(
+          "timeout error should carry code \"timeout\", got:",
+          format(timed_out$response$code)
+        )
+      )
+      # Either guard may report first: the fit child's kill carries the
+      # RTMA-specific message, the request-level backstop a generic one, and
+      # both name the requested budget.
       expect_rtma_timeout(
         grepl(
-          sprintf("RTMA timed out after %s seconds", RTMA_TIMEOUT_BUDGET_SEC),
+          sprintf("timed out after %s seconds", RTMA_TIMEOUT_BUDGET_SEC),
           timed_out$response$message,
           fixed = TRUE
         ),
         paste(
-          "timeout error should carry the documented message, got:",
+          "timeout error should name the requested budget, got:",
           timed_out$response$message
         )
       )

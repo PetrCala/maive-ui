@@ -6,6 +6,12 @@
 # The legacy routes (/run-model, /run-rtma) do not use this file and keep their
 # existing behavior. See docs/PUBLIC_API_DESIGN.md.
 
+# Request-level wall-clock bounds (#526). Sourced here, in the serving
+# process, so its helpers exist before any handler runs.
+# nolint start: undesirable_function_linter.
+source("request_bounds.R")
+# nolint end: undesirable_function_linter.
+
 API_V1_MODEL_TYPES <- c("MAIVE", "WAIVE", "WLS")
 API_V1_MAIVE_METHODS <- c("PET", "PEESE", "PET-PEESE", "EK")
 API_V1_WEIGHTS <- c(
@@ -534,34 +540,75 @@ api_v1_is_validation_message <- function(msg) {
   }, logical(1)))
 }
 
-#' Run a /v1 handler, mapping errors to the structured envelope
+#' Run a /v1 handler, bounded, mapping failures to the structured envelope
 #'
-#' Validation errors (both the api_v1_validation_error condition and
-#' validation-type model errors) become 400s; anything else becomes a 500.
+#' The handler's whole body (request parsing included) runs under the
+#' interactive request budget via run_request_bounded(), so a request that
+#' exceeds it returns a 504 with code "timeout" instead of holding the slot
+#' until the platform kills it (#526). timeoutSeconds is deliberately not
+#' exposed through /v1: callers who need a longer budget submit a background
+#' run instead. Validation errors (both the api_v1_validation_error condition
+#' and validation-type model errors) become 400s; anything else becomes a 500.
 #'
 #' @param res Plumber response object
 #' @param endpoint Endpoint label used in log messages
 #' @param run Zero-argument function producing the success response body
 api_v1_handle <- function(res, endpoint, run) {
-  tryCatch(
-    run(),
-    api_v1_validation_error = function(e) {
-      err_message <- conditionMessage(e)
-      cli::cli_alert_warning("Validation error in {endpoint}: {err_message}")
-      api_v1_error_body(res, 400L, "validation_error", err_message)
-    },
-    error = function(e) {
-      err_message <- conditionMessage(e)
-      if (api_v1_is_validation_message(err_message)) {
-        cli::cli_alert_warning("Validation error in {endpoint}: {err_message}")
-        return(api_v1_error_body(res, 400L, "validation_error", err_message))
+  outcome <- run_request_bounded(run, REQUEST_TIMEOUT_DEFAULT_SEC) # nolint: object_usage_linter.
+  elapsed <- round(outcome$elapsed_sec, 1)
+  switch(outcome$status,
+    ok = outcome$value,
+    timeout = {
+      cli::cli_alert_danger(
+        "Timeout in {endpoint}: budget {REQUEST_TIMEOUT_DEFAULT_SEC}s, elapsed {elapsed}s; analysis process tree killed."
+      )
+      msg <- if (is.null(outcome$message)) {
+        request_timeout_message(REQUEST_TIMEOUT_DEFAULT_SEC) # nolint: object_usage_linter.
+      } else {
+        outcome$message
       }
-      cli::cli_alert_danger("Error in {endpoint}: {err_message}")
+      body <- api_v1_error_body(res, 504L, "timeout", msg)
+      body$error$timeoutSeconds <- REQUEST_TIMEOUT_DEFAULT_SEC # nolint: object_usage_linter.
+      body$error$elapsedSeconds <- elapsed
+      body
+    },
+    died = {
+      cli::cli_alert_danger(
+        "Analysis process died in {endpoint} after {elapsed}s without a result."
+      )
       api_v1_error_body(
         res, 500L, "internal_error",
-        paste("Internal server error:", err_message)
+        paste(
+          "The analysis stopped before returning a result, which usually",
+          "means it ran out of memory. Try reducing the number of estimates."
+        )
       )
-    }
+    },
+    api_v1_error_outcome(res, endpoint, outcome)
+  )
+}
+
+#' Map a bounded handler's error outcome to the structured envelope
+#'
+#' The same classification api_v1_handle() used to do with tryCatch handlers,
+#' applied to the condition forwarded across the process boundary.
+#'
+#' @param res Plumber response object
+#' @param endpoint Endpoint label used in log messages
+#' @param outcome An outcome list from run_request_bounded() with status
+#'   "error"
+api_v1_error_outcome <- function(res, endpoint, outcome) {
+  err_message <- outcome$message
+  is_validation <- inherits(outcome$condition, "api_v1_validation_error") ||
+    api_v1_is_validation_message(err_message)
+  if (is_validation) {
+    cli::cli_alert_warning("Validation error in {endpoint}: {err_message}")
+    return(api_v1_error_body(res, 400L, "validation_error", err_message))
+  }
+  cli::cli_alert_danger("Error in {endpoint}: {err_message}")
+  api_v1_error_body(
+    res, 500L, "internal_error",
+    paste("Internal server error:", err_message)
   )
 }
 
@@ -572,11 +619,14 @@ api_v1_handle <- function(res, endpoint, run) {
 #' @param include Query parameter; "plot" embeds the funnel plot fields
 #' @return The flat results object, or a structured error envelope
 api_v1_run_model <- function(req, res, include = "") {
-  api_v1_handle(res, "/v1/run-model", function() {
-    # nolint start: undesirable_function_linter.
-    source("maive_model.R")
-    # nolint end: undesirable_function_linter.
+  # Sourced out here, in the serving process, rather than inside the bounded
+  # closure: the fork inherits the loaded packages, so no request child pays
+  # the library load twice (#526).
+  # nolint start: undesirable_function_linter.
+  source("maive_model.R")
+  # nolint end: undesirable_function_linter.
 
+  api_v1_handle(res, "/v1/run-model", function() {
     body <- api_v1_request_body(req)
     df <- api_v1_validate_maive_data(body$data)
     params <- api_v1_default_maive_parameters(body$parameters)
@@ -601,11 +651,13 @@ api_v1_run_model <- function(req, res, include = "") {
 #' @param include Query parameter; "plot" embeds the z-score plot fields
 #' @return The flat results object, or a structured error envelope
 api_v1_run_rtma <- function(req, res, include = "") {
-  api_v1_handle(res, "/v1/run-rtma", function() {
-    # nolint start: undesirable_function_linter.
-    source("rtma_model.R")
-    # nolint end: undesirable_function_linter.
+  # Sourced in the serving process for the same reason as in
+  # api_v1_run_model(), and doubly so here: rtma_model.R loads phacking.
+  # nolint start: undesirable_function_linter.
+  source("rtma_model.R")
+  # nolint end: undesirable_function_linter.
 
+  api_v1_handle(res, "/v1/run-rtma", function() {
     body <- api_v1_request_body(req)
     df <- api_v1_validate_rtma_data(body$data)
     params <- api_v1_default_rtma_parameters(body$parameters)
@@ -613,10 +665,14 @@ api_v1_run_rtma <- function(req, res, include = "") {
     # Rendering is gated on include_plot itself (#483 section 3), so the
     # response already omits the plot fields when they were not requested;
     # no post-hoc stripping needed here (contrast with /v1/run-model above).
+    # request_budget_sec mirrors the bound api_v1_handle() runs this closure
+    # under, so the fit child dies with headroom to spare and the RTMA
+    # timeout message reaches the caller (#526).
     run_rtma_model( # nolint: object_usage_linter.
       jsonlite::toJSON(df, dataframe = "rows", digits = NA),
       jsonlite::toJSON(params, auto_unbox = TRUE, digits = NA),
-      include_plot = api_v1_include_plot(include)
+      include_plot = api_v1_include_plot(include),
+      request_budget_sec = REQUEST_TIMEOUT_DEFAULT_SEC # nolint: object_usage_linter.
     )
   })
 }

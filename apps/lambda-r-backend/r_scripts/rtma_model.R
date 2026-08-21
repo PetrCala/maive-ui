@@ -64,6 +64,14 @@ RTMA_STAN_CONTROL <- list(adapt_delta = 0.98, max_treedepth = 12L)
 # most one worker per chain, so nothing above this can be used.
 RTMA_MAX_SAMPLING_CORES <- 4L
 
+# Seconds reserved out of a request-level budget for the work that follows the
+# fit: diagnostics, the optional z-density render, serialization. When the
+# server handlers pass request_budget_sec (see run_rtma_model), the fit child
+# is killed this much before the request-level guard in request_bounds.R would
+# kill the whole request, so the fit-specific timeout message below normally
+# wins the race and reaches the caller.
+RTMA_FIT_HEADROOM_SEC <- 10
+
 #' Number of cores to sample RTMA's Stan chains on
 #'
 #' rstan reads `getOption("mc.cores")` to decide how many of its 4 chains to run
@@ -380,8 +388,15 @@ render_z_density_plot <- function(yi, vi, favor_positive = TRUE, alpha_select = 
 #' @param include_plot Whether to render the z-score density plot. Skipping it
 #'   saves the ragg render (and ~50KB of response) when the caller has no use
 #'   for it, e.g. the default /v1 response before `?include=plot` (#483).
+#' @param request_budget_sec Request-level wall-clock budget the caller
+#'   enforces (the server handlers pass the budget they run this function
+#'   under, see request_bounds.R). When set, the fit gets this budget minus
+#'   RTMA_FIT_HEADROOM_SEC and params$timeoutSeconds is ignored, having
+#'   already been resolved into the budget by the handler. When NULL
+#'   (standalone use, e.g. the reproducibility package), the old contract
+#'   holds: params$timeoutSeconds bounds the fit, defaulting to 480 s.
 #' @return A list of RTMA results
-run_rtma_model <- function(data, parameters, include_plot = TRUE) {
+run_rtma_model <- function(data, parameters, include_plot = TRUE, request_budget_sec = NULL) {
   # Parse JSON inputs
   df <- jsonlite::fromJSON(data)
   params <- jsonlite::fromJSON(parameters)
@@ -491,19 +506,35 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   # depend on an rstan implementation detail. RTMA_MAX_SAMPLING_CORES is the
   # chain count: more cores than chains buys nothing.
   cores <- min(cores, RTMA_MAX_SAMPLING_CORES)
-  # Wall-clock budget kept below the Lambda function timeout so a degenerate
-  # dataset returns a clear error instead of being hard-killed mid-request.
-  # Validated like cores above, and for the same reason: the legacy route hands
-  # parameters through unfiltered, so this is caller-settable there, and
-  # run_rtma_fit_bounded() needs a real positive number to compute a deadline.
-  timeout_sec <- if (!is.null(params$timeoutSeconds)) {
-    suppressWarnings(as.numeric(params$timeoutSeconds))
+  # Wall-clock budget for the fit; the timeout message reports budget_sec, the
+  # bound the caller asked for, while timeout_sec is the enforced fit deadline.
+  if (!is.null(request_budget_sec)) {
+    # Server path: the handler enforces request_budget_sec around this whole
+    # call (#526). The fit gets it minus headroom so this function's timeout
+    # error beats the request-level kill; the max() keeps a tiny budget (e.g.
+    # the e2e timeout scenario's 0.2 s) positive instead of going negative.
+    # budget_sec is read by cli glue strings below. # nolint next: object_usage_linter.
+    budget_sec <- request_budget_sec
+    timeout_sec <- max(
+      request_budget_sec - RTMA_FIT_HEADROOM_SEC,
+      request_budget_sec * 0.9
+    )
   } else {
-    480
-  }
-  # is.finite() rejects NA, NaN and Inf in one test.
-  if (length(timeout_sec) != 1 || !is.finite(timeout_sec) || timeout_sec <= 0) {
-    cli::cli_abort("The timeoutSeconds parameter must be a positive number.")
+    # Standalone path, kept below the Lambda function timeout so a degenerate
+    # dataset returns a clear error instead of being hard-killed mid-request.
+    # Validated like cores above, and for the same reason: this is
+    # caller-settable, and run_rtma_fit_bounded() needs a real positive number
+    # to compute a deadline.
+    timeout_sec <- if (!is.null(params$timeoutSeconds)) {
+      suppressWarnings(as.numeric(params$timeoutSeconds))
+    } else {
+      480
+    }
+    # is.finite() rejects NA, NaN and Inf in one test.
+    if (length(timeout_sec) != 1 || !is.finite(timeout_sec) || timeout_sec <= 0) {
+      cli::cli_abort("The timeoutSeconds parameter must be a positive number.")
+    }
+    budget_sec <- timeout_sec
   }
   # Sampler seed; see RTMA_DEFAULT_SEED above for why it must be pinned.
   seed <- if (!is.null(params$seed)) {
@@ -522,6 +553,7 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
     "ci_level: {ci_level}",
     "seed: {seed}",
     "cores: {cores}",
+    "budget_sec: {budget_sec}",
     "timeout_sec: {timeout_sec}"
   ))
 
@@ -577,10 +609,18 @@ run_rtma_model <- function(data, parameters, include_plot = TRUE) {
   fit_outcome <- run_rtma_fit_bounded(rtma_fit_call, timeout_sec)
   fit_result <- switch(fit_outcome$status,
     ok = fit_outcome$value,
-    timeout = cli::cli_abort(c(
-      "RTMA timed out after {timeout_sec} seconds.",
-      "i" = "The run exceeded its time budget before finishing; this does not necessarily mean it diverged. Try winsorizing outliers or reducing the number of estimates."
-    )),
+    # The class marks this as a budget kill so the request-level guard in
+    # request_bounds.R (which sees it as the child's forwarded error) reports
+    # it as a structured timeout rather than an internal error. The string
+    # must match REQUEST_TIMEOUT_ERROR_CLASS there; it is spelled out because
+    # this file also runs standalone, without request_bounds.R.
+    timeout = cli::cli_abort(
+      c(
+        "RTMA timed out after {budget_sec} seconds.",
+        "i" = "The run exceeded its time budget before finishing; this does not necessarily mean it diverged. Try winsorizing outliers or reducing the number of estimates."
+      ),
+      class = "request_timeout_error"
+    ),
     died = cli::cli_abort(c(
       "The RTMA fit stopped before returning a result.",
       "i" = "The fit process was killed from outside the request, which usually means the container ran out of memory. Try reducing the number of estimates."

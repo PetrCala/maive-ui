@@ -14,6 +14,13 @@ const TTL_SECONDS = 48 * 60 * 60; // 48h
 const FETCH_TIMEOUT_MS = 630_000; // total work budget, below the Lambda 660s timeout
 const TERMINAL_STATUSES = new Set(["succeeded", "failed", "timedout"]);
 
+// Background runs get the R backend's maximum request budget instead of its
+// 120 s interactive default: waiting is the point of a queued run. Injected
+// into the forwarded parameters unless the submitter set a budget explicitly.
+// Keep in sync with REQUEST_TIMEOUT_MAX_SEC in
+// apps/lambda-r-backend/r_scripts/request_bounds.R (#526).
+const BACKGROUND_TIMEOUT_SECONDS = 570;
+
 // Retry budget for HTTP 429 only (see postWithThrottleRetry). Nominally
 // 2+4+8+16+32 = ~62s of waiting for a concurrency slot, jittered, and always
 // bounded by the run's overall deadline.
@@ -150,6 +157,15 @@ async function processRecord(record: SQSRecord): Promise<void> {
 
   const endpoint = modelType === "RTMA" ? "/run-rtma" : "/run-model";
 
+  const baseParameters =
+    parameters && typeof parameters === "object" && !Array.isArray(parameters)
+      ? (parameters as Record<string, unknown>)
+      : {};
+  const parametersWithBudget = {
+    timeoutSeconds: BACKGROUND_TIMEOUT_SECONDS,
+    ...baseParameters,
+  };
+
   try {
     const response = await postWithThrottleRetry(
       `${rApiUrl}${endpoint}`,
@@ -157,7 +173,7 @@ async function processRecord(record: SQSRecord): Promise<void> {
       // expects JSON strings for `data` and `parameters`.
       JSON.stringify({
         data: JSON.stringify(data),
-        parameters: JSON.stringify(parameters),
+        parameters: JSON.stringify(parametersWithBudget),
       }),
       startedAt + FETCH_TIMEOUT_MS,
     );

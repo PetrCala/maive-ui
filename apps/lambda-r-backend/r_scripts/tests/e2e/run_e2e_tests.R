@@ -41,6 +41,7 @@ source(file.path(script_dir, "scenarios/basic_rtma_test.R"))
 source(file.path(script_dir, "scenarios/rtma_direction_test.R"))
 source(file.path(script_dir, "scenarios/rtma_seed_test.R"))
 source(file.path(script_dir, "scenarios/rtma_timeout_test.R"))
+source(file.path(script_dir, "scenarios/request_timeout_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
 
 # Define available test scenarios
@@ -121,6 +122,13 @@ AVAILABLE_SCENARIOS <- list(
     name = "RTMA Timeout Test",
     description = "Test that the RTMA wall-clock budget is enforced and the server survives it",
     function_name = "test_rtma_timeout"
+  ),
+
+  # Request-level guard scenarios
+  "request-timeout" = list(
+    name = "Request Timeout Test",
+    description = "Test that the request-level wall-clock budget is enforced on /run-model",
+    function_name = "test_request_timeout"
   ),
 
   # Public /v1 API scenarios
@@ -394,11 +402,25 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   }
   test_count <- test_count + 1
 
+  # Request-level timeout on the MAIVE path (#526). Runs before the RTMA tail:
+  # it kills a bootstrap run mid-analysis and then asserts the server still
+  # serves, so anything after it exercises the post-kill process state.
+  cat("\n8. Running request timeout test...\n")
+  request_timeout_result <- test_request_timeout()
+  all_results$request_timeout <- request_timeout_result
+  if (request_timeout_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ Request timeout test passed\n")
+  } else {
+    cat("   ✗ Request timeout test failed:", request_timeout_result$error, "\n")
+  }
+  test_count <- test_count + 1
+
   # The three scenarios below run last: between them they fit eight more RTMA
   # models, and every extra fit in this long-lived process makes the rstan
   # sampler more likely to wedge on a later one. Keeping them at the end leaves
   # every other scenario with the same process state it had before they existed.
-  cat("\n8. Running RTMA seed reproducibility test...\n")
+  cat("\n9. Running RTMA seed reproducibility test...\n")
   rtma_seed_result <- test_rtma_seed()
   all_results$rtma_seed <- rtma_seed_result
   if (rtma_seed_result$status == "PASS") {
@@ -409,7 +431,7 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   }
   test_count <- test_count + 1
 
-  cat("\n9. Running RTMA favored direction test...\n")
+  cat("\n10. Running RTMA favored direction test...\n")
   rtma_direction_result <- test_rtma_direction()
   all_results$rtma_direction <- rtma_direction_result
   if (rtma_direction_result$status == "PASS") {
@@ -423,7 +445,7 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   # Last of all: this one kills a fit mid-sample, so anything that ran after it
   # would be reporting on a process that has just had a child torn out from
   # under it. That the server survives is the scenario's own final assertion.
-  cat("\n10. Running RTMA timeout test...\n")
+  cat("\n11. Running RTMA timeout test...\n")
   rtma_timeout_result <- test_rtma_timeout()
   all_results$rtma_timeout <- rtma_timeout_result
   if (rtma_timeout_result$status == "PASS") {
