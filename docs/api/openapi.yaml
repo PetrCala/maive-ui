@@ -134,6 +134,8 @@ paths:
           $ref: "#/components/responses/RateLimited"
         "500":
           $ref: "#/components/responses/InternalError"
+        "504":
+          $ref: "#/components/responses/Timeout"
 
   /v1/run-rtma:
     post:
@@ -179,6 +181,8 @@ paths:
           $ref: "#/components/responses/RateLimited"
         "500":
           $ref: "#/components/responses/InternalError"
+        "504":
+          $ref: "#/components/responses/Timeout"
 
   /v1/runs:
     post:
@@ -426,6 +430,21 @@ components:
             error:
               code: internal_error
               message: "Internal server error."
+    Timeout:
+      description: >-
+        The analysis exceeded the synchronous wall-clock budget (120 s) and
+        was stopped. Reduce the dataset, winsorize outliers, or submit the
+        analysis as a background run via POST /v1/runs.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error:
+              code: timeout
+              message: "The request timed out after 120 seconds."
+              timeoutSeconds: 120
+              elapsedSeconds: 121.2
     NotConfigured:
       description: This deployment does not have the async runs infrastructure configured.
       content:
@@ -454,10 +473,17 @@ components:
                 - method_not_allowed
                 - payload_too_large
                 - rate_limited
+                - timeout
                 - internal_error
                 - not_configured
             message:
               type: string
+            timeoutSeconds:
+              type: number
+              description: Present on timeout errors; the enforced budget.
+            elapsedSeconds:
+              type: number
+              description: Present on timeout errors; seconds before the stop.
 
     DataRow:
       type: object

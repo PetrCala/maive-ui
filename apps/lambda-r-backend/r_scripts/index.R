@@ -58,6 +58,7 @@ function(data, parameters) {
   tryCatch(
     {
       # nolint start: undesirable_function_linter.
+      source("request_bounds.R")
       source("maive_model.R")
       # nolint end: undesirable_function_linter.
 
@@ -67,8 +68,15 @@ function(data, parameters) {
 
       enforce_max_input_rows(data)
 
-      results <- run_maive_model(data, parameters)
-      list(data = results)
+      # The whole analysis runs in a child killed at the deadline, so a
+      # degenerate dataset returns a structured timeout error instead of
+      # holding the slot until the platform kills the request (#526).
+      timeout_sec <- request_timeout_sec_from_json(parameters)
+      outcome <- run_request_bounded(
+        function() run_maive_model(data, parameters),
+        timeout_sec
+      )
+      legacy_bounded_response(outcome, timeout_sec, "run-model")
     },
     error = function(e) {
       err_message <- conditionMessage(e)
@@ -91,6 +99,7 @@ function(data, parameters) {
   tryCatch(
     {
       # nolint start: undesirable_function_linter.
+      source("request_bounds.R")
       source("rtma_model.R")
       # nolint end: undesirable_function_linter.
 
@@ -100,8 +109,18 @@ function(data, parameters) {
 
       enforce_max_input_rows(data)
 
-      results <- run_rtma_model(data, parameters)
-      list(data = results)
+      # Same request-level bound as /run-model. The budget is also handed to
+      # run_rtma_model(), which gives its fit child the budget minus headroom,
+      # so the RTMA-specific timeout message normally arrives through the
+      # normal return path before this kill fires (#526).
+      timeout_sec <- request_timeout_sec_from_json(parameters)
+      outcome <- run_request_bounded(
+        function() {
+          run_rtma_model(data, parameters, request_budget_sec = timeout_sec)
+        },
+        timeout_sec
+      )
+      legacy_bounded_response(outcome, timeout_sec, "run-rtma")
     },
     error = function(e) {
       err_message <- conditionMessage(e)
