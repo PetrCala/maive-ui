@@ -35,9 +35,17 @@ type ModelRequest = {
   parameters: string; // JSON stringified parameters
 };
 
+// Response of the legacy synchronous model routes. Always HTTP 200: either
+// `{ data }` or an error payload with `error` set. Since #526 a failed run
+// also carries `code` ("timeout", "worker_died") and the wall-clock numbers
+// the server knows, so the UI can say what actually happened.
 type ModelResponse = {
-  data: unknown[];
-  error?: string;
+  data?: unknown[];
+  error?: boolean | string;
+  code?: string;
+  message?: string;
+  timeoutSeconds?: number;
+  elapsedSeconds?: number;
 };
 
 type ModelResults = {
