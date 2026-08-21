@@ -11,8 +11,13 @@ resource "aws_sqs_queue" "runs_dlq" {
 }
 
 resource "aws_sqs_queue" "runs" {
-  name                       = "${var.project}-runs"
-  visibility_timeout_seconds = 660     # > R Lambda timeout (600s) + overhead
+  name = "${var.project}-runs"
+  # Must exceed the orchestrator's own timeout (660s), not just the R Lambda's
+  # (600s): a heavy run that uses the orchestrator's full budget would otherwise
+  # see its message become visible again while still executing, and with
+  # maxReceiveCount = 1 the redelivery routes straight to the DLQ, firing the
+  # infra alarm for a run that is in fact still working.
+  visibility_timeout_seconds = 900
   message_retention_seconds  = 86400   # 1 day
   max_message_size           = 1048576 # 1 MiB (SQS max since Aug 2025, was 256KB)
   redrive_policy = jsonencode({
