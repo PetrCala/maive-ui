@@ -119,3 +119,15 @@ variable "cost_circuit_breaker_throttle_periods" {
   type        = number
   default     = 6
 }
+
+variable "lambda_daily_gb_seconds_budget" {
+  description = <<-EOT
+    Daily Lambda compute budget in GB-seconds, summed across all functions. The
+    AWS free tier grants 400,000 GB-s per month, so the default is roughly one
+    thirtieth of that. Crossing it publishes to the cost circuit breaker topic,
+    which emails the operator and, when the breaker is enabled, trips the
+    auto-shutoff (docs/COST_CONTROLS.md, #533).
+  EOT
+  type        = number
+  default     = 13000
+}
