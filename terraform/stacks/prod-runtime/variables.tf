@@ -27,8 +27,15 @@ variable "ui_lambda_memory_size" {
 
 variable "ui_lambda_timeout" {
   type        = number
-  description = "Timeout in seconds for the UI Lambda function (web tier; long analyses bypass it and hit the R backend directly)"
-  default     = 30
+  description = <<-EOT
+    Timeout in seconds for the UI Lambda function. Since #530 the UI Lambda
+    proxies synchronous model runs to the IAM-protected R backend, so it must
+    outlive the R backend's interactive request budget (120 s default plus
+    grace, see request_bounds.R). Kept well below the R maximum (570 s) so an
+    abusive caller cannot pin 1 GB UI instances for minutes; long runs belong
+    on the async queue.
+  EOT
+  default     = 180
 }
 
 variable "ui_lambda_log_retention_days" {

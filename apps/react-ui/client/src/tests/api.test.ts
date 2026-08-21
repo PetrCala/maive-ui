@@ -2,11 +2,6 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { modelService } from "@api/services/modelService";
 import { pingService } from "@api/services/pingService";
 
-// Mock the runtime config
-vi.mock("@src/utils/getRuntimeConfig", () => ({
-  getRuntimeConfig: () => ({ R_API_URL: "http://localhost:8787" }),
-}));
-
 describe("API Services", () => {
   beforeEach(() => {
     vi.clearAllMocks();

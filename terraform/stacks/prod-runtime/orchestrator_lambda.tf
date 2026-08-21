@@ -49,6 +49,16 @@ resource "aws_iam_policy" "orchestrator" {
         Action   = ["dynamodb:GetItem", "dynamodb:UpdateItem"]
         Resource = aws_dynamodb_table.runs.arn
       },
+      # The R backend Function URL requires IAM auth (#530); the orchestrator
+      # SigV4-signs its requests with this role's credentials.
+      {
+        Effect   = "Allow"
+        Action   = ["lambda:InvokeFunctionUrl"]
+        Resource = aws_lambda_function.r_backend.arn
+        Condition = {
+          StringEquals = { "lambda:FunctionUrlAuthType" = "AWS_IAM" }
+        }
+      },
     ]
   })
 }

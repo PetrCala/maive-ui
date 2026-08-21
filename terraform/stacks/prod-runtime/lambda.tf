@@ -46,27 +46,13 @@ resource "aws_lambda_function" "r_backend" {
   }
 }
 
-# Lambda function URL for direct HTTP access
+# Function URL for the R backend. IAM auth only (#530): the browser never
+# calls this URL anymore; the Next.js server and the orchestrator SigV4-sign
+# their requests, and their roles carry lambda:InvokeFunctionUrl. No CORS
+# block because no cross-origin browser calls are allowed at all.
 resource "aws_lambda_function_url" "r_backend" {
   function_name      = aws_lambda_function.r_backend.function_name
-  authorization_type = "NONE"
-
-  cors {
-    allow_credentials = true
-    allow_origins     = ["*"]
-    allow_methods     = ["GET", "POST"]
-    allow_headers     = ["*"]
-    expose_headers    = ["*"]
-    max_age           = 86400
-  }
-}
-
-resource "aws_lambda_permission" "public_invoke" {
-  statement_id           = "FunctionURLAllowPublicAccess"
-  action                 = "lambda:InvokeFunctionUrl"
-  function_name          = aws_lambda_function.r_backend.function_name
-  principal              = "*"
-  function_url_auth_type = "NONE"
+  authorization_type = "AWS_IAM"
 }
 
 # Lambda monitoring and alarms

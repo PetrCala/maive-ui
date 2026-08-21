@@ -10,7 +10,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_R_API_URL=http://r:${R_PORT}
+      - R_API_URL=http://r:${R_PORT}
       - CHOKIDAR_USEPOLLING=true # Node file-watch works in a mount
     volumes:
       # Bind-mount the *exact* directory used in the image.

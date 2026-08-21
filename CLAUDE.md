@@ -86,21 +86,19 @@ npm run mergePR:admin   # Merge PR with admin privileges
 The application is fully serverless. Both the Next.js UI and the R-Plumber backend run as AWS Lambda functions, each exposed via a Lambda Function URL. Cloudflare sits in front of the UI for CDN, TLS, and WAF:
 
 ```
-                      ┌─────────────────────────────┐
 Browser ──► Cloudflare ──► UI Lambda Function URL (Next.js)
-   │        (CDN/TLS/WAF)
-   │
-   └──────────────────────► R Lambda Function URL (Plumber)
-          (heavy /run-model analysis call, direct from browser)
+            (CDN/TLS/WAF)          │ SigV4-signed
+                                   ▼
+                           R Lambda Function URL (Plumber, IAM auth)
 ```
 
 **Key Points:**
 
 - The Next.js UI runs on AWS Lambda via a container image using the [AWS Lambda Web Adapter](https://github.com/awslabs/aws-lambda-web-adapter), exposed through a Lambda Function URL.
 - Cloudflare fronts the UI for CDN/TLS/WAF. A Cloudflare Worker rewrites the `Host`/SNI to the `.on.aws` origin, because Lambda Function URLs reject a foreign `Host` header.
-- The R backend is a separate public Lambda Function URL (authorization `NONE`, CORS `*`).
-- The heavy `/run-model` analysis call goes **directly from the browser to the R Lambda Function URL**; it does not pass through the Next.js server. The browser obtains the R URL from the `/api/runtime-config` route (exposed as `window.RUNTIME_CONFIG`), served at request time.
-- Lightweight Next.js API routes (e.g. `/api/runtime-config`, `/api/ping`, `/api/get-version-info`) still run server-side inside the UI Lambda.
+- The R backend is a separate Lambda Function URL with **IAM auth** (`AWS_IAM`, no CORS): only the UI Lambda and the orchestrator hold `lambda:InvokeFunctionUrl`, and both SigV4-sign their requests (#530).
+- The browser never calls the R Lambda. `modelService` POSTs to same-origin `/api/run-model` / `/api/run-rtma`; the Next.js server signs and forwards to the R backend (`src/api/server/rBackendProxy.ts`).
+- Next.js API routes (e.g. `/api/run-model`, `/api/ping`, `/api/get-version-info`) run server-side inside the UI Lambda.
 - There is no longer an ALB, ECS/Fargate cluster, or VPC public/private-subnet serving path.
 
 **Domains:**
@@ -139,16 +137,16 @@ docs/                         # Project documentation
 
 ### API Request Flow
 
-The heavy analysis request goes directly from the browser to the R Lambda; lightweight metadata still flows through Next.js API routes.
+Every request from the browser targets the same-origin Next.js server; the server is the only client-facing path to the R Lambda.
 
 **Analysis (`/run-model`):**
 
-1. **Runtime config**: On load, the browser fetches `/api/runtime-config`, which sets `window.RUNTIME_CONFIG.R_API_URL` to the R Lambda Function URL.
-2. **Direct call**: The browser's `modelService` POSTs the data and parameters straight to `${R_API_URL}/run-model` (no Next.js proxy involved).
+1. **Proxy call**: The browser's `modelService` POSTs the data and parameters to `/api/run-model` (or `/api/run-rtma`).
+2. **Signed forward**: The Next.js route SigV4-signs the request with the UI Lambda's execution-role credentials and forwards it to the IAM-protected R Lambda Function URL (`src/api/server/rBackendProxy.ts`).
 3. **R processing**: The R Lambda executes the MAIVE analysis.
-4. **Response**: Results return directly to the browser.
+4. **Response**: The proxy relays the R response verbatim back to the browser.
 
-**Lightweight routes (server-side, inside the UI Lambda):** `/api/runtime-config`, `/api/ping`, `/api/get-version-info`, etc. These run in the Next.js server context. The same `modelService`/`pingService` code is isomorphic: see `getRApiUrl()` for how the R URL is resolved on the client vs. the server.
+**Other routes (server-side, inside the UI Lambda):** `/api/ping`, `/api/get-version-info`, etc. These run in the Next.js server context. `getRApiUrl()` is server-only and resolves the R URL from `R_API_URL` (falling back to `NEXT_PUBLIC_DEV_R_API_URL` or `http://localhost:8787` in development).
 
 ### State Management
 
@@ -446,11 +444,9 @@ R_PORT=8787
 ### Production
 
 ```bash
-# React UI (UI Lambda): the public R Lambda Function URL.
-# The /api/runtime-config route reads this and exposes it to the browser
-# (window.RUNTIME_CONFIG), since the browser calls /run-model directly.
+# React UI (UI Lambda): the IAM-protected R Lambda Function URL. Server-only;
+# the /api/run-model and /api/run-rtma routes sign and forward to it.
 R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws
-# NEXT_PUBLIC_R_API_URL is also honored (takes precedence if set).
 ```
 
 **Important**: Copy `apps/react-ui/client/env.example` for local secrets. Never commit `.env` files.
@@ -465,13 +461,13 @@ R_API_URL=https://<r-lambda-id>.lambda-url.<region>.on.aws
 
 ## Common Issues
 
-### Browser Can't Reach the R Backend
+### Analysis Requests Fail to Reach the R Backend
 
-The browser calls the R Lambda Function URL directly for `/run-model`. If analysis requests fail, verify:
+The browser posts to `/api/run-model`, which the UI Lambda signs and forwards to the R Lambda Function URL (IAM auth). If analysis requests fail, verify:
 
-1. `/api/runtime-config` returns a non-empty `R_API_URL` (check the Network tab and `window.RUNTIME_CONFIG`).
-2. `R_API_URL` (or `NEXT_PUBLIC_R_API_URL`) is set on the UI Lambda and points to the public R Lambda Function URL.
-3. The R Lambda Function URL has CORS configured (`*`) and authorization `NONE`, so cross-origin browser calls are allowed.
+1. `R_API_URL` is set on the UI Lambda and points to the R Lambda Function URL.
+2. The UI Lambda role has `lambda:InvokeFunctionUrl` on the R function (a 403 from the Function URL means the signature or the permission is wrong).
+3. The R Function URL's authorization type is `AWS_IAM` and the caller actually signed the request (`src/api/server/rBackendProxy.ts` signs only `.on.aws` hosts; local targets stay unsigned).
 
 ### Cloudflare / Function URL Host Mismatch
 
@@ -481,7 +477,7 @@ The UI is served via Cloudflare in front of a Lambda Function URL. Lambda Functi
 
 - **Server-side**: API routes in `src/pages/api/*` (run inside the UI Lambda)
 - **Client-side**: Components, client API calls in `src/api/client/*`
-- **Isomorphic**: Services in `src/api/services/*` run in both contexts; `getRApiUrl()` resolves the R URL accordingly
+- **Services**: `src/api/services/*` are client-side wrappers over the same-origin `/api` routes; server code reaches the R backend through `src/api/server/rBackendProxy.ts` (`getRApiUrl()` is server-only)
 - **Check**: `typeof window === "undefined"` for server-side detection
 - **Environment vars**: `NEXT_PUBLIC_*` accessible on client, others server-only
 
