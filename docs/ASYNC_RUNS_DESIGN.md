@@ -1,7 +1,13 @@
 # Async Model Runs: Design & Implementation Plan
 
-**Status:** Proposed (scope locked, pre-implementation)
-**Date:** 2026-06-04
+**Status:** Shipped and live (Phases 1 and 2). Verified end to end in production
+on 2026-08-21 (#527): an RTMA job submitted through `POST /api/runs` was queued,
+picked up by the orchestrator, run against the R backend, written to the runs
+table, and picked up by polling `GET /api/runs?ids=...` as `succeeded`.
+Background runs get the R backend's maximum request budget (570 s, #526)
+instead of the 120 s interactive default, so heavy datasets ride the queue
+without the synchronous timeout cliff.
+**Date:** 2026-06-04 (design); 2026-08-21 (status update)
 **Related:** issue [#441](https://github.com/PetrCala/maive-ui/issues/441) (RTMA feature request, where async was first discussed); PR [#451](https://github.com/PetrCala/maive-ui/pull/451) (RTMA, merged)
 
 > This document is the scope of record for adding **non-blocking model runs and a
