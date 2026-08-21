@@ -99,13 +99,29 @@ variable "lambda_r_backend_log_retention_days" {
 variable "cost_circuit_breaker_enabled" {
   description = <<-EOT
     When true, sustained throttling of the R backend automatically trips the
-    circuit breaker: an SNS-triggered Lambda sets the R backend's reserved
-    concurrency to 0, halting all further compute spend until an operator
-    restores it (docs/COST_CONTROLS.md). When false, the same condition only
-    emails; no automatic shutoff happens.
+    circuit breaker: an SNS-triggered Lambda degrades the R backend's reserved
+    concurrency to var.cost_circuit_breaker_degraded_concurrency and enables
+    the unstable banner, bounding compute spend until an operator restores the
+    cap (docs/COST_CONTROLS.md). When false, the same condition only emails;
+    no automatic degradation happens.
   EOT
   type        = bool
   default     = true
+}
+
+variable "cost_circuit_breaker_degraded_concurrency" {
+  description = <<-EOT
+    Reserved concurrency the circuit breaker sets on the R backend when it
+    trips. Degrade, don't kill: the value must be at least 1 so the service
+    stays usable at a bounded spend rate while an operator investigates.
+  EOT
+  type        = number
+  default     = 2
+
+  validation {
+    condition     = var.cost_circuit_breaker_degraded_concurrency >= 1
+    error_message = "Must be at least 1; 0 would kill the backend instead of degrading it."
+  }
 }
 
 variable "cost_circuit_breaker_throttle_periods" {
