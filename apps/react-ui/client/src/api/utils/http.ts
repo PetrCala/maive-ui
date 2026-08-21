@@ -119,7 +119,11 @@ export async function httpRequest<T>(
         if (signal?.aborted) {
           throw error; // Re-throw the original abort error
         } else {
-          throw new Error("Request timed out");
+          // Named so callers (getUserFacingRunErrorMessage) can tell a
+          // client-side timeout from other failures and explain it properly.
+          const timeoutError = new Error("Request timed out");
+          timeoutError.name = "TimeoutError";
+          throw timeoutError;
         }
       }
       throw error;

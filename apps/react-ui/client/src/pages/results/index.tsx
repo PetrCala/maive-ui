@@ -41,6 +41,7 @@ import {
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 import { parseRunParameters } from "@src/utils/runParameterUtils";
+import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
 import {
   generateReproducibilityPackage,
   getReproducibilityPackageFilename,
@@ -282,8 +283,11 @@ export default function ResultsPage() {
             className="page-header"
           />
           <p className="mb-6 text-gray-600 dark:text-gray-300">
-            {runStatus.errorMessage ??
-              "The analysis did not complete. Please try again."}
+            {runStatus.errorMessage
+              ? // Backend error strings can carry cli/ANSI formatting; strip
+                // it so the real reason renders cleanly (#536).
+                cleanCliErrorMessage(runStatus.errorMessage)
+              : "The analysis did not complete. Please try again."}
           </p>
           <GoBackButton
             href={`/model?dataId=${dataId ?? ""}`}

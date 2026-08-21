@@ -35,9 +35,17 @@ type ModelRequest = {
   parameters: string; // JSON stringified parameters
 };
 
+// Legacy /run-model and /run-rtma contract: HTTP 200 with either { data } or
+// an error flag. Since #526 the backend attaches a machine-readable `code`
+// ("timeout", "worker_died") plus the budget and elapsed seconds, so the UI
+// can say what actually happened instead of showing a generic failure.
 type ModelResponse = {
   data: unknown[];
-  error?: string;
+  error?: string | boolean;
+  code?: string;
+  message?: string;
+  timeoutSeconds?: number;
+  elapsedSeconds?: number;
 };
 
 type ModelResults = {

@@ -27,7 +27,10 @@ import { hasNObsColumn, hasStudyIdColumn } from "@src/utils/dataUtils";
 import { isTooLargeForSyncRun } from "@src/utils/runGating";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
-import { getUserFacingRunErrorMessage } from "@src/utils/errorMessageUtils";
+import {
+  getUserFacingRunErrorMessage,
+  modelRunErrorFromResponse,
+} from "@src/utils/errorMessageUtils";
 import { requestNotificationPermission } from "@src/utils/notifications";
 import { getUploadedData as getCachedUploadedData } from "@src/utils/dataCacheDb";
 
@@ -859,7 +862,14 @@ export default function ModelPage() {
           return;
         }
 
-        let result: { data?: unknown; error?: string; message?: string };
+        let result: {
+          data?: unknown;
+          error?: string | boolean;
+          code?: string;
+          message?: string;
+          timeoutSeconds?: number;
+          elapsedSeconds?: number;
+        };
 
         if (parameters.modelType === CONST.MODEL_TYPES.RTMA) {
           const rtmaParams: RTMAParameters = {
@@ -895,7 +905,9 @@ export default function ModelPage() {
         }
 
         if (result.error) {
-          throw new Error(result?.message ?? "Failed to run model");
+          // Preserve the structured error fields (#526) through the throw so
+          // the catch below can show what actually happened (#536).
+          throw modelRunErrorFromResponse(result);
         }
 
         const endTime = Date.now();
@@ -935,7 +947,9 @@ export default function ModelPage() {
         }
         console.error("Error running model:", error);
         if (isMountedRef.current) {
-          showAlert(getUserFacingRunErrorMessage(error), "error");
+          // Run failures carry real diagnostics (timeout, killed worker,
+          // model error); keep them on screen long enough to read (#536).
+          showAlert(getUserFacingRunErrorMessage(error), "error", 12000);
           setLoading(false);
           setHasRunModel(false);
         }
