@@ -8,9 +8,11 @@
 # What this scenario pins down:
 #   * the emitted line is a single, pure JSON log event carrying exactly the
 #     incident-query fields: requestId, endpoint, k, method, rtma, outcome,
-#     durationSec
+#     durationSec, inputHash
 #   * the request id is read from the Lambda Web Adapter context headers and
 #     degrades to null outside Lambda
+#   * the caller-computed input hash (#529) is read from x-maive-input-hash
+#     and degrades to null when absent
 #   * outcomes map to ok/timeout/error, with unknown statuses (died included)
 #     collapsing to error, and a request that never reached its outcome
 #     mapping logging error by default
@@ -98,7 +100,8 @@ test_request_log <- function() {
 
       # Request id from the Lambda Web Adapter context headers.
       lambda_req <- request_log_fake_req(list(
-        HTTP_X_AMZN_LAMBDA_CONTEXT = '{"request_id":"lambda-req-1"}'
+        HTTP_X_AMZN_LAMBDA_CONTEXT = '{"request_id":"lambda-req-1"}',
+        HTTP_X_MAIVE_INPUT_HASH = "abc123hash"
       ))
       expect_request_log(
         identical(helpers$request_log_request_id(lambda_req), "lambda-req-1"),
@@ -116,6 +119,16 @@ test_request_log <- function() {
         "Outside Lambda the request id must degrade to NA"
       )
 
+      # Input hash from the caller's x-maive-input-hash header (#529).
+      expect_request_log(
+        identical(helpers$request_log_input_hash(lambda_req), "abc123hash"),
+        "The input hash must be read from x-maive-input-hash"
+      )
+      expect_request_log(
+        is.na(helpers$request_log_input_hash(request_log_fake_req())),
+        "Without the header the input hash must degrade to NA"
+      )
+
       # A full context round trip: noted fields land in the line, and the
       # line carries exactly the incident-query fields.
       ctx <- helpers$request_log_context(lambda_req, "/run-model", rtma = FALSE)
@@ -123,7 +136,8 @@ test_request_log <- function() {
       line <- request_log_capture_line(helpers, ctx)
 
       expected_fields <- c(
-        "requestId", "endpoint", "k", "method", "rtma", "outcome", "durationSec"
+        "requestId", "endpoint", "k", "method", "rtma", "outcome",
+        "durationSec", "inputHash"
       )
       expect_request_log(
         identical(sort(names(line)), sort(expected_fields)),
@@ -161,6 +175,10 @@ test_request_log <- function() {
         is.numeric(line$durationSec) && line$durationSec >= 0,
         "The log line must carry a non-negative duration"
       )
+      expect_request_log(
+        identical(line$inputHash, "abc123hash"),
+        "The log line must carry the input hash"
+      )
 
       # A context that never reaches its outcome mapping logs an error, and
       # unnoted fields serialize as null rather than being dropped.
@@ -176,6 +194,10 @@ test_request_log <- function() {
       expect_request_log(
         is.null(bare_line$requestId) && is.null(bare_line$k) && is.null(bare_line$method),
         "Unknown requestId, k and method must serialize as null"
+      )
+      expect_request_log(
+        is.null(bare_line$inputHash),
+        "An unknown input hash must serialize as null"
       )
       expect_request_log(
         identical(bare_line$rtma, TRUE),

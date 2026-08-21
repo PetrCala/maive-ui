@@ -7,7 +7,12 @@
 #
 #   {"requestId": "...", "endpoint": "/run-model", "k": 120,
 #    "method": "PET-PEESE", "rtma": false, "outcome": "timeout",
-#    "durationSec": 121.3}
+#    "durationSec": 121.3, "inputHash": "..."}
+#
+# inputHash is the sha256 of the run's input, computed by the calling service
+# (UI Lambda proxy or orchestrator, #529) and forwarded in the
+# x-maive-input-hash header. It joins this log line with the persistent run
+# record in the maive-runs table; direct callers without the header log null.
 #
 # The line is a pure JSON log event, so CloudWatch Logs Insights discovers the
 # fields automatically, e.g.:
@@ -71,6 +76,22 @@ request_log_request_id <- function(req) {
   NA_character_
 }
 
+#' Extract the caller-computed input hash from the request headers
+#'
+#' The UI Lambda proxy and the orchestrator hash each run's input for the
+#' persistent run record (#529) and forward the hash as x-maive-input-hash.
+#' Absent or implausible values degrade to NA rather than failing.
+#'
+#' @param req Plumber request object
+#' @return The input hash as a string, or NA_character_ when unavailable
+request_log_input_hash <- function(req) {
+  raw <- tryCatch(req[["HTTP_X_MAIVE_INPUT_HASH"]], error = function(e) NULL)
+  if (is.character(raw) && length(raw) == 1 && nzchar(raw) && nchar(raw) <= 128) {
+    return(raw)
+  }
+  NA_character_
+}
+
 #' Create the log context for one model request
 #'
 #' @param req Plumber request object; the request id is read from its headers
@@ -81,6 +102,10 @@ request_log_context <- function(req, endpoint, rtma) {
   ctx <- new.env(parent = emptyenv())
   ctx$request_id <- tryCatch(
     request_log_request_id(req),
+    error = function(e) NA_character_
+  )
+  ctx$input_hash <- tryCatch(
+    request_log_input_hash(req),
     error = function(e) NA_character_
   )
   ctx$endpoint <- endpoint
@@ -182,7 +207,8 @@ request_log_emit <- function(ctx) {
           method = ctx$method,
           rtma = ctx$rtma,
           outcome = ctx$outcome,
-          durationSec = round(duration, 3)
+          durationSec = round(duration, 3),
+          inputHash = ctx$input_hash
         ),
         auto_unbox = TRUE,
         na = "null"

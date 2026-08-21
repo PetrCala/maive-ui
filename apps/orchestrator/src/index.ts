@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { Sha256 } from "@aws-crypto/sha256-js";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import {
@@ -16,6 +17,25 @@ const rApiUrl = (process.env.R_API_URL ?? "").replace(/\/+$/, "");
 const TTL_SECONDS = 48 * 60 * 60; // 48h
 const FETCH_TIMEOUT_MS = 630_000; // total work budget, below the Lambda 660s timeout
 const TERMINAL_STATUSES = new Set(["succeeded", "failed", "timedout"]);
+
+// -- Run records + dedup (#529) ---------------------------------------------
+// Persistent per-input records live in the runs table under
+// `jobId = "input#<sha256>"` with a 30 day TTL: input hash, k, method,
+// outcome, duration, timestamps and a run counter. The same record answers
+// identical resubmissions (already running, or recently timed out) without
+// recomputing. Keep the hashing and record semantics in sync with the UI
+// server's copy in apps/react-ui/client/src/api/server/runRecords.ts.
+
+const RUN_RECORD_KEY_PREFIX = "input#";
+const RUN_RECORD_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
+const RUNNING_FRESH_MS = 700_000; // above the R budget (570s) plus margin
+const TIMEOUT_REUSE_MS = 6 * 60 * 60 * 1000; // replay window for timeouts
+const DEDUP_POLL_MS = 15_000; // poll cadence while waiting on an identical run
+const DEDUP_REPLAY_SUFFIX = " (reused from an identical earlier run)";
+const DEDUP_TIMEOUT_FALLBACK_MESSAGE =
+  "An identical analysis recently timed out. Please adjust the dataset or parameters before retrying.";
+const DEDUP_WAIT_EXHAUSTED_MESSAGE =
+  "An identical analysis was already running and did not finish within the wait budget. Please resubmit if you still need this run.";
 
 // Background runs get the R backend's maximum request budget instead of its
 // 120 s interactive default: waiting is the point of a queued run. Injected
@@ -54,10 +74,16 @@ function resolveSigningRegion(hostname: string): string {
 async function buildRequestHeaders(
   url: URL,
   body: string,
+  inputHash?: string,
 ): Promise<Record<string, string>> {
   const baseHeaders: Record<string, string> = {
     "Content-Type": "application/json",
   };
+  if (inputHash) {
+    // Lets the R backend's structured request log line (#532) be joined with
+    // the persistent run record (#529).
+    baseHeaders["x-maive-input-hash"] = inputHash;
+  }
   if (!url.hostname.endsWith(".on.aws")) {
     return baseHeaders;
   }
@@ -87,7 +113,11 @@ async function buildRequestHeaders(
       protocol: url.protocol,
       hostname: url.hostname,
       path: url.pathname,
-      headers: { "content-type": "application/json", host: url.hostname },
+      headers: {
+        "content-type": "application/json",
+        host: url.hostname,
+        ...(inputHash ? { "x-maive-input-hash": inputHash } : {}),
+      },
       body,
     }),
   );
@@ -112,6 +142,7 @@ export async function postWithThrottleRetry(
   url: string,
   body: string,
   deadline: number,
+  inputHash?: string,
 ): Promise<Response> {
   const target = new URL(url);
   for (let attempt = 0; ; attempt++) {
@@ -121,7 +152,7 @@ export async function postWithThrottleRetry(
     }
 
     // eslint-disable-next-line no-await-in-loop
-    const headers = await buildRequestHeaders(target, body);
+    const headers = await buildRequestHeaders(target, body, inputHash);
     // eslint-disable-next-line no-await-in-loop
     const response = await fetch(url, {
       method: "POST",
@@ -172,6 +203,73 @@ type TerminalFields = {
   result?: string;
   errorMessage?: string;
 };
+
+type RunRecord = {
+  status: "running" | TerminalStatus;
+  sourceJobId?: string;
+  startedAt?: number;
+  finishedAt?: number;
+  errorMessage?: string;
+};
+
+// Locale-independent key ordering, so hashes are stable across runtimes.
+function compareKeys(a: string, b: string): number {
+  if (a < b) {
+    return -1;
+  }
+  if (a > b) {
+    return 1;
+  }
+  return 0;
+}
+
+/** JSON.stringify with object keys sorted at every level, so logically equal
+ * parameter objects hash identically regardless of key order. */
+export function stableStringify(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    return JSON.stringify(value) ?? "null";
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((item) => stableStringify(item)).join(",")}]`;
+  }
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([, v]) => v !== undefined)
+    .sort(([a], [b]) => compareKeys(a, b))
+    .map(([key, v]) => `${JSON.stringify(key)}:${stableStringify(v)}`);
+  return `{${entries.join(",")}}`;
+}
+
+/**
+ * Hash one run's input: endpoint, dataset and parameters. `timeoutSeconds` is
+ * excluded from the parameters (this worker injects a background budget), so
+ * the same logical input hashes identically whether it ran synchronously or
+ * through the queue.
+ */
+export function computeInputHash(
+  endpoint: string,
+  data: unknown,
+  parameters: unknown,
+): string {
+  const dataString = typeof data === "string" ? data : stableStringify(data);
+  let params: unknown = parameters;
+  if (typeof params === "string") {
+    try {
+      params = JSON.parse(params);
+    } catch {
+      // Unparseable parameters hash as the raw string.
+    }
+  }
+  if (params && typeof params === "object" && !Array.isArray(params)) {
+    const { timeoutSeconds: _ignored, ...rest } = params as Record<
+      string,
+      unknown
+    >;
+    params = rest;
+  }
+  return createHash("sha256")
+    .update(`${endpoint}\n${dataString}\n${stableStringify(params ?? null)}`)
+    .digest("hex");
+}
 
 /**
  * SQS-triggered handler. The event-source mapping uses batch size 1, but we
@@ -231,6 +329,32 @@ async function processRecord(record: SQSRecord): Promise<void> {
     ...baseParameters,
   };
 
+  // Run records + dedup (#529). Recording never breaks a run: every record
+  // operation degrades to the plain flow on failure.
+  const inputHash = computeInputHash(endpoint, data, baseParameters);
+  try {
+    const deduped = await tryDedup(jobId, inputHash, startedAt);
+    if (deduped) {
+      return;
+    }
+    await startRunRecord(inputHash, endpoint, jobId, message, startedAt);
+  } catch (error) {
+    console.error("Run record layer failed; running without dedup", error);
+  }
+
+  // Terminal write for an executed run: job item plus the persistent record.
+  const finish = async (
+    status: TerminalStatus,
+    fields: TerminalFields,
+  ): Promise<void> => {
+    await markTerminal(jobId, status, fields);
+    try {
+      await finishRunRecord(inputHash, status, startedAt, fields.errorMessage);
+    } catch (error) {
+      console.error("Failed to finish run record", error);
+    }
+  };
+
   try {
     const response = await postWithThrottleRetry(
       `${rApiUrl}${endpoint}`,
@@ -241,10 +365,11 @@ async function processRecord(record: SQSRecord): Promise<void> {
         parameters: JSON.stringify(parametersWithBudget),
       }),
       startedAt + FETCH_TIMEOUT_MS,
+      inputHash,
     );
 
     if (!response.ok) {
-      await markTerminal(jobId, "failed", {
+      await finish("failed", {
         startedAt,
         errorMessage:
           response.status === 429
@@ -260,7 +385,7 @@ async function processRecord(record: SQSRecord): Promise<void> {
     try {
       parsed = JSON.parse(text) as RBackendResponse;
     } catch {
-      await markTerminal(jobId, "failed", {
+      await finish("failed", {
         startedAt,
         errorMessage: "R backend returned an unparseable response.",
       });
@@ -274,11 +399,11 @@ async function processRecord(record: SQSRecord): Promise<void> {
       const status: TerminalStatus = /timed out|timeout/i.test(messageText)
         ? "timedout"
         : "failed";
-      await markTerminal(jobId, status, { startedAt, errorMessage: messageText });
+      await finish(status, { startedAt, errorMessage: messageText });
       return;
     }
 
-    await markTerminal(jobId, "succeeded", {
+    await finish("succeeded", {
       startedAt,
       result: JSON.stringify(parsed.data ?? {}),
     });
@@ -290,7 +415,7 @@ async function processRecord(record: SQSRecord): Promise<void> {
       : "failed";
     // No auto-retry: record terminal so the message is consumed rather than
     // redelivered. (A DynamoDB write failure below would throw -> DLQ.)
-    await markTerminal(jobId, status, { startedAt, errorMessage: messageText });
+    await finish(status, { startedAt, errorMessage: messageText });
   }
 }
 
@@ -332,4 +457,261 @@ async function markTerminal(
       ExpressionAttributeValues: values,
     }),
   );
+}
+
+// -- Run record helpers (#529) ----------------------------------------------
+
+function runRecordKey(inputHash: string): string {
+  return `${RUN_RECORD_KEY_PREFIX}${inputHash}`;
+}
+
+async function getRunRecord(inputHash: string): Promise<RunRecord | undefined> {
+  const { Item } = await ddb.send(
+    new GetCommand({
+      TableName: tableName,
+      Key: { jobId: runRecordKey(inputHash) },
+    }),
+  );
+  return Item as RunRecord | undefined;
+}
+
+/** Row count of the queued dataset, for the record's k field. */
+function countRows(data: unknown): number | undefined {
+  if (Array.isArray(data)) {
+    return data.length;
+  }
+  if (typeof data === "string") {
+    try {
+      const parsed: unknown = JSON.parse(data);
+      return Array.isArray(parsed) ? parsed.length : undefined;
+    } catch {
+      return undefined;
+    }
+  }
+  return undefined;
+}
+
+/** Upsert the record to `running`, increment the run counter and clear any
+ * previous terminal fields. */
+async function startRunRecord(
+  inputHash: string,
+  endpoint: string,
+  jobId: string,
+  message: QueueMessage,
+  now: number,
+): Promise<void> {
+  const names: Record<string, string> = {
+    "#inputHash": "inputHash",
+    "#endpoint": "endpoint",
+    "#status": "status",
+    "#startedAt": "startedAt",
+    "#sourceJobId": "sourceJobId",
+    "#runCount": "runCount",
+    "#ttl": "ttl",
+    "#finishedAt": "finishedAt",
+    "#runDurationMs": "runDurationMs",
+    "#errorMessage": "errorMessage",
+  };
+  const values: Record<string, unknown> = {
+    ":inputHash": inputHash,
+    ":endpoint": endpoint,
+    ":running": "running",
+    ":now": now,
+    ":sourceJobId": jobId,
+    ":zero": 0,
+    ":one": 1,
+    ":ttl": Math.floor(now / 1000) + RUN_RECORD_TTL_SECONDS,
+  };
+  let setExpr =
+    "SET #inputHash = :inputHash, #endpoint = :endpoint, #status = :running, " +
+    "#startedAt = :now, #sourceJobId = :sourceJobId, " +
+    "#runCount = if_not_exists(#runCount, :zero) + :one, #ttl = :ttl";
+
+  const k = countRows(message.data);
+  if (typeof k === "number") {
+    names["#k"] = "k";
+    values[":k"] = k;
+    setExpr += ", #k = :k";
+  }
+  const params = message.parameters;
+  const method =
+    params && typeof params === "object" && !Array.isArray(params)
+      ? (params as Record<string, unknown>).maiveMethod
+      : undefined;
+  if (typeof method === "string" && method) {
+    names["#method"] = "method";
+    values[":method"] = method;
+    setExpr += ", #method = :method";
+  }
+  if (message.modelType) {
+    names["#modelType"] = "modelType";
+    values[":modelType"] = message.modelType;
+    setExpr += ", #modelType = :modelType";
+  }
+
+  await ddb.send(
+    new UpdateCommand({
+      TableName: tableName,
+      Key: { jobId: runRecordKey(inputHash) },
+      UpdateExpression: `${setExpr} REMOVE #finishedAt, #runDurationMs, #errorMessage`,
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+    }),
+  );
+}
+
+/** Record one run's terminal outcome and refresh the 30 day TTL. */
+async function finishRunRecord(
+  inputHash: string,
+  status: TerminalStatus,
+  startedAt: number,
+  errorMessage?: string,
+): Promise<void> {
+  const now = Date.now();
+  const names: Record<string, string> = {
+    "#status": "status",
+    "#finishedAt": "finishedAt",
+    "#runDurationMs": "runDurationMs",
+    "#ttl": "ttl",
+    "#errorMessage": "errorMessage",
+  };
+  const values: Record<string, unknown> = {
+    ":status": status,
+    ":finishedAt": now,
+    ":runDurationMs": now - startedAt,
+    ":ttl": Math.floor(now / 1000) + RUN_RECORD_TTL_SECONDS,
+  };
+  let expr =
+    "SET #status = :status, #finishedAt = :finishedAt, " +
+    "#runDurationMs = :runDurationMs, #ttl = :ttl";
+  if (errorMessage) {
+    values[":errorMessage"] = errorMessage;
+    expr += ", #errorMessage = :errorMessage";
+  } else {
+    expr += " REMOVE #errorMessage";
+  }
+
+  await ddb.send(
+    new UpdateCommand({
+      TableName: tableName,
+      Key: { jobId: runRecordKey(inputHash) },
+      UpdateExpression: expr,
+      ExpressionAttributeNames: names,
+      ExpressionAttributeValues: values,
+    }),
+  );
+}
+
+/** Count a deduplicated submission on the record (atomic, race-safe). */
+async function recordDedupHit(inputHash: string): Promise<void> {
+  await ddb.send(
+    new UpdateCommand({
+      TableName: tableName,
+      Key: { jobId: runRecordKey(inputHash) },
+      UpdateExpression:
+        "SET #dedupHits = if_not_exists(#dedupHits, :zero) + :one, " +
+        "#lastDedupAt = :now",
+      ExpressionAttributeNames: {
+        "#dedupHits": "dedupHits",
+        "#lastDedupAt": "lastDedupAt",
+      },
+      ExpressionAttributeValues: { ":zero": 0, ":one": 1, ":now": Date.now() },
+    }),
+  );
+}
+
+/** Full result of a terminal async job, for copying to a deduplicated job. */
+async function fetchJobResult(
+  sourceJobId: string | undefined,
+): Promise<string | undefined> {
+  if (!sourceJobId || sourceJobId === "sync") {
+    return undefined;
+  }
+  const { Item } = await ddb.send(
+    new GetCommand({
+      TableName: tableName,
+      Key: { jobId: sourceJobId },
+      ProjectionExpression: "#result",
+      ExpressionAttributeNames: { "#result": "result" },
+    }),
+  );
+  const result = Item?.result;
+  return typeof result === "string" ? result : undefined;
+}
+
+/**
+ * Answer this job from an existing record for the identical input, if the
+ * record allows it (#529). Dedup applies when the identical input is already
+ * running (wait for it, then copy its outcome) or recently timed out (replay
+ * the timeout error immediately); succeeded, failed and stale-running records
+ * do not dedup, so an explicit user retry still runs.
+ * @returns true when the job was resolved without running the analysis
+ */
+async function tryDedup(
+  jobId: string,
+  inputHash: string,
+  startedAt: number,
+): Promise<boolean> {
+  const record = await getRunRecord(inputHash);
+  if (!record) {
+    return false;
+  }
+  const now = Date.now();
+
+  if (
+    record.status === "timedout" &&
+    typeof record.finishedAt === "number" &&
+    now - record.finishedAt <= TIMEOUT_REUSE_MS
+  ) {
+    await recordDedupHit(inputHash);
+    const message = record.errorMessage ?? DEDUP_TIMEOUT_FALLBACK_MESSAGE;
+    await markTerminal(jobId, "timedout", {
+      startedAt,
+      errorMessage: `${message}${DEDUP_REPLAY_SUFFIX}`,
+    });
+    return true;
+  }
+
+  const isFreshRunning =
+    record.status === "running" &&
+    typeof record.startedAt === "number" &&
+    now - record.startedAt <= RUNNING_FRESH_MS;
+  if (!isFreshRunning) {
+    return false;
+  }
+
+  // An identical run is in flight: wait for its outcome instead of doubling
+  // the compute. Polling the record is a cheap DynamoDB read every 15s.
+  await recordDedupHit(inputHash);
+  const deadline = startedAt + FETCH_TIMEOUT_MS;
+  while (Date.now() + DEDUP_POLL_MS < deadline) {
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(DEDUP_POLL_MS);
+    // eslint-disable-next-line no-await-in-loop
+    const current = await getRunRecord(inputHash);
+    if (!current || current.status === "running") {
+      continue;
+    }
+    if (current.status === "succeeded") {
+      // eslint-disable-next-line no-await-in-loop
+      const result = await fetchJobResult(current.sourceJobId);
+      if (result === undefined) {
+        return false; // nothing to copy (e.g. a sync run); run it for real
+      }
+      await markTerminal(jobId, "succeeded", { startedAt, result });
+      return true;
+    }
+    const message = current.errorMessage ?? DEDUP_TIMEOUT_FALLBACK_MESSAGE;
+    await markTerminal(jobId, current.status, {
+      startedAt,
+      errorMessage: `${message}${DEDUP_REPLAY_SUFFIX}`,
+    });
+    return true;
+  }
+
+  await markTerminal(jobId, "timedout", {
+    startedAt,
+    errorMessage: DEDUP_WAIT_EXHAUSTED_MESSAGE,
+  });
+  return true;
 }

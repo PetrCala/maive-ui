@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { proxyToRBackend } from "@api/server/rBackendProxy";
+import { proxyModelRun } from "@api/server/rBackendProxy";
 
 // Same-origin proxy for synchronous model runs (#530): the R backend Function
 // URL requires IAM auth, so the browser posts here and the server signs and
@@ -22,5 +22,5 @@ export default async function handler(
     res.setHeader("Allow", "POST");
     return res.status(405).json({ error: "Method Not Allowed" });
   }
-  return proxyToRBackend(req, res, "/run-model");
+  return proxyModelRun(req, res, "/run-model");
 }
