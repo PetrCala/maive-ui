@@ -54,11 +54,19 @@ function() {
 #* @param data The file data to run the model on, passed as a JSON string
 #* @param parameters The parameters to run the model on
 #* @post /run-model
-function(data, parameters) {
+function(req, data, parameters) {
+  # nolint start: undesirable_function_linter.
+  source("request_bounds.R")
+  source("request_log.R")
+  # nolint end: undesirable_function_linter.
+
+  # One structured JSON line per request, emitted on every exit path (#532).
+  log_ctx <- request_log_context(req, "/run-model", rtma = FALSE)
+  on.exit(request_log_emit(log_ctx), add = TRUE)
+
   tryCatch(
     {
       # nolint start: undesirable_function_linter.
-      source("request_bounds.R")
       source("maive_model.R")
       # nolint end: undesirable_function_linter.
 
@@ -66,7 +74,8 @@ function(data, parameters) {
         cli::cli_abort("Missing data or parameters")
       }
 
-      enforce_max_input_rows(data)
+      request_log_note(log_ctx, k = enforce_max_input_rows(data))
+      request_log_note_legacy_params(log_ctx, parameters)
 
       # The whole analysis runs in a child killed at the deadline, so a
       # degenerate dataset returns a structured timeout error instead of
@@ -76,6 +85,7 @@ function(data, parameters) {
         function() run_maive_model(data, parameters),
         timeout_sec
       )
+      request_log_note(log_ctx, outcome = request_log_outcome(outcome$status))
       legacy_bounded_response(outcome, timeout_sec, "run-model")
     },
     error = function(e) {
@@ -95,11 +105,19 @@ function(data, parameters) {
 #* @param data The file data to run the model on, passed as a JSON string
 #* @param parameters The parameters to run the model on
 #* @post /run-rtma
-function(data, parameters) {
+function(req, data, parameters) {
+  # nolint start: undesirable_function_linter.
+  source("request_bounds.R")
+  source("request_log.R")
+  # nolint end: undesirable_function_linter.
+
+  # One structured JSON line per request, emitted on every exit path (#532).
+  log_ctx <- request_log_context(req, "/run-rtma", rtma = TRUE)
+  on.exit(request_log_emit(log_ctx), add = TRUE)
+
   tryCatch(
     {
       # nolint start: undesirable_function_linter.
-      source("request_bounds.R")
       source("rtma_model.R")
       # nolint end: undesirable_function_linter.
 
@@ -107,7 +125,7 @@ function(data, parameters) {
         cli::cli_abort("Missing data or parameters")
       }
 
-      enforce_max_input_rows(data)
+      request_log_note(log_ctx, k = enforce_max_input_rows(data))
 
       # Same request-level bound as /run-model. The budget is also handed to
       # run_rtma_model(), which gives its fit child the budget minus headroom,
@@ -120,6 +138,7 @@ function(data, parameters) {
         },
         timeout_sec
       )
+      request_log_note(log_ctx, outcome = request_log_outcome(outcome$status))
       legacy_bounded_response(outcome, timeout_sec, "run-rtma")
     },
     error = function(e) {

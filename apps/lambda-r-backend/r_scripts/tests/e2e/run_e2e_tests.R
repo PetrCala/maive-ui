@@ -43,6 +43,7 @@ source(file.path(script_dir, "scenarios/rtma_seed_test.R"))
 source(file.path(script_dir, "scenarios/rtma_timeout_test.R"))
 source(file.path(script_dir, "scenarios/request_timeout_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
+source(file.path(script_dir, "scenarios/request_log_test.R"))
 
 # Define available test scenarios
 AVAILABLE_SCENARIOS <- list(
@@ -129,6 +130,11 @@ AVAILABLE_SCENARIOS <- list(
     name = "Request Timeout Test",
     description = "Test that the request-level wall-clock budget is enforced on /run-model",
     function_name = "test_request_timeout"
+  ),
+  "request-log" = list(
+    name = "Request Log Test",
+    description = "Test the structured per-request JSON log line helpers",
+    function_name = "test_request_log"
   ),
 
   # Public /v1 API scenarios
@@ -453,6 +459,19 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     cat("   ✓ RTMA timeout test passed\n")
   } else {
     cat("   ✗ RTMA timeout test failed:", rtma_timeout_result$error, "\n")
+  }
+  test_count <- test_count + 1
+
+  # Pure unit checks on the request log helpers (#532); never touches the
+  # server, so its position in the run order does not matter.
+  cat("\n12. Running request log test...\n")
+  request_log_result <- test_request_log()
+  all_results$request_log <- request_log_result
+  if (request_log_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ Request log test passed\n")
+  } else {
+    cat("   ✗ Request log test failed:", request_log_result$error, "\n")
   }
   test_count <- test_count + 1
 
