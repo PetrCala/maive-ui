@@ -193,6 +193,7 @@ type QueueMessage = {
 type RBackendResponse = {
   data?: unknown;
   error?: boolean | string;
+  code?: string;
   message?: string;
 };
 
@@ -202,6 +203,7 @@ type TerminalFields = {
   startedAt: number;
   result?: string;
   errorMessage?: string;
+  errorCode?: string;
 };
 
 type RunRecord = {
@@ -210,6 +212,7 @@ type RunRecord = {
   startedAt?: number;
   finishedAt?: number;
   errorMessage?: string;
+  errorCode?: string;
 };
 
 // Locale-independent key ordering, so hashes are stable across runtimes.
@@ -349,7 +352,13 @@ async function processRecord(record: SQSRecord): Promise<void> {
   ): Promise<void> => {
     await markTerminal(jobId, status, fields);
     try {
-      await finishRunRecord(inputHash, status, startedAt, fields.errorMessage);
+      await finishRunRecord(
+        inputHash,
+        status,
+        startedAt,
+        fields.errorMessage,
+        fields.errorCode,
+      );
     } catch (error) {
       console.error("Failed to finish run record", error);
     }
@@ -393,13 +402,22 @@ async function processRecord(record: SQSRecord): Promise<void> {
     }
 
     // The R endpoints return { data } on success or { error, message } on
-    // failure (both HTTP 200).
+    // failure (both HTTP 200). Since #526 a failed run also carries a
+    // structured `code` ("timeout", "worker_died"); when present it decides
+    // the terminal status, with the message regex kept as a fallback for
+    // payloads without one.
     if (parsed.error) {
       const messageText = parsed.message ?? "Analysis failed.";
-      const status: TerminalStatus = /timed out|timeout/i.test(messageText)
-        ? "timedout"
-        : "failed";
-      await finish(status, { startedAt, errorMessage: messageText });
+      const errorCode =
+        typeof parsed.code === "string" && parsed.code ? parsed.code : undefined;
+      const status: TerminalStatus = errorCode
+        ? errorCode === "timeout"
+          ? "timedout"
+          : "failed"
+        : /timed out|timeout/i.test(messageText)
+          ? "timedout"
+          : "failed";
+      await finish(status, { startedAt, errorMessage: messageText, errorCode });
       return;
     }
 
@@ -446,6 +464,10 @@ async function markTerminal(
   if (fields.errorMessage !== undefined) {
     values[":errorMessage"] = fields.errorMessage;
     updateExpr += ", errorMessage = :errorMessage";
+  }
+  if (fields.errorCode !== undefined) {
+    values[":errorCode"] = fields.errorCode;
+    updateExpr += ", errorCode = :errorCode";
   }
 
   await ddb.send(
@@ -511,6 +533,7 @@ async function startRunRecord(
     "#finishedAt": "finishedAt",
     "#runDurationMs": "runDurationMs",
     "#errorMessage": "errorMessage",
+    "#errorCode": "errorCode",
   };
   const values: Record<string, unknown> = {
     ":inputHash": inputHash,
@@ -553,7 +576,7 @@ async function startRunRecord(
     new UpdateCommand({
       TableName: tableName,
       Key: { jobId: runRecordKey(inputHash) },
-      UpdateExpression: `${setExpr} REMOVE #finishedAt, #runDurationMs, #errorMessage`,
+      UpdateExpression: `${setExpr} REMOVE #finishedAt, #runDurationMs, #errorMessage, #errorCode`,
       ExpressionAttributeNames: names,
       ExpressionAttributeValues: values,
     }),
@@ -566,6 +589,7 @@ async function finishRunRecord(
   status: TerminalStatus,
   startedAt: number,
   errorMessage?: string,
+  errorCode?: string,
 ): Promise<void> {
   const now = Date.now();
   const names: Record<string, string> = {
@@ -574,6 +598,7 @@ async function finishRunRecord(
     "#runDurationMs": "runDurationMs",
     "#ttl": "ttl",
     "#errorMessage": "errorMessage",
+    "#errorCode": "errorCode",
   };
   const values: Record<string, unknown> = {
     ":status": status,
@@ -584,11 +609,21 @@ async function finishRunRecord(
   let expr =
     "SET #status = :status, #finishedAt = :finishedAt, " +
     "#runDurationMs = :runDurationMs, #ttl = :ttl";
+  const removes: string[] = [];
   if (errorMessage) {
     values[":errorMessage"] = errorMessage;
     expr += ", #errorMessage = :errorMessage";
   } else {
-    expr += " REMOVE #errorMessage";
+    removes.push("#errorMessage");
+  }
+  if (errorCode) {
+    values[":errorCode"] = errorCode;
+    expr += ", #errorCode = :errorCode";
+  } else {
+    removes.push("#errorCode");
+  }
+  if (removes.length > 0) {
+    expr += ` REMOVE ${removes.join(", ")}`;
   }
 
   await ddb.send(
@@ -668,6 +703,7 @@ async function tryDedup(
     await markTerminal(jobId, "timedout", {
       startedAt,
       errorMessage: `${message}${DEDUP_REPLAY_SUFFIX}`,
+      errorCode: record.errorCode,
     });
     return true;
   }
@@ -705,6 +741,7 @@ async function tryDedup(
     await markTerminal(jobId, current.status, {
       startedAt,
       errorMessage: `${message}${DEDUP_REPLAY_SUFFIX}`,
+      errorCode: current.errorCode,
     });
     return true;
   }

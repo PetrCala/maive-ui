@@ -97,6 +97,31 @@ describe("legacy /api/runs/[jobId] (unchanged behavior)", () => {
     expect(body.errorMessage).toBeTruthy();
   });
 
+  it("passes a stored errorCode through alongside the errorMessage", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({
+      Item: {
+        jobId: "abc",
+        status: "timedout",
+        modelType: "RTMA",
+        errorMessage: "The analysis timed out after 570 seconds.",
+        errorCode: "timeout",
+      },
+    });
+    const { default: handler } = await import("@src/pages/api/runs/[jobId]");
+    const req = createMockReq({ method: "GET", query: { jobId: "abc" } });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toMatchObject({
+      status: "timedout",
+      errorMessage: "The analysis timed out after 570 seconds.",
+      errorCode: "timeout",
+    });
+  });
+
   it("returns `result` as the raw stored string (not parsed)", async () => {
     setConfigured();
     const storedResult = JSON.stringify({

@@ -277,8 +277,13 @@ export default function ResultsPage() {
     } else if (runFailed) {
       // #536: say what actually happened. A timed out run gets its own
       // heading, and the backend's structured message (what failed and what
-      // to try) is shown after stripping any cli formatting artifacts.
-      const runTimedOut = runStatus.status === "timedout";
+      // to try) is shown after stripping any cli formatting artifacts. The
+      // backend's structured code decides the heading when present; the
+      // timedout status covers runs recorded before the code was threaded
+      // through.
+      const runTimedOut = runStatus.errorCode
+        ? runStatus.errorCode === "timeout"
+        : runStatus.status === "timedout";
       const failureMessage = runStatus.errorMessage
         ? cleanCliErrorMessage(runStatus.errorMessage)
         : null;

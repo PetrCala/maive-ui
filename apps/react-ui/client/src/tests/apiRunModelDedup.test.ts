@@ -96,6 +96,7 @@ describe("/api/run-model run records and dedup", () => {
           status: "timedout",
           finishedAt: Date.now() - 60_000,
           errorMessage: recordedMessage,
+          errorCode: "timeout",
         },
       })
       .mockResolvedValue({});
@@ -111,6 +112,7 @@ describe("/api/run-model run records and dedup", () => {
     expect(res.body).toEqual({
       error: true,
       message: `${recordedMessage}${DEDUP_REPLAY_SUFFIX}`,
+      code: "timeout",
     });
     // The dedup hit is counted on the record.
     const update = sentCommands().find((c) => c.type === "update");
@@ -200,6 +202,7 @@ describe("/api/run-model run records and dedup", () => {
       new Response(
         JSON.stringify({
           error: true,
+          code: "timeout",
           message: "The analysis timed out after 570 seconds.",
         }),
         // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -223,6 +226,39 @@ describe("/api/run-model run records and dedup", () => {
     expect(finishValues[":errorMessage"]).toBe(
       "The analysis timed out after 570 seconds.",
     );
+    expect(finishValues[":errorCode"]).toBe("timeout");
+  });
+
+  it("lets the structured code decide the outcome over the message text", async () => {
+    ddbSendMock.mockResolvedValue({});
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: true,
+          code: "worker_died",
+          // Mentions "timed out", but the code says the worker died, so the
+          // outcome must be failed, not timedout.
+          message: "The process died before the request timed out.",
+        }),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
+    );
+
+    const { default: handler } = await import("@src/pages/api/run-model");
+    const req = createMockReq({ method: "POST", body: legacyBody });
+    const res = withSend(createMockRes());
+
+    await handler(req, res);
+
+    const updates = sentCommands().filter((c) => c.type === "update");
+    expect(updates).toHaveLength(2);
+    const finishValues = updates[1].input.ExpressionAttributeValues as Record<
+      string,
+      unknown
+    >;
+    expect(finishValues[":status"]).toBe("failed");
+    expect(finishValues[":errorCode"]).toBe("worker_died");
   });
 
   it("proxies plainly when the runs table is not configured", async () => {

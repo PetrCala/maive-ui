@@ -200,12 +200,17 @@ type SubmitRunResponse = {
 
 // Response from GET /api/runs/{jobId}. `result` is the stringified
 // ModelResults | RTMAResults, present only once `status` is terminal.
+// `errorCode` is the R backend's structured code ("timeout", "worker_died";
+// #526) threaded through the orchestrator and the runs table, so clients can
+// key off it instead of parsing errorMessage or trusting the status heuristic.
+// Optional: runs recorded before the code was threaded through have none.
 type GetRunResponse = {
   jobId: string;
   status: RunStatus;
   modelType?: ModelParameters["modelType"];
   result?: string;
   errorMessage?: string;
+  errorCode?: string;
   runDurationMs?: number;
   runTimestamp?: string;
 };

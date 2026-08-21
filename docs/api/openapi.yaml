@@ -989,6 +989,11 @@ components:
           enum: [MAIVE, WAIVE, WLS, RTMA]
         errorMessage:
           type: string
+        errorCode:
+          type: string
+          description: >-
+            Structured error code from the backend (e.g. `timeout`,
+            `worker_died`), present on some `failed`/`timedout` runs.
         runDurationMs:
           type: number
         runTimestamp:
@@ -1023,3 +1028,10 @@ components:
         errorMessage:
           type: string
           description: Present on `failed`/`timedout`.
+        errorCode:
+          type: string
+          description: >-
+            Structured error code from the backend (e.g. `timeout`,
+            `worker_died`), present on some `failed`/`timedout` runs. Prefer
+            it over parsing `errorMessage` when reacting to a specific
+            failure mode.
