@@ -27,7 +27,10 @@ import { hasNObsColumn, hasStudyIdColumn } from "@src/utils/dataUtils";
 import { isTooLargeForSyncRun } from "@src/utils/runGating";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
-import { getUserFacingRunErrorMessage } from "@src/utils/errorMessageUtils";
+import {
+  RunFailureError,
+  getUserFacingRunErrorMessage,
+} from "@src/utils/errorMessageUtils";
 import { requestNotificationPermission } from "@src/utils/notifications";
 import { getUploadedData as getCachedUploadedData } from "@src/utils/dataCacheDb";
 
@@ -859,7 +862,14 @@ export default function ModelPage() {
           return;
         }
 
-        let result: { data?: unknown; error?: string; message?: string };
+        let result: {
+          data?: unknown;
+          error?: boolean | string;
+          code?: string;
+          message?: string;
+          timeoutSeconds?: number;
+          elapsedSeconds?: number;
+        };
 
         if (parameters.modelType === CONST.MODEL_TYPES.RTMA) {
           const rtmaParams: RTMAParameters = {
@@ -895,7 +905,15 @@ export default function ModelPage() {
         }
 
         if (result.error) {
-          throw new Error(result?.message ?? "Failed to run model");
+          // #526/#536: the backend now says what actually happened (timeout,
+          // worker killed, analysis error). Keep the structured payload so the
+          // catch below can show a real message instead of a generic failure.
+          throw new RunFailureError({
+            code: result.code,
+            message: result.message,
+            timeoutSeconds: result.timeoutSeconds,
+            elapsedSeconds: result.elapsedSeconds,
+          });
         }
 
         const endTime = Date.now();
@@ -935,7 +953,10 @@ export default function ModelPage() {
         }
         console.error("Error running model:", error);
         if (isMountedRef.current) {
-          showAlert(getUserFacingRunErrorMessage(error), "error");
+          // Structured failures carry guidance the user should have time to
+          // read; the default 2.5 s alert is far too short for them.
+          const duration = error instanceof RunFailureError ? 12000 : undefined;
+          showAlert(getUserFacingRunErrorMessage(error), "error", duration);
           setLoading(false);
           setHasRunModel(false);
         }

@@ -41,6 +41,7 @@ import {
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 import { parseRunParameters } from "@src/utils/runParameterUtils";
+import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
 import {
   generateReproducibilityPackage,
   getReproducibilityPackageFilename,
@@ -274,16 +275,27 @@ export default function ResultsPage() {
         </div>
       );
     } else if (runFailed) {
+      // #536: say what actually happened. A timed out run gets its own
+      // heading, and the backend's structured message (what failed and what
+      // to try) is shown after stripping any cli formatting artifacts.
+      const runTimedOut = runStatus.status === "timedout";
+      const failureMessage = runStatus.errorMessage
+        ? cleanCliErrorMessage(runStatus.errorMessage)
+        : null;
       body = (
         <div className="text-center">
           <SectionHeading
             level="h1"
-            text="Run failed"
+            text={runTimedOut ? "Run timed out" : "Run failed"}
             className="page-header"
           />
           <p className="mb-6 text-gray-600 dark:text-gray-300">
-            {runStatus.errorMessage ??
-              "The analysis did not complete. Please try again."}
+            {failureMessage ??
+              (runTimedOut
+                ? "The analysis exceeded its time budget before finishing. " +
+                  "Try winsorizing outliers or reducing the number of " +
+                  "estimates, then run it again."
+                : "The analysis did not complete. Please try again.")}
           </p>
           <GoBackButton
             href={`/model?dataId=${dataId ?? ""}`}

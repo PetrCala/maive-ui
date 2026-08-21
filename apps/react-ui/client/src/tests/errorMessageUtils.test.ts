@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ApiRequestError } from "@api/utils/http";
 import {
+  RunFailureError,
   cleanCliErrorMessage,
   getUserFacingRunErrorMessage,
 } from "@src/utils/errorMessageUtils";
@@ -67,6 +68,85 @@ describe("getUserFacingRunErrorMessage", () => {
 
     const messages = new Set([rateLimited, serverError, networkFailure]);
     expect(messages.size).toBe(3);
+  });
+});
+
+// Covers #536: the structured error payload from #526 (code, message,
+// wall-clock numbers) must reach the user as a message that says what
+// actually happened, not a generic failure.
+describe("RunFailureError", () => {
+  it("preserves the backend's timeout message, cleaned of cli artifacts", () => {
+    const error = new RunFailureError({
+      code: "timeout",
+      message:
+        "✖ The request timed out after 120 seconds. Try winsorizing outliers.",
+      timeoutSeconds: 120,
+      elapsedSeconds: 121.2,
+    });
+
+    expect(getUserFacingRunErrorMessage(error)).toBe(
+      "The request timed out after 120 seconds. Try winsorizing outliers.",
+    );
+    expect(error.code).toBe("timeout");
+    expect(error.timeoutSeconds).toBe(120);
+    expect(error.elapsedSeconds).toBe(121.2);
+  });
+
+  it("falls back to a timeout-specific message when the payload has no text", () => {
+    const message = getUserFacingRunErrorMessage(
+      new RunFailureError({ code: "timeout" }),
+    );
+
+    expect(message).toMatch(/budget/i);
+    expect(message).toMatch(/background/i);
+  });
+
+  it("explains a killed worker as an out-of-memory failure", () => {
+    const message = getUserFacingRunErrorMessage(
+      new RunFailureError({ code: "worker_died" }),
+    );
+
+    expect(message).toMatch(/memory/i);
+    expect(message).toMatch(/reducing/i);
+  });
+
+  it("keeps a plain analysis error message intact without a code", () => {
+    const message = getUserFacingRunErrorMessage(
+      new RunFailureError({
+        message: "Internal server error: The model did not converge.",
+      }),
+    );
+
+    expect(message).toBe("The model did not converge.");
+  });
+
+  it("falls back to the generic message for an unknown code with no text", () => {
+    const message = getUserFacingRunErrorMessage(
+      new RunFailureError({ code: "mystery" }),
+    );
+
+    expect(message).toMatch(/unexpected error/i);
+  });
+});
+
+describe("proxy-level failures", () => {
+  it("translates a 504 proxy timeout into user guidance", () => {
+    const message = getUserFacingRunErrorMessage(
+      new ApiRequestError("The analysis request timed out at the proxy.", 504),
+    );
+
+    expect(message).toMatch(/timed out/i);
+    expect(message).toMatch(/background/i);
+    expect(message).not.toMatch(/proxy/i);
+  });
+
+  it("translates a 502 into a backend-unreachable message", () => {
+    const message = getUserFacingRunErrorMessage(
+      new ApiRequestError("Failed to reach the analysis backend.", 502),
+    );
+
+    expect(message).toMatch(/could not be reached/i);
+    expect(message).toMatch(/try again/i);
   });
 });
 
