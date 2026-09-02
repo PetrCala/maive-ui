@@ -1,13 +1,17 @@
 import { describe, it, expect } from "vitest";
 import { resolveRunParameters } from "@api/server/modelParameterDefaults";
-import type { ResolvedRunParameters } from "@api/server/modelParameterDefaults";
+import type {
+  ResolveRunParametersOptions,
+  ResolvedRunParameters,
+} from "@api/server/modelParameterDefaults";
 import CONFIG from "@src/CONFIG";
 
 const resolveOk = (
   modelType: unknown,
   parameters: unknown,
+  options?: ResolveRunParametersOptions,
 ): ResolvedRunParameters => {
-  const result = resolveRunParameters(modelType, parameters);
+  const result = resolveRunParameters(modelType, parameters, options);
   expect(result.error).toBeUndefined();
   if (!result.resolved) {
     throw new Error("expected parameters to resolve");
@@ -42,14 +46,10 @@ describe("resolveRunParameters", () => {
     });
   });
 
-  it("keeps an explicit shouldUseInstrumenting override for WLS", () => {
-    const resolved = resolveOk("WLS", {
-      shouldUseInstrumenting: true,
-    });
-    expect(resolved.parameters).toMatchObject({
-      modelType: "WLS",
-      shouldUseInstrumenting: true,
-    });
+  it("rejects an explicit shouldUseInstrumenting=true on WLS as a conflict (#555)", () => {
+    expect(resolveError("WLS", { shouldUseInstrumenting: true })).toMatch(
+      /WLS does not instrument/,
+    );
   });
 
   it("derives shouldUseInstrumenting=true for MAIVE/WAIVE", () => {
@@ -69,18 +69,54 @@ describe("resolveRunParameters", () => {
     });
   });
 
-  it("drops unknown parameter keys instead of queueing them", () => {
-    const resolved = resolveOk("MAIVE", {
-      winsorize: 5,
-      unknownKnob: "boom",
-    });
-    expect(resolved.parameters).not.toHaveProperty("unknownKnob");
+  it("rejects unknown parameter keys instead of silently dropping them (#555)", () => {
+    expect(
+      resolveError("MAIVE", { winsorize: 5, unknownKnob: "boom" }),
+    ).toMatch(/Unknown MAIVE-family parameter key: unknownKnob/);
   });
 
-  it("routes modelType RTMA to the RTMA defaults, ignoring MAIVE parameter fields", () => {
+  it("derives the data-dependent defaults from the submitted rows", () => {
+    const withStudyId = resolveOk("MAIVE", undefined, {
+      data: [
+        { effect: 0.1, se: 0.1, n_obs: 10, study_id: "a" },
+        { effect: 0.2, se: 0.1, n_obs: 10, study_id: "a" },
+      ],
+    });
+    expect(withStudyId.parameters).toMatchObject({
+      includeStudyClustering: true,
+    });
+    const positional = resolveOk("MAIVE", undefined, {
+      data: [{ a: 0.1, b: 0.1, c: 10, d: "s1" }],
+    });
+    expect(positional.parameters).toMatchObject({
+      includeStudyClustering: true,
+    });
+    const withoutStudyId = resolveOk("MAIVE", undefined, {
+      data: [{ effect: 0.1, se: 0.1, n_obs: 10 }],
+    });
+    expect(withoutStudyId.parameters).toMatchObject({
+      includeStudyClustering: false,
+    });
+  });
+
+  it("expands a named recipe and reports it", () => {
+    const resolved = resolveOk(undefined, undefined, {
+      recipe: "EK",
+      data: [{ effect: 0.1, se: 0.1, n_obs: 10 }],
+    });
+    expect(resolved.modelType).toBe("WLS");
+    expect(resolved.recipe).toBe("EK");
+    expect(resolved.parameters).toMatchObject({
+      maiveMethod: "EK",
+      shouldUseInstrumenting: false,
+    });
+  });
+
+  it("routes modelType RTMA to the RTMA defaults", () => {
     const resolved = resolveOk("RTMA", undefined);
     expect(resolved).toEqual({
       modelType: "RTMA",
+      recipe: "RTMA",
       parameters: {
         modelType: "RTMA",
         favorPositive: true,
@@ -89,6 +125,12 @@ describe("resolveRunParameters", () => {
         winsorize: 0,
       },
     });
+  });
+
+  it("threads a caller seed through the async RTMA path (#555)", () => {
+    const resolved = resolveOk("RTMA", { seed: 123 });
+    expect(resolved.parameters).toMatchObject({ modelType: "RTMA", seed: 123 });
+    expect(resolveError("RTMA", { seed: -1 })).toMatch(/Invalid seed value/);
   });
 
   it("applies explicit RTMA overrides", () => {

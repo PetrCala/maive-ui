@@ -43,6 +43,7 @@ source(file.path(script_dir, "scenarios/rtma_seed_test.R"))
 source(file.path(script_dir, "scenarios/rtma_timeout_test.R"))
 source(file.path(script_dir, "scenarios/request_timeout_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
+source(file.path(script_dir, "scenarios/resolver_parity_test.R"))
 source(file.path(script_dir, "scenarios/request_log_test.R"))
 source(file.path(script_dir, "scenarios/response_cleanup_test.R"))
 
@@ -160,6 +161,11 @@ AVAILABLE_SCENARIOS <- list(
     name = "API v1 Test",
     description = "Test the public /v1 endpoints (validation, defaults, plot opt-in)",
     function_name = "test_api_v1"
+  ),
+  "resolver-parity" = list(
+    name = "Resolver Parity Test",
+    description = "Test that the /v1 parameter resolver matches the UI's shared fixture",
+    function_name = "test_resolver_parity"
   ),
 
   # Special scenarios
@@ -423,6 +429,17 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     cat("   ✓ API v1 test passed\n")
   } else {
     cat("   ✗ API v1 test failed:", api_v1_result$error, "\n")
+  }
+  test_count <- test_count + 1
+
+  # Resolver parity test (#555)
+  parity_result <- test_resolver_parity()
+  all_results$resolver_parity <- parity_result
+  if (parity_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ Resolver parity test passed\n")
+  } else {
+    cat("   ✗ Resolver parity test failed:", parity_result$error, "\n")
   }
   test_count <- test_count + 1
 

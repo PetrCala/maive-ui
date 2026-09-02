@@ -154,6 +154,16 @@ Every request from the browser targets the same-origin Next.js server; the serve
 - **React Context**: App-wide providers in `src/providers/`
 - State includes uploaded data, analysis parameters, and results
 
+### Parameter Resolution (one resolver for browser and API)
+
+Every run resolves its parameters through `apps/react-ui/client/src/lib/parameterResolver.ts` (#555). It is pure TypeScript, so the model page imports the same function the API routes run:
+
+- The browser calls it in `lenient` mode: first-seen datasets get the data-dependent defaults from it (study clustering follows the `study_id` column; a two-column upload defaults to RTMA), and on submit it canonicalizes the page state and reports any adjustment through `detectAndDispatchAlerts`.
+- Every API route calls it in `strict` mode through `api/server/modelParameterDefaults.ts`: unknown keys and conflicting values are a 400, never a silently different analysis. `/api/run-model`, `/api/run-rtma`, `/api/v1/run-model`, `/api/v1/run-rtma`, `/api/runs` and `/api/v1/runs` all forward the resolved object to R and echo it back as `resolvedParameters` (plus `recipe`) on every 200.
+- Named recipes (`RECIPES`: MAIVE, RTMA, PET-PEESE, EK) live in the same file; `recipe` in a request body expands to a preset before caller `parameters` apply.
+- `api_v1.R` applies the same rules for direct callers of the R backend. The shared fixture `apps/lambda-r-backend/r_scripts/tests/e2e/fixtures/resolver_parity.json` is run by both `parameterResolver.test.ts` and the `resolver-parity` R e2e scenario; when you change a rule, change it in both files and add a fixture case.
+- The discovery files (`/llms.txt`, `/agent.md`, `/openapi.yaml`) are rendered from `src/lib/discovery.ts` and the citation registry; `public/openapi.yaml` is a copy of `docs/api/openapi.yaml` guarded by a drift test.
+
 ### Parameter Change Tracking & Alerts
 
 The app tracks indirect parameter changes and shows alerts to users when changing one option automatically affects others.

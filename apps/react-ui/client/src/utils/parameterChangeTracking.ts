@@ -129,6 +129,44 @@ const EXPLANATION_RULES: ExplanationRule[] = [
     return null;
   },
 
+  // Rules below explain adjustments made by the shared parameter resolver
+  // (src/lib/parameterResolver.ts, #555) when the page submits a run: there
+  // is no single user-changed parameter to blame, so they key off the
+  // resolved state instead.
+  ({ param, next, changedByUser }) => {
+    if (changedByUser !== null) {
+      return null;
+    }
+    if (param === "weight" && !next.shouldUseInstrumenting) {
+      return "**Adjusted Weights** requires instrumenting";
+    }
+    if (param === "useLogFirstStage" && !next.shouldUseInstrumenting) {
+      return "log first stage requires instrumenting";
+    }
+    if (param === "computeAndersonRubin" && !next.shouldUseInstrumenting) {
+      return "**Anderson-Rubin CI** requires instrumenting";
+    }
+    if (
+      param === "computeAndersonRubin" &&
+      next.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE
+    ) {
+      return "**Anderson-Rubin CI** is not available with **Standard Weights**";
+    }
+    if (param === "computeAndersonRubin" && next.includeStudyDummies) {
+      return "**Anderson-Rubin CI** is not available with **Fixed-Intercept Multilevel**";
+    }
+    if (param === "maiveMethod" && next.modelType === CONST.MODEL_TYPES.WAIVE) {
+      return "**WAIVE** only supports **PET-PEESE**";
+    }
+    if (param === "modelType" && next.modelType === CONST.MODEL_TYPES.WLS) {
+      return "**MAIVE** without instrumenting is the **WLS** model";
+    }
+    if (param === "modelType" && next.modelType === CONST.MODEL_TYPES.RTMA) {
+      return "the data has no sample-size column, so only **RTMA** can run";
+    }
+    return null;
+  },
+
   // maiveMethod changed due to WAIVE model
   ({ param, next, changedByUser }) => {
     if (param !== "maiveMethod") {

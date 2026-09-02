@@ -8,6 +8,7 @@ import {
   parseIdsParam,
   submitRun,
 } from "@api/server/runsService";
+import { resolveRunParameters } from "@api/server/modelParameterDefaults";
 
 // Allow larger request bodies than Next.js's 1mb default so we can accept a
 // dataset and decide whether to queue it or signal the synchronous fallback.
@@ -69,12 +70,29 @@ const handler = async (
       .json({ error: "Missing required fields: data, parameters, modelType." });
   }
 
+  // The browser already ran the shared resolver, but the server owns the
+  // recorded run (#555): resolve again in strict mode so the queue carries
+  // exactly what the results page and the reproducibility package report.
+  const { resolved, error: resolutionError } = resolveRunParameters(
+    modelType,
+    parameters,
+    { data },
+  );
+  if (resolutionError) {
+    return res.status(400).json({ error: resolutionError.message });
+  }
+
   const submission = await submitRun(
     store.ddb,
     queue.sqs,
     store.tableName,
     queue.queueUrl,
-    { data, parameters, modelType, dataId },
+    {
+      data,
+      parameters: resolved.parameters,
+      modelType: resolved.modelType,
+      dataId,
+    },
   );
 
   if (submission.outcome === "too_large") {
@@ -86,7 +104,11 @@ const handler = async (
     return res.status(500).json({ error: "Failed to submit run." });
   }
 
-  return res.status(200).json({ jobId: submission.jobId });
+  return res.status(200).json({
+    jobId: submission.jobId,
+    resolvedParameters: resolved.parameters,
+    recipe: resolved.recipe,
+  });
 };
 
 export default handler;

@@ -182,6 +182,7 @@ jobs:
           TF_VAR_project: ${{ env.PROJECT_NAME }}
           TF_VAR_email: ${{ secrets.ADMIN_EMAIL }}
           TF_VAR_image_tag: ${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
+          TF_VAR_git_commit_hash: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
         with:
           tf_version: ${{ env.TF_VERSION }}
           tg_version: ${{ env.TG_VERSION }}
@@ -216,6 +217,7 @@ jobs:
           TF_VAR_project: ${{ env.PROJECT_NAME }}
           TF_VAR_email: ${{ secrets.ADMIN_EMAIL }}
           TF_VAR_image_tag: ${{ needs.bumpVersion.outputs.COMMIT_HASH_SHORT }}
+          TF_VAR_git_commit_hash: ${{ needs.bumpVersion.outputs.COMMIT_HASH }}
         with:
           tf_version: ${{ env.TF_VERSION }}
           tg_version: ${{ env.TG_VERSION }}

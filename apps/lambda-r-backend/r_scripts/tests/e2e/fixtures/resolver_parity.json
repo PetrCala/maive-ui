@@ -1,0 +1,249 @@
+{
+  "description": "Shared parity cases for the parameter resolver (#555). The UI's src/lib/parameterResolver.ts (Vitest: parameterResolver.test.ts) and the R backend's api_v1.R (e2e: resolver_parity_test.R) must both produce `expected` / `expectedRecipe` for a case, or reject it with a message containing `expectedErrorContains`. `family` names the sync endpoint (maive: /v1/run-model, rtma: /v1/run-rtma); `dataShape` says which optional columns the posted data carries.",
+  "cases": [
+    {
+      "name": "four-column upload turns study clustering on by default",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": true, "hasNObsColumn": true },
+      "parameters": {},
+      "expected": {
+        "modelType": "MAIVE",
+        "maiveMethod": "PET-PEESE",
+        "weight": "equal_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": true,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": true,
+        "favorPositive": true
+      },
+      "expectedRecipe": "MAIVE"
+    },
+    {
+      "name": "three-column upload leaves study clustering off",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": {},
+      "expected": {
+        "modelType": "MAIVE",
+        "maiveMethod": "PET-PEESE",
+        "weight": "equal_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": false,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": true,
+        "favorPositive": true
+      },
+      "expectedRecipe": "MAIVE"
+    },
+    {
+      "name": "WLS defaults to standard weights and no instrumenting",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": true, "hasNObsColumn": true },
+      "parameters": { "modelType": "WLS" },
+      "expected": {
+        "modelType": "WLS",
+        "maiveMethod": "PET-PEESE",
+        "weight": "standard_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": true,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": false,
+        "favorPositive": true
+      },
+      "expectedRecipe": "PET-PEESE"
+    },
+    {
+      "name": "WLS keeps an explicit compatible weight",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "modelType": "WLS", "weight": "equal_weights" },
+      "expected": {
+        "modelType": "WLS",
+        "maiveMethod": "PET-PEESE",
+        "weight": "equal_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": false,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": false,
+        "favorPositive": true
+      },
+      "expectedRecipe": "PET-PEESE"
+    },
+    {
+      "name": "conventional PET-PEESE (MAIVE without instrumenting) is normalized to WLS",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "maiveMethod": "PET-PEESE", "shouldUseInstrumenting": false },
+      "expected": {
+        "modelType": "WLS",
+        "maiveMethod": "PET-PEESE",
+        "weight": "standard_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": false,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": false,
+        "favorPositive": true
+      },
+      "expectedRecipe": "PET-PEESE"
+    },
+    {
+      "name": "conventional EK",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": true, "hasNObsColumn": true },
+      "parameters": { "maiveMethod": "EK", "shouldUseInstrumenting": false },
+      "expected": {
+        "modelType": "WLS",
+        "maiveMethod": "EK",
+        "weight": "standard_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": true,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": false,
+        "favorPositive": true
+      },
+      "expectedRecipe": "EK"
+    },
+    {
+      "name": "MAIVE with PEESE keeps instrumenting and is not a named recipe",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "maiveMethod": "PEESE" },
+      "expected": {
+        "modelType": "MAIVE",
+        "maiveMethod": "PEESE",
+        "weight": "equal_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": false,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": true,
+        "favorPositive": true
+      },
+      "expectedRecipe": null
+    },
+    {
+      "name": "WAIVE forces PET-PEESE and defaults to a log first stage",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "modelType": "WAIVE" },
+      "expected": {
+        "modelType": "WAIVE",
+        "maiveMethod": "PET-PEESE",
+        "weight": "equal_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": false,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": true,
+        "winsorize": 0,
+        "shouldUseInstrumenting": true,
+        "favorPositive": true
+      },
+      "expectedRecipe": null
+    },
+    {
+      "name": "not_clustered standard errors turn study clustering off on four-column data",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": true, "hasNObsColumn": true },
+      "parameters": { "standardErrorTreatment": "not_clustered" },
+      "expected": {
+        "modelType": "MAIVE",
+        "maiveMethod": "PET-PEESE",
+        "weight": "equal_weights",
+        "standardErrorTreatment": "not_clustered",
+        "includeStudyDummies": false,
+        "includeStudyClustering": false,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": true,
+        "favorPositive": true
+      },
+      "expectedRecipe": "MAIVE"
+    },
+    {
+      "name": "a misspelled key is rejected, naming the key",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "favourPositive": true },
+      "expectedErrorContains": "Unknown MAIVE-family parameter key: favourPositive"
+    },
+    {
+      "name": "adjusted weights without instrumenting is a conflict, not a silent switch",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "modelType": "WLS", "weight": "adjusted_weights" },
+      "expectedErrorContains": "adjusted weights require instrumenting"
+    },
+    {
+      "name": "explicit study clustering without a study_id column is a conflict",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "includeStudyClustering": true },
+      "expectedErrorContains": "Invalid includeStudyClustering value: true conflicts"
+    },
+    {
+      "name": "WAIVE with EK is a conflict",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "modelType": "WAIVE", "maiveMethod": "EK" },
+      "expectedErrorContains": "WAIVE only supports PET-PEESE"
+    },
+    {
+      "name": "RTMA on the MAIVE endpoint is rejected",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "modelType": "RTMA" },
+      "expectedErrorContains": "use /v1/run-rtma for RTMA"
+    },
+    {
+      "name": "RTMA echoes a caller seed and explicit direction",
+      "family": "rtma",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": false },
+      "parameters": { "seed": 42, "favorPositive": false },
+      "expected": {
+        "modelType": "RTMA",
+        "favorPositive": false,
+        "alphaSelect": 0.05,
+        "ciLevel": 0.95,
+        "winsorize": 0,
+        "seed": 42
+      },
+      "expectedRecipe": "RTMA"
+    },
+    {
+      "name": "RTMA rejects a misspelled key",
+      "family": "rtma",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": false },
+      "parameters": { "favourPositive": true },
+      "expectedErrorContains": "Unknown RTMA parameter key: favourPositive"
+    },
+    {
+      "name": "MAIVE on the RTMA endpoint is rejected",
+      "family": "rtma",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": false },
+      "parameters": { "modelType": "MAIVE" },
+      "expectedErrorContains": "This endpoint runs RTMA only"
+    }
+  ]
+}

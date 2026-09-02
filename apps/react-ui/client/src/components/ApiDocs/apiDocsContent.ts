@@ -6,8 +6,72 @@
  */
 
 import CONST from "@src/CONST";
+import { RECIPES, RECIPE_NAMES } from "@src/lib/parameterResolver";
+import { recipeCurlExample, recipePresetJson } from "@src/lib/discovery";
 
 const BASE_URL = CONST.LINKS.PUBLIC_API.BASE_URL;
+
+export type RecipeRow = {
+  name: string;
+  description: string;
+  /** The explicit `parameters` the recipe expands to. */
+  preset: string;
+  /** Copy-paste curl request, shared with agent.md. */
+  curl: string;
+};
+
+/**
+ * The four named recipes (#555), read from the resolver's own table so the
+ * docs cannot list a recipe the API does not accept.
+ */
+export const RECIPE_ROWS: RecipeRow[] = RECIPE_NAMES.map((name) => ({
+  name,
+  description: RECIPES[name].description,
+  preset: recipePresetJson(name),
+  curl: recipeCurlExample(name),
+}));
+
+export type DiscoveryRow = {
+  label: string;
+  url: string;
+};
+
+/** Where a client or an assistant finds the contract without a GitHub hint. */
+export const DISCOVERY_ROWS: DiscoveryRow[] = [
+  {
+    label: "OpenAPI 3 spec, served by the API host",
+    url: CONST.LINKS.PUBLIC_API.SPEC_URL,
+  },
+  { label: "llms.txt", url: CONST.LINKS.DISCOVERY.LLMS_TXT },
+  { label: "agent.md", url: CONST.LINKS.DISCOVERY.AGENT_MD },
+];
+
+export const RESOLVED_ECHO_EXAMPLE = `{
+  "effectEstimate": 0.2137,
+  "standardError": 0.0412,
+  "...": "...",
+  "resolvedParameters": {
+    "modelType": "WLS",
+    "maiveMethod": "PET-PEESE",
+    "weight": "standard_weights",
+    "standardErrorTreatment": "clustered_cr2",
+    "includeStudyDummies": false,
+    "includeStudyClustering": true,
+    "computeAndersonRubin": false,
+    "useLogFirstStage": false,
+    "winsorize": 0,
+    "shouldUseInstrumenting": false,
+    "favorPositive": true
+  },
+  "recipe": "PET-PEESE"
+}`;
+
+export const UNKNOWN_KEY_ERROR_EXAMPLE = `{
+  "error": {
+    "code": "validation_error",
+    "message": "Unknown RTMA parameter key: favourPositive. Known keys: modelType, favorPositive, alphaSelect, ciLevel, winsorize, seed."
+  }
+}`;
 
 export type EndpointRow = {
   method: string;
@@ -101,7 +165,7 @@ export const MODEL_PARAMETERS: ParameterRow[] = [
     name: "weight",
     values:
       "equal_weights | standard_weights | adjusted_weights | study_weights",
-    defaultValue: "equal_weights",
+    defaultValue: "equal_weights, or standard_weights without instrumenting",
   },
   {
     name: "standardErrorTreatment",
@@ -109,9 +173,18 @@ export const MODEL_PARAMETERS: ParameterRow[] = [
     defaultValue: "clustered_cr2",
   },
   { name: "includeStudyDummies", values: "boolean", defaultValue: "false" },
-  { name: "includeStudyClustering", values: "boolean", defaultValue: "false" },
+  {
+    name: "includeStudyClustering",
+    values: "boolean",
+    defaultValue:
+      "derived: true when the data has study_id and SEs are clustered",
+  },
   { name: "computeAndersonRubin", values: "boolean", defaultValue: "false" },
-  { name: "useLogFirstStage", values: "boolean", defaultValue: "false" },
+  {
+    name: "useLogFirstStage",
+    values: "boolean",
+    defaultValue: "derived: true for WAIVE, false otherwise",
+  },
   {
     name: "winsorize",
     values: "number (percent, 0 disables)",

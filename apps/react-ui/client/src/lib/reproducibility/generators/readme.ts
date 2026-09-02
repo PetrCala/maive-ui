@@ -17,6 +17,24 @@ function linkLabel(url: string): string {
 }
 
 /**
+ * Names the source ref honestly: the exact commit when the deployment
+ * recorded one, otherwise the branch the files were fetched from, so the
+ * package never prints a ref that does not exist (#555).
+ */
+export function describeGitRef(versionInfo: VersionInfo): string {
+  if (versionInfo.isExactCommit) {
+    return versionInfo.gitCommitHash;
+  }
+  return `not recorded by this deployment; sources fetched from the ${versionInfo.gitRef} branch`;
+}
+
+/** GitHub URL for the deployed source: a commit page or a branch tree. */
+export function gitRefUrl(versionInfo: VersionInfo): string {
+  const kind = versionInfo.isExactCommit ? "commit" : "tree";
+  return `${CONST.LINKS.APP_GITHUB.HOMEPAGE}/${kind}/${versionInfo.gitRef}`;
+}
+
+/**
  * Converts model parameters to a readable markdown table
  *
  * @param rtmaSeed - Seed the RTMA sampler ran under, when the run recorded one
@@ -112,7 +130,7 @@ This package contains everything needed to reproduce the ${analysisType} meta-an
 - **MAIVE UI Version:** ${versionInfo.uiVersion}
 - **MAIVE R Package:** ${versionInfo.maiveTag}
 - **R Version Used:** ${versionInfo.rVersion}
-- **Git Commit:** ${versionInfo.gitCommitHash}
+- **Git Commit:** ${describeGitRef(versionInfo)}
 - **Dataset Size:** ${numRows} observations
 
 ${
@@ -350,7 +368,7 @@ ${getCitationsForModel(parameters.modelType)
 - **MAIVE UI:** ${versionInfo.uiVersion}
 - **MAIVE Package:** ${versionInfo.maiveTag}
 - **R Version:** ${versionInfo.rVersion}
-- **Git Commit:** ${versionInfo.gitCommitHash}
+- **Git Commit:** ${describeGitRef(versionInfo)}
 
 ### R Package Dependencies
 
@@ -412,18 +430,18 @@ SOFTWARE VERSIONS
 MAIVE UI Version:        ${versionInfo.uiVersion}
 MAIVE R Package:         ${versionInfo.maiveTag}
 R Version:               ${versionInfo.rVersion}${phackingLine}
-Git Commit Hash:         ${versionInfo.gitCommitHash}
+Git Commit Hash:         ${describeGitRef(versionInfo)}
 
 GITHUB REFERENCES
 -----------------
 UI Repository:           ${CONST.LINKS.APP_GITHUB.HOMEPAGE}
-UI Commit:               ${CONST.LINKS.APP_GITHUB.HOMEPAGE}/commit/${versionInfo.gitCommitHash}
+UI Source:               ${gitRefUrl(versionInfo)}
 MAIVE Package:           https://github.com/${CONST.GITHUB.OWNER}/${CONST.GITHUB.REPO_PACKAGE}/releases/tag/${versionInfo.maiveTag}
 
 R SOURCE FILES
 --------------
-maive_model.R:           ${CONST.LINKS.APP_GITHUB.HOMEPAGE}/blob/${versionInfo.gitCommitHash}/apps/lambda-r-backend/r_scripts/maive_model.R
-funnel_plot.R:           ${CONST.LINKS.APP_GITHUB.HOMEPAGE}/blob/${versionInfo.gitCommitHash}/apps/lambda-r-backend/r_scripts/funnel_plot.R
+maive_model.R:           ${CONST.LINKS.APP_GITHUB.HOMEPAGE}/blob/${versionInfo.gitRef}/${CONST.GITHUB.R_SCRIPTS_PATH}/maive_model.R
+funnel_plot.R:           ${CONST.LINKS.APP_GITHUB.HOMEPAGE}/blob/${versionInfo.gitRef}/${CONST.GITHUB.R_SCRIPTS_PATH}/funnel_plot.R
 
 ANALYSIS CONFIGURATION
 ----------------------
@@ -455,7 +473,7 @@ Required R packages:
 REPRODUCIBILITY NOTES
 ---------------------
 This package contains:
-  1. Exact R source code from the deployed backend (commit ${versionInfo.gitCommitHash})
+  1. R source code from the deployed backend (${describeGitRef(versionInfo)})
   2. User's original data (pre-winsorization if applicable)
   3. Exact parameter configuration used in the web application
   4. Expected results for verification

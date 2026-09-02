@@ -1,5 +1,7 @@
 // API request and response types
 
+import type { RecipeName } from "@src/lib/parameterResolver";
+
 type ApiResponse<T = unknown> = {
   data?: T;
   error?: string;
@@ -46,6 +48,12 @@ type ModelResponse = {
   message?: string;
   timeoutSeconds?: number;
   elapsedSeconds?: number;
+  // The fully resolved parameters the backend actually ran (#555), added by
+  // the same-origin proxy on every successful run so the results page and the
+  // reproducibility package describe the run the server recorded, not the
+  // browser's copy of it.
+  resolvedParameters?: ResolvedParameters;
+  recipe?: RecipeName | null;
 };
 
 // Verdict fields (`isSignificant`, `publicationBias.isSignificant`,
@@ -121,7 +129,15 @@ type RTMAParameters = {
   alphaSelect: number;
   ciLevel: number;
   winsorize: number;
+  // Sampler seed. Optional on the way in (the backend's RTMA_DEFAULT_SEED is
+  // the single definition of the default); the response's `seed` field says
+  // which one actually ran.
+  seed?: number;
 };
+
+// What the server resolved and ran, echoed as `resolvedParameters` on every
+// successful run response (#555).
+type ResolvedParameters = ModelParameters | RTMAParameters;
 
 // Per-parameter sampler diagnostics. The sampler can mix well for mu and
 // badly for tau, so these are reported separately rather than collapsed into
@@ -213,6 +229,8 @@ type SubmitRunResponse = {
   jobId?: string;
   tooLarge?: boolean;
   error?: string;
+  resolvedParameters?: ResolvedParameters;
+  recipe?: RecipeName | null;
 };
 
 // Response from GET /api/runs/{jobId}. `result` is the stringified
@@ -230,6 +248,10 @@ type GetRunResponse = {
   errorCode?: string;
   runDurationMs?: number;
   runTimestamp?: string;
+  // The parameters the run was queued with, already resolved (#555). Absent
+  // on runs recorded before they were stored.
+  resolvedParameters?: ResolvedParameters;
+  recipe?: RecipeName | null;
 };
 
 // API configuration
@@ -246,6 +268,7 @@ export type {
   ModelResponse,
   ModelResults,
   RTMAParameters,
+  ResolvedParameters,
   RTMAResults,
   RTMADiagnostics,
   RTMAParameterDiagnostic,

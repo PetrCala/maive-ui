@@ -10,8 +10,18 @@ export type VersionInfo = {
   uiVersion: string;
   /** MAIVE R package tag/version (e.g., "v0.2.2") */
   maiveTag: string;
-  /** Git commit hash of the deployed code */
+  /**
+   * Git commit hash of the deployed code, or "unknown" when the deployment
+   * did not record one. Never a made-up ref (#555): links use gitRef.
+   */
   gitCommitHash: string;
+  /**
+   * Git ref to fetch source at and to build GitHub links from: the commit
+   * hash when it is known, else the default branch.
+   */
+  gitRef: string;
+  /** Whether gitRef is an exact commit rather than a moving branch. */
+  isExactCommit: boolean;
   /** R version used in backend (e.g., "4.4.1") */
   rVersion: string;
   /**

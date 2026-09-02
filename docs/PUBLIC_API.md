@@ -20,6 +20,61 @@ copy-paste examples.
 - Auth: none; the API is anonymous by design. Abuse is bounded by
   server-side concurrency caps and edge rate limits, not identity.
 
+## Discovery
+
+The contract is reachable without a GitHub hint:
+
+- `https://api.maive.eu/openapi.yaml`: this spec, served by the API host
+  (also at `https://easymeta.org/openapi.yaml`).
+- `https://easymeta.org/llms.txt` and `https://easymeta.org/agent.md`: short
+  machine-readable guides for AI assistants, rendered from the app's own
+  recipe table and citation registry.
+- `https://easymeta.org/api-docs`: the human-readable page.
+
+## Recipes and the resolved echo
+
+All four methods (MAIVE, RTMA, PET-PEESE, EK) run on the same upload under
+the same clustering and weighting choices, in the browser and over the API
+alike. Pass `"recipe": "<name>"` beside `data`; explicit `parameters` are
+applied on top of the recipe's preset.
+
+| Recipe | Expands to |
+|---|---|
+| `MAIVE` | `{"modelType":"MAIVE","maiveMethod":"PET-PEESE","shouldUseInstrumenting":true}` |
+| `RTMA` | `{"modelType":"RTMA"}` (RTMA endpoints only) |
+| `PET-PEESE` | `{"modelType":"WLS","maiveMethod":"PET-PEESE","shouldUseInstrumenting":false}` (conventional PET-PEESE) |
+| `EK` | `{"modelType":"WLS","maiveMethod":"EK","shouldUseInstrumenting":false}` (conventional endogenous kink) |
+
+Drop `shouldUseInstrumenting: false` from the last two and you get the MAIVE
+variant of the same method.
+
+```bash
+curl -s https://api.maive.eu/v1/run-model \
+  -H 'Content-Type: application/json' \
+  -d '{"recipe": "EK", "data": [
+    {"effect": 0.42, "se": 0.11, "n_obs": 120, "study_id": "Smith2020"},
+    {"effect": 0.31, "se": 0.06, "n_obs": 90, "study_id": "Smith2020"},
+    {"effect": 0.55, "se": 0.20, "n_obs": 45, "study_id": "Smith2020"},
+    {"effect": 0.12, "se": 0.04, "n_obs": 200, "study_id": "Jones2019"},
+    {"effect": 0.27, "se": 0.09, "n_obs": 75, "study_id": "Jones2019"},
+    {"effect": 0.18, "se": 0.05, "n_obs": 160, "study_id": "Jones2019"}
+  ]}'
+```
+
+One resolver fills in unset parameters for the browser and the API, and some
+of its defaults depend on the data: study clustering is on when the upload
+has a `study_id` column and the standard errors are clustered; WLS runs with
+standard weights; WAIVE defaults to a log first stage. Every successful
+response therefore carries `resolvedParameters`, the complete object the
+backend actually ran, and `recipe`, the named recipe it corresponds to (or
+`null`). Report it alongside the numbers and feed it back to reproduce them.
+
+Unknown or misspelled parameter keys (`favourPositive`) and conflicting
+values (`adjusted_weights` on a WLS run, study clustering without a
+`study_id` column) are rejected with `400 validation_error` naming the
+problem. The API never silently runs a different analysis than the one you
+asked for.
+
 ## Sync vs. async
 
 Two ways to run a model:
@@ -58,10 +113,10 @@ These mirror the MAIVE UI's own validation page, enforced server-side so API
 callers get a structured `400 validation_error` instead of a raw R error;
 see [`components/responses/ValidationError`](api/openapi.yaml) in the spec.
 
-All model parameters are optional; unset ones fall back to documented
-defaults (the same defaults the UI ships with). A minimal valid request is
-just `{"data": [...]}`. See the `ModelParameters` / `RTMAParameters` schemas
-in the OpenAPI spec for the full enum/default table.
+All model parameters are optional; unset ones are resolved by the same
+resolver the UI uses (see "Recipes and the resolved echo" above). A minimal
+valid request is just `{"data": [...]}`. See the `ModelParameters` /
+`RTMAParameters` schemas in the OpenAPI spec for the full enum/default table.
 
 Plots (`funnelPlot`, `zScorePlot`, and their width/height companions) are
 **excluded by default**: each is a ~50KB base64 PNG, noise for most
@@ -260,6 +315,10 @@ else:
 
 Batch status for multiple runs at once (no results, just status): `GET
 /v1/runs?ids=jobId1,jobId2,jobId3` (max 100 ids).
+
+The submit response and every poll carry `resolvedParameters` and `recipe`
+too. An RTMA `seed` passed in `parameters` is honoured on the async path just
+as on `POST /v1/run-rtma`, and the echo reports the seed that ran.
 
 ## `jobId` semantics
 

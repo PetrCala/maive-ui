@@ -24,6 +24,12 @@ import type { ModelParameters } from "@src/types";
 import type { RTMAParameters, SubmitRunResponse } from "@src/types/api";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasNObsColumn, hasStudyIdColumn } from "@src/utils/dataUtils";
+import {
+  describeDataShape,
+  fromPageParameters,
+  resolveRunParameters,
+  toPageParameters,
+} from "@src/lib/parameterResolver";
 import { isTooLargeForSyncRun } from "@src/utils/runGating";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import { detectAndDispatchAlerts } from "@src/utils/parameterChangeTracking";
@@ -182,16 +188,18 @@ export default function ModelPage() {
           useDataStore.getState();
         if (savedParameters && modelParametersDataId === dataId) {
           restoreSavedParameters(savedParameters);
-        } else if (
-          hasStudyIdColumn(data.data) &&
-          CONFIG.SHOULD_USE_CLUSTERED_CR2_SE_AS_DEFAULT
-        ) {
-          setParameters((prev) => ({
-            ...prev,
-            includeStudyClustering: true,
-            standardErrorTreatment:
-              CONST.STANDARD_ERROR_TREATMENTS.CLUSTERED_CR2.VALUE,
-          }));
+        } else {
+          // First time this dataset is seen: the shared resolver (#555)
+          // derives the data-dependent defaults (study clustering follows
+          // the study_id column, RTMA when there is no sample size) exactly
+          // as the API does for the same upload.
+          const { resolved } = resolveRunParameters({
+            dataShape: describeDataShape(data.data),
+            mode: "lenient",
+          });
+          if (resolved) {
+            setParameters(toPageParameters(resolved.parameters));
+          }
         }
       }
       parametersHydratedRef.current = true;
@@ -743,11 +751,38 @@ export default function ModelPage() {
         return;
       }
 
+      // Canonicalize through the shared resolver (#555) so the request
+      // carries exactly what the server records and echoes back. The page's
+      // own cascades normally leave nothing to change; anything the rules do
+      // still adjust is reported like every other cascade.
+      const resolution = resolveRunParameters({
+        dataShape: describeDataShape(uploadedData.data),
+        parameters: fromPageParameters(parameters),
+        mode: "lenient",
+      });
+      if (resolution.error) {
+        showAlert(resolution.error.message, "error");
+        return;
+      }
+      const resolvedRun = resolution.resolved;
+      if (resolvedRun.adjustments.length > 0) {
+        const adjustedPageParameters = toPageParameters(resolvedRun.parameters);
+        detectAndDispatchAlerts(
+          parameters,
+          adjustedPageParameters,
+          null,
+          showParameterAlert,
+        );
+        setParameters(adjustedPageParameters);
+      }
+      const runParameters = resolvedRun.parameters;
+      const isRtmaRun = resolvedRun.modelType === CONST.MODEL_TYPES.RTMA;
+
       // #528: above CONST.RTMA_SYNC_ROW_LIMIT rows the interactive p-hacking
       // correction cannot finish before the Lambda timeout, so the run must
       // go through the background queue and never the synchronous fallback.
       const mustRunInBackground = isTooLargeForSyncRun(
-        parameters.modelType,
+        resolvedRun.modelType,
         uploadedData.data.length,
       );
 
@@ -769,16 +804,6 @@ export default function ModelPage() {
           // Ask for notification permission lazily, on first submit, so the
           // global RunsWatcher can ping the user when a backgrounded run ends.
           requestNotificationPermission();
-          const runParameters: ModelParameters | RTMAParameters =
-            parameters.modelType === CONST.MODEL_TYPES.RTMA
-              ? {
-                  modelType: "RTMA",
-                  favorPositive: parameters.favorPositive,
-                  alphaSelect: 0.05,
-                  ciLevel: 0.95,
-                  winsorize: parameters.winsorize,
-                }
-              : parameters;
 
           // Best-effort: if the async submit fails (e.g. the queue/table isn't
           // configured, giving a 503 locally, or a transient error), degrade to
@@ -790,7 +815,7 @@ export default function ModelPage() {
               uploadedData?.data ?? [],
               runParameters,
               dataId ?? "",
-              parameters.modelType,
+              resolvedRun.modelType,
               abortControllerRef.current ?? undefined,
             );
           } catch (submitError) {
@@ -811,13 +836,18 @@ export default function ModelPage() {
               // Tell the user why this run went to the background path.
               showAlert(TEXT.model.largeRtma.queuedInfo, "info", 8000);
             }
+            // The server's echo is what the run actually queued with; it is
+            // what the results page and the reproducibility package report.
+            const recordedParameters = JSON.stringify(
+              toPageParameters(submission.resolvedParameters ?? runParameters),
+            );
             addRun({
               jobId: submission.jobId,
-              modelType: parameters.modelType,
+              modelType: resolvedRun.modelType,
               dataId: dataId ?? null,
               filename: uploadedData?.filename ?? "Unknown dataset",
               rowCount: uploadedData?.data?.length ?? 0,
-              parameters: JSON.stringify(parameters),
+              parameters: recordedParameters,
               submittedAt: Date.now(),
               status: "queued",
             });
@@ -839,7 +869,7 @@ export default function ModelPage() {
               const asyncParams = new URLSearchParams({
                 jobId: submission.jobId,
                 dataId: dataId ?? "",
-                parameters: JSON.stringify(parameters),
+                parameters: recordedParameters,
               });
               router.push(`/results?${asyncParams.toString()}`);
             }
@@ -869,22 +899,15 @@ export default function ModelPage() {
           message?: string;
           timeoutSeconds?: number;
           elapsedSeconds?: number;
+          resolvedParameters?: ModelParameters | RTMAParameters;
         };
 
-        if (parameters.modelType === CONST.MODEL_TYPES.RTMA) {
-          const rtmaParams: RTMAParameters = {
-            modelType: "RTMA",
-            favorPositive: parameters.favorPositive,
-            alphaSelect: 0.05,
-            ciLevel: 0.95,
-            winsorize: parameters.winsorize,
-          };
-          // Calls the R backend Function URL directly from the browser
-          // (URL resolved from runtime config); bypasses the web tier so the
-          // long MCMC run is not capped by the UI Lambda's short timeout.
+        if (isRtmaRun) {
+          // Same-origin proxy; the server signs and forwards to the R
+          // backend and echoes the parameters it ran (#530, #555).
           result = await modelService.runRTMA(
             uploadedData?.data ?? [],
-            rtmaParams,
+            runParameters as RTMAParameters,
             abortControllerRef.current,
           );
         } else if (shouldUseMockResults()) {
@@ -895,11 +918,11 @@ export default function ModelPage() {
             data: generateMockResults(nrow, parameters.useLogFirstStage),
           };
         } else {
-          // Calls the R backend Function URL directly from the browser
-          // (URL resolved from runtime config); bypasses the web tier.
+          // Same-origin proxy; the server signs and forwards to the R
+          // backend and echoes the parameters it ran (#530, #555).
           result = await modelService.runModel(
             uploadedData?.data ?? [],
-            parameters,
+            runParameters as ModelParameters,
             abortControllerRef.current,
           );
         }
@@ -933,10 +956,13 @@ export default function ModelPage() {
 
         // Redirect to results page with the model output
         const results = result.data;
+        // Prefer the server's echo of what ran over the browser's copy.
         const urlSearchParams = new URLSearchParams({
           results: JSON.stringify(results),
           dataId: dataId ?? "",
-          parameters: JSON.stringify(parameters),
+          parameters: JSON.stringify(
+            toPageParameters(result.resolvedParameters ?? runParameters),
+          ),
           runDuration: runDuration.toString(),
           runTimestamp: runTimestamp.toISOString(),
         });
@@ -968,7 +994,15 @@ export default function ModelPage() {
         abortControllerRef.current = null;
       }
     })();
-  }, [dataId, parameters, uploadedData, router, showAlert, addRun]);
+  }, [
+    dataId,
+    parameters,
+    uploadedData,
+    router,
+    showAlert,
+    showParameterAlert,
+    addRun,
+  ]);
 
   useEffect(() => {
     if (!uploadedData || !hasStudyIdColumn(uploadedData.data)) {

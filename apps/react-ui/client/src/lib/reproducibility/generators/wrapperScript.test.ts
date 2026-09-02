@@ -7,6 +7,8 @@ const versionInfo: VersionInfo = {
   uiVersion: "0.0.0",
   maiveTag: "0.2.5",
   gitCommitHash: "abc1234",
+  gitRef: "abc1234",
+  isExactCommit: true,
   rVersion: "4.4.1",
   phackingVersion: "0.2.1",
   timestamp: "2026-01-01T00:00:00.000Z",

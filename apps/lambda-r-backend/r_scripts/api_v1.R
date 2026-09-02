@@ -14,7 +14,7 @@ source("request_bounds.R")
 source("request_log.R")
 # nolint end: undesirable_function_linter.
 
-API_V1_MODEL_TYPES <- c("MAIVE", "WAIVE", "WLS")
+API_V1_MODEL_TYPES <- c("MAIVE", "WAIVE", "WLS", "RTMA")
 API_V1_MAIVE_METHODS <- c("PET", "PEESE", "PET-PEESE", "EK")
 API_V1_WEIGHTS <- c(
   "equal_weights",
@@ -27,6 +27,33 @@ API_V1_SE_TREATMENTS <- c(
   "clustered",
   "clustered_cr2",
   "bootstrap"
+)
+
+# Every key the two parameter families accept (#555). Anything else is a
+# 400 naming the key, so a misspelling like `favourPositive` cannot run a
+# different analysis than the caller asked for. Keep in sync with
+# MAIVE_PARAMETER_KEYS / RTMA_PARAMETER_KEYS in the UI's parameterResolver.ts;
+# tests/e2e/fixtures/resolver_parity.json asserts the two resolvers agree.
+API_V1_MAIVE_PARAMETER_KEYS <- c(
+  "modelType",
+  "maiveMethod",
+  "weight",
+  "standardErrorTreatment",
+  "includeStudyDummies",
+  "includeStudyClustering",
+  "computeAndersonRubin",
+  "useLogFirstStage",
+  "winsorize",
+  "shouldUseInstrumenting",
+  "favorPositive"
+)
+API_V1_RTMA_PARAMETER_KEYS <- c(
+  "modelType",
+  "favorPositive",
+  "alphaSelect",
+  "ciLevel",
+  "winsorize",
+  "seed"
 )
 
 API_V1_MAIVE_CANONICAL <- c("effect", "se", "n_obs")
@@ -453,31 +480,146 @@ api_v1_unit_interval_parameter <- function(params, name, default) {
   value
 }
 
-#' Apply MAIVE-family parameter defaults per design D6
+#' Reject parameter keys outside a family's contract (#555)
 #'
-#' All parameters are optional; defaults match the UI's
-#' CONFIG.DEFAULT_MODEL_PARAMETERS. shouldUseInstrumenting is derived from
-#' modelType (WLS -> FALSE, otherwise TRUE) unless explicitly provided.
+#' @param params Named list of caller-supplied parameters
+#' @param known Character vector of accepted keys
+#' @param family Label used in the message ("MAIVE-family" or "RTMA")
+api_v1_reject_unknown_keys <- function(params, known, family) {
+  unknown <- setdiff(names(params), known)
+  if (length(unknown) > 0) {
+    api_v1_abort_validation(sprintf(
+      "Unknown %s parameter key%s: %s. Known keys: %s.",
+      family,
+      if (length(unknown) > 1) "s" else "",
+      paste(unknown, collapse = ", "),
+      paste(known, collapse = ", ")
+    ))
+  }
+  invisible(NULL)
+}
+
+#' Format a parameter value the way the UI resolver prints it in messages
+api_v1_format_value <- function(value) {
+  if (is.logical(value)) {
+    return(tolower(as.character(value)))
+  }
+  as.character(value)
+}
+
+#' Dependencies between MAIVE-family parameters (#555)
+#'
+#' The same cascades the model page applies interactively and the UI's shared
+#' resolver applies on every API call. Each rule names the parameter it may
+#' change and returns the value it requires given the others, or NULL when it
+#' does not apply. Order matters: later rules read what earlier ones settled.
+api_v1_maive_rules <- function(has_study_id) {
+  list(
+    list(
+      param = "shouldUseInstrumenting",
+      required = function(p) if (identical(p$modelType, "WAIVE")) TRUE else NULL,
+      reason = "WAIVE always instruments standard errors"
+    ),
+    list(
+      param = "shouldUseInstrumenting",
+      required = function(p) if (identical(p$modelType, "WLS")) FALSE else NULL,
+      reason = "WLS does not instrument; use modelType MAIVE for the instrumented estimator"
+    ),
+    list(
+      param = "maiveMethod",
+      required = function(p) if (identical(p$modelType, "WAIVE")) "PET-PEESE" else NULL,
+      reason = "WAIVE only supports PET-PEESE"
+    ),
+    list(
+      param = "useLogFirstStage",
+      required = function(p) if (isTRUE(p$shouldUseInstrumenting)) NULL else FALSE,
+      reason = "a log first stage needs instrumenting"
+    ),
+    list(
+      param = "weight",
+      required = function(p) {
+        if (!isTRUE(p$shouldUseInstrumenting) && identical(p$weight, "adjusted_weights")) {
+          "standard_weights"
+        } else {
+          NULL
+        }
+      },
+      reason = "adjusted weights require instrumenting"
+    ),
+    list(
+      param = "includeStudyClustering",
+      required = function(p) {
+        if (!has_study_id) {
+          return(FALSE)
+        }
+        !identical(p$standardErrorTreatment, "not_clustered")
+      },
+      reason = paste(
+        "study clustering follows the standard error treatment when the data has a",
+        "study_id column and is off otherwise"
+      )
+    ),
+    list(
+      param = "computeAndersonRubin",
+      required = function(p) if (isTRUE(p$shouldUseInstrumenting)) NULL else FALSE,
+      reason = "the Anderson-Rubin CI needs instrumenting"
+    ),
+    list(
+      param = "computeAndersonRubin",
+      required = function(p) if (identical(p$weight, "standard_weights")) FALSE else NULL,
+      reason = "the Anderson-Rubin CI is not available with standard weights"
+    ),
+    list(
+      param = "computeAndersonRubin",
+      required = function(p) if (isTRUE(p$includeStudyDummies)) FALSE else NULL,
+      reason = "the Anderson-Rubin CI is not available with fixed-intercept multilevel (study dummies)"
+    )
+  )
+}
+
+#' Resolve MAIVE-family parameters the way the UI's shared resolver does (#555)
+#'
+#' In production the Next.js layer has already resolved the parameters with
+#' src/lib/parameterResolver.ts and forwards the full object, so every rule
+#' here is a no-op for it. The same rules are kept for callers that reach the
+#' backend directly, and tests/e2e/fixtures/resolver_parity.json pins the two
+#' implementations to each other: unknown keys are rejected, defaults follow
+#' the data (study clustering is on when a study_id column is present and the
+#' standard errors are clustered), an explicit value the rules would have to
+#' change is a 400 rather than a silent adjustment, and MAIVE without
+#' instrumenting is normalized to its canonical name, WLS.
 #'
 #' @param parameters The `parameters` field of the request body (may be NULL)
-#' @return Complete parameter list for run_maive_model()
-api_v1_default_maive_parameters <- function(parameters) {
+#' @param has_study_id Whether the validated data carries a study_id column
+#' @return Complete parameter list for run_maive_model(), in the UI's key order
+api_v1_resolve_maive_parameters <- function(parameters, has_study_id) {
   params <- api_v1_parameters_object(parameters)
-  model_type <- api_v1_enum_parameter(params, "modelType", API_V1_MODEL_TYPES, "MAIVE")
+  api_v1_reject_unknown_keys(params, API_V1_MAIVE_PARAMETER_KEYS, "MAIVE-family")
+  explicit <- names(params)
 
-  should_use_instrumenting <- if (is.null(params$shouldUseInstrumenting)) {
-    !identical(model_type, "WLS")
-  } else {
-    api_v1_flag_parameter(params, "shouldUseInstrumenting", NA)
+  model_type <- api_v1_enum_parameter(params, "modelType", API_V1_MODEL_TYPES, "MAIVE")
+  if (identical(model_type, "RTMA")) {
+    api_v1_abort_validation(
+      "Invalid modelType value: RTMA. This endpoint runs MAIVE, WAIVE and WLS; use /v1/run-rtma for RTMA."
+    )
   }
 
-  list(
+  should_use_instrumenting <- api_v1_flag_parameter(
+    params, "shouldUseInstrumenting", !identical(model_type, "WLS")
+  )
+  if (identical(model_type, "MAIVE") && !should_use_instrumenting) {
+    model_type <- "WLS"
+  }
+  is_waive <- identical(model_type, "WAIVE")
+
+  resolved <- list(
     modelType = model_type,
     maiveMethod = api_v1_enum_parameter(
       params, "maiveMethod", API_V1_MAIVE_METHODS, "PET-PEESE"
     ),
     weight = api_v1_enum_parameter(
-      params, "weight", API_V1_WEIGHTS, "equal_weights"
+      params, "weight", API_V1_WEIGHTS,
+      if (should_use_instrumenting) "equal_weights" else "standard_weights"
     ),
     standardErrorTreatment = api_v1_enum_parameter(
       params, "standardErrorTreatment", API_V1_SE_TREATMENTS, "clustered_cr2"
@@ -485,13 +627,50 @@ api_v1_default_maive_parameters <- function(parameters) {
     includeStudyDummies = api_v1_flag_parameter(params, "includeStudyDummies", FALSE),
     includeStudyClustering = api_v1_flag_parameter(params, "includeStudyClustering", FALSE),
     computeAndersonRubin = api_v1_flag_parameter(params, "computeAndersonRubin", FALSE),
-    useLogFirstStage = api_v1_flag_parameter(params, "useLogFirstStage", FALSE),
+    useLogFirstStage = api_v1_flag_parameter(params, "useLogFirstStage", is_waive),
     winsorize = api_v1_winsorize_parameter(params),
-    shouldUseInstrumenting = should_use_instrumenting
+    shouldUseInstrumenting = should_use_instrumenting,
+    favorPositive = api_v1_flag_parameter(params, "favorPositive", TRUE)
   )
+
+  for (rule in api_v1_maive_rules(has_study_id)) {
+    required <- rule$required(resolved)
+    if (is.null(required) || identical(resolved[[rule$param]], required)) {
+      next
+    }
+    if (rule$param %in% explicit) {
+      api_v1_abort_validation(sprintf(
+        "Invalid %s value: %s conflicts with the other parameters because %s.",
+        rule$param, api_v1_format_value(resolved[[rule$param]]), rule$reason
+      ))
+    }
+    resolved[[rule$param]] <- required
+  }
+
+  resolved
 }
 
-#' Apply RTMA parameter defaults per design D6
+#' Name the recipe a resolved parameter set corresponds to, or NA (#555)
+api_v1_detect_recipe <- function(params) {
+  if (identical(params$modelType, "RTMA")) {
+    return("RTMA")
+  }
+  instrumented <- isTRUE(params$shouldUseInstrumenting)
+  if (identical(params$modelType, "MAIVE") && identical(params$maiveMethod, "PET-PEESE") && instrumented) {
+    return("MAIVE")
+  }
+  if (identical(params$modelType, "WLS") && !instrumented) {
+    if (identical(params$maiveMethod, "PET-PEESE")) {
+      return("PET-PEESE")
+    }
+    if (identical(params$maiveMethod, "EK")) {
+      return("EK")
+    }
+  }
+  NA_character_
+}
+
+#' Resolve RTMA parameters (#555)
 #'
 #' The internal cores/timeoutSeconds knobs are deliberately not exposed;
 #' run_rtma_model falls back to its own safe defaults for them. `seed` is not in
@@ -504,10 +683,20 @@ api_v1_default_maive_parameters <- function(parameters) {
 #'
 #' @param parameters The `parameters` field of the request body (may be NULL)
 #' @return Complete parameter list for run_rtma_model()
-api_v1_default_rtma_parameters <- function(parameters) {
+api_v1_resolve_rtma_parameters <- function(parameters) {
   params <- api_v1_parameters_object(parameters)
+  api_v1_reject_unknown_keys(params, API_V1_RTMA_PARAMETER_KEYS, "RTMA")
 
-  defaults <- list(
+  model_type <- api_v1_enum_parameter(params, "modelType", API_V1_MODEL_TYPES, "RTMA")
+  if (!identical(model_type, "RTMA")) {
+    api_v1_abort_validation(sprintf(
+      "Invalid modelType value: %s. This endpoint runs RTMA only; use /v1/run-model for MAIVE, WAIVE and WLS.",
+      model_type
+    ))
+  }
+
+  resolved <- list(
+    modelType = "RTMA",
     favorPositive = api_v1_flag_parameter(params, "favorPositive", TRUE),
     alphaSelect = api_v1_unit_interval_parameter(params, "alphaSelect", 0.05),
     ciLevel = api_v1_unit_interval_parameter(params, "ciLevel", 0.95),
@@ -516,9 +705,26 @@ api_v1_default_rtma_parameters <- function(parameters) {
 
   seed <- api_v1_seed_parameter(params)
   if (!is.null(seed)) {
-    defaults$seed <- seed
+    resolved$seed <- seed
   }
-  defaults
+  resolved
+}
+
+#' Attach the resolved-parameter echo to a /v1 success body (#555)
+#'
+#' Every 200 carries `resolvedParameters` (exactly what ran) and `recipe`
+#' (the named recipe it corresponds to, or null). For RTMA the seed the
+#' sampler reports fills in when the caller left it to the default.
+#'
+#' @param results The flat results object
+#' @param resolved The resolved parameter list
+api_v1_with_resolved_parameters <- function(results, resolved) {
+  if (identical(resolved$modelType, "RTMA") && is.null(resolved$seed) && !is.null(results$seed)) {
+    resolved$seed <- results$seed
+  }
+  results$resolvedParameters <- resolved
+  results$recipe <- api_v1_detect_recipe(resolved)
+  results
 }
 
 #' Check whether ?include=plot was requested (design D7)
@@ -645,18 +851,19 @@ api_v1_run_model <- function(req, res, include = "") {
   api_v1_handle(res, "/v1/run-model", log_ctx = log_ctx, run = function() {
     body <- api_v1_request_body(req)
     df <- api_v1_validate_maive_data(body$data)
-    params <- api_v1_default_maive_parameters(body$parameters)
+    params <- api_v1_resolve_maive_parameters(body$parameters, !is.null(df$study_id))
 
     results <- run_maive_model( # nolint: object_usage_linter.
       jsonlite::toJSON(df, dataframe = "rows", digits = NA),
       jsonlite::toJSON(params, auto_unbox = TRUE, digits = NA)
     )
 
-    if (api_v1_include_plot(include)) {
+    results <- if (api_v1_include_plot(include)) {
       results
     } else {
       api_v1_strip_plot_fields(results, API_V1_MAIVE_PLOT_FIELDS)
     }
+    api_v1_with_resolved_parameters(results, params)
   })
 }
 
@@ -683,7 +890,8 @@ api_v1_run_rtma <- function(req, res, include = "") {
   api_v1_handle(res, "/v1/run-rtma", log_ctx = log_ctx, run = function() {
     body <- api_v1_request_body(req)
     df <- api_v1_validate_rtma_data(body$data)
-    params <- api_v1_default_rtma_parameters(body$parameters)
+    params <- api_v1_resolve_rtma_parameters(body$parameters)
+    model_params <- params[names(params) != "modelType"]
 
     # Rendering is gated on include_plot itself (#483 section 3), so the
     # response already omits the plot fields when they were not requested;
@@ -691,11 +899,12 @@ api_v1_run_rtma <- function(req, res, include = "") {
     # request_budget_sec mirrors the bound api_v1_handle() runs this closure
     # under, so the fit child dies with headroom to spare and the RTMA
     # timeout message reaches the caller (#526).
-    run_rtma_model( # nolint: object_usage_linter.
+    results <- run_rtma_model( # nolint: object_usage_linter.
       jsonlite::toJSON(df, dataframe = "rows", digits = NA),
-      jsonlite::toJSON(params, auto_unbox = TRUE, digits = NA),
+      jsonlite::toJSON(model_params, auto_unbox = TRUE, digits = NA),
       include_plot = api_v1_include_plot(include),
       request_budget_sec = REQUEST_TIMEOUT_DEFAULT_SEC # nolint: object_usage_linter.
     )
+    api_v1_with_resolved_parameters(results, params)
   })
 }

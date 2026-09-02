@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Machine-readable guidance for AI assistants and crawlers:
+#   https://easymeta.org/llms.txt
+#   https://easymeta.org/agent.md
+#   https://easymeta.org/openapi.yaml

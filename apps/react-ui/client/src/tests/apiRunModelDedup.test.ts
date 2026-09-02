@@ -56,10 +56,20 @@ const withSend = <T>(res: MockResponse<T>): MockResponse<T> => {
 
 const legacyBody = {
   data: JSON.stringify([
-    { effect: 1, se: 0.1 },
-    { effect: 2, se: 0.2 },
+    { effect: 1, se: 0.1, n_obs: 10 },
+    { effect: 2, se: 0.2, n_obs: 20 },
   ]),
   parameters: JSON.stringify({ maiveMethod: "PET-PEESE", modelType: "MAIVE" }),
+};
+
+// Successful legacy bodies are decorated with the resolved parameters (#555);
+// the tests below care about the relayed payload, not the echo.
+const relayed = (body: unknown): Record<string, unknown> => {
+  const parsed = JSON.parse(body as string) as Record<string, unknown>;
+  expect(parsed).toHaveProperty("resolvedParameters");
+  delete parsed.resolvedParameters;
+  delete parsed.recipe;
+  return parsed;
 };
 
 beforeEach(() => {
@@ -163,7 +173,7 @@ describe("/api/run-model run records and dedup", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toBe(JSON.stringify({ data: { ok: true } }));
+    expect(relayed(res.body)).toEqual({ data: { ok: true } });
 
     const updates = sentCommands().filter((c) => c.type === "update");
     expect(updates).toHaveLength(2);
@@ -304,7 +314,7 @@ describe("/api/run-model run records and dedup", () => {
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(res.statusCode).toBe(200);
-    expect(res.body).toBe(JSON.stringify({ data: {} }));
+    expect(relayed(res.body)).toEqual({ data: {} });
     consoleError.mockRestore();
   });
 });

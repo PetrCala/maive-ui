@@ -837,7 +837,6 @@ components:
         - seInstrumented
         - bootSE
         - bootCI
-        - warnings
       properties:
         effectEstimate:
           type: number
@@ -845,10 +844,6 @@ components:
           type: number
         isSignificant:
           type: boolean
-          nullable: true
-          description: >-
-            `null` when the verdict is undefined, e.g. a numerically zero
-            standard error from a perfect fit; not the same as `false`.
         andersonRubinCI:
           $ref: "#/components/schemas/CIInterval"
         publicationBias:
@@ -861,8 +856,6 @@ components:
               type: number
             isSignificant:
               type: boolean
-              nullable: true
-              description: '`null` when `pValue` is undefined.'
             eggerBootCI:
               $ref: "#/components/schemas/CIInterval"
             eggerAndersonRubinCI:
@@ -885,8 +878,6 @@ components:
               type: number
             rejectsNull:
               type: boolean
-              nullable: true
-              description: '`null` when the statistic is undefined (reported as `"NA"`).'
         seInstrumented:
           type: array
           items:
@@ -961,22 +952,6 @@ components:
                   type: number
                 kink_effect:
                   type: number
-        instrument_strength:
-          nullable: true
-          type: string
-          enum: [strong, weak, very_weak, unknown, not_applicable]
-          description: >-
-            Instrument strength label reported by the MAIVE package (0.2.3+);
-            `not_applicable` without instrumenting, `null` on older packages.
-        warnings:
-          type: array
-          items:
-            type: string
-          description: >-
-            Conditions raised while fitting; empty when the fit was clean.
-            Includes the package's own diagnostics (small sample, weak
-            instrument, perfect fit) and the backend's, such as a numerically
-            zero standard error that leaves `isSignificant` undefined.
         funnelPlot:
           type: string
           description: 'Base64-encoded PNG data URI. Only present with `?include=plot`.'

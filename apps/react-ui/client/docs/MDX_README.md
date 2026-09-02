@@ -21,7 +21,7 @@ npm install next-mdx-remote --legacy-peer-deps
 
 ## Configuration
 
-### Next.js Config (`next.config.cjs`)
+### Next.js Config (`next.config.js`)
 
 The Next.js configuration is kept simple:
 

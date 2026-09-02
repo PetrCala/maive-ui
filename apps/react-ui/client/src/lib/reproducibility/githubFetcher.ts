@@ -27,8 +27,10 @@ async function fetchRFileFromGitHub(
   filePath: string,
   commitHash = "latest",
 ): Promise<string> {
-  // Use "master" branch if commitHash is "latest"
-  const ref = commitHash === "latest" ? "master" : commitHash;
+  // A ref is a commit hash when the deployment recorded one and the default
+  // branch otherwise; "latest" is the pre-#555 spelling of the latter.
+  const ref =
+    commitHash === "latest" ? CONST.GITHUB.DEFAULT_BRANCH : commitHash;
 
   // Try raw content URL first (faster, no rate limits for public repos)
   const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${ref}/${filePath}`;
