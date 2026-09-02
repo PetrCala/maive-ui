@@ -122,7 +122,8 @@ until the next apply reconciles it. That is expected.
 
 - Raise `lambda_r_backend_reserved_concurrency` (and `maximum_concurrency`
   together) if legitimate traffic grows and the throttle alarm fires on real
-  load. Each unit is ~$0.12/hr (~$86/month) of worst-case exposure.
+  load. Each unit is ~$0.21/hr (~$150/month) of worst-case exposure at the
+  current 3538 MB.
 - Raise `ui_lambda_reserved_concurrency` if the UI throttles under real traffic.
 - Adjust `cost_circuit_breaker_throttle_periods` to trade sensitivity against
   false positives.
