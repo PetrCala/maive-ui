@@ -44,6 +44,7 @@ source(file.path(script_dir, "scenarios/rtma_timeout_test.R"))
 source(file.path(script_dir, "scenarios/request_timeout_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
 source(file.path(script_dir, "scenarios/request_log_test.R"))
+source(file.path(script_dir, "scenarios/response_cleanup_test.R"))
 
 # Define available test scenarios
 AVAILABLE_SCENARIOS <- list(
@@ -101,6 +102,23 @@ AVAILABLE_SCENARIOS <- list(
     name = "Invalid Parameters Test",
     description = "Test handling of invalid parameters",
     function_name = "test_invalid_parameters"
+  ),
+
+  # Response layer scenarios (#554)
+  "small-se-precision" = list(
+    name = "Small SE Precision Test",
+    description = "Test that standard errors on the 1e-05 scale are not serialized as 0",
+    function_name = "test_small_se_precision"
+  ),
+  "identical-effects" = list(
+    name = "Identical Effects Test",
+    description = "Test that a perfect-fit dataset returns a structured result with no invented verdict",
+    function_name = "test_identical_effects"
+  ),
+  "maive-warnings" = list(
+    name = "MAIVE Warnings Test",
+    description = "Test that MAIVE package warnings and instrument_strength reach the response",
+    function_name = "test_maive_warnings"
   ),
 
   # RTMA scenarios
@@ -475,6 +493,28 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   }
   test_count <- test_count + 1
 
+  # Response layer regressions (#554): serializer precision, degenerate data,
+  # package warnings reaching the caller.
+  cat("\n13. Running response cleanup tests...\n")
+  response_cleanup_tests <- list(
+    small_se_precision = test_small_se_precision(),
+    identical_effects = test_identical_effects(),
+    maive_warnings = test_maive_warnings()
+  )
+
+  all_results$response_cleanup <- response_cleanup_tests
+
+  for (test_name in names(response_cleanup_tests)) {
+    test_result <- response_cleanup_tests[[test_name]]
+    if (test_result$status == "PASS") {
+      passed_count <- passed_count + 1
+      cat(sprintf("   ✓ %s test passed\n", test_name))
+    } else {
+      cat(sprintf("   ✗ %s test failed: %s\n", test_name, test_result$error))
+    }
+    test_count <- test_count + 1
+  }
+
   # Summary
   cat("\n", paste(rep("=", 60), collapse = ""), "\n")
   cat("TEST SUMMARY\n")
@@ -492,7 +532,7 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     for (test_category in names(all_results)) {
       cat(sprintf("\n%s:\n", toupper(test_category)))
 
-      if (test_category == "edge_cases") {
+      if (test_category %in% c("edge_cases", "response_cleanup")) {
         for (edge_test in names(all_results[[test_category]])) {
           result <- all_results[[test_category]][[edge_test]]
           status_icon <- ifelse(result$status == "PASS", "✓", "✗")

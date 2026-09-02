@@ -141,7 +141,7 @@ assert_response_structure <- function(response, expected_fields = NULL) {
       "effectEstimate", "standardError", "isSignificant",
       "andersonRubinCI", "publicationBias", "firstStageFStatistic",
       "firstStage",
-      "hausmanTest", "seInstrumented", "funnelPlot"
+      "hausmanTest", "seInstrumented", "funnelPlot", "warnings"
     )
 
     missing_data_fields <- setdiff(data_fields, names(response$data))

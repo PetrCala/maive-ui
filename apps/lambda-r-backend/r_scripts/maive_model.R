@@ -285,9 +285,20 @@ run_maive_model <- function(data, parameters) {
     }
   }
 
+  # The package signals its diagnostics as warnings: small samples, weak
+  # instruments ("Consider using Anderson-Rubin confidence intervals"),
+  # perfect fits. Collected next to the fit and muffled, as rtma_model.R does
+  # for phacking, so they reach the response instead of only the Lambda log.
+  maive_warnings <- character(0)
   tryCatch(
     {
-      maive_res <- do.call(target_function, maive_args)
+      maive_res <- withCallingHandlers(
+        do.call(target_function, maive_args),
+        warning = function(w) {
+          maive_warnings <<- c(maive_warnings, conditionMessage(w))
+          invokeRestart("muffleWarning")
+        }
+      )
     },
     error = function(e) {
       err_message <- conditionMessage(e)
@@ -339,10 +350,47 @@ run_maive_model <- function(data, parameters) {
 
   est <- maive_res$beta
   se <- maive_res$SE
-  est_is_significant <- if (se > 0) abs(est / se) >= 1.96 else TRUE
+
+  # Verdicts are NA (JSON null) rather than a boolean whenever the number they
+  # rest on is undefined. A zero standard error used to count as significant
+  # and an NA publication-bias p-value crashed the request with "missing value
+  # where TRUE/FALSE needed" (#554); both are degenerate fits, not findings.
+  is_defined_number <- function(x) {
+    !is.null(x) && length(x) == 1 && is.numeric(x) && is.finite(x)
+  }
+  # A perfect fit leaves the SE at floating-point noise (1e-17 for an estimate
+  # of 0.3) rather than exactly 0, so compare against the estimate's scale: a
+  # t-statistic above 1 / sqrt(eps), roughly 7e7, is not a real result.
+  se_is_usable <- is_defined_number(se) && is_defined_number(est) &&
+    se > sqrt(.Machine$double.eps) * max(abs(est), .Machine$double.eps)
+  est_is_significant <- if (se_is_usable) abs(est / se) >= 1.96 else NA
+  if (is_defined_number(se) && !se_is_usable) {
+    maive_warnings <- c(
+      maive_warnings,
+      "The standard error of the effect estimate is numerically zero, so its significance is undefined. The data are likely degenerate (for example, identical effect sizes)."
+    )
+  }
 
   pub_bias_p_value <- maive_res[["pub bias p-value"]]
-  pb_is_significant <- if (pub_bias_p_value < 0.05) TRUE else FALSE
+  pb_is_significant <- if (is_defined_number(pub_bias_p_value)) pub_bias_p_value < 0.05 else NA
+
+  hausman_statistic <- maive_res$Hausman
+  hausman_critical_value <- maive_res$Chi2
+  hausman_rejects_null <- if (is_defined_number(hausman_statistic) && is_defined_number(hausman_critical_value)) {
+    hausman_statistic >= hausman_critical_value
+  } else {
+    NA
+  }
+
+  # Warnings are muffled above so they never reach the Lambda log on their own;
+  # re-emit them here. "{msg}" keeps cli from glue-interpolating the message.
+  maive_warnings <- unique(gsub("\\s+", " ", trimws(maive_warnings)))
+  if (length(maive_warnings) > 0) {
+    cli::cli_h2(sprintf("%s warnings:", model_label))
+    for (msg in maive_warnings) {
+      cli::cli_alert_warning("{msg}")
+    }
+  }
 
 
   parse_boot_result <- function(boot_result, field) if (is.null(boot_result)) "NA" else boot_result[[field]]
@@ -406,9 +454,9 @@ run_maive_model <- function(data, parameters) {
     ),
     firstStageFStatistic = maive_res[["F-test"]],
     hausmanTest = list(
-      statistic = maive_res$Hausman,
-      criticalValue = maive_res$Chi2,
-      rejectsNull = maive_res$Hausman >= maive_res$Chi2
+      statistic = hausman_statistic,
+      criticalValue = hausman_critical_value,
+      rejectsNull = hausman_rejects_null
     ),
     seInstrumented = maive_res$SE_instrumented,
     funnelPlot = funnel_plot_data$data_uri,
@@ -430,7 +478,13 @@ run_maive_model <- function(data, parameters) {
     peese_se2_coef = maive_res$peese_se2_coef,
     peese_se2_se = maive_res$peese_se2_se,
     slope_coef = maive_res$slope_coef,
-    is_quadratic_fit = maive_res$is_quadratic_fit
+    is_quadratic_fit = maive_res$is_quadratic_fit,
+    # Instrument strength label from MAIVE 0.2.3+ ("strong", "weak",
+    # "very_weak", "unknown", "not_applicable"); null on older packages.
+    instrument_strength = if (is.null(maive_res$instrument_strength)) NA else maive_res$instrument_strength,
+    # I() so the unboxed-JSON serializer keeps this an array even when a single
+    # warning was raised; callers can always treat it as a list of strings.
+    warnings = I(maive_warnings)
   )
 
   results

@@ -33,6 +33,22 @@ const isFiniteNumber = (value: unknown): value is number =>
 const isBoolean = (value: unknown): value is boolean =>
   typeof value === "boolean";
 
+// A verdict the backend could not reach (see ModelResults) is shown as "NA"
+// with no colour, not as a red "No".
+const formatVerdict = (verdict: unknown): string => {
+  if (!isBoolean(verdict)) {
+    return "NA";
+  }
+  return verdict ? "Yes" : "No";
+};
+
+const verdictHighlightColor = (verdict: unknown): string | undefined => {
+  if (!isBoolean(verdict)) {
+    return undefined;
+  }
+  return verdict ? "text-green-600" : "text-red-600";
+};
+
 const formatValue = (value: unknown, decimals = 4): string => {
   if (!isFiniteNumber(value)) {
     return "NA";
@@ -197,9 +213,9 @@ export const generateResultsData = (
     },
     {
       label: resultsText.effectEstimate.metrics.significance.label,
-      value: results.isSignificant ? "Yes" : "No",
+      value: formatVerdict(results.isSignificant),
       show: true,
-      highlightColor: results.isSignificant ? "text-green-600" : "text-red-600",
+      highlightColor: verdictHighlightColor(results.isSignificant),
       section: "effect",
     },
     {
@@ -230,11 +246,11 @@ export const generateResultsData = (
     },
     {
       label: resultsText.publicationBias.metrics.significance.label,
-      value: results.publicationBias.isSignificant ? "Yes" : "No",
+      value: formatVerdict(results.publicationBias.isSignificant),
       show: true,
-      highlightColor: results.publicationBias.isSignificant
-        ? "text-green-600"
-        : "text-red-600",
+      highlightColor: verdictHighlightColor(
+        results.publicationBias.isSignificant,
+      ),
       section: "bias",
     },
     {

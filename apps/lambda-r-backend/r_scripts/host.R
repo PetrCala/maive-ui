@@ -1,5 +1,5 @@
 # Lambda R Backend Handler
-# Used for local development
+# Container entrypoint (see the Dockerfile); also what `npm run r:dev` runs.
 
 cli::cli_alert_info("In host.R")
 
@@ -43,7 +43,11 @@ R_PORT <- env_vars$port
 cli::cli_alert_info("Starting plumber server...")
 
 pr <- plumber::plumb("index.R")
-pr$setSerializer(plumber::serializer_unboxed_json())
+# digits = NA: jsonlite's default of 4 significant digits after the decimal
+# point rounds any value in (1e-05, 5e-05] to exactly 0, which turned a
+# standard error of 2.31e-05 into 0 on the wire (#554). Matches the digits = NA
+# api_v1.R already passes on the way into the model.
+pr$setSerializer(plumber::serializer_unboxed_json(digits = NA))
 
 # ---- GLOBAL CORS FILTER -------------------------------------------------
 `%||%` <- function(a, b) if (is.null(a) || length(a) == 0 || identical(a, "")) b else a # nolint: object_name_linter.

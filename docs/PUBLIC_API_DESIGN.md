@@ -234,6 +234,7 @@ Response `200`: the flat results object (today's `ModelResults` shape:
 `effectEstimate`, `standardError`, `isSignificant`, `andersonRubinCI`,
 `publicationBias{...}`, `firstStageFStatistic`, `hausmanTest{...}`,
 `seInstrumented`, `bootSE`, `bootCI`, `firstStage`, `petpeese_selected`, …,
+`instrument_strength`, `warnings`,
 plus `funnelPlot`/`funnelPlotWidth`/`funnelPlotHeight` only with
 `?include=plot`).
 

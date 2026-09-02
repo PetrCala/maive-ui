@@ -152,8 +152,9 @@ type VerificationField = {
  * application reported.
  *
  * Shared by the MAIVE and RTMA scripts because the comparison itself is the
- * same everywhere: round to the precision the API response carries, skip
- * fields the stored run predates, print PASS/FAIL. Only the field list and the
+ * same everywhere: compare at full precision, fall back to the 4-decimal
+ * precision older API responses carried, skip fields the stored run predates,
+ * print PASS/FAIL. Only the field list and the
  * plausible causes of a mismatch differ, so those are the arguments. RTMA
  * previously shipped expected_results.json without ever reading it (#489).
  *
@@ -171,7 +172,7 @@ function generateVerificationSection(
   const comparisons = fields
     .map(
       (field) =>
-        `${field.variable} <- if (recorded(${field.expected})) abs(round(${field.actual}, 4) - ${field.expected}) < tolerance else NA`,
+        `${field.variable} <- if (recorded(${field.expected})) matches(${field.actual}, ${field.expected}) else NA`,
     )
     .join("\n");
 
@@ -194,14 +195,18 @@ cat("Comparing with expected results from web application...\\n")
 expected <- jsonlite::fromJSON("expected_results.json")
 tolerance <- 1e-8
 
-# expected_results.json was captured from the web app's JSON API response,
-# which rounds every numeric field to 4 decimal places before it reaches the
-# browser (jsonlite::toJSON default digits = 4). This script's local re-run
-# is not rounded, so round to that same precision before comparing.
+# expected_results.json was captured from the web app's JSON API response.
+# The backend now serializes at full double precision (digits = NA), but runs
+# stored before that change carry values rounded to 4 decimal places
+# (jsonlite::toJSON default digits = 4). Accept either: an exact match at full
+# precision, or a match once this script's local re-run is rounded the same way.
 #
 # Fields the original run predates are absent from the file; those are reported
 # as unrecorded instead of counting as a mismatch.
 recorded <- function(value) !is.null(value) && length(value) == 1 && is.finite(value)
+matches <- function(actual, expected) {
+  abs(actual - expected) < tolerance || abs(round(actual, 4) - expected) < tolerance
+}
 verdict <- function(match) {
   if (is.na(match)) "- not recorded" else if (match) "\\u2713 PASS" else "\\u2717 FAIL"
 }

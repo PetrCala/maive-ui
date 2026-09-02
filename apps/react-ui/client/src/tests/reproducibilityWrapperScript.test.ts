@@ -103,27 +103,19 @@ describe("generateWrapperScript (RTMA)", () => {
 
     // RTMA fields, not MAIVE's effect/SE/Egger ones.
     expect(script).toContain(
-      "mu_match <- if (recorded(expected$mu)) abs(round(results$mu, 4) - expected$mu) < tolerance else NA",
+      "mu_match <- if (recorded(expected$mu)) matches(results$mu, expected$mu) else NA",
     );
     expect(script).toContain(
-      "tau_match <- if (recorded(expected$tau)) abs(round(results$tau, 4) - expected$tau) < tolerance else NA",
+      "tau_match <- if (recorded(expected$tau)) matches(results$tau, expected$tau) else NA",
     );
     // The credible intervals are what the sampler seed moves, so both bounds
     // are checked rather than the point estimates alone.
+    expect(script).toContain("matches(results$muCI[1], expected$muCI[1])");
+    expect(script).toContain("matches(results$muCI[2], expected$muCI[2])");
+    expect(script).toContain("matches(results$tauCI[1], expected$tauCI[1])");
+    expect(script).toContain("matches(results$tauCI[2], expected$tauCI[2])");
     expect(script).toContain(
-      "abs(round(results$muCI[1], 4) - expected$muCI[1])",
-    );
-    expect(script).toContain(
-      "abs(round(results$muCI[2], 4) - expected$muCI[2])",
-    );
-    expect(script).toContain(
-      "abs(round(results$tauCI[1], 4) - expected$tauCI[1])",
-    );
-    expect(script).toContain(
-      "abs(round(results$tauCI[2], 4) - expected$tauCI[2])",
-    );
-    expect(script).toContain(
-      "abs(round(results$unadjustedMean, 4) - expected$unadjustedMean)",
+      "matches(results$unadjustedMean, expected$unadjustedMean)",
     );
 
     expect(script).toContain("\\u2713 PASS");
