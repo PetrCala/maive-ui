@@ -131,6 +131,13 @@ only the documented `/v1` endpoints (everything else 404s, keeping the legacy
 `/run-model`, `/echo`, `/ping` routes off the public hostname). See
 [`docs/PUBLIC_API_DESIGN.md`](../../docs/PUBLIC_API_DESIGN.md) §5.
 
+It also passes three discovery paths through to the UI origin unchanged
+(#555): `/openapi.yaml` (the spec, so `api.maive.eu/openapi.yaml` serves the
+contract), `/llms.txt` and `/agent.md`. The UI serves the same three at
+`easymeta.org`, which is where they resolve to the moment the app is deployed;
+the API-host aliases need the worker redeployed
+(`bash infra/cloudflare/deploy-worker.sh api-origin-proxy`) and 404 until it is.
+
 Origins (both public; the R URL is already exposed to browsers via
 `/api/runtime-config`):
 

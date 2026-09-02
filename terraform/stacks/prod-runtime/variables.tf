@@ -19,6 +19,12 @@ variable "image_tag" {
   description = "The tag of the ECR images"
 }
 
+variable "git_commit_hash" {
+  type        = string
+  description = "Full commit SHA the UI image was built from. Exposed to the UI Lambda as GIT_COMMIT_HASH so reproducibility packages link the exact source (#555). Empty means unknown; the app then links the default branch instead of a fake ref."
+  default     = ""
+}
+
 variable "ui_lambda_memory_size" {
   type        = number
   description = "Memory size in MB for the UI Lambda function"

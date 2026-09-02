@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import type { ModelResults, RTMAResults, RunStatus } from "@src/types/api";
+import type {
+  ModelResults,
+  ResolvedParameters,
+  RTMAResults,
+  RunStatus,
+} from "@src/types/api";
 import { modelService } from "@api/services/modelService";
 import { useRunsStore } from "@src/store/runsStore";
 import { getResult, putResult } from "@src/utils/runsCache";
@@ -12,6 +17,9 @@ type UseRunStatusResult = {
   errorCode: string | null;
   runDurationMs: number | null;
   runTimestamp: string | null;
+  // Parameters the server queued the run with (#555); null until the first
+  // poll answers, or for runs recorded before they were stored.
+  resolvedParameters: ResolvedParameters | null;
   isPolling: boolean;
 };
 
@@ -42,6 +50,8 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [runDurationMs, setRunDurationMs] = useState<number | null>(null);
   const [runTimestamp, setRunTimestamp] = useState<string | null>(null);
+  const [resolvedParameters, setResolvedParameters] =
+    useState<ResolvedParameters | null>(null);
   const [isPolling, setIsPolling] = useState<boolean>(Boolean(jobId));
   const updateRunStatus = useRunsStore((state) => state.updateRunStatus);
 
@@ -76,6 +86,9 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
         }
         if (run.runTimestamp) {
           setRunTimestamp(run.runTimestamp);
+        }
+        if (run.resolvedParameters) {
+          setResolvedParameters(run.resolvedParameters);
         }
         if (run.result) {
           try {
@@ -164,6 +177,7 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
     errorCode,
     runDurationMs,
     runTimestamp,
+    resolvedParameters,
     isPolling,
   };
 }

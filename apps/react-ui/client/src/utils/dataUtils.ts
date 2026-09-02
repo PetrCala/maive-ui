@@ -2,6 +2,7 @@ import TEXT, { getResultsText } from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
 import type { RTMAResults } from "@src/types/api";
 import CONST from "@src/CONST";
+import { describeDataShape } from "@src/lib/parameterResolver";
 import type { DataInfo } from "@src/types/data";
 import {
   convertToExportFormat,
@@ -307,31 +308,17 @@ export const processUploadedFile = async (
 export function hasNObsColumn(
   data: Array<Record<string, unknown>> | undefined,
 ): boolean {
-  if (!data?.[0]) {
-    return false;
-  }
-
-  const headers = Object.keys(data[0]);
-
-  return headers.some((header: string) => /^n[\s_-]?obs$/i.test(header));
+  return describeDataShape(data).hasNObsColumn;
 }
 
 /**
- * Checks if the uploaded data has a study ID column
+ * Checks if the uploaded data has a study ID column. The rule lives in the
+ * shared parameter resolver so the browser and the API agree on it (#555).
  */
 export function hasStudyIdColumn(
   data: Array<Record<string, unknown>> | undefined,
 ): boolean {
-  if (!data?.[0]) {
-    return false;
-  }
-
-  const headers = Object.keys(data[0]);
-
-  return (
-    headers.some((header: string) => /\bstudy[\s_-]?id\b/i.test(header)) ||
-    headers.length === 4
-  );
+  return describeDataShape(data).hasStudyIdColumn;
 }
 
 /**

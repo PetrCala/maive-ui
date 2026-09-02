@@ -179,6 +179,117 @@ describe("POST /api/v1/runs", () => {
     });
   });
 
+  it("threads an RTMA seed through to the queued parameters and echoes it (#555)", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: {
+        data: [
+          { effect: 0.1, se: 0.1 },
+          { effect: 0.2, se: 0.2 },
+        ],
+        modelType: "RTMA",
+        parameters: { seed: 4242 },
+      },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const queued = getLastQueuedMessage();
+    expect(queued.parameters).toMatchObject({ modelType: "RTMA", seed: 4242 });
+    expect(res.body).toMatchObject({
+      resolvedParameters: { modelType: "RTMA", seed: 4242 },
+      recipe: "RTMA",
+    });
+  });
+
+  it("400s on an unknown parameter key, naming it (#555)", async () => {
+    setConfigured();
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: {
+        data: validMaiveData,
+        modelType: "RTMA",
+        parameters: { favourPositive: true },
+      },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: {
+        code: "validation_error",
+        message: expect.stringContaining("favourPositive") as string,
+      },
+    });
+    expect(sqsSendMock).not.toHaveBeenCalled();
+  });
+
+  it("turns study clustering on for a four-column submission and echoes the resolved parameters (#555)", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: {
+        // One study: four rows satisfy the rows >= studies + 3 rule.
+        data: validMaiveData.map((row) => ({ ...row, study_id: "a" })),
+      },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    const stored = JSON.parse(getLastPutCall().input.Item.parameters) as Record<
+      string,
+      unknown
+    >;
+    expect(stored).toMatchObject({
+      includeStudyClustering: true,
+      standardErrorTreatment: "clustered_cr2",
+    });
+    expect(res.body).toMatchObject({
+      resolvedParameters: stored,
+      recipe: "MAIVE",
+    });
+  });
+
+  it("expands a named recipe before queueing (#555)", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: { data: validMaiveData, recipe: "PET-PEESE" },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(getLastPutCall().input.Item.modelType).toBe("WLS");
+    expect(res.body).toMatchObject({
+      recipe: "PET-PEESE",
+      resolvedParameters: {
+        modelType: "WLS",
+        maiveMethod: "PET-PEESE",
+        shouldUseInstrumenting: false,
+        weight: "standard_weights",
+      },
+    });
+  });
+
   it("derives shouldUseInstrumenting=false for modelType WLS", async () => {
     setConfigured();
     ddbSendMock.mockResolvedValue({});

@@ -10,14 +10,18 @@ import {
   CodeBlock,
   CodeExampleTabs,
   DATA_FIELDS,
+  DISCOVERY_ROWS,
   ENDPOINTS,
   ERROR_CODES,
   ERROR_ENVELOPE_EXAMPLE,
   MINIMAL_REQUEST_EXAMPLE,
   MODEL_PARAMETERS,
+  RECIPE_ROWS,
+  RESOLVED_ECHO_EXAMPLE,
   RTMA_DIAGNOSTIC_FIELDS,
   RTMA_PARAMETERS,
   SYNC_EXAMPLES,
+  UNKNOWN_KEY_ERROR_EXAMPLE,
 } from "@components/ApiDocs";
 import type { ParameterRow } from "@components/ApiDocs";
 
@@ -128,8 +132,112 @@ export default function ApiDocsPage() {
                   <ExternalLink href={API.GUIDE}>usage guide</ExternalLink> has
                   the same examples in narrative form.
                 </p>
+                <p className="text-sm text-secondary">
+                  All four methods (MAIVE, RTMA, PET-PEESE, EK) run on the same
+                  upload under the same clustering and weighting choices, in the
+                  browser and over this API alike, and every run comes with one
+                  reproducibility package.
+                </p>
               </div>
             </header>
+
+            <section className="space-y-4">
+              <SectionHeading
+                level="h2"
+                text="Recipes"
+                description="Four named presets; pass recipe beside data and the server resolves the rest."
+              />
+              <p className="text-secondary text-sm leading-relaxed">
+                A recipe expands into explicit parameters before anything you
+                put in <code className={CODE_CLASSES}>parameters</code> is
+                applied on top. Conventional PET-PEESE and EK are the
+                non-instrumented estimators (the app&apos;s WLS model); drop{" "}
+                <code className={CODE_CLASSES}>
+                  shouldUseInstrumenting: false
+                </code>{" "}
+                and you get the MAIVE variant of the same method instead.
+              </p>
+              <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+                <table className="w-full border-collapse">
+                  <caption className="sr-only">Named recipes</caption>
+                  <thead className="bg-gray-50 dark:bg-gray-800/60">
+                    <tr>
+                      <th scope="col" className={TABLE_HEAD_CELL_CLASSES}>
+                        Recipe
+                      </th>
+                      <th scope="col" className={TABLE_HEAD_CELL_CLASSES}>
+                        What it runs
+                      </th>
+                      <th scope="col" className={TABLE_HEAD_CELL_CLASSES}>
+                        Expands to
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {RECIPE_ROWS.map((row) => (
+                      <tr
+                        key={row.name}
+                        className="border-t border-gray-200 dark:border-gray-700"
+                      >
+                        <td className={TABLE_CELL_CLASSES}>
+                          <code className={CODE_CLASSES}>{row.name}</code>
+                        </td>
+                        <td className={TABLE_CELL_CLASSES}>
+                          {row.description}
+                        </td>
+                        <td className={TABLE_CELL_CLASSES}>
+                          <code className={CODE_CLASSES}>{row.preset}</code>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <CodeExampleTabs
+                samples={RECIPE_ROWS.map((row) => ({
+                  language: row.name,
+                  label: row.name,
+                  code: row.curl,
+                }))}
+                label="Recipe request examples"
+              />
+            </section>
+
+            <section className="space-y-4">
+              <SectionHeading
+                level="h2"
+                text="What ran"
+                description="Every successful response says exactly which parameters were used."
+              />
+              <p className="text-secondary text-sm leading-relaxed">
+                One resolver fills in unset parameters for the browser and the
+                API alike, and some of its defaults depend on the data: study
+                clustering is on when the upload has a{" "}
+                <code className={CODE_CLASSES}>study_id</code> column and the
+                standard errors are clustered, and WLS runs with standard
+                weights. Rather than make you re-derive that, every 200 carries{" "}
+                <code className={CODE_CLASSES}>resolvedParameters</code>, the
+                complete object the backend ran, and{" "}
+                <code className={CODE_CLASSES}>recipe</code>, the named recipe
+                it corresponds to (or <code className={CODE_CLASSES}>null</code>
+                ). Report it with the numbers; feed it back to reproduce them.
+              </p>
+              <CodeBlock
+                code={RESOLVED_ECHO_EXAMPLE}
+                label="the resolved parameters echo"
+              />
+              <p className="text-secondary text-sm leading-relaxed">
+                Unknown or misspelled parameter keys and values that conflict
+                with each other are rejected with a{" "}
+                <code className={CODE_CLASSES}>400</code> naming the problem.
+                The API never silently runs a different analysis than the one
+                you asked for.
+              </p>
+              <CodeBlock
+                code={UNKNOWN_KEY_ERROR_EXAMPLE}
+                label="an unknown key error"
+              />
+            </section>
 
             <section className="space-y-4">
               <SectionHeading level="h2" text="Endpoints" />
@@ -455,6 +563,22 @@ export default function ApiDocsPage() {
                   every request the way you would treat a request to any other
                   unauthenticated public web service.
                 </li>
+              </ul>
+            </section>
+
+            <section className="space-y-4">
+              <SectionHeading
+                level="h2"
+                text="For AI assistants"
+                description="The same contract, in the places an agent looks first."
+              />
+              <ul className="list-disc pl-5 space-y-2 text-secondary text-sm leading-relaxed">
+                {DISCOVERY_ROWS.map((row) => (
+                  <li key={row.url}>
+                    {row.label}:{" "}
+                    <ExternalLink href={row.url}>{row.url}</ExternalLink>
+                  </li>
+                ))}
               </ul>
             </section>
 

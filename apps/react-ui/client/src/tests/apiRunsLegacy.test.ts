@@ -124,16 +124,19 @@ describe("legacy /api/runs (unchanged behavior)", () => {
     });
   });
 
-  it("queues a valid submission and returns 200 { jobId } with no dataset shape enforced", async () => {
+  it("queues a valid submission and returns 200 { jobId } with no row-count validation enforced", async () => {
     setConfigured();
     ddbSendMock.mockResolvedValue({});
     sqsSendMock.mockResolvedValue({});
     const { default: handler } = await import("@src/pages/api/runs");
-    // Only 1 row / missing n_obs; the legacy route never validated shape.
+    // Only 1 row; the legacy route never validated the dataset (the
+    // browser's validation page already did). Since #555 it does resolve
+    // the parameters against the columns, so n_obs has to be there for a
+    // MAIVE run, as it always is for data that passed validation.
     const req = createMockReq({
       method: "POST",
       body: {
-        data: [{ effect: 1, se: 0.1 }],
+        data: [{ effect: 1, se: 0.1, n_obs: 5 }],
         parameters: { modelType: "MAIVE" },
         modelType: "MAIVE",
       },
@@ -144,6 +147,11 @@ describe("legacy /api/runs (unchanged behavior)", () => {
 
     expect(res.statusCode).toBe(200);
     expect(res.body).toHaveProperty("jobId");
+    // The browser's async path now gets the server's echo too (#555).
+    expect(res.body).toMatchObject({
+      resolvedParameters: { modelType: "MAIVE", shouldUseInstrumenting: true },
+      recipe: "MAIVE",
+    });
     expect(ddbSendMock).toHaveBeenCalledTimes(1);
     expect(sqsSendMock).toHaveBeenCalledTimes(1);
   });

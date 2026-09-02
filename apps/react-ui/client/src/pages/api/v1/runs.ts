@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import type { GetRunResponse } from "@src/types/api";
+import type { GetRunResponse, ResolvedParameters } from "@src/types/api";
+import type { RecipeName } from "@src/lib/parameterResolver";
 import {
   MAX_BATCH_IDS,
   batchGetRunStatuses,
@@ -28,7 +29,11 @@ export const config = {
   },
 };
 
-type V1SubmitResponse = { jobId: string };
+type V1SubmitResponse = {
+  jobId: string;
+  resolvedParameters: ResolvedParameters;
+  recipe: RecipeName | null;
+};
 
 const handler = async (
   req: NextApiRequest,
@@ -72,15 +77,21 @@ const handler = async (
     );
   }
 
-  const { data, parameters, modelType } = (req.body ?? {}) as {
+  const { data, parameters, modelType, recipe } = (req.body ?? {}) as {
     data?: unknown;
     parameters?: unknown;
     modelType?: string;
+    recipe?: unknown;
   };
 
+  // The shared resolver (#555) expands the named recipe, derives the
+  // data-dependent defaults from the submitted rows, and rejects unknown keys
+  // or conflicting values with a 400. The queue only ever carries fully
+  // resolved parameters, so the orchestrator forwards them verbatim.
   const { resolved, error: parameterError } = resolveRunParameters(
     modelType,
     parameters,
+    { data, recipe },
   );
   if (parameterError) {
     return sendApiError(res, "validation_error", parameterError.message);
@@ -124,7 +135,11 @@ const handler = async (
     return sendApiError(res, "internal_error", "Failed to submit run.");
   }
 
-  return res.status(200).json({ jobId: submission.jobId });
+  return res.status(200).json({
+    jobId: submission.jobId,
+    resolvedParameters: resolved.parameters,
+    recipe: resolved.recipe,
+  });
 };
 
 export default handler;

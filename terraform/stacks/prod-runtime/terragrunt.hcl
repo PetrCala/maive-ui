@@ -5,6 +5,7 @@ locals {
   email=get_env("TF_VAR_email")
   tfstate_name="${local.project}-tf-state"
   image_tag=get_env("TF_VAR_image_tag")
+  git_commit_hash=get_env("TF_VAR_git_commit_hash", "")
   key = "prod-runtime.tfstate"
 }
 
@@ -15,6 +16,7 @@ inputs = {
   email = local.email
   tfstate_name = local.tfstate_name
   image_tag = local.image_tag
+  git_commit_hash = local.git_commit_hash
   key = local.key
 }
 

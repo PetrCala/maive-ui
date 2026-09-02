@@ -6,7 +6,12 @@ import {
   BatchGetCommand,
 } from "@aws-sdk/lib-dynamodb";
 import { SQSClient, SendMessageCommand } from "@aws-sdk/client-sqs";
-import type { GetRunResponse, RunStatus } from "@src/types/api";
+import type {
+  GetRunResponse,
+  ResolvedParameters,
+  RTMAParameters,
+  RunStatus,
+} from "@src/types/api";
 import { generateJobId } from "@src/utils/idUtils";
 import CONST from "@src/CONST";
 
@@ -166,6 +171,8 @@ export type RunItem = {
   status: RunStatus;
   modelType?: GetRunResponse["modelType"];
   result?: string;
+  // JSON-encoded resolved parameters the run was queued with (#555).
+  parameters?: string;
   errorMessage?: string;
   errorCode?: string;
   runDurationMs?: number;
@@ -185,12 +192,14 @@ export const getRunItem = async (
       TableName: tableName,
       Key: { jobId },
       ProjectionExpression:
-        "jobId, #status, modelType, #result, errorMessage, errorCode, runDurationMs, submittedAt",
+        "jobId, #status, modelType, #result, #parameters, errorMessage, errorCode, runDurationMs, submittedAt",
       ExpressionAttributeNames: {
         // eslint-disable-next-line @typescript-eslint/naming-convention
         "#status": "status",
         // eslint-disable-next-line @typescript-eslint/naming-convention
         "#result": "result",
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "#parameters": "parameters",
       },
     }),
   );
@@ -200,6 +209,44 @@ export const getRunItem = async (
   }
 
   return withFailureFallback(Item as RunItem);
+};
+
+/**
+ * Rebuilds the `resolvedParameters` echo (#555) for a stored run: the
+ * parameters it was queued with, plus, for RTMA, the seed the sampler
+ * reported in the result when the caller left it to the backend's default.
+ * Returns undefined for runs recorded before parameters were stored.
+ */
+export const resolvedParametersFromItem = (
+  item: Pick<RunItem, "parameters" | "result">,
+): ResolvedParameters | undefined => {
+  if (!item.parameters) {
+    return undefined;
+  }
+  let parameters: unknown;
+  try {
+    parameters = JSON.parse(item.parameters);
+  } catch {
+    return undefined;
+  }
+  if (!parameters || typeof parameters !== "object") {
+    return undefined;
+  }
+  const resolved = parameters as ResolvedParameters;
+  if (resolved.modelType === "RTMA" && item.result) {
+    try {
+      const result = JSON.parse(item.result) as { seed?: unknown };
+      if (
+        typeof result.seed === "number" &&
+        (resolved as RTMAParameters).seed === undefined
+      ) {
+        return { ...resolved, seed: result.seed } as RTMAParameters;
+      }
+    } catch {
+      // A result that does not parse simply carries no seed to fill in.
+    }
+  }
+  return resolved;
 };
 
 export type SubmitRunParams = {

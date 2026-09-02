@@ -61,7 +61,7 @@ export async function generateReproducibilityPackage(
 
   // 1. Fetch R source code from GitHub
   console.log("Fetching R source code from GitHub...");
-  const rCodeBundle = await fetchRCodeBundle(versionInfo.gitCommitHash);
+  const rCodeBundle = await fetchRCodeBundle(versionInfo.gitRef);
 
   // Get data length with explicit type
   const dataLength: number = data.length;

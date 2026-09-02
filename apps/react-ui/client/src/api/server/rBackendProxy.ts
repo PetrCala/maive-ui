@@ -4,6 +4,8 @@ import { SignatureV4 } from "@smithy/signature-v4";
 import type { NextApiRequest, NextApiResponse } from "next";
 import { getRApiUrl } from "@api/utils/config";
 import { getRunsStoreConfig } from "@api/server/runsService";
+import { resolveRunParameters } from "@api/server/modelParameterDefaults";
+import type { ResolvedParameters, RTMAParameters } from "@src/types/api";
 import {
   DEDUP_REPLAY_SUFFIX,
   DEDUP_RUNNING_MESSAGE,
@@ -126,6 +128,13 @@ export type ProxyRunOptions = {
   // Forwarded to the R backend as x-maive-input-hash so its structured
   // request log line (#532) can be joined with the run record (#529).
   inputHash?: string;
+  // Body to forward instead of req.body, e.g. the request with its
+  // parameters replaced by the resolved ones (#555).
+  body?: unknown;
+  // Fields merged into a successful JSON response body (#555). Applied only
+  // when the upstream status is 2xx and, for the legacy envelope, the body is
+  // not an error payload; anything else is relayed verbatim.
+  decorateSuccess?: Record<string, unknown>;
   // Called with the classified terminal outcome before the response is
   // relayed. Errors thrown here are swallowed: recording must never break
   // the run.
@@ -178,6 +187,68 @@ function classifyLegacyOutcome(status: number, text: string): RunOutcome {
   }
 }
 
+/** Merge extra fields into a JSON object body; relay anything else as is. */
+function decorateJson(text: string, extra: Record<string, unknown>): string {
+  try {
+    const parsed = JSON.parse(text) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+      return text;
+    }
+    return JSON.stringify({ ...(parsed as Record<string, unknown>), ...extra });
+  } catch {
+    return text;
+  }
+}
+
+/**
+ * For an RTMA run the seed that actually ran is the one the backend reports;
+ * a caller who left it out gets the backend default. Fill it into the echo so
+ * `resolvedParameters` alone reproduces the run.
+ * @param resolved - Parameters as resolved before the run
+ * @param seed - Seed reported by the backend, when it reported one
+ */
+export function withReportedSeed(
+  resolved: ResolvedParameters,
+  seed: unknown,
+): ResolvedParameters {
+  if (resolved.modelType !== "RTMA" || typeof seed !== "number") {
+    return resolved;
+  }
+  const rtma = resolved as RTMAParameters;
+  return rtma.seed === undefined ? { ...rtma, seed } : rtma;
+}
+
+/**
+ * Apply withReportedSeed to the `resolvedParameters` entry of a decoration,
+ * when it has one.
+ */
+function withSeedFilled(
+  extra: Record<string, unknown>,
+  text: string,
+): Record<string, unknown> {
+  const resolved = extra.resolvedParameters as ResolvedParameters | undefined;
+  if (!resolved) {
+    return extra;
+  }
+  return {
+    ...extra,
+    resolvedParameters: withReportedSeed(resolved, reportedSeed(text)),
+  };
+}
+
+/** Read the RTMA seed off a success payload, legacy `{ data }` or flat. */
+function reportedSeed(text: string): unknown {
+  try {
+    const parsed = JSON.parse(text) as {
+      seed?: unknown;
+      data?: { seed?: unknown };
+    };
+    return parsed.seed ?? parsed.data?.seed;
+  } catch {
+    return undefined;
+  }
+}
+
 async function notifyOutcome(
   options: ProxyRunOptions | undefined,
   outcome: RunOutcome,
@@ -222,7 +293,7 @@ export async function proxyToRBackend(
     const hasBody = req.method !== "GET" && req.method !== "HEAD";
     const upstream = await signedRFetch(path, {
       method: req.method ?? "GET",
-      body: hasBody ? JSON.stringify(req.body) : undefined,
+      body: hasBody ? JSON.stringify(options?.body ?? req.body) : undefined,
       signal: AbortSignal.timeout(PROXY_FETCH_TIMEOUT_MS),
       headers: options?.inputHash
         ? // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -230,14 +301,19 @@ export async function proxyToRBackend(
         : undefined,
     });
     const text = await upstream.text();
-    await notifyOutcome(options, classifyLegacyOutcome(upstream.status, text));
+    const outcome = classifyLegacyOutcome(upstream.status, text);
+    await notifyOutcome(options, outcome);
     res
       .status(upstream.status)
       .setHeader(
         "Content-Type",
         upstream.headers.get("content-type") ?? "application/json",
       )
-      .send(text);
+      .send(
+        options?.decorateSuccess && outcome.status === "succeeded"
+          ? decorateJson(text, withSeedFilled(options.decorateSuccess, text))
+          : text,
+      );
   } catch (error) {
     if (error instanceof Error && error.name === "TimeoutError") {
       await notifyOutcome(options, {
@@ -272,15 +348,50 @@ export async function proxyModelRun(
   res: NextApiResponse,
   path: string,
 ): Promise<void> {
-  const store = getRunsStoreConfig();
   const body = (req.body ?? {}) as { data?: unknown; parameters?: unknown };
+
+  // Resolve the parameters before anything else (#555): the browser sends
+  // JSON strings, so parse them, run the shared resolver in strict mode, and
+  // forward the fully resolved parameters. A key the contract does not know
+  // or a conflicting value is a 400, never a silently different analysis.
+  const parsedData = parseJsonString(body.data);
+  const parsedParameters = parseJsonString(body.parameters);
+  const { resolved, error: resolutionError } = resolveRunParameters(
+    undefined,
+    parsedParameters ?? body.parameters,
+    {
+      data: parsedData,
+      family: path === "/run-rtma" ? "rtma" : "maive",
+    },
+  );
+  if (resolutionError) {
+    res.status(400).json({
+      error: true,
+      code: "validation_error",
+      message: resolutionError.message,
+    });
+    return;
+  }
+  const forwardedBody = {
+    ...(req.body as Record<string, unknown>),
+    parameters: JSON.stringify(resolved.parameters),
+  };
+  const decorateSuccess = {
+    resolvedParameters: resolved.parameters,
+    recipe: resolved.recipe,
+  };
+
+  const store = getRunsStoreConfig();
   if (!store || typeof body.data !== "string") {
-    return proxyToRBackend(req, res, path);
+    return proxyToRBackend(req, res, path, "legacy", {
+      body: forwardedBody,
+      decorateSuccess,
+    });
   }
 
   let inputHash: string | undefined;
   try {
-    const hash = computeInputHash(path, body.data, body.parameters);
+    const hash = computeInputHash(path, body.data, resolved.parameters);
     inputHash = hash;
     const existing = await getRunRecord(store.ddb, store.tableName, hash);
     const dedup = classifyDedup(existing, Date.now());
@@ -316,12 +427,14 @@ export async function proxyModelRun(
       endpoint: path,
       sourceJobId: "sync",
       k: countRowsFromJson(body.data),
-      method: methodFromParameters(body.parameters),
-      modelType: modelTypeFromParameters(body.parameters),
+      method: methodFromParameters(resolved.parameters),
+      modelType: modelTypeFromParameters(resolved.parameters),
     });
 
     return await proxyToRBackend(req, res, path, "legacy", {
       inputHash: hash,
+      body: forwardedBody,
+      decorateSuccess,
       onOutcome: (outcome) =>
         finishRunRecord(store.ddb, store.tableName, {
           inputHash: hash,
@@ -333,12 +446,22 @@ export async function proxyModelRun(
     });
   } catch (error) {
     console.error("Run record layer failed; proxying without it", error);
-    return proxyToRBackend(
-      req,
-      res,
-      path,
-      "legacy",
-      inputHash ? { inputHash } : undefined,
-    );
+    return proxyToRBackend(req, res, path, "legacy", {
+      ...(inputHash ? { inputHash } : {}),
+      body: forwardedBody,
+      decorateSuccess,
+    });
+  }
+}
+
+/** Parse a JSON string field; non-strings and unparseable input give undefined. */
+function parseJsonString(value: unknown): unknown {
+  if (typeof value !== "string") {
+    return undefined;
+  }
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return undefined;
   }
 }

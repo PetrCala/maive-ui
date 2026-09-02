@@ -4,6 +4,9 @@ const GH_REPO_UI = "maive-ui";
 const GH_REPO_PACKAGE = "MAIVE";
 const GH_REPO_PACKAGE_ORG = "PetrCala/MAIVE"; // meta-analysis-es/maive
 const GH_R_SCRIPTS_PATH = "apps/lambda-r-backend/r_scripts";
+// Branch the deployed code is cut from; the ref reproducibility links fall
+// back to when the deployment did not record its commit hash (#555).
+const GH_DEFAULT_BRANCH = "master";
 
 const CONST = {
   APP_DISPLAY_NAME: "MAIVE UI",
@@ -18,6 +21,7 @@ const CONST = {
     REPO_PACKAGE: GH_REPO_PACKAGE,
     REPO_PACKAGE_ORG: GH_REPO_PACKAGE_ORG,
     R_SCRIPTS_PATH: GH_R_SCRIPTS_PATH,
+    DEFAULT_BRANCH: GH_DEFAULT_BRANCH,
   },
 
   LINKS: {
@@ -51,6 +55,17 @@ const CONST = {
       DOCS_ROUTE: "/api-docs",
       SPEC: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/blob/master/docs/api/openapi.yaml`,
       GUIDE: `https://github.com/${GH_OWNER}/${GH_REPO_UI}/blob/master/docs/PUBLIC_API.md`,
+      // The spec served from the API host itself (#555), so a client can
+      // discover the contract without a GitHub hint.
+      SPEC_URL: "https://api.maive.eu/openapi.yaml",
+    },
+    // Machine-readable discovery files served by the app (#555). Both are
+    // rendered by API routes from the same constants and citation registry
+    // as the rest of the UI, so they cannot drift from it.
+    DISCOVERY: {
+      LLMS_TXT: "https://easymeta.org/llms.txt",
+      AGENT_MD: "https://easymeta.org/agent.md",
+      OPENAPI_YAML: "https://easymeta.org/openapi.yaml",
     },
     APPLICATIONS_URL: "https://meta-analysis.cz/",
     CREATOR_URL: `https://github.com/${GH_OWNER}`,

@@ -107,6 +107,9 @@ export default function Home() {
             Adjust your data for publication bias, p-hacking, and spurious
             precision.
             <br />
+            MAIVE, RTMA, PET-PEESE and EK on one upload, with one
+            reproducibility package.
+            <br />
             Powered by the MAIVE estimator (
             <em>
               <Link

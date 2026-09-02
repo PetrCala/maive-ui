@@ -41,6 +41,7 @@ import {
   normalizeFilterState,
 } from "@src/utils/subsampleFilterUtils";
 import { parseRunParameters } from "@src/utils/runParameterUtils";
+import { toPageParameters } from "@src/lib/parameterResolver";
 import { cleanCliErrorMessage } from "@src/utils/errorMessageUtils";
 import {
   generateReproducibilityPackage,
@@ -100,7 +101,13 @@ export default function ResultsPage() {
     : urlRunDuration;
   const runTimestamp = jobId ? runStatus.runTimestamp : urlRunTimestamp;
 
-  const parsedParameters = parseRunParameters(parameters);
+  // For an async run the server's record of what it queued (#555) wins over
+  // the copy carried in the URL, so the page and the reproducibility package
+  // describe the run that actually executed.
+  const parsedParameters =
+    jobId && runStatus.resolvedParameters
+      ? toPageParameters(runStatus.resolvedParameters)
+      : parseRunParameters(parameters);
 
   const shouldUseInstrumenting =
     parsedParameters?.shouldUseInstrumenting ?? true;

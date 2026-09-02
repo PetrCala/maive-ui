@@ -44,12 +44,17 @@ function getVersionInfo(): VersionInfo {
   const maiveTag =
     process.env.MAIVE_TAG ?? maiveTagFromPackageJson ?? "unknown";
 
-  // Get git commit hash from environment variable (set during build)
-  // Falls back to "latest" if not available
-  const gitCommitHash =
-    process.env.GIT_COMMIT_HASH ??
-    process.env.NEXT_PUBLIC_GIT_COMMIT_HASH ??
-    "latest";
+  // Git commit hash, set on the UI Lambda by the deploy workflow
+  // (GIT_COMMIT_HASH, from the release commit). When it is missing the
+  // package must not pretend: an earlier fallback of "latest" was written
+  // into /commit/ and /blob/ URLs, none of which resolved (#555). Links fall
+  // back to the default branch, labelled as such.
+  const recordedHash =
+    process.env.GIT_COMMIT_HASH ?? process.env.NEXT_PUBLIC_GIT_COMMIT_HASH;
+  const isExactCommit =
+    typeof recordedHash === "string" && /^[0-9a-f]{7,40}$/i.test(recordedHash);
+  const gitCommitHash = isExactCommit ? recordedHash : "unknown";
+  const gitRef = isExactCommit ? recordedHash : CONST.GITHUB.DEFAULT_BRANCH;
 
   // Get R version from environment variable (set during build)
   // Falls back to default from constants
@@ -67,6 +72,8 @@ function getVersionInfo(): VersionInfo {
     uiVersion,
     maiveTag,
     gitCommitHash,
+    gitRef,
+    isExactCommit,
     rVersion,
     phackingVersion,
     timestamp: new Date().toISOString(),

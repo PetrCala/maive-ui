@@ -1,6 +1,11 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { GetRunResponse } from "@src/types/api";
-import { getRunItem, getRunsStoreConfig } from "@api/server/runsService";
+import {
+  getRunItem,
+  getRunsStoreConfig,
+  resolvedParametersFromItem,
+} from "@api/server/runsService";
+import { detectRecipe } from "@src/lib/parameterResolver";
 import { sendApiError, type ApiErrorBody } from "@api/server/errorEnvelope";
 
 // Public re-skin of `/api/runs/[jobId]` (design D8, §6.5): same lookup, but
@@ -91,6 +96,13 @@ const handler = async (
     }
     if (typeof item.submittedAt === "number") {
       body.runTimestamp = new Date(item.submittedAt).toISOString();
+    }
+    // What the run was queued with, already resolved (#555), so a caller can
+    // reproduce it without re-deriving the defaults.
+    const resolvedParameters = resolvedParametersFromItem(item);
+    if (resolvedParameters) {
+      body.resolvedParameters = resolvedParameters;
+      body.recipe = detectRecipe(resolvedParameters);
     }
 
     return res.status(200).json(body);

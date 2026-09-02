@@ -128,6 +128,7 @@ resource "aws_lambda_function" "ui" {
   environment {
     variables = {
       R_API_URL                            = aws_lambda_function_url.r_backend.function_url
+      GIT_COMMIT_HASH                      = var.git_commit_hash
       STATUS_BANNER_ENABLED_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_enabled.name
       STATUS_BANNER_MESSAGE_PARAMETER_NAME = aws_ssm_parameter.ui_unstable_banner_message.name
       STATUS_BANNER_AWS_REGION             = var.region
