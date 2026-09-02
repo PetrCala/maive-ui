@@ -48,15 +48,19 @@ type ModelResponse = {
   elapsedSeconds?: number;
 };
 
+// Verdict fields (`isSignificant`, `publicationBias.isSignificant`,
+// `hausmanTest.rejectsNull`) are `null` when the number they rest on is
+// undefined, e.g. a numerically zero standard error from a perfect fit. That
+// is "no verdict", not "no": render it neutrally.
 type ModelResults = {
   effectEstimate: number;
   standardError: number;
-  isSignificant: boolean;
+  isSignificant: boolean | null;
   andersonRubinCI: [number, number] | "NA";
   publicationBias: {
     eggerCoef: number;
     eggerSE: number;
-    isSignificant: boolean;
+    isSignificant: boolean | null;
     eggerBootCI: [number, number] | "NA";
     eggerAndersonRubinCI: [number, number] | "NA";
     pValue?: number;
@@ -65,7 +69,7 @@ type ModelResults = {
   hausmanTest: {
     statistic: number;
     criticalValue: number;
-    rejectsNull: boolean;
+    rejectsNull: boolean | null;
   };
   seInstrumented: number[];
   funnelPlot: string; // Base64 encoded image
@@ -96,6 +100,19 @@ type ModelResults = {
       kink_effect?: number;
     } | null;
   };
+  // Instrument strength label from MAIVE 0.2.3+. Optional because runs stored
+  // before the backend returned it have no value; `null` on older packages.
+  instrument_strength?:
+    | "strong"
+    | "weak"
+    | "very_weak"
+    | "unknown"
+    | "not_applicable"
+    | null;
+  // Conditions the MAIVE package raised while fitting (small sample, weak
+  // instrument, perfect fit) plus the backend's own, e.g. an undefined
+  // significance verdict. Optional for the same stored-run reason as above.
+  warnings?: string[];
 };
 
 type RTMAParameters = {

@@ -27,8 +27,9 @@ const parameters: ModelParameters = {
 };
 
 const results: ModelResults = {
-  // Values as they arrive in the browser: already rounded to 4 decimal
-  // places by the R backend's JSON serializer (jsonlite digits = 4).
+  // Values as they arrived in the browser from a run stored before the R
+  // backend's JSON serializer switched to full precision (jsonlite digits = 4
+  // rounded everything to 4 decimal places, #554).
   effectEstimate: 0.0879,
   standardError: 0.0473,
   isSignificant: false,
@@ -55,28 +56,35 @@ const results: ModelResults = {
 };
 
 describe("generateWrapperScript", () => {
-  it("rounds the local re-run before comparing against expected_results.json", () => {
-    // MAIVE >= 0.2.5 returns effectEstimate/standardError/eggerCoef at full
-    // double precision from a local re-run, while expected_results.json is
-    // the API response the browser received, which the server always rounds
-    // to 4 decimal places. Comparing the two directly at a 1e-8 tolerance
-    // would fail on nearly every reproducible run; the script must round the
-    // local re-run to the same precision before comparing.
+  it("compares the local re-run at full precision or at the old 4-decimal precision", () => {
+    // The backend serializes responses at full double precision since #554,
+    // so a reproducible run matches expected_results.json directly. Runs
+    // stored before that carry values the server rounded to 4 decimal places;
+    // comparing those directly at a 1e-8 tolerance would fail on nearly every
+    // run, so the script also accepts a match after rounding the local re-run
+    // to the same precision.
     const script = generateWrapperScript(versionInfo, parameters, results, 60);
 
     expect(script).toContain(
-      "abs(round(results$effectEstimate, 4) - expected$effectEstimate) < tolerance",
+      "abs(actual - expected) < tolerance || abs(round(actual, 4) - expected) < tolerance",
     );
     expect(script).toContain(
-      "abs(round(results$standardError, 4) - expected$standardError) < tolerance",
+      "matches(results$effectEstimate, expected$effectEstimate)",
     );
     expect(script).toContain(
-      "abs(round(results$publicationBias$eggerCoef, 4) - expected$publicationBias$eggerCoef) < tolerance",
+      "matches(results$standardError, expected$standardError)",
+    );
+    expect(script).toContain(
+      "matches(results$publicationBias$eggerCoef, expected$publicationBias$eggerCoef)",
     );
 
-    // Guard against a regression back to the old unrounded comparison.
+    // Guard against a regression to a comparison that only ever passes for
+    // one of the two precisions.
     expect(script).not.toContain(
       "abs(results$effectEstimate - expected$effectEstimate) < tolerance",
+    );
+    expect(script).not.toContain(
+      "abs(round(results$effectEstimate, 4) - expected$effectEstimate) < tolerance",
     );
   });
 

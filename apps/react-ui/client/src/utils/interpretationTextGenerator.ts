@@ -53,10 +53,12 @@ export function getSpuriousPrecisionEvidence(
 export function isHausmanTestNA(hausmanTest: {
   statistic: number;
   criticalValue: number;
-  rejectsNull: boolean;
+  rejectsNull: boolean | null;
 }): boolean {
-  // If statistic is NaN, Infinity, or critical value is NaN/Infinity, treat as NA
+  // If statistic is NaN, Infinity, or critical value is NaN/Infinity, treat as NA.
+  // The backend also reports the verdict itself as null when it is undefined.
   return (
+    typeof hausmanTest.rejectsNull !== "boolean" ||
     !Number.isFinite(hausmanTest.statistic) ||
     !Number.isFinite(hausmanTest.criticalValue) ||
     Number.isNaN(hausmanTest.statistic) ||
@@ -86,12 +88,23 @@ export function generateEffectInterpretation(
     effectEstimate,
     standardError,
   );
-  const significant = isSignificant(effectEstimate, standardError);
+  // The backend's verdict wins: it is null when the standard error is
+  // numerically zero, where the ratio test below would call anything
+  // significant.
+  const significant =
+    results.isSignificant === null
+      ? null
+      : isSignificant(effectEstimate, standardError);
 
   const prefix = `Using ${modelType}, the`;
-  const significanceText = significant
-    ? "statistically different from zero"
-    : "not different from zero";
+  let significanceText: string;
+  if (significant === null) {
+    significanceText = "with significance undefined";
+  } else if (significant) {
+    significanceText = "statistically different from zero";
+  } else {
+    significanceText = "not different from zero";
+  }
 
   let text = `${prefix} bias-corrected mean effect is ${formatNumber(effectEstimate)} (95% CI ${formatNumber(ciLower)}, ${formatNumber(ciUpper)}), ${significanceText} at the 5% level.`;
 
@@ -177,7 +190,7 @@ export function generateTestsInterpretation(
         "The Hausman test is undefined because IV variance < OLS variance; estimators are nearly identical, so this test is not informative.",
       );
     } else {
-      const { rejectsNull } = hausmanTest;
+      const rejectsNull = hausmanTest.rejectsNull === true;
       const rejectText = rejectsNull ? "rejects" : "does not reject";
       const evidenceStrength = getSpuriousPrecisionEvidence(rejectsNull);
 

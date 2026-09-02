@@ -8,6 +8,7 @@ import {
 } from "@src/utils/resultsDataUtils";
 import Tooltip from "@components/Tooltip";
 import InterpretationButton from "@components/InterpretationButton";
+import Alert from "@components/Alert";
 import {
   generateEffectInterpretation,
   generateBiasInterpretation,
@@ -15,6 +16,7 @@ import {
 } from "@utils/interpretationTextGenerator";
 import TEXT from "@src/lib/text";
 import CONFIG from "@src/CONFIG";
+import CONST from "@src/CONST";
 
 type ResultsTextContent = typeof TEXT.results;
 
@@ -246,11 +248,29 @@ export default function ResultsSummary({
     return <div key={key}>{content}</div>;
   };
 
+  // Conditions the backend raised while fitting (small sample, weak
+  // instrument, perfect fit, undefined verdict), shown ahead of the numbers
+  // they qualify, as RTMAResultsSummary does for RTMA.
+  const warnings = results.warnings ?? [];
+  const warningsBlock =
+    warnings.length > 0 ? (
+      <div className="space-y-2">
+        {warnings.map((warning) => (
+          <Alert
+            key={warning}
+            message={warning}
+            type={CONST.ALERT_TYPES.WARNING}
+          />
+        ))}
+      </div>
+    ) : null;
+
   // Detailed variant for modal display
   if (layout === "vertical") {
     if (columns === 1) {
       return (
         <div className="space-y-2 text-sm">
+          {warningsBlock}
           {visibleResults.map((item, index) =>
             renderResultItem(item, `single-${index}`),
           )}
@@ -262,6 +282,7 @@ export default function ResultsSummary({
 
     return (
       <div className="space-y-2 text-sm">
+        {warningsBlock}
         <div className={gridClass}>
           <div className="space-y-2">
             {left.map((item, index) => renderResultItem(item, `left-${index}`))}
@@ -299,6 +320,7 @@ export default function ResultsSummary({
 
   return (
     <div className="space-y-6">
+      {warningsBlock}
       {sectionOrder.map((sectionKey) => {
         const sectionResults = resultsBySection[sectionKey];
         if (!sectionResults || sectionResults.length === 0) {
