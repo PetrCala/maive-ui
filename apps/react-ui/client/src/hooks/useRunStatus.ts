@@ -1,10 +1,5 @@
 import { useEffect, useState } from "react";
-import type {
-  ModelResults,
-  ResolvedParameters,
-  RTMAResults,
-  RunStatus,
-} from "@src/types/api";
+import type { ResolvedParameters, RunResults, RunStatus } from "@src/types/api";
 import { modelService } from "@api/services/modelService";
 import { useRunsStore } from "@src/store/runsStore";
 import { getResult, putResult } from "@src/utils/runsCache";
@@ -12,7 +7,7 @@ import CONST from "@src/CONST";
 
 type UseRunStatusResult = {
   status: RunStatus | null;
-  result: ModelResults | RTMAResults | null;
+  result: RunResults | null;
   errorMessage: string | null;
   errorCode: string | null;
   runDurationMs: number | null;
@@ -45,7 +40,7 @@ const MAX_POLL_MS = 16 * 60 * 1000;
  */
 export function useRunStatus(jobId: string | null): UseRunStatusResult {
   const [status, setStatus] = useState<RunStatus | null>(null);
-  const [result, setResult] = useState<ModelResults | RTMAResults | null>(null);
+  const [result, setResult] = useState<RunResults | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [runDurationMs, setRunDurationMs] = useState<number | null>(null);
@@ -92,7 +87,7 @@ export function useRunStatus(jobId: string | null): UseRunStatusResult {
         }
         if (run.result) {
           try {
-            const parsed = JSON.parse(run.result) as ModelResults | RTMAResults;
+            const parsed = JSON.parse(run.result) as RunResults;
             setResult(parsed);
             void putResult(jobId, parsed); // durable client-side cache
           } catch {

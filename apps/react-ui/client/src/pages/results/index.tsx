@@ -14,6 +14,7 @@ import InterpretationButton from "@components/InterpretationButton";
 import TEXT, { getResultsText } from "@src/lib/text";
 import { useDataStore, dataCache } from "@store/dataStore";
 import {
+  buildRdtResultsCsvRows,
   buildRtmaResultsCsvRows,
   exportComprehensiveResults,
   downloadImageAsJpg,
@@ -23,13 +24,14 @@ import {
   generateDataInfo,
 } from "@utils/dataInfoUtils";
 import type { ModelResults } from "@src/types";
-import type { RTMAResults } from "@src/types/api";
+import type { RDTResults, RTMAResults } from "@src/types/api";
 import type { VersionInfo } from "@src/types/reproducibility";
 import CitationBox from "@src/components/CitationBox";
 import { getCitationsForModel } from "@utils/citationUtils";
 import { RunInfoModal } from "@src/components/Modals";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
+import RDTResultsSummary from "@src/components/RDTResultsSummary";
 import RunLoading from "@src/components/RunLoading";
 import { useRunStatus } from "@src/hooks/useRunStatus";
 import CONST from "@src/CONST";
@@ -113,6 +115,7 @@ export default function ResultsPage() {
     parsedParameters?.shouldUseInstrumenting ?? true;
   const isWaiveModel = parsedParameters.modelType === CONST.MODEL_TYPES.WAIVE;
   const isRtmaModel = parsedParameters.modelType === CONST.MODEL_TYPES.RTMA;
+  const isRdtModel = parsedParameters.modelType === CONST.MODEL_TYPES.RDT;
 
   const funnelInterpretationText = useMemo(() => {
     if (!shouldUseInstrumenting) {
@@ -364,6 +367,12 @@ export default function ResultsPage() {
     ? JSON.parse(results ?? "{}")
     : null;
 
+  // For RDT, the diagnostic payload (#559)
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+  const parsedRdtResults: RDTResults | null = isRdtModel
+    ? JSON.parse(results ?? "{}")
+    : null;
+
   const handleRerunModel = () => {
     router.push(`/model?dataId=${dataId}&parameters=${parameters}`);
   };
@@ -395,7 +404,22 @@ export default function ResultsPage() {
         dataCache.set(dataId, currentData);
       }
 
-      if (isRtmaModel && parsedRtmaResults) {
+      if (isRdtModel && parsedRdtResults) {
+        // RDT export: the diagnostic as a metric/value CSV (#559).
+        const rows = buildRdtResultsCsvRows(parsedRdtResults);
+        const csv = rows
+          .map((r) =>
+            r.map((cell) => `"${cell.replace(/"/g, '""')}"`).join(","),
+          )
+          .join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `rdt_results_${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+      } else if (isRtmaModel && parsedRtmaResults) {
         // RTMA-specific export: simple CSV with results summary.
         const rows = buildRtmaResultsCsvRows(parsedRtmaResults);
         const csv = rows.map((r) => r.join(",")).join("\n");
@@ -426,7 +450,10 @@ export default function ResultsPage() {
 
   const handleDownloadPlot = () => {
     try {
-      if (isRtmaModel && parsedRtmaResults) {
+      if (isRdtModel && parsedRdtResults) {
+        const filename = `rdt_plot_${Date.now()}`;
+        downloadImageAsJpg(parsedRdtResults.plot, filename, false);
+      } else if (isRtmaModel && parsedRtmaResults) {
         const filename = `z_score_plot_${Date.now()}`;
         downloadImageAsJpg(parsedRtmaResults.zScorePlot, filename, false);
       } else {
@@ -558,7 +585,53 @@ export default function ResultsPage() {
                 </div>
               ) : null}
               {/* Results Summary + Plot: branch on model type */}
-              {isRtmaModel && parsedRtmaResults ? (
+              {isRdtModel && parsedRdtResults ? (
+                <>
+                  <RDTResultsSummary
+                    results={parsedRdtResults}
+                    showTooltips={true}
+                  />
+
+                  {/* Binned residual precision plot (#559) */}
+                  <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-700 rounded-lg relative">
+                    <div className="mb-4 flex items-start justify-between">
+                      <Tooltip
+                        content={resultsText.funnelPlot.tooltip}
+                        visible={CONFIG.TOOLTIPS_ENABLED.RESULTS_PAGE}
+                      >
+                        <SectionHeading
+                          level="h2"
+                          text={resultsText.funnelPlot.title}
+                          className="leading-tight"
+                        />
+                      </Tooltip>
+                      <InterpretationButton
+                        interpretationText={
+                          TEXT.rdt.results.plot.interpretation
+                        }
+                        section={resultsText.funnelPlot.title}
+                        variant="icon"
+                      />
+                    </div>
+                    <div className="flex justify-center">
+                      <Image
+                        src={parsedRdtResults.plot}
+                        alt="Binned scatter of residual precision against |t|"
+                        width={Math.min(parsedRdtResults.plotWidth, 800)}
+                        height={Math.min(parsedRdtResults.plotHeight, 800)}
+                        className="max-w-full h-auto"
+                      />
+                    </div>
+                    <div className="absolute flex bottom-6 right-6 sm:bottom-8 sm:right-8">
+                      <DownloadButton
+                        onClick={handleDownloadPlot}
+                        title="Download RDT plot as JPG"
+                        className="shadow-lg"
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : isRtmaModel && parsedRtmaResults ? (
                 <>
                   <RTMAResultsSummary
                     results={parsedRtmaResults}
@@ -667,11 +740,14 @@ export default function ResultsPage() {
                   </div>
                 </>
               )}
-              <CitationBox
-                variant="compact"
-                useBlueStyling
-                citations={getCitationsForModel(parsedParameters.modelType)}
-              />
+              {/* RDT is unpublished and has no citation entry (#559). */}
+              {!isRdtModel ? (
+                <CitationBox
+                  variant="compact"
+                  useBlueStyling
+                  citations={getCitationsForModel(parsedParameters.modelType)}
+                />
+              ) : null}
             </div>
           </div>
 
@@ -709,7 +785,7 @@ export default function ResultsPage() {
                 className="inline-flex items-center gap-2 w-full"
               >
                 <FaDownload className="w-4 h-4" />
-                {isRtmaModel
+                {isRtmaModel || isRdtModel
                   ? "Export Results"
                   : "Export Results and Adjusted SEs"}
               </ActionButton>
@@ -722,27 +798,30 @@ export default function ResultsPage() {
                 <FaInfoCircle className="w-4 h-4" />
                 Show Run Info
               </ActionButton>
-              <ActionButton
-                onClick={() => {
-                  void handleExportReproducibility();
-                }}
-                variant="secondary"
-                size="md"
-                className="inline-flex items-center gap-2 w-full"
-                disabled={isExportingReproducibility}
-              >
-                {isExportingReproducibility ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                    Generating Package...
-                  </>
-                ) : (
-                  <>
-                    <FaCode className="w-4 h-4" />
-                    Export R Code
-                  </>
-                )}
-              </ActionButton>
+              {/* No reproducibility package for RDT in v1 (#559). */}
+              {!isRdtModel ? (
+                <ActionButton
+                  onClick={() => {
+                    void handleExportReproducibility();
+                  }}
+                  variant="secondary"
+                  size="md"
+                  className="inline-flex items-center gap-2 w-full"
+                  disabled={isExportingReproducibility}
+                >
+                  {isExportingReproducibility ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
+                      Generating Package...
+                    </>
+                  ) : (
+                    <>
+                      <FaCode className="w-4 h-4" />
+                      Export R Code
+                    </>
+                  )}
+                </ActionButton>
+              ) : null}
             </div>
 
             {/* Separator */}
@@ -797,6 +876,7 @@ export default function ResultsPage() {
         parameters={parsedParameters}
         results={parsedResults}
         rtmaResults={parsedRtmaResults}
+        rdtResults={parsedRdtResults}
         dataInfo={dataInfo}
         runDuration={runDuration ? parseInt(runDuration, 10) : undefined}
         runTimestamp={runTimestamp ? new Date(runTimestamp) : undefined}

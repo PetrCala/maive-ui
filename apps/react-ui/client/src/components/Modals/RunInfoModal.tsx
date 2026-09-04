@@ -1,12 +1,13 @@
 "use client";
 
 import type { ModelParameters, ModelResults } from "@src/types";
-import type { RTMAResults } from "@src/types/api";
+import type { RDTResults, RTMAResults } from "@src/types/api";
 import type { DataInfo } from "@src/types/data";
 import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
+import RDTResultsSummary from "@src/components/RDTResultsSummary";
 import RunDetails from "@src/components/RunDetails";
 import type { DetailItem } from "@src/components/RunDetails";
 import SectionHeading from "@src/components/SectionHeading";
@@ -27,6 +28,7 @@ type RunInfoModalProps = {
   parameters: ModelParameters;
   results: ModelResults;
   rtmaResults?: RTMAResults | null;
+  rdtResults?: RDTResults | null;
   dataInfo?: DataInfo;
   runDuration?: number; // in milliseconds
   runTimestamp?: Date;
@@ -45,6 +47,7 @@ export default function RunInfoModal({
   parameters,
   results,
   rtmaResults,
+  rdtResults,
   dataInfo,
   runDuration,
   runTimestamp,
@@ -52,6 +55,7 @@ export default function RunInfoModal({
   resultsText,
 }: RunInfoModalProps) {
   const isRtmaModel = parameters.modelType === CONST.MODEL_TYPES.RTMA;
+  const isRdtModel = parameters.modelType === CONST.MODEL_TYPES.RDT;
 
   // RTMA only: the credible intervals are posterior quantiles from a seeded
   // sampler, so the seed is what makes the reported numbers traceable to the
@@ -201,7 +205,10 @@ export default function RunInfoModal({
           <SectionHeading level="h3" text="Run Settings" className="mb-3" />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-1 text-sm">
             {(() => {
-              const parameterEntries = Object.entries(parameters);
+              // RDT has no options (#559): only the model type is a setting.
+              const parameterEntries = isRdtModel
+                ? [["modelType", parameters.modelType] as [string, unknown]]
+                : Object.entries(parameters);
               const midPoint = Math.ceil(parameterEntries.length / 2);
               const leftColumnParams = parameterEntries.slice(0, midPoint);
               const rightColumnParams = parameterEntries.slice(midPoint);
@@ -260,7 +267,9 @@ export default function RunInfoModal({
         {/* Results Summary */}
         <section>
           <SectionHeading level="h3" text="Results Summary" className="mb-3" />
-          {isRtmaModel && rtmaResults ? (
+          {isRdtModel && rdtResults ? (
+            <RDTResultsSummary results={rdtResults} />
+          ) : isRtmaModel && rtmaResults ? (
             <RTMAResultsSummary results={rtmaResults} />
           ) : (
             <ResultsSummary

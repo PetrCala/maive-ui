@@ -34,6 +34,7 @@ const VALUE_LABELS: Record<string, string> = {
   WAIVE: "WAIVE",
   WLS: "WLS",
   RTMA: "RTMA",
+  RDT: "RDT",
   // Weights
   equal_weights: "Equal Weights",
   standard_weights: "Standard Weights",
@@ -89,6 +90,9 @@ const EXPLANATION_RULES: ExplanationRule[] = [
     }
     if (next.modelType === CONST.MODEL_TYPES.RTMA) {
       return "**RTMA** doesn't use instrumenting";
+    }
+    if (next.modelType === CONST.MODEL_TYPES.RDT) {
+      return "**RDT** is a diagnostic with no estimator options";
     }
     return null;
   },

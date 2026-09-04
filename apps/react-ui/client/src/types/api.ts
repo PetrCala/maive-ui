@@ -11,7 +11,7 @@ type ApiResponse<T = unknown> = {
 };
 
 type ModelParameters = {
-  modelType: "MAIVE" | "WAIVE" | "WLS" | "RTMA";
+  modelType: "MAIVE" | "WAIVE" | "WLS" | "RTMA" | "RDT";
   includeStudyDummies: boolean;
   includeStudyClustering: boolean;
   standardErrorTreatment:
@@ -135,9 +135,16 @@ type RTMAParameters = {
   seed?: number;
 };
 
+// RDT (Residual Discontinuity Test, #559) has no user options at all: the
+// cutoff, running variable, kernel, bandwidth rule and inference are fixed in
+// the backend. Experimental; hidden behind CONFIG.RDT_ENABLED.
+type RDTParameters = {
+  modelType: "RDT";
+};
+
 // What the server resolved and ran, echoed as `resolvedParameters` on every
 // successful run response (#555).
-type ResolvedParameters = ModelParameters | RTMAParameters;
+type ResolvedParameters = ModelParameters | RTMAParameters | RDTParameters;
 
 // Per-parameter sampler diagnostics. The sampler can mix well for mu and
 // badly for tau, so these are reported separately rather than collapsed into
@@ -205,6 +212,77 @@ type RTMAResults = {
   diagnostics?: RTMADiagnostics;
 };
 
+// One local-linear fit of the jump in residual precision at a cutoff on |t|:
+// the headline, a bandwidth-sensitivity refit, or a placebo threshold. A fit
+// that could not be computed (too few estimates on a side) carries only
+// `unavailable`, the reason, so the rest of the panel still renders.
+type RDTFit = {
+  jump: number;
+  jumpSE: number;
+  jumpCI: [number, number];
+  pValue: number;
+  bandwidth: number;
+  /** Threshold on |t| the fit was estimated at (1.96 for the headline). */
+  cutoff: number;
+  nLeft: number;
+  nRight: number;
+  studies: number;
+  unavailable?: undefined;
+};
+
+type RDTFitUnavailable = {
+  unavailable: string;
+};
+
+// Results of the Residual Discontinuity Test (#559). A diagnostic, not an
+// estimator: there is no corrected effect. `jump` is the discontinuity in the
+// residual of log(SE) on log(N) at |t| = 1.96. Lower residual = more precise
+// than sample size predicts, so the p-hacking signature is a negative jump.
+type RDTResults = {
+  /** Always "RDT"; first field of the payload so the shape is unambiguous. */
+  model: "RDT";
+  jump: number;
+  jumpSE: number;
+  jumpCI: [number, number];
+  pValue: number;
+  /** Satterthwaite degrees of freedom of the CR2 test on the jump. */
+  df: number;
+  cutoff: number;
+  /** Effective bandwidth in log points. */
+  bandwidth: number;
+  /** The estimation window on the |t| scale. */
+  windowT: [number, number];
+  nLeft: number;
+  nRight: number;
+  /** Clusters inside the window: studies, or estimates when there is no study column. */
+  studies: number;
+  hasStudyColumn: boolean;
+  /** Usable estimates after the row filter, and the rows that filter dropped. */
+  k: number;
+  droppedRows: number;
+  /** Smallest jump detectable with 80% power: 2.8 standard errors. */
+  minDetectableJump: number;
+  firstStage: {
+    slope: number;
+    rSquared: number;
+  };
+  sensitivity: {
+    half: RDTFit | RDTFitUnavailable;
+    double: RDTFit | RDTFitUnavailable;
+  };
+  placebo: {
+    below: RDTFit | RDTFitUnavailable;
+    above: RDTFit | RDTFitUnavailable;
+  };
+  warnings: string[];
+  plot: string; // Base64 encoded image
+  plotWidth: number;
+  plotHeight: number;
+};
+
+// Any result payload a finished run can carry.
+type RunResults = ModelResults | RTMAResults | RDTResults;
+
 type PingResponse = {
   status: string;
   time: string;
@@ -268,8 +346,13 @@ export type {
   ModelResponse,
   ModelResults,
   RTMAParameters,
+  RDTParameters,
   ResolvedParameters,
   RTMAResults,
+  RDTFit,
+  RDTFitUnavailable,
+  RDTResults,
+  RunResults,
   RTMADiagnostics,
   RTMAParameterDiagnostic,
   PingResponse,

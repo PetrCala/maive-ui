@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
-import type { ModelResults, RTMAResults } from "@src/types/api";
+import type { RunResults } from "@src/types/api";
 import { modelService } from "@api/services/modelService";
 import { getResult, putResult } from "@src/utils/runsCache";
 
 export type RunResultState =
   | { status: "loading" }
-  | { status: "ready"; result: ModelResults | RTMAResults }
+  | { status: "ready"; result: RunResults }
   | { status: "unavailable"; reason: string };
 
 export type RunResultsMap = Record<string, RunResultState>;
@@ -65,7 +65,7 @@ export function useRunResults(jobIds: string[]): RunResultsMap {
               run.status === "expired" ? EXPIRED_REASON : NO_RESULT_REASON,
           };
         }
-        const parsed = JSON.parse(run.result) as ModelResults | RTMAResults;
+        const parsed = JSON.parse(run.result) as RunResults;
         void putResult(jobId, parsed);
         return { status: "ready", result: parsed };
       } catch {

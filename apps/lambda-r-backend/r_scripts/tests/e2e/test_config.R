@@ -31,6 +31,10 @@ SCENARIOS <- list(
   basic_rtma = list(
     name = "Basic RTMA Test",
     description = "Tests basic RTMA functionality with phacking package"
+  ),
+  basic_rdt = list(
+    name = "Basic RDT Test",
+    description = "Tests the RDT residual discontinuity diagnostic"
   )
 )
 

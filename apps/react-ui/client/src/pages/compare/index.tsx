@@ -7,13 +7,14 @@ import { GoBackButton } from "@src/components/Buttons";
 import ActionButton from "@src/components/Buttons/ActionButton";
 import ResultsSummary from "@src/components/ResultsSummary";
 import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
+import RDTResultsSummary from "@src/components/RDTResultsSummary";
 import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
 import { useRunsStore, type RunEntry } from "@src/store/runsStore";
 import { useRunResults, type RunResultState } from "@src/hooks/useRunResults";
 import { useReadySearchParams } from "@src/hooks/useReadySearchParams";
 import { parseRunParameters } from "@src/utils/runParameterUtils";
-import { isRtmaResults } from "@src/utils/resultTypeUtils";
+import { isRdtResults, isRtmaResults } from "@src/utils/resultTypeUtils";
 
 // Class names are written out in full rather than composed as `grid-cols-${n}`:
 // Tailwind scans source text for literal class names, so an interpolated one is
@@ -77,7 +78,11 @@ function RunCard({ jobId, entry, state }: RunCardProps) {
       </div>
 
       {state?.status === "ready" ? (
-        isRtmaResults(state.result) ? (
+        // RDT first: it has neither muCI nor effectEstimate, so the shape
+        // tests below would file it under MAIVE (#559).
+        isRdtResults(state.result) ? (
+          <RDTResultsSummary results={state.result} columns={1} />
+        ) : isRtmaResults(state.result) ? (
           // RTMAResultsSummary brings its own titled panel; the MAIVE summary
           // does not, so it gets a matching one here. Without it the cards sit
           // side by side with different chrome, which reads as a rendering bug

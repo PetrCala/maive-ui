@@ -154,6 +154,59 @@ function(req, data, parameters) {
   )
 }
 
+#* Run the RDT (Residual Discontinuity Test) diagnostic
+#*
+#* Experimental (#559). Not exposed through the public /v1 API: RDT is a
+#* diagnostic with no corrected effect and no user options, and the UI is its
+#* only caller until the method is published.
+#* @param data The file data to run the test on, passed as a JSON string
+#* @param parameters The parameters (accepted for parity, RDT has none)
+#* @post /run-rdt
+function(req, data, parameters = "{}") {
+  # nolint start: undesirable_function_linter.
+  source("request_bounds.R")
+  source("request_log.R")
+  # nolint end: undesirable_function_linter.
+
+  # One structured JSON line per request, emitted on every exit path (#532).
+  log_ctx <- request_log_context(req, "/run-rdt", rtma = FALSE)
+  on.exit(request_log_emit(log_ctx), add = TRUE)
+
+  tryCatch(
+    {
+      # nolint start: undesirable_function_linter.
+      source("rdt_model.R")
+      # nolint end: undesirable_function_linter.
+
+      if (is.null(data)) {
+        cli::cli_abort("Missing data")
+      }
+
+      request_log_note(log_ctx, k = enforce_max_input_rows(data))
+
+      # RDT runs well under a second, but the shared request bound is what
+      # gives every legacy route the same response envelope and log line.
+      timeout_sec <- request_timeout_sec_from_json(parameters)
+      outcome <- run_request_bounded(
+        function() run_rdt_model(data, parameters),
+        timeout_sec
+      )
+      request_log_note(log_ctx, outcome = request_log_outcome(outcome$status))
+      legacy_bounded_response(outcome, timeout_sec, "run-rdt")
+    },
+    error = function(e) {
+      err_message <- conditionMessage(e)
+      cli::cli_alert_danger("Error in run-rdt endpoint: {err_message}")
+      cli::cli_h2("Error traceback:")
+      cli::cli_code(capture.output(traceback()))
+      list(
+        error = TRUE,
+        message = paste("Internal server error:", err_message)
+      )
+    }
+  )
+}
+
 # -- Public /v1 API (docs/PUBLIC_API_DESIGN.md) ------------------------------
 # Versioned routes with a plain nested JSON contract, server-side validation,
 # parameter defaults, and real HTTP status codes. The legacy routes above are

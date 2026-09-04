@@ -8,7 +8,11 @@ import {
   type RecipeName,
   type ResolvedRun,
 } from "@src/lib/parameterResolver";
-import type { ModelParameters, RTMAParameters } from "@src/types/api";
+import type {
+  ModelParameters,
+  RDTParameters,
+  RTMAParameters,
+} from "@src/types/api";
 
 // Server-side entry point to the shared parameter resolver
 // (src/lib/parameterResolver.ts, #555). The rules themselves live there so
@@ -22,7 +26,7 @@ import type { ModelParameters, RTMAParameters } from "@src/types/api";
 
 export type ResolvedRunParameters = {
   modelType: string;
-  parameters: ModelParameters | RTMAParameters;
+  parameters: ModelParameters | RTMAParameters | RDTParameters;
   recipe: RecipeName | null;
 };
 
@@ -35,8 +39,14 @@ export type ResolveRunParametersOptions = {
   data?: unknown;
   /** Named recipe from the request body. */
   recipe?: unknown;
-  /** Endpoint family constraint (`/v1/run-model` vs `/v1/run-rtma`). */
-  family?: "maive" | "rtma";
+  /** Endpoint family constraint (`/v1/run-model` vs `/v1/run-rtma`, or the app's `/run-rdt`). */
+  family?: "maive" | "rtma" | "rdt";
+  /**
+   * Accept experimental model types the public API does not expose (RDT,
+   * #559). Only the app's own same-origin routes set this; the public /v1
+   * routes leave it off and get a 400 for RDT.
+   */
+  allowExperimentalModels?: boolean;
 };
 
 // The API resolves columns by canonical name with positional fallback (D5),
@@ -78,6 +88,7 @@ export const resolveRunParameters = (
     parameters: parametersInput,
     recipe: options.recipe,
     family: options.family,
+    allowExperimentalModels: options.allowExperimentalModels,
     mode: "strict",
   });
   if (result.error) {

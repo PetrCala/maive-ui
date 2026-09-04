@@ -1,5 +1,5 @@
 import { openDB, type IDBPDatabase } from "idb";
-import type { ModelResults, RTMAResults } from "@src/types/api";
+import type { RunResults } from "@src/types/api";
 
 // Durable, client-side cache of run results (IndexedDB). Lets a run stay
 // viewable after the 48h server TTL and across browser restarts. Browser-only,
@@ -9,7 +9,7 @@ const DB_NAME = "maive-runs-cache";
 const STORE = "results";
 const DB_VERSION = 1;
 
-type CachedResult = ModelResults | RTMAResults;
+type CachedResult = RunResults;
 
 let dbPromise: Promise<IDBPDatabase> | undefined;
 

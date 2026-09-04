@@ -88,11 +88,14 @@ export default function OptionSection({
     }
   };
 
+  // The WLS footnote is about estimator choices; WAIVE and RDT (#559) have
+  // none to make.
   const shouldShowBottomText =
     Boolean(config.bottomText) &&
     !(
       config === modelOptionsConfig.basic &&
-      parameters.modelType === CONST.MODEL_TYPES.WAIVE
+      (parameters.modelType === CONST.MODEL_TYPES.WAIVE ||
+        parameters.modelType === CONST.MODEL_TYPES.RDT)
     );
 
   const renderOptions = () => (
