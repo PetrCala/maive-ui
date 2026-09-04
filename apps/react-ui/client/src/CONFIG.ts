@@ -6,7 +6,7 @@ const CONFIG = {
   RTMA_ENABLED: true,
   // RDT (Residual Discontinuity Test, #559): experimental diagnostic, off by
   // default like WAIVE was. Never exposed through the public API regardless.
-  RDT_ENABLED: false,
+  RDT_ENABLED: true,
   // Async (non-blocking) model runs + per-browser runs history.
   ASYNC_RUNS_ENABLED: true,
   SHOULD_SEND_EMAIL_IN_FOOTER_CONTACT: false,
