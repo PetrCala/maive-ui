@@ -1,6 +1,67 @@
 import { describe, it, expect } from "vitest";
-import { buildRtmaResultsCsvRows, hasNObsColumn } from "@src/utils/dataUtils";
+import {
+  buildRtmaResultsCsvRows,
+  hasNObsColumn,
+  parseLocalizedNumber,
+} from "@src/utils/dataUtils";
 import type { RTMAResults } from "@src/types/api";
+
+describe("parseLocalizedNumber", () => {
+  it("keeps decimal commas and dots for measurements", () => {
+    expect(parseLocalizedNumber("0,5")).toBe(0.5);
+    expect(parseLocalizedNumber("0.5")).toBe(0.5);
+    expect(parseLocalizedNumber("-1,25")).toBe(-1.25);
+    expect(parseLocalizedNumber("1.234,5")).toBe(1234.5);
+    expect(parseLocalizedNumber("1,234.5")).toBe(1234.5);
+  });
+
+  it("returns null for empty or non-numeric input", () => {
+    expect(parseLocalizedNumber("")).toBeNull();
+    expect(parseLocalizedNumber("   ")).toBeNull();
+    expect(parseLocalizedNumber(null)).toBeNull();
+    expect(parseLocalizedNumber(undefined)).toBeNull();
+    expect(parseLocalizedNumber("abc")).toBeNull();
+    expect(parseLocalizedNumber("abc", { integer: true })).toBeNull();
+  });
+
+  describe("with the integer option", () => {
+    it("reads a single separator followed by three digits as thousands", () => {
+      expect(parseLocalizedNumber("1,274", { integer: true })).toBe(1274);
+      expect(parseLocalizedNumber("1.274", { integer: true })).toBe(1274);
+      expect(parseLocalizedNumber("12,345", { integer: true })).toBe(12345);
+      expect(parseLocalizedNumber("12.345", { integer: true })).toBe(12345);
+      expect(parseLocalizedNumber("999,999", { integer: true })).toBe(999999);
+    });
+
+    it("reads grouped thousands with either separator", () => {
+      expect(parseLocalizedNumber("1,234,567", { integer: true })).toBe(
+        1234567,
+      );
+      expect(parseLocalizedNumber("1.234.567", { integer: true })).toBe(
+        1234567,
+      );
+    });
+
+    it("accepts space and non-breaking space separators", () => {
+      expect(parseLocalizedNumber("1 274", { integer: true })).toBe(1274);
+      expect(parseLocalizedNumber("1\u00a0274", { integer: true })).toBe(1274);
+    });
+
+    it("still parses values that cannot be thousands groups", () => {
+      expect(parseLocalizedNumber("1274.0", { integer: true })).toBe(1274);
+      expect(parseLocalizedNumber("1274", { integer: true })).toBe(1274);
+      expect(parseLocalizedNumber(1274, { integer: true })).toBe(1274);
+      expect(parseLocalizedNumber("12,5", { integer: true })).toBe(12.5);
+      expect(parseLocalizedNumber("1,2345", { integer: true })).toBe(1.2345);
+      expect(parseLocalizedNumber("0.5", { integer: true })).toBe(0.5);
+    });
+
+    it("does not change how effect values are parsed without the option", () => {
+      expect(parseLocalizedNumber("0,5")).toBe(0.5);
+      expect(parseLocalizedNumber("1,274")).toBe(1.274);
+    });
+  });
+});
 
 describe("hasNObsColumn", () => {
   it("detects a canonical n_obs column", () => {

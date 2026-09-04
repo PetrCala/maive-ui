@@ -224,13 +224,16 @@ const convertToNormalizedRow = (
     return rawValue;
   };
 
-  const normalizeNumericValue = (column: string | null) => {
+  const normalizeNumericValue = (
+    column: string | null,
+    options: { integer?: boolean } = {},
+  ) => {
     const value = getValue(column);
     if (value === null || value === undefined || value === "") {
       return null;
     }
 
-    const parsed = parseLocalizedNumber(value);
+    const parsed = parseLocalizedNumber(value, options);
     return parsed ?? Number.NaN;
   };
 
@@ -266,7 +269,9 @@ const convertToNormalizedRow = (
   // Keep the key order effect, se, n_obs, study_id: the R backend reads the
   // columns positionally.
   if (mapping.nObs) {
-    normalized.n_obs = normalizeNumericValue(mapping.nObs);
+    // Sample sizes are counts: "1,274" and "1.274" are thousands groups here,
+    // not decimals, so the integer check below does not reject them.
+    normalized.n_obs = normalizeNumericValue(mapping.nObs, { integer: true });
   }
 
   if (mapping.studyId) {
