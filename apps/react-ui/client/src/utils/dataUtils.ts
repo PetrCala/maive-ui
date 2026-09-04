@@ -16,10 +16,24 @@ import {
 import { parse, type ParseResult } from "papaparse";
 import * as XLSX from "xlsx";
 
+type ParseLocalizedNumberOptions = {
+  /**
+   * Treat the value as a count rather than a measurement. A single "," or "."
+   * followed by exactly three digits ("1,274", "1.274") and any grouped form
+   * ("1,234,567", "1.234.567") are read as thousands separators, so sample
+   * sizes exported with a locale-specific separator stay integers. Values that
+   * cannot be thousands groups ("1274.0", "12,5") still parse as decimals.
+   */
+  integer?: boolean;
+};
+
 /**
  * Parses a localized numeric string, supporting decimal commas and various thousands separators
  */
-export const parseLocalizedNumber = (value: unknown): number | null => {
+export const parseLocalizedNumber = (
+  value: unknown,
+  options: ParseLocalizedNumberOptions = {},
+): number | null => {
   if (value === undefined || value === null) {
     return null;
   }
@@ -39,6 +53,14 @@ export const parseLocalizedNumber = (value: unknown): number | null => {
   }
 
   const normalized = trimmed.replace(/\u00a0/g, "").replace(/\s+/g, "");
+
+  if (options.integer) {
+    const groupedIntegerPattern = /^-?\d{1,3}(?:([,.])\d{3})(?:\1\d{3})*$/;
+    if (groupedIntegerPattern.test(normalized)) {
+      const parsedInteger = Number(normalized.replace(/[,.]/g, ""));
+      return Number.isNaN(parsedInteger) ? null : parsedInteger;
+    }
+  }
 
   const europeanPattern = /^-?\d{1,3}(?:\.\d{3})*,\d+$/;
   const commaDecimalPattern = /^-?\d+,\d+$/;
