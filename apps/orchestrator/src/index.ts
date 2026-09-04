@@ -321,7 +321,14 @@ async function processRecord(record: SQSRecord): Promise<void> {
     }),
   );
 
-  const endpoint = modelType === "RTMA" ? "/run-rtma" : "/run-model";
+  // RDT (#559) is the experimental residual discontinuity diagnostic; every
+  // other model type runs through the MAIVE route.
+  const endpoint =
+    modelType === "RTMA"
+      ? "/run-rtma"
+      : modelType === "RDT"
+        ? "/run-rdt"
+        : "/run-model";
 
   const baseParameters =
     parameters && typeof parameters === "object" && !Array.isArray(parameters)

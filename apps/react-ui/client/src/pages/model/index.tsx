@@ -21,7 +21,11 @@ import CONST from "@src/CONST";
 import TEXT from "@src/lib/text";
 import { modelService } from "@src/api/services/modelService";
 import type { ModelParameters } from "@src/types";
-import type { RTMAParameters, SubmitRunResponse } from "@src/types/api";
+import type {
+  RDTParameters,
+  RTMAParameters,
+  SubmitRunResponse,
+} from "@src/types/api";
 import { modelOptionsConfig } from "@src/config/optionsConfig";
 import { hasNObsColumn, hasStudyIdColumn } from "@src/utils/dataUtils";
 import {
@@ -118,7 +122,8 @@ export default function ModelPage() {
 
     if (
       params.modelType === CONST.MODEL_TYPES.WLS ||
-      params.modelType === CONST.MODEL_TYPES.RTMA
+      params.modelType === CONST.MODEL_TYPES.RTMA ||
+      params.modelType === CONST.MODEL_TYPES.RDT
     ) {
       params.shouldUseInstrumenting = false;
     } else {
@@ -248,7 +253,8 @@ export default function ModelPage() {
       if (
         parsed.shouldUseInstrumenting === false &&
         parsed.modelType !== CONST.MODEL_TYPES.WAIVE &&
-        parsed.modelType !== CONST.MODEL_TYPES.RTMA
+        parsed.modelType !== CONST.MODEL_TYPES.RTMA &&
+        parsed.modelType !== CONST.MODEL_TYPES.RDT
       ) {
         params.modelType = CONST.MODEL_TYPES
           .WLS as ModelParameters["modelType"];
@@ -256,7 +262,8 @@ export default function ModelPage() {
 
       if (
         params.modelType === CONST.MODEL_TYPES.WLS ||
-        params.modelType === CONST.MODEL_TYPES.RTMA
+        params.modelType === CONST.MODEL_TYPES.RTMA ||
+        params.modelType === CONST.MODEL_TYPES.RDT
       ) {
         params.shouldUseInstrumenting = false;
       } else {
@@ -417,7 +424,12 @@ export default function ModelPage() {
           return nextState;
         }
 
-        if (nextModelType === CONST.MODEL_TYPES.RTMA) {
+        // RTMA and RDT run neither the instrumented estimator nor the
+        // Anderson-Rubin interval; RDT has no options at all (#559).
+        if (
+          nextModelType === CONST.MODEL_TYPES.RTMA ||
+          nextModelType === CONST.MODEL_TYPES.RDT
+        ) {
           const nextState: ModelParameters = {
             ...prev,
             modelType: nextModelType,
@@ -660,11 +672,15 @@ export default function ModelPage() {
     }
 
     if (
-      parameters.modelType === CONST.MODEL_TYPES.RTMA &&
+      (parameters.modelType === CONST.MODEL_TYPES.RTMA ||
+        parameters.modelType === CONST.MODEL_TYPES.RDT) &&
       (parameters.shouldUseInstrumenting || parameters.computeAndersonRubin)
     ) {
       setParameters((prev) => {
-        if (prev.modelType !== CONST.MODEL_TYPES.RTMA) {
+        if (
+          prev.modelType !== CONST.MODEL_TYPES.RTMA &&
+          prev.modelType !== CONST.MODEL_TYPES.RDT
+        ) {
           return prev;
         }
 
@@ -690,6 +706,7 @@ export default function ModelPage() {
     if (
       parameters.modelType !== CONST.MODEL_TYPES.WLS &&
       parameters.modelType !== CONST.MODEL_TYPES.RTMA &&
+      parameters.modelType !== CONST.MODEL_TYPES.RDT &&
       !parameters.shouldUseInstrumenting
     ) {
       autoSetWeightForWlsRef.current = false;
@@ -697,7 +714,8 @@ export default function ModelPage() {
       setParameters((prev) => {
         if (
           prev.modelType === CONST.MODEL_TYPES.WLS ||
-          prev.modelType === CONST.MODEL_TYPES.RTMA
+          prev.modelType === CONST.MODEL_TYPES.RTMA ||
+          prev.modelType === CONST.MODEL_TYPES.RDT
         ) {
           return prev;
         }
@@ -777,6 +795,7 @@ export default function ModelPage() {
       }
       const runParameters = resolvedRun.parameters;
       const isRtmaRun = resolvedRun.modelType === CONST.MODEL_TYPES.RTMA;
+      const isRdtRun = resolvedRun.modelType === CONST.MODEL_TYPES.RDT;
 
       // #528: above CONST.RTMA_SYNC_ROW_LIMIT rows the interactive p-hacking
       // correction cannot finish before the Lambda timeout, so the run must
@@ -899,10 +918,17 @@ export default function ModelPage() {
           message?: string;
           timeoutSeconds?: number;
           elapsedSeconds?: number;
-          resolvedParameters?: ModelParameters | RTMAParameters;
+          resolvedParameters?: ModelParameters | RTMAParameters | RDTParameters;
         };
 
-        if (isRtmaRun) {
+        if (isRdtRun) {
+          // Same-origin proxy for the experimental diagnostic (#559).
+          result = await modelService.runRDT(
+            uploadedData?.data ?? [],
+            runParameters as RDTParameters,
+            abortControllerRef.current,
+          );
+        } else if (isRtmaRun) {
           // Same-origin proxy; the server signs and forwards to the R
           // backend and echoes the parameters it ran (#530, #555).
           result = await modelService.runRTMA(

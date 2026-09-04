@@ -14,6 +14,12 @@ const winsorizationFormatter = new Intl.NumberFormat(undefined, {
 const formatWinsorizationValue = (value: number) =>
   `${winsorizationFormatter.format(value)}%`;
 
+// RTMA has its own small option set and RDT (#559) has none: neither runs the
+// MAIVE-family estimator, so every MAIVE-family option is hidden for both.
+const hidesMaiveOptions = (parameters: ModelParameters): boolean =>
+  parameters.modelType === CONST.MODEL_TYPES.RTMA ||
+  parameters.modelType === CONST.MODEL_TYPES.RDT;
+
 export const modelOptionsConfig: ModelOptionsConfig = {
   basic: {
     bottomText: TEXT.model.basicOptions.bottomText,
@@ -48,6 +54,14 @@ export const modelOptionsConfig: ModelOptionsConfig = {
                 },
               ]
             : []),
+          ...(CONFIG.RDT_ENABLED
+            ? [
+                {
+                  value: CONST.MODEL_TYPES.RDT,
+                  label: TEXT.rdt.dropdownLabel,
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -70,7 +84,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         ),
         visibility: {
           hideIf: (context) =>
-            context.parameters.modelType === CONST.MODEL_TYPES.RTMA ||
+            hidesMaiveOptions(context.parameters) ||
             !hasStudyIdColumn(
               (context.uploadedData as { data: DataArray } | undefined)?.data,
             ),
@@ -104,7 +118,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         type: "yesno",
         visibility: {
           hideIf: ({ parameters }) =>
-            parameters.modelType === CONST.MODEL_TYPES.RTMA ||
+            hidesMaiveOptions(parameters) ||
             !parameters.shouldUseInstrumenting ||
             parameters.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE ||
             parameters.includeStudyDummies === true,
@@ -146,8 +160,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           label: method,
         })),
         visibility: {
-          hideIf: ({ parameters }) =>
-            parameters.modelType === CONST.MODEL_TYPES.RTMA,
+          hideIf: ({ parameters }) => hidesMaiveOptions(parameters),
         },
         warnings: [
           {
@@ -170,8 +183,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
           label: option.TEXT,
         })),
         visibility: {
-          hideIf: ({ parameters }) =>
-            parameters.modelType === CONST.MODEL_TYPES.RTMA,
+          hideIf: ({ parameters }) => hidesMaiveOptions(parameters),
         },
       },
       {
@@ -184,6 +196,12 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         step: 0.5,
         formatValue: formatWinsorizationValue,
         valueLabel: TEXT.model.winsorize.selectedLabel,
+        // Winsorizing effects or SEs changes t and moves estimates across the
+        // RDT cutoff, so the slider is hidden for RDT (#559).
+        visibility: {
+          hideIf: ({ parameters }) =>
+            parameters.modelType === CONST.MODEL_TYPES.RDT,
+        },
       },
       {
         key: "includeStudyDummies",
@@ -192,7 +210,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         type: "yesno",
         visibility: {
           hideIf: (context) =>
-            context.parameters.modelType === CONST.MODEL_TYPES.RTMA ||
+            hidesMaiveOptions(context.parameters) ||
             !hasStudyIdColumn(
               (context.uploadedData as { data: DataArray } | undefined)?.data,
             ),
@@ -205,8 +223,7 @@ export const modelOptionsConfig: ModelOptionsConfig = {
         type: "yesno",
         visibility: {
           hideIf: ({ parameters }) =>
-            parameters.modelType === CONST.MODEL_TYPES.RTMA ||
-            !parameters.shouldUseInstrumenting,
+            hidesMaiveOptions(parameters) || !parameters.shouldUseInstrumenting,
         },
       },
     ],

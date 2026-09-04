@@ -1,6 +1,11 @@
 import TEXT, { getResultsText } from "@src/lib/text";
 import type { DataArray, ModelResults, ModelParameters } from "@src/types";
-import type { RTMAResults } from "@src/types/api";
+import type {
+  RDTFit,
+  RDTFitUnavailable,
+  RDTResults,
+  RTMAResults,
+} from "@src/types/api";
 import CONST from "@src/CONST";
 import { describeDataShape } from "@src/lib/parameterResolver";
 import type { DataInfo } from "@src/types/data";
@@ -506,6 +511,67 @@ export const exportComprehensiveResults = (
   const newFilename = `${baseName}_${modelSlug}_results${salt}.xlsx`;
 
   XLSX.writeFile(workbook, newFilename);
+};
+
+/**
+ * Build the rows of the RDT results CSV export (#559)
+ *
+ * RDT reports no corrected effect, so this is the diagnostic itself: the jump
+ * with its interval, the smallest detectable jump, the window, the first
+ * stage and the check fits. A check fit that could not be computed exports
+ * its reason rather than an empty cell.
+ *
+ * @param results - The RDT results to export
+ * @returns Rows of [metric, value], header first
+ */
+export const buildRdtResultsCsvRows = (
+  results: RDTResults,
+): Array<[string, string]> => {
+  const fitRows = (
+    label: string,
+    fit: RDTFit | RDTFitUnavailable,
+  ): Array<[string, string]> => {
+    if (fit.unavailable !== undefined) {
+      return [[label, `not available: ${fit.unavailable}`]];
+    }
+    return [
+      [`${label} Cutoff (|t|)`, String(fit.cutoff)],
+      [`${label} Jump`, String(fit.jump)],
+      [`${label} Jump SE`, String(fit.jumpSE)],
+      [`${label} CI Lower`, String(fit.jumpCI[0])],
+      [`${label} CI Upper`, String(fit.jumpCI[1])],
+      [`${label} p-value`, String(fit.pValue)],
+      [`${label} Bandwidth`, String(fit.bandwidth)],
+    ];
+  };
+
+  return [
+    ["Metric", "Value"],
+    ["Model", "RDT (Residual Discontinuity Test)"],
+    ["Jump in Residual Precision at |t| = 1.96", String(results.jump)],
+    ["Jump SE (CR2)", String(results.jumpSE)],
+    ["Jump CI Lower", String(results.jumpCI[0])],
+    ["Jump CI Upper", String(results.jumpCI[1])],
+    ["Jump p-value", String(results.pValue)],
+    ["Satterthwaite df", String(results.df)],
+    ["Smallest Detectable Jump (80% power)", String(results.minDetectableJump)],
+    ["Bandwidth (log points)", String(results.bandwidth)],
+    ["Window |t| Lower", String(results.windowT[0])],
+    ["Window |t| Upper", String(results.windowT[1])],
+    ["Estimates Below Cutoff in Window", String(results.nLeft)],
+    ["Estimates Above Cutoff in Window", String(results.nRight)],
+    ["Clusters in Window", String(results.studies)],
+    ["Has Study Column", String(results.hasStudyColumn)],
+    ["Rows Used", String(results.k)],
+    ["Dropped Rows", String(results.droppedRows)],
+    ["First Stage Slope", String(results.firstStage.slope)],
+    ["First Stage R-squared", String(results.firstStage.rSquared)],
+    ...fitRows("Half Bandwidth", results.sensitivity.half),
+    ...fitRows("Double Bandwidth", results.sensitivity.double),
+    ...fitRows("Placebo Below", results.placebo.below),
+    ...fitRows("Placebo Above", results.placebo.above),
+    ["Warnings", (results.warnings ?? []).join(" | ")],
+  ];
 };
 
 /**

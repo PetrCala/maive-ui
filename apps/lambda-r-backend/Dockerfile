@@ -97,6 +97,7 @@ COPY r_scripts/request_log.R .
 COPY r_scripts/maive_model.R .
 COPY r_scripts/funnel_plot.R .
 COPY r_scripts/rtma_model.R .
+COPY r_scripts/rdt_model.R .
 COPY r_scripts/host.R .
 
 # Adapter / server settings

@@ -341,7 +341,7 @@ export async function proxyToRBackend(
  * plain proxy behavior.
  * @param req - Incoming Next.js API request (legacy contract body)
  * @param res - Outgoing Next.js API response
- * @param path - R backend path, "/run-model" or "/run-rtma"
+ * @param path - R backend path, "/run-model", "/run-rtma" or "/run-rdt"
  */
 export async function proxyModelRun(
   req: NextApiRequest,
@@ -361,7 +361,8 @@ export async function proxyModelRun(
     parsedParameters ?? body.parameters,
     {
       data: parsedData,
-      family: path === "/run-rtma" ? "rtma" : "maive",
+      family:
+        path === "/run-rtma" ? "rtma" : path === "/run-rdt" ? "rdt" : "maive",
     },
   );
   if (resolutionError) {

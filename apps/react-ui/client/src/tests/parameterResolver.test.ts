@@ -431,3 +431,51 @@ describe("page parameter helpers", () => {
     ).toBeNull();
   });
 });
+
+describe("RDT (#559)", () => {
+  it("resolves to a bare { modelType: 'RDT' } in the browser", () => {
+    const resolved = resolveOk({
+      dataShape: FOUR_COLUMN,
+      parameters: { modelType: "RDT" },
+      mode: "lenient",
+    });
+    expect(resolved.modelType).toBe("RDT");
+    expect(resolved.parameters).toEqual({ modelType: "RDT" });
+    expect(resolved.recipe).toBeNull();
+    expect(resolved.adjustments).toEqual([]);
+  });
+
+  it("falls back to RTMA on a two-column upload like every model that needs n_obs", () => {
+    const resolved = resolveOk({
+      dataShape: TWO_COLUMN,
+      parameters: { modelType: "RDT" },
+      mode: "lenient",
+    });
+    expect(resolved.modelType).toBe("RTMA");
+    expect(resolved.adjustments.map((a) => a.param)).toEqual(["modelType"]);
+  });
+
+  it("is not a public model type in strict mode", () => {
+    expect(
+      resolveError({
+        dataShape: FOUR_COLUMN,
+        parameters: { modelType: "RDT" },
+      }),
+    ).toMatch(/Must be one of: MAIVE, WAIVE, WLS, RTMA\./);
+  });
+
+  it("widens to the page shape with instrumenting and AR off, and narrows back to the model type alone", () => {
+    const page = toPageParameters({ modelType: "RDT" });
+    expect(page).toMatchObject({
+      ...CONFIG.DEFAULT_MODEL_PARAMETERS,
+      modelType: "RDT",
+      shouldUseInstrumenting: false,
+      computeAndersonRubin: false,
+    });
+    expect(fromPageParameters(page)).toEqual({ modelType: "RDT" });
+  });
+
+  it("does not match any recipe", () => {
+    expect(detectRecipe({ modelType: "RDT" })).toBeNull();
+  });
+});

@@ -41,6 +41,7 @@ source(file.path(script_dir, "scenarios/basic_rtma_test.R"))
 source(file.path(script_dir, "scenarios/rtma_direction_test.R"))
 source(file.path(script_dir, "scenarios/rtma_seed_test.R"))
 source(file.path(script_dir, "scenarios/rtma_timeout_test.R"))
+source(file.path(script_dir, "scenarios/basic_rdt_test.R"))
 source(file.path(script_dir, "scenarios/request_timeout_test.R"))
 source(file.path(script_dir, "scenarios/api_v1_test.R"))
 source(file.path(script_dir, "scenarios/resolver_parity_test.R"))
@@ -142,6 +143,13 @@ AVAILABLE_SCENARIOS <- list(
     name = "RTMA Timeout Test",
     description = "Test that the RTMA wall-clock budget is enforced and the server survives it",
     function_name = "test_rtma_timeout"
+  ),
+
+  # RDT scenarios (#559)
+  "basic-rdt" = list(
+    name = "Basic RDT Test",
+    description = "Test the RDT diagnostic: response contract, input guards, first-stage warning",
+    function_name = "test_basic_rdt"
   ),
 
   # Request-level guard scenarios
@@ -394,6 +402,18 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     cat("   ✓ Basic RTMA test passed\n")
   } else {
     cat("   ✗ Basic RTMA test failed:", rtma_result$error, "\n")
+  }
+  test_count <- test_count + 1
+
+  # RDT diagnostic (#559)
+  cat("\n5b. Running RDT test...\n")
+  rdt_result <- test_basic_rdt()
+  all_results$basic_rdt <- rdt_result
+  if (rdt_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ Basic RDT test passed\n")
+  } else {
+    cat("   ✗ Basic RDT test failed:", rdt_result$error, "\n")
   }
   test_count <- test_count + 1
 

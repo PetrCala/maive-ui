@@ -71,6 +71,11 @@ export default function OptionRenderer({
     option.key === "modelType" ? TEXT.model.modelType.tooltip : option.tooltip;
   const isWaiveModel =
     CONFIG.WAIVE_ENABLED && parameters.modelType === CONST.MODEL_TYPES.WAIVE;
+  // RDT is a diagnostic with no estimator (#559): it gets its own explanation
+  // instead of the "not MAIVE, still cite MAIVE" note the other
+  // non-instrumented models show.
+  const isRdtModel =
+    CONFIG.RDT_ENABLED && parameters.modelType === CONST.MODEL_TYPES.RDT;
   const contextData = (
     context?.uploadedData as { data?: DataArray } | undefined
   )?.data;
@@ -196,9 +201,19 @@ export default function OptionRenderer({
       >
         {renderOption()}
       </Tooltip>
-      {option.key === "modelType" && !parameters.shouldUseInstrumenting && (
+      {option.key === "modelType" &&
+        !parameters.shouldUseInstrumenting &&
+        !isRdtModel && (
+          <Alert
+            message={renderRichInfoMessage(noInstrumentingInfo)}
+            type={CONST.ALERT_TYPES.INFO}
+            className="mt-3"
+            role="status"
+          />
+        )}
+      {option.key === "modelType" && isRdtModel && (
         <Alert
-          message={renderRichInfoMessage(noInstrumentingInfo)}
+          message={TEXT.rdt.helpText}
           type={CONST.ALERT_TYPES.INFO}
           className="mt-3"
           role="status"

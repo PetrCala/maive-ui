@@ -5,6 +5,7 @@ import type {
   ModelParameters,
 } from "@src/types";
 import type {
+  RDTParameters,
   RTMAParameters,
   SubmitRunResponse,
   GetRunResponse,
@@ -89,6 +90,41 @@ export class ModelService {
   }
 
   /**
+   * Run the RDT (Residual Discontinuity Test) diagnostic on the data (#559).
+   * RDT has no user options; the parameters carry only the model type.
+   * @param data - The data to process
+   * @param parameters - RDT parameters
+   * @param abortController - Optional AbortController for cancelling the request
+   * @returns Promise with RDT results
+   */
+  async runRDT(
+    data: DataArray,
+    parameters: RDTParameters,
+    abortController?: AbortController,
+  ): Promise<ModelResponse> {
+    const requestData: ModelRequest = {
+      data: JSON.stringify(data),
+      parameters: JSON.stringify(parameters),
+    };
+
+    try {
+      return await httpPost<ModelResponse>("/api/run-rdt", requestData, {
+        timeout: 300000,
+        headers: {
+          // eslint-disable-next-line @typescript-eslint/naming-convention
+          "Content-Type": "application/json",
+        },
+        signal: abortController?.signal,
+      });
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to run RDT.");
+    }
+  }
+
+  /**
    * Batch-fetch the status of multiple runs by jobId (for the My Runs list /
    * the global watcher). Returns status-only entries (no heavy result payload).
    * @param jobIds - The run job ids to look up
@@ -130,7 +166,7 @@ export class ModelService {
    */
   async submitRun(
     data: DataArray,
-    parameters: ModelParameters | RTMAParameters,
+    parameters: ModelParameters | RTMAParameters | RDTParameters,
     dataId: string,
     modelType: ModelParameters["modelType"],
     abortController?: AbortController,

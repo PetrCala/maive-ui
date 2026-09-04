@@ -73,10 +73,12 @@ const handler = async (
   // The browser already ran the shared resolver, but the server owns the
   // recorded run (#555): resolve again in strict mode so the queue carries
   // exactly what the results page and the reproducibility package report.
+  // This is the app's own route, so it may queue the experimental RDT
+  // diagnostic (#559); the public /api/v1/runs route may not.
   const { resolved, error: resolutionError } = resolveRunParameters(
     modelType,
     parameters,
-    { data },
+    { data, allowExperimentalModels: true },
   );
   if (resolutionError) {
     return res.status(400).json({ error: resolutionError.message });

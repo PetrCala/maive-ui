@@ -118,11 +118,16 @@ ER  -`,
 /**
  * Citations to show for a finished model run. RTMA runs Mathur's method, so
  * the method citation comes first and the MAIVE app is credited as the
- * application; every other model type is MAIVE's own method.
+ * application; every other model type is MAIVE's own method. RDT is an
+ * unpublished, different method (#559): it has no citation entry, and the
+ * MAIVE paper must not be attached to its results.
  */
 function getCitationsForModel(
   modelType?: ModelParameters["modelType"],
 ): Citation[] {
+  if (modelType === "RDT") {
+    return [];
+  }
   if (modelType === "RTMA") {
     return [
       { ...RTMA_PAPER, role: "Method" },

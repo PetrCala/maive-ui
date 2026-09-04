@@ -69,6 +69,49 @@ describe("resolveRunParameters", () => {
     });
   });
 
+  it("rejects the experimental RDT model type unless the caller opts in (#559)", () => {
+    // /api/v1/runs derives the accepted list from CONST.MODEL_TYPES, so RDT
+    // must be refused explicitly there, and the message must not list it.
+    const message = resolveError("RDT", undefined);
+    expect(message).toMatch(/Invalid modelType value: RDT/);
+    expect(message).toMatch(/Must be one of: MAIVE, WAIVE, WLS, RTMA\./);
+
+    const resolved = resolveOk("RDT", undefined, {
+      allowExperimentalModels: true,
+    });
+    expect(resolved.modelType).toBe("RDT");
+    expect(resolved.parameters).toEqual({ modelType: "RDT" });
+    expect(resolved.recipe).toBeNull();
+  });
+
+  it("runs RDT only on the rdt family and rejects it on the public families", () => {
+    expect(resolveOk(undefined, undefined, { family: "rdt" }).modelType).toBe(
+      "RDT",
+    );
+    const wrongFamily = resolveRunParameters("MAIVE", undefined, {
+      family: "rdt",
+    });
+    expect(wrongFamily.error?.message).toMatch(/This endpoint runs RDT only/);
+    const maiveFamily = resolveRunParameters("RDT", undefined, {
+      family: "maive",
+      allowExperimentalModels: true,
+    });
+    expect(maiveFamily.error?.message).toMatch(
+      /Invalid modelType value: RDT\. This endpoint runs MAIVE, WAIVE and WLS/,
+    );
+  });
+
+  it("rejects RDT parameters other than the model type", () => {
+    const result = resolveRunParameters(
+      "RDT",
+      { winsorize: 2 },
+      { allowExperimentalModels: true },
+    );
+    expect(result.error?.message).toMatch(
+      /Unknown RDT parameter key: winsorize/,
+    );
+  });
+
   it("rejects unknown parameter keys instead of silently dropping them (#555)", () => {
     expect(
       resolveError("MAIVE", { winsorize: 5, unknownKnob: "boom" }),

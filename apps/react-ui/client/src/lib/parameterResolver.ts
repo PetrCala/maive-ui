@@ -33,7 +33,11 @@
 
 import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
-import type { ModelParameters, RTMAParameters } from "@src/types/api";
+import type {
+  ModelParameters,
+  RDTParameters,
+  RTMAParameters,
+} from "@src/types/api";
 
 export type DataShape = {
   /** A study identifier column is present (by name, or as a 4th column). */
@@ -123,7 +127,7 @@ export type ParameterAdjustment = {
 
 export type ResolvedRun = {
   modelType: ModelParameters["modelType"];
-  parameters: ModelParameters | RTMAParameters;
+  parameters: ModelParameters | RTMAParameters | RDTParameters;
   /** The named recipe the resolved parameters correspond to, if any. */
   recipe: RecipeName | null;
   /** Values the rules changed (lenient mode only; always empty in strict). */
@@ -139,8 +143,17 @@ export type ResolveInput = {
   parameters?: unknown;
   /** Named recipe to expand before applying caller parameters. */
   recipe?: unknown;
-  /** Endpoint constraint: `/v1/run-model` is `maive`, `/v1/run-rtma` is `rtma`. */
-  family?: "maive" | "rtma";
+  /**
+   * Endpoint constraint: `/v1/run-model` is `maive`, `/v1/run-rtma` is
+   * `rtma`, and the app's own `/api/run-rdt` proxy is `rdt`.
+   */
+  family?: "maive" | "rtma" | "rdt";
+  /**
+   * Accept the experimental RDT model type (#559). Off by default, so the
+   * public API rejects RDT no matter what CONST.MODEL_TYPES lists; the app's
+   * own routes (`/api/runs`, the `rdt` family) opt in.
+   */
+  allowExperimentalModels?: boolean;
   mode?: ResolveMode;
 };
 
@@ -151,6 +164,10 @@ export type ResolveResult =
   | { resolved?: undefined; error: ResolveError };
 
 const MODEL_TYPE_VALUES = Object.values(CONST.MODEL_TYPES);
+/** Model types the public API accepts: everything but the experimental RDT. */
+const PUBLIC_MODEL_TYPE_VALUES = MODEL_TYPE_VALUES.filter(
+  (value) => value !== CONST.MODEL_TYPES.RDT,
+);
 const MAIVE_METHOD_VALUES = Object.values(CONST.MAIVE_METHODS);
 const WEIGHT_VALUES = Object.values(CONST.WEIGHT_OPTIONS).map(
   (option) => option.VALUE,
@@ -182,6 +199,15 @@ export const RTMA_PARAMETER_KEYS: ReadonlyArray<keyof RTMAParameters> = [
   "ciLevel",
   "winsorize",
   "seed",
+];
+
+/**
+ * Every key an RDT `parameters` object may carry. RDT has no user options
+ * (#559): cutoff, running variable, kernel, bandwidth and inference are all
+ * fixed in the backend.
+ */
+export const RDT_PARAMETER_KEYS: ReadonlyArray<keyof RDTParameters> = [
+  "modelType",
 ];
 
 export const RTMA_DEFAULTS: Omit<RTMAParameters, "modelType" | "seed"> = {
@@ -373,10 +399,13 @@ const resolveRecipe = (recipeInput: unknown): Recipe | null => {
  * run from being "MAIVE".
  */
 export const detectRecipe = (
-  parameters: ModelParameters | RTMAParameters,
+  parameters: ModelParameters | RTMAParameters | RDTParameters,
 ): RecipeName | null => {
   if (parameters.modelType === CONST.MODEL_TYPES.RTMA) {
     return "RTMA";
+  }
+  if (parameters.modelType === CONST.MODEL_TYPES.RDT) {
+    return null;
   }
   const params = parameters;
   const match = RECIPE_NAMES.find((name) => {
@@ -485,6 +514,7 @@ const resolveModelType = (
   explicit: Set<string>,
   mode: ResolveMode,
   family: ResolveInput["family"],
+  allowExperimental: boolean,
 ): ModelTypeValue => {
   const fromParameters = overrides.modelType;
   const topLevel =
@@ -511,18 +541,32 @@ const resolveModelType = (
     if (family === "rtma" || (mode === "lenient" && !shape.hasNObsColumn)) {
       return CONST.MODEL_TYPES.RTMA as ModelTypeValue;
     }
+    if (family === "rdt") {
+      return CONST.MODEL_TYPES.RDT as ModelTypeValue;
+    }
     return CONFIG.DEFAULT_MODEL_PARAMETERS.modelType;
   }
   explicit.add("modelType");
+  // RDT is experimental (#559): the browser and the app's own routes may run
+  // it, but through the public API it is not a model type at all, so the
+  // error lists only the public ones and never hints that it exists.
+  const accepted = allowExperimental
+    ? MODEL_TYPE_VALUES
+    : PUBLIC_MODEL_TYPE_VALUES;
   if (
     typeof requested !== "string" ||
-    !MODEL_TYPE_VALUES.includes(requested as ModelTypeValue)
+    !accepted.includes(requested as ModelTypeValue)
   ) {
     invalid(
-      `Invalid modelType value: ${String(requested)}. Must be one of: ${MODEL_TYPE_VALUES.join(", ")}.`,
+      `Invalid modelType value: ${String(requested)}. Must be one of: ${accepted.join(", ")}.`,
     );
   }
   return requested as ModelTypeValue;
+};
+
+const resolveRdt = (overrides: Record<string, unknown>): RDTParameters => {
+  rejectUnknownKeys(overrides, RDT_PARAMETER_KEYS, "RDT");
+  return { modelType: "RDT" };
 };
 
 const resolveRtma = (overrides: Record<string, unknown>): RTMAParameters => {
@@ -669,6 +713,12 @@ const resolveOrThrow = (input: ResolveInput): ResolvedRun => {
   const explicit = new Set(Object.keys(overrides));
   const adjustments: ParameterAdjustment[] = [];
 
+  // Lenient mode is the browser, which gates RDT behind CONFIG.RDT_ENABLED
+  // itself; strict callers must opt in explicitly.
+  const allowExperimental =
+    mode === "lenient" ||
+    input.family === "rdt" ||
+    input.allowExperimentalModels === true;
   const modelType = resolveModelType(
     input.modelType,
     overrides,
@@ -676,9 +726,16 @@ const resolveOrThrow = (input: ResolveInput): ResolvedRun => {
     explicit,
     mode,
     input.family,
+    allowExperimental,
   );
 
   const isRtma = modelType === CONST.MODEL_TYPES.RTMA;
+  const isRdt = modelType === CONST.MODEL_TYPES.RDT;
+  if (input.family === "rdt" && !isRdt) {
+    invalid(
+      `Invalid modelType value: ${modelType}. This endpoint runs RDT only.`,
+    );
+  }
   if (input.family === "rtma" && !isRtma) {
     invalid(
       `Invalid modelType value: ${modelType}. This endpoint runs RTMA only; use /v1/run-model for MAIVE, WAIVE and WLS.`,
@@ -689,11 +746,16 @@ const resolveOrThrow = (input: ResolveInput): ResolvedRun => {
       "Invalid modelType value: RTMA. This endpoint runs MAIVE, WAIVE and WLS; use /v1/run-rtma for RTMA.",
     );
   }
+  if (input.family === "maive" && isRdt) {
+    invalid(
+      "Invalid modelType value: RDT. This endpoint runs MAIVE, WAIVE and WLS.",
+    );
+  }
   if (!isRtma && !shape.hasNObsColumn) {
     if (mode === "strict") {
       invalid(
         explicit.has("modelType")
-          ? `Invalid modelType value: ${modelType}. The data has no n_obs (sample size) column, which MAIVE, WAIVE and WLS all require; only RTMA can run on it.`
+          ? `Invalid modelType value: ${modelType}. The data has no n_obs (sample size) column, which ${isRdt ? "RDT requires" : "MAIVE, WAIVE and WLS all require"}; only RTMA can run on it.`
           : "The data has no n_obs (sample size) column, which the default model (MAIVE) requires. Add n_obs, or set modelType to RTMA.",
       );
     }
@@ -705,7 +767,7 @@ const resolveOrThrow = (input: ResolveInput): ResolvedRun => {
     });
   }
 
-  let parameters: ModelParameters | RTMAParameters;
+  let parameters: ModelParameters | RTMAParameters | RDTParameters;
   if (isRtma) {
     parameters = resolveRtma(overrides);
   } else if (!shape.hasNObsColumn) {
@@ -719,6 +781,8 @@ const resolveOrThrow = (input: ResolveInput): ResolvedRun => {
         ),
       ),
     );
+  } else if (isRdt) {
+    parameters = resolveRdt(overrides);
   } else {
     parameters = resolveMaiveFamily(
       modelType,
@@ -755,11 +819,20 @@ export const resolveRunParameters = (input: ResolveInput): ResolveResult => {
 
 /**
  * The model page keeps one `ModelParameters` object for every model type,
- * RTMA included, so a resolved RTMA run is widened back onto that shape.
+ * RTMA and RDT included, so a resolved RTMA or RDT run is widened back onto
+ * that shape.
  */
 export const toPageParameters = (
-  parameters: ModelParameters | RTMAParameters,
+  parameters: ModelParameters | RTMAParameters | RDTParameters,
 ): ModelParameters => {
+  if (parameters.modelType === CONST.MODEL_TYPES.RDT) {
+    return {
+      ...CONFIG.DEFAULT_MODEL_PARAMETERS,
+      modelType: "RDT",
+      shouldUseInstrumenting: false,
+      computeAndersonRubin: false,
+    };
+  }
   if (parameters.modelType !== CONST.MODEL_TYPES.RTMA) {
     return parameters;
   }
@@ -776,12 +849,15 @@ export const toPageParameters = (
 
 /**
  * The inverse: the subset of the page's parameter object the resolver should
- * see for the selected model type. RTMA ignores every MAIVE-family knob, and
- * sending them would trip the unknown-key check.
+ * see for the selected model type. RTMA ignores every MAIVE-family knob, RDT
+ * has no knobs at all, and sending them would trip the unknown-key check.
  */
 export const fromPageParameters = (
   parameters: ModelParameters,
-): Partial<ModelParameters> | Partial<RTMAParameters> => {
+): Partial<ModelParameters> | Partial<RTMAParameters> | RDTParameters => {
+  if (parameters.modelType === CONST.MODEL_TYPES.RDT) {
+    return { modelType: "RDT" };
+  }
   if (parameters.modelType !== CONST.MODEL_TYPES.RTMA) {
     return parameters;
   }

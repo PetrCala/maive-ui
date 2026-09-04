@@ -107,6 +107,39 @@ test_run_rtma <- function(data, parameters,
   )
 }
 
+#' Test run-rdt endpoint
+#' @param data JSON string of file data
+#' @param parameters JSON string of parameters (RDT has none; sent for parity)
+#' @param base_url Base URL of the API
+#' @param timeout Timeout in seconds
+#' @return Response from run-rdt endpoint
+test_run_rdt <- function(data, parameters = "{}",
+                         base_url = API_BASE_URL,
+                         timeout = API_TIMEOUT) {
+  tryCatch(
+    {
+      response <- httr::POST(
+        paste0(base_url, "/run-rdt"),
+        body = list(
+          data = data,
+          parameters = parameters
+        ),
+        encode = "form",
+        httr::timeout(timeout)
+      )
+
+      if (httr::status_code(response) == 200) {
+        return(httr::content(response, "parsed"))
+      } else {
+        stop(paste("Run-rdt test failed with status:", httr::status_code(response)))
+      }
+    },
+    error = function(e) {
+      stop(paste("Run-rdt test error:", e$message))
+    }
+  )
+}
+
 #' POST a plain nested JSON body to a public /v1 endpoint
 #'
 #' Unlike the legacy helpers above, this sends `application/json` (no form

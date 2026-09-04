@@ -1,5 +1,6 @@
 import { createElement } from "react";
 
+import CONFIG from "@src/CONFIG";
 import CONST from "@src/CONST";
 import type { ModelParameters } from "@src/types";
 import { formatNumberWithSeparator } from "@src/utils/numberFormat";
@@ -340,6 +341,14 @@ const TEXT = {
         createElement("br"),
         createElement("strong", null, "RTMA:"),
         " Right-Truncated Meta-Analysis (Mathur, 2024). Corrects for p-hacking and publication bias using a truncated normal likelihood.",
+        ...(CONFIG.RDT_ENABLED
+          ? [
+              createElement("br"),
+              createElement("br"),
+              createElement("strong", null, "RDT (Experimental):"),
+              " Residual Discontinuity Test. A diagnostic for precision adjusted to reach significance; reports no corrected effect.",
+            ]
+          : []),
       ),
       rtmaOnlyInfo:
         "Your data has no sample-size column, so RTMA is the only available model. MAIVE, WAIVE, and WLS require sample sizes; re-upload with a sample-size column to use them.",
@@ -486,6 +495,67 @@ const TEXT = {
       unavailableValue: "Not recorded",
       unavailableTooltip:
         "This run predates RTMA convergence diagnostics, so there is no way to tell whether its fit converged. Rerun the model to get them.",
+    },
+  },
+  // RDT (Residual Discontinuity Test, #559). The sign convention below is
+  // load-bearing: the residual is of log(SE), so lower means more precise
+  // than sample size predicts, and the signature is a downward jump.
+  rdt: {
+    dropdownLabel: "RDT (Experimental)",
+    helpText:
+      "RDT (Residual Discontinuity Test) is an experimental diagnostic, not an estimator. It regresses log(SE) on log(N) and tests whether the residual, the part of reported precision that sample size does not explain, jumps at |t| = 1.96. It reports no corrected effect and has no options; winsorization does not apply because it would move estimates across the cutoff.",
+    results: {
+      title: "RDT Results",
+      jump: {
+        label: "Jump in residual precision at |t| = 1.96",
+        subLabel:
+          "negative = estimates just past the threshold are more precise than their sample sizes predict",
+        tooltip:
+          "Local-linear regression-discontinuity estimate of the jump in the residual of log(SE) on log(N) at |t| = 1.96, with a CR2 cluster-robust standard error and a conventional 95% interval. Lower residual means more precise than sample size predicts, so a negative jump is the p-hacking signature.",
+      },
+      detectable: {
+        label: "Smallest jump this dataset could detect (80% power)",
+        subLabel:
+          "a jump of about 0.10 corresponds to standard errors roughly 10% smaller than sample size predicts; below the detectable size, a null result says nothing.",
+        tooltip:
+          "2.8 times the standard error of the jump: the smallest true jump that a two-sided 5% test would detect 80% of the time. Power is genuinely low in most literatures, so a result that is not significant is not evidence of clean data.",
+      },
+      window: {
+        label: "Estimation window",
+        tooltip:
+          "The local-linear fit uses estimates with |t| inside this window, weighted by a triangular kernel. The bandwidth follows the Imbens-Kalyanaraman rule, clamped to between 0.25 and 1.0 log points, and is widened only when one side would otherwise hold fewer than five estimates.",
+      },
+      checks: {
+        title: "Checks",
+        firstStage: {
+          label: "First stage",
+          note: "Slope of log(SE) on log(N) and the R-squared of that regression.",
+          warning:
+            "R-squared above 0.99: the standard errors are an almost exact function of sample size, the residual has no variation, and RDT cannot say anything about this data.",
+        },
+        sensitivity: {
+          label: "Bandwidth sensitivity",
+          note: "If these move outside the headline interval, the number depends on the window.",
+        },
+        placebo: {
+          label: "Placebo thresholds",
+          note: "Placebo jumps as large as the headline mean the headline is within noise.",
+        },
+        unavailable: "not available",
+      },
+      // Both paragraphs must stay on the panel (#559): without them the jump
+      // is read as an estimate and a null result as evidence of clean data.
+      interpretation:
+        "The jump compares how much more precise estimates just past |t| = 1.96 are than their sample sizes predict, relative to estimates just short of it. A negative jump is the signature of precision being adjusted to reach significance. Publication selection alone cannot produce it: selecting on t changes which estimates are seen, not the average residual at a given t.",
+      caution:
+        "A result that is not significant does not mean the literature is clean. Read the estimate and its interval, not the p-value. The interval is a conventional cluster-robust interval, not the bias-corrected interval of Calonico, Cattaneo and Titiunik (2014), and the estimate moves with the bandwidth (see checks). RDT is experimental and reports no corrected effect.",
+      plot: {
+        title: "Residual Precision by |t|",
+        tooltip:
+          "Binned scatter of the first-stage residual (log(SE) after log(N); lower = more precise than sample size predicts) against |t| on a log scale. The dashed line marks |t| = 1.96, the shaded band is the estimation window, and the two red segments are the local-linear fits on each side of the cutoff. Dot size is proportional to the number of estimates in the bin.",
+        interpretation:
+          "The figure is a binned scatter of the first-stage residual against |t| on a log scale. Lower means more precise than sample size predicts. The dashed line marks |t| = 1.96, the shaded band is the estimation window, and the two red segments are the local-linear fits on each side of the cutoff; the vertical gap between them at the dashed line is the reported jump. Dot size is proportional to the number of estimates in the bin.",
+      },
     },
   },
   waive: {
@@ -683,10 +753,14 @@ export const getResultsText = (
 
   const isWaive = modelType === CONST.MODEL_TYPES.WAIVE;
   const isRtma = modelType === CONST.MODEL_TYPES.RTMA;
+  const isRdt = modelType === CONST.MODEL_TYPES.RDT;
 
   let plotTitle: string;
   let plotTooltip: string;
-  if (isRtma) {
+  if (isRdt) {
+    plotTitle = TEXT.rdt.results.plot.title;
+    plotTooltip = TEXT.rdt.results.plot.tooltip;
+  } else if (isRtma) {
     plotTitle = "Z-Score Distribution";
     plotTooltip =
       "Distribution of z-scores in the favored direction (estimate divided by standard error, sign-flipped when the favored direction is negative). The dashed vertical line marks the critical value; estimates with z above it are affirmative (significant in the favored direction). RTMA fits its model to the distribution of the not-affirmative estimates to correct for selection bias.";

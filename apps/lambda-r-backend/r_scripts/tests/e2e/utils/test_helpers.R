@@ -58,6 +58,32 @@ generate_rtma_test_data <- function(n = 40, mean_effect = 0.15, tau = 0.08, seed
   data.frame(bs = effects, sebs = se)
 }
 
+#' Generate sample data for RDT
+#'
+#' RDT needs estimates on both sides of |t| = 1.96 and standard errors that
+#' sample size explains only partly. Sample sizes are log-uniform, standard
+#' errors follow 1/sqrt(N) with lognormal noise, and effects are drawn so that
+#' t is centred at 1.5 with enough spread to put roughly a third past 1.96.
+#'
+#' @param n Number of estimates
+#' @param n_studies Number of distinct study ids
+#' @param seed Random seed, for reproducible tests
+#' @return Data frame with bs, sebs, Ns and study_id columns
+generate_rdt_test_data <- function(n = 150, n_studies = 30, seed = 2027) {
+  set.seed(seed)
+
+  n_obs <- round(exp(runif(n, log(50), log(3000))))
+  se <- exp(0.3 - 0.5 * log(n_obs) + rnorm(n, 0, 0.3))
+  effects <- se * rnorm(n, 1.5, 1.2)
+
+  data.frame(
+    bs = effects,
+    sebs = se,
+    Ns = n_obs,
+    study_id = paste0("study_", sample(seq_len(n_studies), n, replace = TRUE))
+  )
+}
+
 #' Generate data with known publication bias
 #' @param n_studies Number of studies
 #' @param bias_strength Strength of publication bias

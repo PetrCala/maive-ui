@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { parseRunParameters } from "@src/utils/runParameterUtils";
-import { isRtmaResults } from "@src/utils/resultTypeUtils";
-import type { ModelResults, RTMAResults } from "@src/types/api";
+import { isRdtResults, isRtmaResults } from "@src/utils/resultTypeUtils";
+import type { ModelResults, RDTResults, RTMAResults } from "@src/types/api";
 import CONFIG from "@src/CONFIG";
 
 describe("parseRunParameters", () => {
@@ -33,6 +33,22 @@ describe("parseRunParameters", () => {
     );
     expect(parsed.modelType).toBe("WLS");
     expect(parsed.shouldUseInstrumenting).toBe(false);
+  });
+
+  it("leaves an RDT run labelled RDT when instrumenting is off (#559)", () => {
+    // RDT records shouldUseInstrumenting: false like WLS does; without the
+    // exclusion a stored RDT run came back labelled WLS and rendered as a
+    // MAIVE estimate.
+    const parsed = parseRunParameters(
+      JSON.stringify({ modelType: "RDT", shouldUseInstrumenting: false }),
+    );
+    expect(parsed.modelType).toBe("RDT");
+    expect(parsed.shouldUseInstrumenting).toBe(false);
+    expect(
+      parseRunParameters(
+        JSON.stringify({ modelType: "RDT", shouldUseInstrumenting: true }),
+      ).shouldUseInstrumenting,
+    ).toBe(false);
   });
 
   it("leaves WAIVE and RTMA alone when instrumenting is off", () => {
@@ -79,5 +95,20 @@ describe("isRtmaResults", () => {
 
     expect(isRtmaResults(rtma)).toBe(true);
     expect(isRtmaResults(maive)).toBe(false);
+  });
+});
+
+describe("isRdtResults", () => {
+  it("identifies an RDT payload by its model field, and nothing else", () => {
+    // RDT has neither muCI nor effectEstimate, so the shape tests above
+    // cannot see it; the backend names the model instead (#559).
+    const rdt = { model: "RDT", jump: -0.1 } as unknown as RDTResults;
+    const rtma = { mu: 1, muCI: [0.5, 1.5] } as unknown as RTMAResults;
+    const maive = { effectEstimate: 1 } as unknown as ModelResults;
+
+    expect(isRdtResults(rdt)).toBe(true);
+    expect(isRtmaResults(rdt)).toBe(false);
+    expect(isRdtResults(rtma)).toBe(false);
+    expect(isRdtResults(maive)).toBe(false);
   });
 });

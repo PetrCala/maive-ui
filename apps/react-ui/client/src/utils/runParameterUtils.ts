@@ -8,9 +8,9 @@ import CONST from "@src/CONST";
  *
  * `shouldUseInstrumenting` is not stored independently of `modelType`: it is
  * derived, because the two would otherwise be able to disagree. A stored
- * `shouldUseInstrumenting: false` on a non-WAIVE, non-RTMA run is how a WLS run
- * is recorded, so it is read back as WLS rather than as the model type that
- * happens to sit in the object.
+ * `shouldUseInstrumenting: false` on a non-WAIVE, non-RTMA, non-RDT run is how
+ * a WLS run is recorded, so it is read back as WLS rather than as the model
+ * type that happens to sit in the object.
  *
  * Unparseable input falls back to the defaults rather than throwing, so one bad
  * entry cannot take down a page that renders several runs at once.
@@ -41,14 +41,16 @@ export const parseRunParameters = (
   if (
     resolved.shouldUseInstrumenting === false &&
     resolved.modelType !== CONST.MODEL_TYPES.WAIVE &&
-    resolved.modelType !== CONST.MODEL_TYPES.RTMA
+    resolved.modelType !== CONST.MODEL_TYPES.RTMA &&
+    resolved.modelType !== CONST.MODEL_TYPES.RDT
   ) {
     resolved.modelType = CONST.MODEL_TYPES.WLS;
   }
 
   resolved.shouldUseInstrumenting = !(
     resolved.modelType === CONST.MODEL_TYPES.WLS ||
-    resolved.modelType === CONST.MODEL_TYPES.RTMA
+    resolved.modelType === CONST.MODEL_TYPES.RTMA ||
+    resolved.modelType === CONST.MODEL_TYPES.RDT
   );
 
   return resolved;
