@@ -342,6 +342,14 @@ cat("\\n========================================\\n")
 cat("MAIVE ANALYSIS RESULTS\\n")
 cat("========================================\\n\\n")
 
+# Some numbers come back as the string "NA" when they are undefined (a WLS or
+# WAIVE Hausman statistic, an Egger p-value with a zero standard error), so
+# print through a helper rather than sprintf("%.6f", ...), which errors on a
+# character value.
+fmt_num <- function(x) {
+  if (is.null(x) || length(x) != 1 || !is.numeric(x) || !is.finite(x)) "NA" else sprintf("%.6f", x)
+}
+
 cat("=== EFFECT ESTIMATE ===\\n")
 cat("Estimate:         ", sprintf("%.6f", results$effectEstimate), "\\n")
 cat("Standard Error:   ", sprintf("%.6f", results$standardError), "\\n")
@@ -353,7 +361,7 @@ if (!identical(results$andersonRubinCI, "NA") && !is.null(results$andersonRubinC
 cat("\\n=== PUBLICATION BIAS ===\\n")
 cat("Egger Coefficient:", sprintf("%.6f", results$publicationBias$eggerCoef), "\\n")
 cat("Egger SE:         ", sprintf("%.6f", results$publicationBias$eggerSE), "\\n")
-cat("P-value:          ", sprintf("%.6f", results$publicationBias$pValue), "\\n")
+cat("P-value:          ", fmt_num(results$publicationBias$pValue), "\\n")
 cat("Significant:      ", results$publicationBias$isSignificant, "\\n")
 if (!identical(results$publicationBias$eggerBootCI, "NA") && !is.null(results$publicationBias$eggerBootCI)) {
   cat("Bootstrap CI:     ", sprintf("[%.6f, %.6f]", results$publicationBias$eggerBootCI[1], results$publicationBias$eggerBootCI[2]), "\\n")
@@ -363,7 +371,7 @@ cat("\\n=== MODEL DIAGNOSTICS ===\\n")
 if (!identical(results$firstStageFStatistic, "NA") && !is.null(results$firstStageFStatistic)) {
   cat("First-Stage F-statistic:", sprintf("%.6f", results$firstStageFStatistic), "\\n")
 }
-cat("Hausman Statistic: ", sprintf("%.6f", results$hausmanTest$statistic), "\\n")
+cat("Hausman Statistic: ", fmt_num(results$hausmanTest$statistic), "\\n")
 cat("Chi-Squared CV:    ", sprintf("%.6f", results$hausmanTest$criticalValue), "\\n")
 cat("Rejects Null:      ", results$hausmanTest$rejectsNull, "\\n")
 ${generateVerificationSection(
