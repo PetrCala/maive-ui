@@ -546,7 +546,7 @@ const TEXT = {
       // Both paragraphs must stay on the panel (#559): without them the jump
       // is read as an estimate and a null result as evidence of clean data.
       interpretation:
-        "The jump compares how much more precise estimates just past |t| = 1.96 are than their sample sizes predict, relative to estimates just short of it. A negative jump is the signature of precision being adjusted to reach significance. Publication selection alone cannot produce it: selecting on t changes which estimates are seen, not the average residual at a given t.",
+        "The jump compares how much more precise estimates just past |t| = 1.96 are than their sample sizes predict, relative to estimates just short of it. A negative jump is what adjusting precision to reach significance would produce. Selection on significance alone cannot produce it, but selection that also depends on the size of the effect can, so a negative jump is not by itself proof of manipulation.",
       caution:
         "A result that is not significant does not mean the literature is clean. Read the estimate and its interval, not the p-value. The interval is a conventional cluster-robust interval, not the bias-corrected interval of Calonico, Cattaneo and Titiunik (2014), and the estimate moves with the bandwidth (see checks). RDT is experimental and reports no corrected effect.",
       plot: {

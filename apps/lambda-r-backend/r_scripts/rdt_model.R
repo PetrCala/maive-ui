@@ -4,9 +4,9 @@
 # chosen (clustering level, HAC, controls). Regressing log(SE) on log(N) leaves
 # a residual, pi, which is the part of reported precision that sample size does
 # not explain. RDT asks whether the conditional mean of pi jumps at |t| = 1.96.
-# Selection on t reweights which estimates are seen at a given t, but it cannot
-# move the mean residual at a given t, so a jump is evidence of precision being
-# adjusted rather than of selective publication.
+# Selection on t alone cannot move the mean residual at a given t; selection
+# that also depends on effect size can, so a jump is evidence of precision
+# adjusted or selected at the cutoff, not proof of manipulation.
 #
 # Sign convention: pi is a residual of log(SE), so LOWER means more precise
 # than sample size predicts, and the p-hacking signature is a DOWNWARD jump at
@@ -31,6 +31,13 @@ RDT_MIN_STUDIES_IN_WINDOW <- 10
 # standard errors are then an almost exact function of N and RDT cannot say
 # anything. One of the app's own mock datasets sits at exactly 1.000.
 RDT_FIRST_STAGE_R2_WARN <- 0.99
+# Share of estimates above which the standard errors are treated as
+# back-computed rather than reported. A standard error obtained as
+# |effect / t| from a printed 2dp t-statistic leaves |t| on the 2dp grid AND
+# carries full double precision, unlike a reported SE (2-4 digits); either
+# fingerprint alone gives false positives, the pair separates cleanly. Corpus
+# median 0.19; the five reconstructed literatures run 0.63-0.83.
+RDT_RECONSTRUCTED_SE_WARN <- 0.60
 # Smallest jump detectable with 80% power at the 5% level, as a multiple of the
 # standard error: qnorm(0.975) + qnorm(0.8) = 1.96 + 0.84.
 RDT_DETECTABLE_JUMP_SE_MULTIPLE <- 2.8
@@ -238,6 +245,28 @@ render_rdt_plot <- function(pi, r, fit, cutoff = RDT_CUTOFF, res = RDT_PLOT_RES)
   )
 }
 
+#' Share of estimates whose standard error looks back-computed from a t-statistic
+#'
+#' A standard error obtained as |effect / t| from a printed two-decimal
+#' t-statistic leaves two fingerprints together: the implied |t| sits on the
+#' 2dp grid, and the standard error carries full double precision rather than
+#' the two to four significant digits an author would print. The 1e-6
+#' tolerance is deliberate: one genuine reconstruction stores its standard
+#' errors to eight significant figures and is missed at 1e-8, while a
+#' continuous |t| lands on the 2dp grid by chance with probability about 2e-4.
+#'
+#' @param effect Filtered effect estimates
+#' @param se Filtered standard errors
+#' @return Share of rows carrying both fingerprints
+rdt_reconstructed_se_share <- function(effect, se) {
+  t_abs <- abs(effect / se)
+  se_digits <- nchar(sub("0+$", "", sub(
+    "^0+", "",
+    gsub("[^0-9]", "", sub("e.*$", "", sprintf("%.15g", se)))
+  )))
+  mean(abs(t_abs - round(t_abs, 2)) < 1e-6 & se_digits >= 7)
+}
+
 #' Run the Residual Discontinuity Test
 #'
 #' Columns are read positionally like the other legacy routes: effect,
@@ -357,6 +386,18 @@ run_rdt_model <- function(data, parameters = "{}", include_plot = TRUE) {
         "sample size, the residual has no variation, and RDT cannot say anything about this data."
       ),
       first_stage_r2
+    ))
+  }
+  reconstructed_share <- rdt_reconstructed_se_share(effect, se)
+  if (reconstructed_share > RDT_RECONSTRUCTED_SE_WARN) {
+    warnings <- c(warnings, sprintf(
+      paste(
+        "%.0f%% of the implied t-statistics are exact to two decimal places and the standard",
+        "errors carry full precision, which usually means they were back-computed from rounded",
+        "t-statistics rather than reported. RDT then has no independent measure of reported",
+        "precision, so read this result with caution."
+      ),
+      100 * reconstructed_share
     ))
   }
 
