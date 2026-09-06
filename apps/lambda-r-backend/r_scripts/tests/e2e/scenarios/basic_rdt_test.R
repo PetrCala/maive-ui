@@ -3,9 +3,10 @@
 # RDT is a diagnostic, not an estimator: it reports the jump in the residual
 # of log(SE) on log(N) at |t| = 1.96 and no corrected effect. These checks
 # pin the response contract the UI's RDTResultsSummary reads, the input
-# guards (sample size mandatory, minimum counts each side of the cutoff) and
-# the first-stage warning that fires when standard errors are an exact
-# function of sample size.
+# guards (sample size mandatory, minimum counts each side of the cutoff), the
+# first-stage warning that fires when standard errors are an exact function of
+# sample size and the warning for standard errors that were back-computed from
+# a rounded t-statistic rather than reported (#564).
 
 #' Post a data frame to /run-rdt and return the parsed results
 #' @param df Data frame with effect, se, n_obs and optionally study_id
@@ -82,6 +83,51 @@ check_rdt_exact_first_stage <- function(df) {
   if (!any(grepl("R-squared", unlist(results$warnings)))) {
     stop("A first-stage R-squared above 0.99 should raise a warning")
   }
+  invisible(TRUE)
+}
+
+#' Check the warning that fires when standard errors were back-computed (#564)
+#'
+#' The detector reads how many significant digits the standard errors carry, so
+#' these posts serialize at full precision (`digits = NA`) the way the browser
+#' does; the shared `df_to_json` rounds to four decimals and would erase the
+#' fingerprint the check is about.
+check_rdt_reconstructed_se <- function(df) {
+  cat("Checking RDT reconstructed standard error warning...\n")
+  warns_reconstructed <- function(data) {
+    response <- test_run_rdt(
+      jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA),
+      params_to_json(list(modelType = "RDT"))
+    )
+    if (!is.list(response) || is.null(response$data)) {
+      stop(paste(
+        "Response should contain a 'data' field; got:",
+        if (is.null(response$message)) "no message" else response$message
+      ))
+    }
+    any(grepl("back-computed", unlist(response$data$warnings)))
+  }
+
+  if (warns_reconstructed(df)) {
+    stop("Reported standard errors should not raise the back-computed warning")
+  }
+
+  # Standard errors recovered as |effect / t| from a t-statistic printed to
+  # two decimal places, as they are in literatures that never report an SE.
+  recon <- df
+  recon$sebs <- abs(recon$bs / round(recon$bs / recon$sebs, 2))
+  if (!warns_reconstructed(recon)) {
+    stop("Standard errors back-computed from a 2dp t-statistic should raise a warning")
+  }
+
+  # Three printed decimals leave |t| off the 2dp grid, so honest coarse
+  # reporting is not flagged.
+  recon3 <- df
+  recon3$sebs <- abs(recon3$bs / round(recon3$bs / recon3$sebs, 3))
+  if (warns_reconstructed(recon3)) {
+    stop("Standard errors back-computed from a 3dp t-statistic should not raise a warning")
+  }
+
   invisible(TRUE)
 }
 
@@ -171,6 +217,7 @@ test_basic_rdt <- function() {
       check_rdt_input_guards(test_data)
       check_rdt_exact_first_stage(test_data)
       check_rdt_no_study_column(test_data)
+      check_rdt_reconstructed_se(test_data)
 
       log_test_result(test_name, "PASS", "Basic RDT functionality working correctly")
       return(list(status = "PASS", test_name = test_name, results = results))

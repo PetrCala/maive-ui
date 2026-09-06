@@ -106,7 +106,7 @@ describe("RDTResultsSummary", () => {
     ).toBeInTheDocument();
     expect(screen.getByText(TEXT.rdt.results.caution)).toBeInTheDocument();
     expect(TEXT.rdt.results.interpretation).toMatch(
-      /Publication selection alone cannot produce it/,
+      /Selection on significance alone cannot produce it/,
     );
     expect(TEXT.rdt.results.caution).toMatch(
       /RDT is experimental and reports no corrected effect/,
