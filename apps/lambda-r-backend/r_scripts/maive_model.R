@@ -373,6 +373,12 @@ run_maive_model <- function(data, parameters) {
 
   pub_bias_p_value <- maive_res[["pub bias p-value"]]
   pb_is_significant <- if (is_defined_number(pub_bias_p_value)) pub_bias_p_value < 0.05 else NA
+  # An Egger standard error of zero (identical effects) makes the p-value NaN.
+  # Report it as the same "NA" string every other undefined number in the
+  # payload uses, so the response never carries a bare NaN (#565).
+  if (!is_defined_number(pub_bias_p_value)) {
+    pub_bias_p_value <- "NA"
+  }
 
   hausman_statistic <- maive_res$Hausman
   hausman_critical_value <- maive_res$Chi2

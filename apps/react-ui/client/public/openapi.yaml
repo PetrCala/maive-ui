@@ -188,16 +188,54 @@ paths:
             examples:
               minimal:
                 summary: Minimal request (all parameters default)
+                description: >-
+                  RTMA is refused unless at least one estimate is
+                  nonaffirmative (`|effect / se|` below 1.96), and a
+                  mostly-affirmative dataset makes the sampler unpredictably
+                  slow. These 40 rows are the fixture the backend test suite
+                  runs: 24 of them nonaffirmative, and a few seconds to fit.
                 value:
                   data:
-                    - effect: 0.42
-                      se: 0.11
-                    - effect: 0.31
-                      se: 0.06
-                    - effect: 0.55
-                      se: 0.2
-                    - effect: 0.12
-                      se: 0.04
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.05, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.1, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.15, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.25, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
+                    - { effect: 0.35, se: 0.1 }
       responses:
         "200":
           description: RTMA results, plus the resolved parameters that ran.
@@ -868,7 +906,13 @@ components:
             eggerAndersonRubinCI:
               $ref: "#/components/schemas/CIInterval"
             pValue:
-              type: number
+              description: >-
+                Egger p-value, or `"NA"` when it is undefined (an Egger
+                standard error of zero, e.g. identical effects).
+              oneOf:
+                - type: number
+                - type: string
+                  enum: ["NA"]
         firstStageFStatistic:
           description: Numeric F-statistic, or `"NA"` when not computed (e.g. no instrumenting).
           oneOf:
@@ -880,7 +924,11 @@ components:
           required: [statistic, criticalValue, rejectsNull]
           properties:
             statistic:
-              type: number
+              description: Numeric Hausman statistic, or `"NA"` when it is undefined.
+              oneOf:
+                - type: number
+                - type: string
+                  enum: ["NA"]
             criticalValue:
               type: number
             rejectsNull:
@@ -931,11 +979,23 @@ components:
           type: string
           enum: [PET, PEESE]
         peese_se2_coef:
-          nullable: true
-          type: number
+          description: >-
+            PEESE `se^2` coefficient, or `"NA"` when `petpeese_selected` is
+            `PET` and no PEESE curve was fitted.
+          oneOf:
+            - type: number
+              nullable: true
+            - type: string
+              enum: ["NA"]
         peese_se2_se:
-          nullable: true
-          type: number
+          description: >-
+            Standard error of `peese_se2_coef`, or `"NA"` under the same
+            condition.
+          oneOf:
+            - type: number
+              nullable: true
+            - type: string
+              enum: ["NA"]
         slope_coef:
           description: A single slope coefficient, or a kink description when the fit is piecewise.
           oneOf:

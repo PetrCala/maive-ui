@@ -8,6 +8,7 @@ import {
   buildAgentMd,
   buildLlmsTxt,
   recipeCurlExample,
+  EXAMPLE_RTMA_ROWS,
 } from "@src/lib/discovery";
 import { RECIPE_NAMES } from "@src/lib/parameterResolver";
 import { getCitationsForModel } from "@src/utils/citationUtils";
@@ -47,6 +48,21 @@ describe("discovery files (#555)", () => {
     }
     expect(recipeCurlExample("RTMA")).toContain("/v1/run-rtma");
     expect(recipeCurlExample("EK")).toContain('"recipe": "EK"');
+  });
+
+  it("show an RTMA example the API would actually accept", () => {
+    // Every estimate affirmative (|t| >= 1.96) is refused outright, and a
+    // mostly-affirmative dataset samples badly (#565). Guard the constant
+    // rather than posting to production, which would be slow and flaky.
+    const nonaffirmative = EXAMPLE_RTMA_ROWS.filter(
+      ({ effect, se }) => Math.abs(effect / se) < 1.96,
+    );
+    expect(nonaffirmative.length).toBeGreaterThan(0);
+    expect(nonaffirmative.length * 2).toBeGreaterThanOrEqual(
+      EXAMPLE_RTMA_ROWS.length,
+    );
+    expect(EXAMPLE_RTMA_ROWS.length).toBeGreaterThanOrEqual(40);
+    expect(recipeCurlExample("RTMA")).toContain('{"effect":0.05,"se":0.1}');
   });
 
   it("describe the resolved echo and the unknown-key rejection", () => {

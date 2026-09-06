@@ -84,6 +84,25 @@ generate_rdt_test_data <- function(n = 150, n_studies = 30, seed = 2027) {
   )
 }
 
+#' Plant a known jump in the residual at the RDT cutoff
+#'
+#' Scales standard error and effect together for the rows above the cutoff, so
+#' |t| is unchanged and no observation moves across the cutoff: the only thing
+#' planted is a jump in the residual of log(SE) on log(N). A positive `delta`
+#' shrinks the standard errors above the cutoff, which is the p-hacking
+#' signature, and RDT should report a downward (negative) jump.
+#'
+#' @param df Data frame from generate_rdt_test_data
+#' @param delta Size of the jump in log points; negative flips its direction
+#' @return The data frame with the rows above the cutoff rescaled
+plant_rdt_jump <- function(df, delta = 0.30) {
+  above <- abs(df$bs / df$sebs) >= 1.96
+  scale <- exp(-delta)
+  df$sebs[above] <- df$sebs[above] * scale
+  df$bs[above] <- df$bs[above] * scale
+  df
+}
+
 #' Generate data with known publication bias
 #' @param n_studies Number of studies
 #' @param bias_strength Strength of publication bias

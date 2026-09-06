@@ -131,6 +131,42 @@ check_rdt_reconstructed_se <- function(df) {
   invisible(TRUE)
 }
 
+#' Check that the reported jump has the sign of the discontinuity in the data
+#'
+#' The unplanted fixture has no discontinuity, so every other assertion here
+#' passes under a sign flip in the estimator (#565). These two do not: a
+#' downward jump is planted first, then an upward one, on a fixture large
+#' enough to separate them from noise by a wide margin (the planted jumps are
+#' about -0.33 and +0.27 against an unplanted -0.03).
+check_rdt_jump_sign <- function() {
+  cat("Checking the sign of the RDT jump...\n")
+  base <- generate_rdt_test_data(n = 400, n_studies = 40)
+
+  down <- rdt_results_for(plant_rdt_jump(base, 0.30))
+  if (down$jump > -0.15) {
+    stop(sprintf(
+      "Shrinking the standard errors above the cutoff should give a downward jump; got %+0.4f",
+      down$jump
+    ))
+  }
+  if (down$pValue > 0.01) {
+    stop(sprintf("The planted downward jump should be significant; got p = %0.4f", down$pValue))
+  }
+
+  up <- rdt_results_for(plant_rdt_jump(base, -0.30))
+  if (up$jump < 0.15) {
+    stop(sprintf(
+      "Inflating the standard errors above the cutoff should give an upward jump; got %+0.4f",
+      up$jump
+    ))
+  }
+  if (up$pValue > 0.01) {
+    stop(sprintf("The planted upward jump should be significant; got p = %0.4f", up$pValue))
+  }
+
+  invisible(TRUE)
+}
+
 #' Check that a missing study column is reported and changes the clustering
 check_rdt_no_study_column <- function(df) {
   cat("Checking RDT without a study column...\n")
@@ -214,6 +250,7 @@ test_basic_rdt <- function() {
         stop("The plot should be a base64 PNG data URI")
       }
 
+      check_rdt_jump_sign()
       check_rdt_input_guards(test_data)
       check_rdt_exact_first_stage(test_data)
       check_rdt_no_study_column(test_data)

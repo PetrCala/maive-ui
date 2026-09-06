@@ -34,11 +34,17 @@ export const EXAMPLE_MAIVE_ROWS = [
   { effect: 0.18, se: 0.05, n_obs: 160, study_id: "Jones2019" },
 ];
 
-/** RTMA needs only effect and se. */
-export const EXAMPLE_RTMA_ROWS = EXAMPLE_MAIVE_ROWS.map(({ effect, se }) => ({
-  effect,
-  se,
-}));
+/**
+ * RTMA needs only effect and se, but it also needs the data to suit the
+ * sampler: a dataset where every estimate is affirmative (|effect / se| at or
+ * above 1.96) is refused outright, and a mostly-affirmative one fits slowly
+ * and badly (#565). The six MAIVE rows are all affirmative, so RTMA gets the
+ * 40-row fixture the R e2e suite runs instead: 24 nonaffirmative estimates,
+ * a few seconds to fit, and no sampler warnings.
+ */
+export const EXAMPLE_RTMA_ROWS = [0.05, 0.1, 0.15, 0.25, 0.35].flatMap(
+  (effect) => Array.from({ length: 8 }, () => ({ effect, se: 0.1 })),
+);
 
 const formatRows = (rows: Array<Record<string, unknown>>): string =>
   rows.map((row) => `      ${JSON.stringify(row)}`).join(",\n");
