@@ -55,6 +55,8 @@ const effectSignificanceLabel =
 const biasSignificanceLabel =
   TEXT.results.publicationBias.metrics.significance.label;
 const hausmanLabel = TEXT.results.diagnosticTests.metrics.hausmanTest.label;
+const peeseSe2CoefLabel = TEXT.results.modelDetails.metrics.peeseSe2Coef.label;
+const peeseSe2SeLabel = TEXT.results.modelDetails.metrics.peeseSe2Se.label;
 
 describe("generateResultsData significance verdicts", () => {
   it("renders boolean verdicts as Yes/No with a colour", () => {
@@ -130,5 +132,34 @@ describe("generateResultsData significance verdicts", () => {
     expect(hausman?.value).toBe(5.2);
     expect(hausman?.highlightColor).toBeUndefined();
     expect(hausman?.extraText).toBeUndefined();
+  });
+});
+
+describe("generateResultsData with string-valued numbers", () => {
+  // The backend spells an undefined number as the string "NA", not as NaN:
+  // every WLS and WAIVE run reports the Hausman statistic that way, and the
+  // PEESE coefficients follow whenever PET was the selected model.
+  it('reads "NA" the same way it reads a NaN', () => {
+    const data = generateResultsData(
+      {
+        ...results,
+        hausmanTest: {
+          statistic: "NA",
+          criticalValue: 3.8415,
+          rejectsNull: null,
+        },
+        petpeese_selected: "PET",
+        peese_se2_coef: "NA",
+        peese_se2_se: "NA",
+      },
+      { ...parameters, maiveMethod: "PEESE" },
+    );
+
+    const hausman = findItem(data, hausmanLabel);
+    expect(hausman?.value).toBe("NA");
+    expect(hausman?.highlightColor).toBeUndefined();
+
+    expect(findItem(data, peeseSe2CoefLabel)).toBeUndefined();
+    expect(findItem(data, peeseSe2SeLabel)).toBeUndefined();
   });
 });

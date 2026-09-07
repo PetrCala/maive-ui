@@ -342,12 +342,7 @@ export const generateResultsData = (
       const peeseSe2Coef = results.peese_se2_coef;
       const peeseSe2Se = results.peese_se2_se;
 
-      if (
-        peeseSe2Coef !== null &&
-        peeseSe2Coef !== undefined &&
-        !Number.isNaN(peeseSe2Coef) &&
-        Number.isFinite(peeseSe2Coef)
-      ) {
+      if (isFiniteNumber(peeseSe2Coef)) {
         extendedResults.push({
           label: resultsText.modelDetails.metrics.peeseSe2Coef.label,
           value: peeseSe2Coef,
@@ -356,12 +351,7 @@ export const generateResultsData = (
         });
       }
 
-      if (
-        peeseSe2Se !== null &&
-        peeseSe2Se !== undefined &&
-        !Number.isNaN(peeseSe2Se) &&
-        Number.isFinite(peeseSe2Se)
-      ) {
+      if (isFiniteNumber(peeseSe2Se)) {
         extendedResults.push({
           label: resultsText.modelDetails.metrics.peeseSe2Se.label,
           value: peeseSe2Se,
