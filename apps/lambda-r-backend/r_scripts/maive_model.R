@@ -60,6 +60,35 @@ winsorize_percent <- function(x, percent) {
   )
 }
 
+# Relative spread below which a standard-error column counts as constant.
+# Deliberately loose: the second stage was seen to fail on relative spreads up
+# to ~6e-06 (#564), and no reported standard-error column is constant to five
+# significant digits across every estimate.
+SE_DEGENERATE_RELATIVE_TOLERANCE <- 1e-05
+
+#' Check whether a standard-error column carries no usable variation
+#'
+#' Every MAIVE-family model regresses the effects on their standard errors, so
+#' a constant column of standard errors is collinear with the intercept: the
+#' package drops the aliased coefficient and then indexes it anyway, which
+#' reached callers as a "subscript out of bounds" 500 (#564).
+#'
+#' @param sebs Numeric vector of standard errors
+#' @return TRUE when the column is constant up to the relative tolerance
+se_column_is_degenerate <- function(sebs) {
+  values <- sebs[is.finite(sebs)]
+  if (length(values) < 2) {
+    return(FALSE)
+  }
+
+  se_scale <- max(abs(values))
+  if (se_scale == 0) {
+    return(FALSE)
+  }
+
+  diff(range(values)) <= SE_DEGENERATE_RELATIVE_TOLERANCE * se_scale
+}
+
 # Main MAIVE model function
 run_maive_model <- function(data, parameters) {
   # Static config
@@ -155,6 +184,20 @@ run_maive_model <- function(data, parameters) {
         se_winsor$clipped[1],
         se_winsor$clipped[2]
       )
+    ))
+  }
+
+  # Checked on the standard errors the model actually sees, so a column that
+  # winsorization flattened is caught too.
+  se_values <- df$sebs[is.finite(df$sebs)]
+  if (se_column_is_degenerate(se_values)) {
+    cli::cli_abort(paste0(
+      "The se column has no usable variation: its ", length(se_values),
+      " values are all ", format(signif(se_values[1], 6), scientific = FALSE),
+      ". Every MAIVE-family estimator reads publication bias off the way the ",
+      "effects vary with their standard errors, so a constant se column leaves ",
+      "that slope unidentified. Supply the standard errors as reported, which ",
+      "differ across estimates."
     ))
   }
 

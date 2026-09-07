@@ -21,6 +21,17 @@ IDENTICAL_EFFECTS_FIXTURE <- data.frame(
   n_obs = c(120, 95, 200, 60, 150, 80, 110, 175, 90, 130, 105, 140)
 )
 
+# The same rows with a constant standard error (#564). Unlike the fixture above,
+# this one is unusable rather than merely degenerate: with no variation in se
+# the second-stage slope is collinear with the intercept, the package drops the
+# coefficient and then indexes it, and the request used to 500 with "subscript
+# out of bounds". It must be a 400 naming the column.
+CONSTANT_SE_FIXTURE <- data.frame(
+  effect = IDENTICAL_EFFECTS_FIXTURE$effect,
+  se = rep(0.1, 12),
+  n_obs = IDENTICAL_EFFECTS_FIXTURE$n_obs
+)
+
 #' Run the legacy /run-model route and fail on its 200-with-error envelope
 #' @param df Data frame to submit
 #' @return Parsed response with a populated `data` field
@@ -142,6 +153,64 @@ test_identical_effects <- function() {
       )
 
       return(list(status = "PASS", test_name = test_name, results = results))
+    },
+    error = function(e) {
+      log_test_result(test_name, "FAIL", e$message)
+      return(list(status = "FAIL", test_name = test_name, error = e$message))
+    }
+  )
+}
+
+#' Test that a constant standard-error column is a 400, not a 500
+#' @return Test results
+test_constant_se <- function() {
+  test_name <- "Constant SE Test"
+
+  tryCatch(
+    {
+      cat("Testing twelve rows with a constant standard error...\n")
+
+      response <- httr::POST(
+        paste0(API_BASE_URL, "/v1/run-model"),
+        body = list(
+          data = CONSTANT_SE_FIXTURE,
+          parameters = list(modelType = "MAIVE")
+        ),
+        encode = "json",
+        httr::timeout(API_TIMEOUT)
+      )
+
+      status <- httr::status_code(response)
+      if (status != 400) {
+        stop(paste("/v1/run-model should reject a constant se column with 400, got", status))
+      }
+
+      body <- httr::content(response, "parsed")
+      if (!identical(body$error$code, "validation_error")) {
+        stop(paste("Expected code validation_error, got:", body$error$code))
+      }
+
+      message_text <- body$error$message
+      if (!is.character(message_text) || !grepl("\\bse\\b", message_text)) {
+        stop(paste("The error message should name the se column, got:", message_text))
+      }
+      if (grepl("subscript out of bounds|Internal server error", message_text)) {
+        stop(paste("The raw R error must not reach the caller, got:", message_text))
+      }
+
+      # The legacy route the browser uses must report it too, rather than
+      # failing somewhere inside the fit.
+      legacy <- test_run_model(df_to_json(CONSTANT_SE_FIXTURE), params_to_json(DEFAULT_PARAMETERS))
+      if (!isTRUE(legacy$error)) {
+        stop("/run-model should report an error for a constant se column")
+      }
+      if (!grepl("no usable variation", legacy$message)) {
+        stop(paste("/run-model should explain the degenerate column, got:", legacy$message))
+      }
+
+      log_test_result(test_name, "PASS", sprintf("400 validation_error: %s", message_text))
+
+      return(list(status = "PASS", test_name = test_name, results = body))
     },
     error = function(e) {
       log_test_result(test_name, "FAIL", e$message)

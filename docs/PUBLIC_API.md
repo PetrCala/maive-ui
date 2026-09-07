@@ -100,7 +100,7 @@ positionally in that order.
 | Field | Type | Required for | Notes |
 |---|---|---|---|
 | `effect` | number | MAIVE-family, RTMA | Estimated effect size |
-| `se` | number | MAIVE-family, RTMA | Standard error; must be `> 0` |
+| `se` | number | MAIVE-family, RTMA | Standard error; must be `> 0`. MAIVE-family runs also need it to vary across rows: a constant column leaves the publication-bias slope unidentified |
 | `n_obs` | integer | MAIVE-family | Number of observations; must be a positive integer |
 | `study_id` | string | optional | Enables study clustering; if present, rows must be ≥ unique studies + 3 |
 

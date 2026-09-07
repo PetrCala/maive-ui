@@ -606,7 +606,10 @@ components:
           description: Estimated effect size.
         se:
           type: number
-          description: Standard error of the effect estimate. Must be > 0.
+          description: >-
+            Standard error of the effect estimate. Must be > 0, and for
+            MAIVE-family runs it must vary across rows: a constant column
+            leaves the publication-bias slope unidentified.
         n_obs:
           type: integer
           description: >-
