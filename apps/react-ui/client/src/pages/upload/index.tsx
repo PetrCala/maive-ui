@@ -74,6 +74,9 @@ export default function UploadPage() {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
         ".xlsx",
       ],
+      // Macro-enabled workbooks parse identically to .xlsx; accepted but not advertised.
+      // eslint-disable-next-line @typescript-eslint/naming-convention
+      "application/vnd.ms-excel.sheet.macroEnabled.12": [".xlsm"],
     },
     multiple: false,
     noClick: true,
@@ -141,7 +144,11 @@ export default function UploadPage() {
     if (filename.endsWith(".csv")) {
       return <FaFileCsv className="text-primary" size={size} />;
     }
-    if (filename.endsWith(".xls") || filename.endsWith(".xlsx")) {
+    if (
+      filename.endsWith(".xls") ||
+      filename.endsWith(".xlsx") ||
+      filename.endsWith(".xlsm")
+    ) {
       return <FaFileExcel className="text-green-600" size={size} />;
     }
     return <FaFileAlt className="text-muted" size={size} />;

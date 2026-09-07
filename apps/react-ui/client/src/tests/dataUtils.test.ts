@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
+import * as XLSX from "xlsx";
 import {
   buildRtmaResultsCsvRows,
   hasNObsColumn,
   parseLocalizedNumber,
+  processUploadedFile,
 } from "@src/utils/dataUtils";
 import type { RTMAResults } from "@src/types/api";
 
@@ -150,5 +152,53 @@ describe("buildRtmaResultsCsvRows", () => {
     expect(
       rows.filter(([label]) => /standard error/i.test(label)),
     ).toHaveLength(0);
+  });
+});
+
+describe("processUploadedFile", () => {
+  const buildWorkbookFile = (
+    filename: string,
+    bookType: XLSX.BookType,
+    mimeType: string,
+  ): File => {
+    const worksheet = XLSX.utils.aoa_to_sheet([
+      ["effect", "se", "n_obs"],
+      [0.5, 0.1, 100],
+      [0.3, 0.2, 200],
+    ]);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    const buffer = XLSX.write(workbook, {
+      bookType,
+      type: "array",
+    }) as ArrayBuffer;
+
+    return new File([buffer], filename, { type: mimeType });
+  };
+
+  it("parses a macro-enabled workbook the same way as a plain one", async () => {
+    const parsed = await processUploadedFile(
+      buildWorkbookFile(
+        "study.xlsm",
+        "xlsm",
+        "application/vnd.ms-excel.sheet.macroEnabled.12",
+      ),
+    );
+
+    expect(parsed.hasHeaders).toBe(true);
+    expect(parsed.columnNames).toEqual(["effect", "se", "n_obs"]);
+    expect(parsed.data).toEqual([
+      { effect: 0.5, se: 0.1, n_obs: 100 },
+      { effect: 0.3, se: 0.2, n_obs: 200 },
+    ]);
+  });
+
+  it("parses a macro-enabled workbook whose type the browser did not report", async () => {
+    const parsed = await processUploadedFile(
+      buildWorkbookFile("study.xlsm", "xlsm", ""),
+    );
+
+    expect(parsed.columnNames).toEqual(["effect", "se", "n_obs"]);
+    expect(parsed.data).toHaveLength(2);
   });
 });
