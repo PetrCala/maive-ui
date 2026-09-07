@@ -16,6 +16,12 @@ export const MIN_MAIVE_ROWS = 4;
 // in the R backend (api_v1.R / index.R).
 export const MAX_ROWS = 50000;
 
+// Relative spread below which a standard-error column counts as constant, so
+// the submit endpoint rejects it here rather than letting the job fail in the
+// second stage (#564). Keep in sync with SE_DEGENERATE_RELATIVE_TOLERANCE in
+// the R backend (maive_model.R).
+export const SE_DEGENERATE_RELATIVE_TOLERANCE = 1e-5;
+
 export type ResolvedColumns = {
   effect: string;
   se: string;
@@ -117,6 +123,59 @@ const isFiniteNumber = (value: unknown): boolean => {
 
 const toNumber = (value: unknown): number =>
   typeof value === "number" ? value : Number(value);
+
+/**
+ * Rejects a standard-error column that carries no usable variation. Every
+ * MAIVE-family model regresses the effects on their standard errors, so a
+ * constant column is collinear with the intercept: the R package drops the
+ * aliased coefficient and then indexes it anyway, which used to reach callers
+ * as a "subscript out of bounds" 500 (#564). Mirrors
+ * `se_column_is_degenerate` in the R backend, so the async submit endpoint
+ * fails fast instead of queuing a job that cannot finish.
+ *
+ * Min/max are taken in a single pass: `Math.min(...values)` would spread up to
+ * MAX_ROWS arguments, past the engine's argument limit.
+ */
+const degenerateSeColumn = (
+  rows: Array<Record<string, unknown>>,
+  seKey: string,
+): ValidationError | null => {
+  let count = 0;
+  let min = Number.POSITIVE_INFINITY;
+  let max = Number.NEGATIVE_INFINITY;
+  let first = 0;
+
+  rows.forEach((row) => {
+    const value = toNumber(row[seKey]);
+    if (!Number.isFinite(value)) {
+      return;
+    }
+    if (count === 0) {
+      first = value;
+    }
+    count += 1;
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  });
+
+  if (count < 2) {
+    return null;
+  }
+
+  const scale = Math.max(Math.abs(min), Math.abs(max));
+  if (scale === 0 || max - min > SE_DEGENERATE_RELATIVE_TOLERANCE * scale) {
+    return null;
+  }
+
+  return {
+    message:
+      `The \`se\` column has no usable variation: its ${count} values are all ` +
+      `${Number(first.toPrecision(6))}. Every MAIVE-family estimator reads ` +
+      "publication bias off the way the effects vary with their standard " +
+      "errors, so a constant `se` column leaves that slope unidentified. " +
+      "Supply the standard errors as reported, which differ across estimates.",
+  };
+};
 
 export const validateDataset = (
   data: unknown,
@@ -242,6 +301,16 @@ export const validateDataset = (
         message:
           "The number of rows must be larger than the number of unique study IDs plus 3.",
       };
+    }
+  }
+
+  // Last, so the checks above keep their more specific messages. RTMA is
+  // exempt: it never regresses the effects on their standard errors, so a
+  // constant `se` column is legitimate there.
+  if (!isRtma) {
+    const seDegenerateError = degenerateSeColumn(rows, columns.se);
+    if (seDegenerateError) {
+      return seDegenerateError;
     }
   }
 
