@@ -117,6 +117,11 @@ AVAILABLE_SCENARIOS <- list(
     description = "Test that a perfect-fit dataset returns a structured result with no invented verdict",
     function_name = "test_identical_effects"
   ),
+  "constant-se" = list(
+    name = "Constant SE Test",
+    description = "Test that a constant standard-error column is a 400, not a 500",
+    function_name = "test_constant_se"
+  ),
   "maive-warnings" = list(
     name = "MAIVE Warnings Test",
     description = "Test that MAIVE package warnings and instrument_strength reach the response",
@@ -536,6 +541,7 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
   response_cleanup_tests <- list(
     small_se_precision = test_small_se_precision(),
     identical_effects = test_identical_effects(),
+    constant_se = test_constant_se(),
     maive_warnings = test_maive_warnings()
   )
 

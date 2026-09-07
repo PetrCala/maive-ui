@@ -72,7 +72,8 @@ API_V1_RTMA_PLOT_FIELDS <- c("zScorePlot", "zScorePlotWidth", "zScorePlotHeight"
 
 # Messages raised by the model layer that describe bad input rather than an
 # unexpected failure; these map to 400 instead of 500. The first five mirror
-# the validation patterns recognized inside run_maive_model().
+# the validation patterns recognized inside run_maive_model(); the last one
+# catches its degenerate-column guards (#564).
 API_V1_MODEL_VALIDATION_PATTERNS <- c(
   "Insufficient data",
   "Missing required columns",
@@ -80,7 +81,8 @@ API_V1_MODEL_VALIDATION_PATTERNS <- c(
   "must be positive",
   "degrees of freedom",
   "Data must have",
-  "nonaffirmative"
+  "nonaffirmative",
+  "no usable variation"
 )
 
 API_V1_BODY_SHAPE_MESSAGE <- paste0(

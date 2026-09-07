@@ -131,7 +131,8 @@ export const DATA_FIELDS: DataFieldRow[] = [
     field: "se",
     type: "number",
     requiredFor: "MAIVE-family, RTMA",
-    notes: "Standard error; must be greater than 0.",
+    notes:
+      "Standard error; must be greater than 0, and must vary across rows for MAIVE-family runs.",
   },
   {
     field: "n_obs",
