@@ -393,7 +393,11 @@ export const exportDataWithInstrumentedSE = (
   let fileExtension: string;
   let mimeType: string;
 
-  if (filename.toLowerCase().endsWith(".xlsx")) {
+  if (
+    filename.toLowerCase().endsWith(".xlsx") ||
+    // Macros cannot be carried over, so a macro-enabled upload exports as .xlsx.
+    filename.toLowerCase().endsWith(".xlsm")
+  ) {
     fileExtension = "xlsx";
     mimeType =
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
