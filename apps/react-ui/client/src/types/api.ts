@@ -71,11 +71,14 @@ type ModelResults = {
     isSignificant: boolean | null;
     eggerBootCI: [number, number] | "NA";
     eggerAndersonRubinCI: [number, number] | "NA";
-    pValue?: number;
+    // `"NA"` when the Egger standard error is zero (identical effects), so the
+    // p-value is undefined. Same spelling the other undefined numbers use.
+    pValue?: number | "NA";
   };
   firstStageFStatistic: number | "NA";
   hausmanTest: {
-    statistic: number;
+    // `"NA"` on every WLS and WAIVE run, and on MAIVE with degenerate input.
+    statistic: number | "NA";
     criticalValue: number;
     rejectsNull: boolean | null;
   };
@@ -92,8 +95,9 @@ type ModelResults = {
   } | null;
   // New fields added in MAIVE commit 80125b2
   petpeese_selected?: "PET" | "PEESE" | null;
-  peese_se2_coef?: number | null;
-  peese_se2_se?: number | null;
+  // `"NA"` whenever `petpeese_selected` is `PET`, so no PEESE curve was fitted.
+  peese_se2_coef?: number | "NA" | null;
+  peese_se2_se?: number | "NA" | null;
   slope_coef?:
     | number
     | {

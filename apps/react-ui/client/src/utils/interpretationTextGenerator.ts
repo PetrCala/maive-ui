@@ -51,12 +51,13 @@ export function getSpuriousPrecisionEvidence(
  * Checks if Hausman test is NA (undefined)
  */
 export function isHausmanTestNA(hausmanTest: {
-  statistic: number;
+  statistic: number | "NA";
   criticalValue: number;
   rejectsNull: boolean | null;
 }): boolean {
-  // If statistic is NaN, Infinity, or critical value is NaN/Infinity, treat as NA.
-  // The backend also reports the verdict itself as null when it is undefined.
+  // If statistic is "NA", NaN, Infinity, or critical value is NaN/Infinity,
+  // treat as NA. The backend also reports the verdict itself as null when it
+  // is undefined.
   return (
     typeof hausmanTest.rejectsNull !== "boolean" ||
     !Number.isFinite(hausmanTest.statistic) ||
