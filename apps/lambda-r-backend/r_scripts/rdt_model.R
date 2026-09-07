@@ -30,7 +30,19 @@ RDT_MIN_STUDIES_IN_WINDOW <- 10
 # First-stage R-squared above which the residual has no variation left: the
 # standard errors are then an almost exact function of N and RDT cannot say
 # anything. One of the app's own mock datasets sits at exactly 1.000.
+#
+# This threshold only separates cases where log(SE) HAS variation that log(N)
+# explains. It cannot see a constant SE column, which leaves log(SE) with no
+# variation to explain in the first place: both sums of squares are then ~1e-31
+# and R-squared = 1 - RSS/TSS is an arbitrary ratio of rounding error (0.4999 on
+# the repro), so it never crosses this threshold. That case is refused outright
+# below, before the first stage runs.
 RDT_FIRST_STAGE_R2_WARN <- 0.99
+# Relative spread below which a standard-error column counts as constant. Same
+# value and meaning as SE_DEGENERATE_RELATIVE_TOLERANCE in maive_model.R and in
+# the UI's datasetValidation.ts (#564); RDT sources neither, so it carries its
+# own copy. Keep the three in sync.
+RDT_SE_DEGENERATE_RELATIVE_TOLERANCE <- 1e-05
 # Share of estimates above which the standard errors are treated as
 # back-computed rather than reported. A standard error obtained as
 # |effect / t| from a printed 2dp t-statistic leaves |t| on the 2dp grid AND
@@ -41,6 +53,30 @@ RDT_RECONSTRUCTED_SE_WARN <- 0.60
 # Smallest jump detectable with 80% power at the 5% level, as a multiple of the
 # standard error: qnorm(0.975) + qnorm(0.8) = 1.96 + 0.84.
 RDT_DETECTABLE_JUMP_SE_MULTIPLE <- 2.8
+
+#' Check whether a standard-error column carries no usable variation
+#'
+#' Same rule as `se_column_is_degenerate` in maive_model.R, duplicated because
+#' the RDT route sources only this file and pulling in the MAIVE model would
+#' load clubSandwich and metafor for one predicate. Named apart from the MAIVE
+#' copy so neither shadows the other when both files are sourced into the same
+#' environment.
+#'
+#' @param se Numeric vector of standard errors
+#' @return TRUE when the column is constant up to the relative tolerance
+rdt_se_column_is_degenerate <- function(se) {
+  values <- se[is.finite(se)]
+  if (length(values) < 2) {
+    return(FALSE)
+  }
+
+  se_scale <- max(abs(values))
+  if (se_scale == 0) {
+    return(FALSE)
+  }
+
+  diff(range(values)) <= RDT_SE_DEGENERATE_RELATIVE_TOLERANCE * se_scale
+}
 
 # Imbens & Kalyanaraman (2012, REStud) sec. 4.2, regularized, triangular kernel.
 #
@@ -332,8 +368,27 @@ run_rdt_model <- function(data, parameters = "{}", include_plot = TRUE) {
     ))
   }
 
+  # A constant SE column leaves log(SE) with no variation, so the residual the
+  # whole test is built on is identically zero and what survives is rounding
+  # error from the QR fit at ~1e-15. Every jump, interval and p-value below
+  # would then be the significance of floating-point noise rather than a
+  # measurement, and on the repro the half-bandwidth window reported p = 0.002.
+  # Refused here rather than warned about, because there is no signal left to
+  # qualify. Mirrors the MAIVE-family guard in maive_model.R (#564).
+  if (rdt_se_column_is_degenerate(se)) {
+    cli::cli_abort(paste0(
+      "The se column has no usable variation: its ", length(se),
+      " values are all ", format(signif(se[1], 6), scientific = FALSE),
+      ". RDT reads reported precision off the part of log(SE) that sample size ",
+      "does not explain, so a constant se column leaves that residual identically ",
+      "zero and there is nothing left for a jump at the cutoff to be measured in. ",
+      "Supply the standard errors as reported, which differ across estimates."
+    ))
+  }
+
   # First stage: the residual is the part of reported precision that sample
-  # size does not explain.
+  # size does not explain. Past the guard above, log(SE) has real variation, so
+  # R-squared below is a genuine share rather than a ratio of rounding error.
   first_stage <- stats::lm(log(se) ~ log(n_obs))
   pi <- unname(stats::residuals(first_stage))
   first_stage_slope <- unname(stats::coef(first_stage)[2])

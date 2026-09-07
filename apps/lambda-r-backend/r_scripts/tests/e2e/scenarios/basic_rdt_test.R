@@ -86,6 +86,39 @@ check_rdt_exact_first_stage <- function(df) {
   invisible(TRUE)
 }
 
+#' Check that a constant standard-error column is refused rather than analysed
+#'
+#' log(SE) then has no variation at all, so the residual the whole test is built
+#' on is identically zero and only QR rounding error at ~1e-15 survives. Before
+#' the guard this returned a full result whose half-bandwidth window reported
+#' p = 0.002, i.e. the significance of floating-point noise. The R-squared
+#' warning cannot catch it: both sums of squares are ~1e-31, so the ratio came
+#' out at 0.4999 rather than near 1.
+check_rdt_constant_se <- function(df) {
+  cat("Checking RDT constant standard error guard...\n")
+
+  constant <- df
+  constant$sebs <- 0.1
+  response <- test_run_rdt(df_to_json(constant), params_to_json(list(modelType = "RDT")))
+  if (!isTRUE(response$error) || !grepl("no usable variation", response$message)) {
+    stop(paste(
+      "A constant se column should be refused with a message naming the missing variation; got:",
+      if (is.null(response$message)) "a successful response" else response$message
+    ))
+  }
+
+  # Just above the tolerance the column is analysable again, so the guard does
+  # not swallow genuinely near-constant but varying standard errors.
+  nearly <- df
+  nearly$sebs <- 0.1 * (1 + seq_len(nrow(nearly)) * 1e-3)
+  ok <- rdt_results_for(nearly)
+  if (!is.numeric(ok$jump)) {
+    stop("A standard-error column that varies above the tolerance should still produce a jump")
+  }
+
+  invisible(TRUE)
+}
+
 #' Check the warning that fires when standard errors were back-computed (#564)
 #'
 #' The detector reads how many significant digits the standard errors carry, so
@@ -252,6 +285,7 @@ test_basic_rdt <- function() {
 
       check_rdt_jump_sign()
       check_rdt_input_guards(test_data)
+      check_rdt_constant_se(test_data)
       check_rdt_exact_first_stage(test_data)
       check_rdt_no_study_column(test_data)
       check_rdt_reconstructed_se(test_data)

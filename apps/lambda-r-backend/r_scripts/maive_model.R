@@ -63,9 +63,10 @@ winsorize_percent <- function(x, percent) {
 # Relative spread below which a standard-error column counts as constant.
 # Deliberately loose: the second stage was seen to fail on relative spreads up
 # to ~6e-06 (#564), and no reported standard-error column is constant to five
-# significant digits across every estimate. Keep in sync with
-# SE_DEGENERATE_RELATIVE_TOLERANCE in the UI's server-side dataset validation
-# (apps/react-ui/client/src/api/server/datasetValidation.ts).
+# significant digits across every estimate. Keep in sync with the two other
+# copies of this rule: the UI's server-side dataset validation
+# (apps/react-ui/client/src/api/server/datasetValidation.ts) and
+# RDT_SE_DEGENERATE_RELATIVE_TOLERANCE in rdt_model.R.
 SE_DEGENERATE_RELATIVE_TOLERANCE <- 1e-05
 
 #' Check whether a standard-error column carries no usable variation

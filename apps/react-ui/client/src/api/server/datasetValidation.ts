@@ -18,8 +18,9 @@ export const MAX_ROWS = 50000;
 
 // Relative spread below which a standard-error column counts as constant, so
 // the submit endpoint rejects it here rather than letting the job fail in the
-// second stage (#564). Keep in sync with SE_DEGENERATE_RELATIVE_TOLERANCE in
-// the R backend (maive_model.R).
+// second stage (#564). Keep in sync with the R backend's two copies of the same
+// rule: SE_DEGENERATE_RELATIVE_TOLERANCE in maive_model.R and
+// RDT_SE_DEGENERATE_RELATIVE_TOLERANCE in rdt_model.R.
 export const SE_DEGENERATE_RELATIVE_TOLERANCE = 1e-5;
 
 export type ResolvedColumns = {
