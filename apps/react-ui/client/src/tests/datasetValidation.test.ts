@@ -157,8 +157,8 @@ describe("validateDataset: MAIVE-family", () => {
   });
 
   it("accepts exactly MAX_ROWS rows", () => {
-    const data = Array.from({ length: MAX_ROWS }, () =>
-      maiveRow(0.4, 0.1, 100),
+    const data = Array.from({ length: MAX_ROWS }, (_unused, index) =>
+      maiveRow(0.4, 0.1 + (index % 5) * 0.01, 100),
     );
     expect(validateDataset(data, "MAIVE")).toBeNull();
   });
@@ -199,10 +199,10 @@ describe("validateDataset: MAIVE-family", () => {
 
   it("rejects non-positive-integer n_obs", () => {
     const data = [
-      maiveRow(0.1, 0.1, 10),
-      maiveRow(0.2, 0.1, 10.5),
-      maiveRow(0.3, 0.1, 10),
-      maiveRow(0.4, 0.1, 10),
+      maiveRow(0.1, 0.11, 10),
+      maiveRow(0.2, 0.06, 10.5),
+      maiveRow(0.3, 0.2, 10),
+      maiveRow(0.4, 0.04, 10),
     ];
     expect(validateDataset(data, "MAIVE")?.message).toMatch(
       /n_obs.*positive integers/,
@@ -211,10 +211,10 @@ describe("validateDataset: MAIVE-family", () => {
 
   it("rejects too few rows relative to unique study ids", () => {
     const data = [
-      maiveRow(0.1, 0.1, 10, "A"),
-      maiveRow(0.2, 0.1, 10, "B"),
-      maiveRow(0.3, 0.1, 10, "C"),
-      maiveRow(0.4, 0.1, 10, "D"),
+      maiveRow(0.1, 0.11, 10, "A"),
+      maiveRow(0.2, 0.06, 10, "B"),
+      maiveRow(0.3, 0.2, 10, "C"),
+      maiveRow(0.4, 0.04, 10, "D"),
     ];
     expect(validateDataset(data, "MAIVE")?.message).toMatch(
       /unique study IDs plus 3/,
@@ -235,26 +235,63 @@ describe("validateDataset: MAIVE-family", () => {
 
   it("tolerates extra columns when canonical names are present", () => {
     const data = [
-      { effect: 0.1, se: 0.1, n_obs: 10, note: "x" },
-      { effect: 0.2, se: 0.1, n_obs: 10, note: "x" },
-      { effect: 0.3, se: 0.1, n_obs: 10, note: "x" },
-      { effect: 0.4, se: 0.1, n_obs: 10, note: "x" },
+      { effect: 0.1, se: 0.11, n_obs: 10, note: "x" },
+      { effect: 0.2, se: 0.06, n_obs: 10, note: "x" },
+      { effect: 0.3, se: 0.2, n_obs: 10, note: "x" },
+      { effect: 0.4, se: 0.04, n_obs: 10, note: "x" },
     ];
     expect(validateDataset(data, "MAIVE")).toBeNull();
   });
 
   it("rejects empty study_id values", () => {
     const data = [
-      maiveRow(0.1, 0.1, 10, "A"),
-      maiveRow(0.2, 0.1, 10, ""),
-      maiveRow(0.3, 0.1, 10, "A"),
-      maiveRow(0.4, 0.1, 10, "B"),
-      maiveRow(0.5, 0.1, 10, "B"),
-      maiveRow(0.6, 0.1, 10, "B"),
+      maiveRow(0.1, 0.11, 10, "A"),
+      maiveRow(0.2, 0.06, 10, ""),
+      maiveRow(0.3, 0.2, 10, "A"),
+      maiveRow(0.4, 0.04, 10, "B"),
+      maiveRow(0.5, 0.09, 10, "B"),
+      maiveRow(0.6, 0.13, 10, "B"),
     ];
     expect(validateDataset(data, "MAIVE")?.message).toMatch(
       /study_id.*empty values/,
     );
+  });
+
+  it("rejects a constant se column (#564)", () => {
+    // The issue's repro: a well-formed dataset whose every standard error is
+    // 0.1. The second stage used to fail on it with "subscript out of bounds".
+    const data = [
+      maiveRow(0.3, 0.1, 120),
+      maiveRow(0.3, 0.1, 95),
+      maiveRow(0.3, 0.1, 200),
+      maiveRow(0.3, 0.1, 60),
+    ];
+    const message = validateDataset(data, "MAIVE")?.message;
+    expect(message).toMatch(/`se` column has no usable variation/);
+    expect(message).toContain("0.1");
+  });
+
+  it("rejects a near-constant se column", () => {
+    // Relative spread of 1e-6, below the tolerance: still unidentified.
+    const data = [
+      maiveRow(0.3, 0.1, 120),
+      maiveRow(0.3, 0.1000001, 95),
+      maiveRow(0.3, 0.1, 200),
+      maiveRow(0.3, 0.10000005, 60),
+    ];
+    expect(validateDataset(data, "MAIVE")?.message).toMatch(
+      /`se` column has no usable variation/,
+    );
+  });
+
+  it("accepts a normally varying se column", () => {
+    const data = [
+      maiveRow(0.3, 0.1, 120),
+      maiveRow(0.3, 0.12, 95),
+      maiveRow(0.3, 0.08, 200),
+      maiveRow(0.3, 0.15, 60),
+    ];
+    expect(validateDataset(data, "MAIVE")).toBeNull();
   });
 });
 
@@ -288,6 +325,18 @@ describe("validateDataset: RTMA", () => {
     const data = [
       { se: 0.12, effect: -0.4 },
       { se: 0.08, effect: 0.25 },
+    ];
+    expect(validateDataset(data, "RTMA")).toBeNull();
+  });
+
+  it("still accepts a constant se column (#564)", () => {
+    // RTMA never regresses the effects on their standard errors, so the
+    // MAIVE-family degeneracy rule must not reach it.
+    const data = [
+      { effect: 0.1, se: 0.1 },
+      { effect: 0.2, se: 0.1 },
+      { effect: 0.3, se: 0.1 },
+      { effect: 0.4, se: 0.1 },
     ];
     expect(validateDataset(data, "RTMA")).toBeNull();
   });

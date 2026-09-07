@@ -115,7 +115,7 @@ describe("POST /api/v1/runs", () => {
     // Comfortably above the ~900 KiB budget.
     const bigData = Array.from({ length: 4 }, (_, i) => ({
       effect: 0.1 + i,
-      se: 0.1,
+      se: 0.1 + i * 0.01,
       n_obs: 10,
       study_id: "x".repeat(300 * 1024),
     }));
@@ -136,7 +136,7 @@ describe("POST /api/v1/runs", () => {
     // Above the old 200 KiB cap, comfortably under the ~900 KiB budget.
     const midData = Array.from({ length: 4 }, (_, i) => ({
       effect: 0.1 + i,
-      se: 0.1,
+      se: 0.1 + i * 0.01,
       n_obs: 10,
       study_id: "x".repeat(100 * 1024),
     }));
