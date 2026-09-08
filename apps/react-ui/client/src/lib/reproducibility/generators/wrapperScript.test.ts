@@ -11,6 +11,7 @@ const versionInfo: VersionInfo = {
   isExactCommit: true,
   rVersion: "4.4.1",
   phackingVersion: "0.2.1",
+  clubSandwichVersion: "0.7.0",
   timestamp: "2026-01-01T00:00:00.000Z",
 };
 
@@ -105,5 +106,113 @@ describe("generateWrapperScript", () => {
       "jsonlite::toJSON(parameters, auto_unbox = TRUE, digits = NA)",
     );
     expect(script).not.toContain('jsonlite::toJSON(data, dataframe = "rows")');
+  });
+
+  it("installs the clubSandwich version the analysis ran under, before MAIVE", () => {
+    // clubSandwich supplies the cluster-robust covariance behind every MAIVE
+    // standard error; it used to arrive unpinned as a MAIVE dependency (#576).
+    const script = generateWrapperScript(versionInfo, parameters, results, 60);
+
+    expect(script).toContain('clubsandwich_version <- "0.7.0"');
+    expect(script).toContain('remotes::install_version(\n    "clubSandwich",');
+    expect(script).toContain("version = clubsandwich_version,");
+    expect(script).toContain("# clubSandwich:    0.7.0");
+    expect(script).toMatch(/"clubSandwich",\s+# Cluster-robust covariance/);
+
+    // Pinned before the MAIVE install, so install_github(upgrade = "never")
+    // finds it and leaves it alone.
+    expect(script.indexOf('clubsandwich_version <- "0.7.0"')).toBeLessThan(
+      script.indexOf("remotes::install_github("),
+    );
+    // And before the generic installer, so that one never pulls the latest.
+    expect(script.indexOf('clubsandwich_version <- "0.7.0"')).toBeLessThan(
+      script.indexOf("required_packages <- c("),
+    );
+  });
+
+  it("falls back to an unpinned clubSandwich install when no version was recorded", () => {
+    const script = generateWrapperScript(
+      { ...versionInfo, clubSandwichVersion: "unknown" },
+      parameters,
+      results,
+      60,
+    );
+
+    expect(script).toContain(
+      'install.packages("clubSandwich", repos = "https://cloud.r-project.org/")',
+    );
+    expect(script).toContain("does not record the clubSandwich version");
+    expect(script).not.toContain("remotes::install_version(");
+  });
+
+  it("records sessionInfo() next to the results and points the mismatch hint at it", () => {
+    // The hint used to say "Different R version" without recording which R,
+    // MAIVE or clubSandwich the re-run used (#576).
+    const script = generateWrapperScript(versionInfo, parameters, results, 60);
+
+    expect(script).toContain('session_info_path <- "session_info.txt"');
+    expect(script).toContain("capture.output(sessionInfo())");
+    expect(script).toContain(
+      "Web application ran under: R 4.4.1, MAIVE 0.2.5, clubSandwich 0.7.0",
+    );
+    // Written after the fit (so every package it touched is loaded) and before
+    // the verification, so it exists even when that step fails.
+    expect(script.indexOf("run_maive_model(")).toBeLessThan(
+      script.indexOf("capture.output(sessionInfo())"),
+    );
+    expect(script.indexOf("capture.output(sessionInfo())")).toBeLessThan(
+      script.indexOf("=== VERIFICATION ==="),
+    );
+
+    expect(script).toContain(
+      "A different clubSandwich version (this run: 0.7.0)",
+    );
+    expect(script).toContain("A different R version (this run: 4.4.1)");
+    expect(script).toContain("recorded in\\n");
+    expect(script).toContain("session_info.txt, next to the results");
+    expect(script).toContain("session_info.txt     - R and package versions");
+  });
+
+  it("refuses a model type it cannot write a runnable script for", () => {
+    // RDT has no export path (#559); the generator used to emit a MAIVE script
+    // with modelType = "RDT" that called run_maive_model() (#576).
+    expect(() =>
+      generateWrapperScript(
+        versionInfo,
+        { ...parameters, modelType: "RDT" },
+        results,
+        60,
+      ),
+    ).toThrow(
+      /model type "RDT".*Supported model types: MAIVE, WAIVE, WLS, RTMA/,
+    );
+  });
+
+  it("refuses a missing required parameter instead of writing undefined into R", () => {
+    const without = (keys: Array<keyof ModelParameters>): ModelParameters => {
+      const partial: Partial<ModelParameters> = { ...parameters };
+      keys.forEach((key) => delete partial[key]);
+      return partial as ModelParameters;
+    };
+
+    expect(() =>
+      generateWrapperScript(versionInfo, without(["weight"]), results, 60),
+    ).toThrow(/parameter "weight" missing/);
+
+    expect(() =>
+      generateWrapperScript(
+        versionInfo,
+        without(["weight", "maiveMethod"]),
+        results,
+        60,
+      ),
+    ).toThrow(/parameters "maiveMethod", "weight" missing/);
+  });
+
+  it("never interpolates undefined into a script it does emit", () => {
+    const script = generateWrapperScript(versionInfo, parameters, results, 60);
+
+    // `weight = "undefined"` is what a missing parameter used to become.
+    expect(script).not.toMatch(/= "?undefined"?/);
   });
 });

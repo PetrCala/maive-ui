@@ -28,6 +28,7 @@ const versionInfoWith = (overrides: Partial<VersionInfo>): VersionInfo => ({
   isExactCommit: false,
   rVersion: "4.4.1",
   phackingVersion: "0.2.1",
+  clubSandwichVersion: "0.7.0",
   timestamp: "2026-01-01T00:00:00.000Z",
   ...overrides,
 });

@@ -13,7 +13,11 @@ import type { VersionInfo, WinsorizeInfo } from "@src/types/reproducibility";
 import type { DataArray } from "@src/types";
 
 import { fetchRCodeBundle } from "./githubFetcher";
-import { generateWrapperScript, getRtmaSeed } from "./generators/wrapperScript";
+import {
+  assertScriptParameters,
+  generateWrapperScript,
+  getRtmaSeed,
+} from "./generators/wrapperScript";
 import { generateReadme, generateVersionManifest } from "./generators/readme";
 import { convertDataToCSV } from "./csvConverter";
 import { validateExportData, estimatePackageSize } from "./validator";
@@ -55,6 +59,10 @@ export async function generateReproducibilityPackage(
   winsorizeInfo?: WinsorizeInfo,
 ): Promise<Blob> {
   console.log("Generating reproducibility package...");
+
+  // Refuse a run the script generator cannot write for before spending a
+  // round trip on GitHub, so the user sees the reason straight away (#576).
+  assertScriptParameters(parameters);
 
   // Create a new ZIP file
   const zip = new JSZip();

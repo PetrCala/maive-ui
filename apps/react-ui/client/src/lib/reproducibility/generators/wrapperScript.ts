@@ -30,6 +30,80 @@ import { describeGitRef } from "./readme";
 const RTMA_FALLBACK_SEED = 2025;
 
 /**
+ * Model types the generator can write a runnable script for.
+ *
+ * RDT has no export path in v1 (#559): run_maive_model() only knows the
+ * MAIVE family, rdt_model.R is not bundled, and the download button is hidden
+ * for RDT runs. Without this list the generator would happily emit a MAIVE
+ * script with modelType = "RDT" for whoever turns that button on (#576).
+ */
+const SCRIPT_MODEL_TYPES: readonly string[] = [
+  CONST.MODEL_TYPES.MAIVE,
+  CONST.MODEL_TYPES.WAIVE,
+  CONST.MODEL_TYPES.WLS,
+  CONST.MODEL_TYPES.RTMA,
+];
+
+/**
+ * Parameters each script interpolates into R source. A missing one used to be
+ * written out as the literal string `undefined` (`weight = "undefined"`), which
+ * R only rejects once the user runs the script (#576).
+ */
+const RTMA_SCRIPT_PARAMETERS: ReadonlyArray<keyof ModelParameters> = [
+  "favorPositive",
+  "winsorize",
+];
+
+const MAIVE_SCRIPT_PARAMETERS: ReadonlyArray<keyof ModelParameters> = [
+  "includeStudyDummies",
+  "includeStudyClustering",
+  "standardErrorTreatment",
+  "computeAndersonRubin",
+  "maiveMethod",
+  "weight",
+  "shouldUseInstrumenting",
+  "useLogFirstStage",
+  "winsorize",
+];
+
+/**
+ * Refuses to generate a script that could not run: an unsupported model type,
+ * or a parameter the script would have to interpolate but does not have.
+ *
+ * @throws Error naming the model type or the missing parameters
+ */
+export function assertScriptParameters(parameters: ModelParameters): void {
+  const modelType: unknown = parameters?.modelType;
+  if (
+    typeof modelType !== "string" ||
+    !SCRIPT_MODEL_TYPES.includes(modelType)
+  ) {
+    throw new Error(
+      `Cannot generate a reproducibility script for model type "${String(modelType)}". ` +
+        `Supported model types: ${SCRIPT_MODEL_TYPES.join(", ")}.`,
+    );
+  }
+
+  const required =
+    modelType === CONST.MODEL_TYPES.RTMA
+      ? RTMA_SCRIPT_PARAMETERS
+      : MAIVE_SCRIPT_PARAMETERS;
+  const missing = required.filter((key) => {
+    const value: unknown = parameters[key];
+    return value === undefined || value === null;
+  });
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Cannot generate a reproducibility script for a ${modelType} run: ` +
+        `${missing.length === 1 ? "parameter" : "parameters"} ${missing
+          .map((key) => `"${key}"`)
+          .join(", ")} missing. The generated script would not run.`,
+    );
+  }
+}
+
+/**
  * Reads the seed the RTMA sampler actually ran under, if the run recorded one.
  *
  * RTMA results travel through the export path typed as ModelResults (the two
@@ -227,7 +301,51 @@ if (all(is.na(checks))) {
 } else {
   cat("\\n\\u26a0 Some results differ. This may be due to:\\n")
 ${causes}
+  cat("  The R and package versions this re-run actually used are recorded in\\n")
+  cat("  session_info.txt, next to the results; compare them with the versions above.\\n")
 }
+`;
+}
+
+/**
+ * Generates the block that records the session the re-run happened in
+ *
+ * The mismatch hints name the versions the web application ran under, but
+ * until now nothing recorded which R, MAIVE, clubSandwich or phacking the local
+ * re-run actually used, so a failed comparison was a dead end (#576).
+ * sessionInfo() is captured right after the model runs, so every package the
+ * fit touched is loaded by then, and it is written before the verification
+ * step so it exists even if that step fails.
+ *
+ * @param recordedVersions - "package version" pairs the original run reports
+ */
+function generateSessionInfoSection(
+  versionInfo: VersionInfo,
+  recordedVersions: string[],
+): string {
+  const recorded = [`R ${versionInfo.rVersion}`, ...recordedVersions].join(
+    ", ",
+  );
+
+  // The confirmation line carries the literal glyph rather than a \u2713
+  // escape: R renders the escape as "<U+2713>" in a C locale, which is what
+  // a bare Rscript on a fresh machine gets.
+  return `
+# Record the session this re-run happened in, next to the results. When the
+# verification below fails, this is what tells you which R and which package
+# versions produced the local numbers, so the mismatch can be traced instead of
+# guessed at.
+session_info_path <- "session_info.txt"
+writeLines(
+  c(
+    paste("Local re-run recorded:", format(Sys.time(), "%Y-%m-%d %H:%M:%S %Z")),
+    "Web application ran under: ${recorded}",
+    "",
+    capture.output(sessionInfo())
+  ),
+  session_info_path
+)
+cat("✓ Session info saved as:", session_info_path, "\\n")
 `;
 }
 
@@ -319,9 +437,11 @@ function generateRtmaVerificationSection(phackingVersion: string): string {
 
 /**
  * Generates the results display section
+ *
+ * @param versionInfo - Versions the original run reports, named in the
+ *   mismatch hints so they can be compared with session_info.txt
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function generateResultsDisplaySection(_results: ModelResults): string {
+function generateResultsDisplaySection(versionInfo: VersionInfo): string {
   // Note: arCI and eggerBootCI could be used for validation in the future
   // const arCI =
   //   results.andersonRubinCI !== "NA"
@@ -396,12 +516,82 @@ ${generateVerificationSection(
     },
   ],
   [
-    "Different R version",
-    "Different MAIVE package version",
-    "Different random seed (for bootstrap methods)",
+    `A different MAIVE package version (this run: ${versionInfo.maiveTag})`,
+    `A different clubSandwich version (this run: ${versionInfo.clubSandwichVersion})`,
+    `A different R version (this run: ${versionInfo.rVersion})`,
+    "A different random seed (for bootstrap methods)",
     "Floating-point arithmetic differences",
   ],
 )}`;
+}
+
+/**
+ * Generates the clubSandwich installation block for the MAIVE script
+ *
+ * MAIVE takes its cluster-robust covariance estimator from clubSandwich, so it
+ * decides every standard error, confidence interval and p-value the script
+ * prints. It used to arrive silently as a dependency of the MAIVE install, at
+ * whatever version CRAN served that day (#576). Install the recorded version
+ * instead, before MAIVE so that install finds it and leaves it alone, and say
+ * so when the loaded one differs. Same shape as the phacking block above.
+ * The output lines carry literal glyphs rather than \u escapes, which R
+ * renders as "<U+2713>" in the C locale a bare Rscript usually runs under.
+ *
+ * @param clubSandwichVersion - Version the backend image ran under
+ */
+function generateClubSandwichInstallSection(
+  clubSandwichVersion: string,
+): string {
+  // A backend that never reported its clubSandwich version leaves nothing to
+  // pin to. An unpinned install still beats failing the script, as long as it
+  // says out loud that the inference may not be the recorded one.
+  if (!/^\d+(\.\d+)*$/.test(clubSandwichVersion)) {
+    return `
+# Install clubSandwich (cluster-robust covariance behind MAIVE inference)
+cat("\\n⚠ This package does not record the clubSandwich version the analysis\\n")
+cat("  ran under, so the current CRAN release is installed instead. Standard\\n")
+cat("  errors and confidence intervals may differ from the web application's.\\n")
+if (!requireNamespace("clubSandwich", quietly = TRUE)) {
+  install.packages("clubSandwich", repos = "https://cloud.r-project.org/")
+}
+library(clubSandwich)
+`;
+  }
+
+  return `
+# Install clubSandwich, pinned to the version the web application ran under.
+# MAIVE takes its cluster-robust covariance estimator from clubSandwich, so it
+# decides every standard error, confidence interval and p-value below; an
+# unpinned install would quietly change the inference once CRAN moves on. It
+# is installed before MAIVE so that install (upgrade = "never") keeps it.
+clubsandwich_version <- "${clubSandwichVersion}"
+clubsandwich_ready <- requireNamespace("clubSandwich", quietly = TRUE) &&
+  identical(as.character(utils::packageVersion("clubSandwich")), clubsandwich_version)
+
+if (!clubsandwich_ready) {
+  cat("\\nInstalling clubSandwich", clubsandwich_version, "...\\n")
+  if (!requireNamespace("remotes", quietly = TRUE)) {
+    install.packages("remotes", repos = "https://cloud.r-project.org/")
+  }
+  # install_version() falls back to the CRAN archive once this version is no
+  # longer the current release.
+  remotes::install_version(
+    "clubSandwich",
+    version = clubsandwich_version,
+    repos = "https://cloud.r-project.org/",
+    upgrade = "never"
+  )
+}
+library(clubSandwich)
+
+clubsandwich_loaded <- as.character(utils::packageVersion("clubSandwich"))
+if (identical(clubsandwich_loaded, clubsandwich_version)) {
+  cat("✓ clubSandwich", clubsandwich_version, "loaded\\n")
+} else {
+  cat("⚠ clubSandwich", clubsandwich_loaded, "is loaded, but this analysis ran under",
+      clubsandwich_version, "- standard errors may differ\\n")
+}
+`;
 }
 
 /**
@@ -528,7 +718,13 @@ required_packages <- c(
   "base64enc",     # Base64 encoding/decoding
   "ragg",          # Graphics device for high-quality plots
   "systemfonts",   # Font support
-  "textshaping"    # Text rendering
+  "textshaping",   # Text rendering
+  # maive_model.R attaches these two when it is sourced below (for the
+  # winsorize_percent helper); neither enters the RTMA fit, which phacking
+  # performs, so they are not pinned here. session_info.txt records the
+  # versions that were loaded.
+  "clubSandwich",  # Loaded by maive_model.R
+  "metafor"        # Loaded by maive_model.R (also a phacking dependency)
 )
 
 # Install missing packages
@@ -620,7 +816,9 @@ results <- run_rtma_model(
 )
 
 cat("\\u2713 Analysis complete\\n")
-
+${generateSessionInfoSection(versionInfo, [
+  `phacking ${versionInfo.phackingVersion}`,
+])}
 # ============================================================
 # 6. DISPLAY RESULTS
 # ============================================================
@@ -712,6 +910,7 @@ cat("Generated files:\\n")
 cat("  \\u2713 z_score_plot.png       - Z-score density plot\\n")
 cat("  \\u2713 rtma_results.rds       - R object (load with readRDS())\\n")
 cat("  \\u2713 rtma_results.json      - JSON format (for other tools)\\n")
+cat("  \\u2713 session_info.txt       - R and package versions this run used\\n")
 
 cat("\\nTo load results in another R session:\\n")
 cat("  results <- readRDS('rtma_results.rds')\\n")
@@ -734,6 +933,8 @@ export function generateWrapperScript(
   numRows: number,
   winsorizeInfo?: WinsorizeInfo,
 ): string {
+  assertScriptParameters(parameters);
+
   if (parameters.modelType === "RTMA") {
     return generateRtmaWrapperScript(
       versionInfo,
@@ -755,6 +956,7 @@ export function generateWrapperScript(
 # Generated by:    MAIVE UI v${versionInfo.uiVersion}
 # Analysis Date:   ${timestamp}
 # MAIVE Package:   ${versionInfo.maiveTag}
+# clubSandwich:    ${versionInfo.clubSandwichVersion} (cluster-robust covariance behind MAIVE inference)
 # Git Commit:      ${describeGitRef(versionInfo)}
 # R Version:       ${versionInfo.rVersion}
 #
@@ -774,6 +976,7 @@ cat("MAIVE Analysis Reproducibility Script\\n")
 cat("============================================================\\n")
 cat("UI Version:    ${versionInfo.uiVersion}\\n")
 cat("MAIVE Package: ${versionInfo.maiveTag}\\n")
+cat("clubSandwich:  ${versionInfo.clubSandwichVersion}\\n")
 cat("R Version:     ${versionInfo.rVersion}\\n")
 cat("Git Commit:    ${describeGitRef(versionInfo)}\\n")
 cat("============================================================\\n\\n")
@@ -783,11 +986,12 @@ cat("============================================================\\n\\n")
 # ============================================================
 
 cat("Setting up R environment...\\n")
-
+${generateClubSandwichInstallSection(versionInfo.clubSandwichVersion)}
 # Required R packages
 required_packages <- c(
   "jsonlite",      # JSON parsing
   "base64enc",     # Base64 encoding/decoding
+  "clubSandwich",  # Cluster-robust covariance for MAIVE inference (pinned above)
   "metafor",       # Meta-analysis functions
   "ragg",          # Graphics device for high-quality plots
   "systemfonts",   # Font support
@@ -886,7 +1090,10 @@ results <- run_maive_model(
 )
 
 cat("✓ Analysis complete\\n")
-${generateResultsDisplaySection(results)}
+${generateSessionInfoSection(versionInfo, [
+  `MAIVE ${versionInfo.maiveTag}`,
+  `clubSandwich ${versionInfo.clubSandwichVersion}`,
+])}${generateResultsDisplaySection(versionInfo)}
 
 cat("\\n=== FUNNEL PLOT ===\\n")
 if (results$funnelPlot != "") {
@@ -931,6 +1138,7 @@ cat("Generated files:\\n")
 cat("  ✓ funnel_plot.png      - Funnel plot visualization\\n")
 cat("  ✓ maive_results.rds    - R object (load with readRDS())\\n")
 cat("  ✓ maive_results.json   - JSON format (for other tools)\\n")
+cat("  ✓ session_info.txt     - R and package versions this run used\\n")
 
 cat("\\nTo load results in another R session:\\n")
 cat("  results <- readRDS('maive_results.rds')\\n")

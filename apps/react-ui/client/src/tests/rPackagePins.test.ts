@@ -4,13 +4,16 @@ import { join } from "path";
 import CONST from "@src/CONST";
 
 /**
- * An RTMA reproducibility package names the phacking version it ran under and
- * reinstalls exactly that one (#489). That promise only holds if the version
+ * A reproducibility package names the version of the package that produced
+ * its numbers and reinstalls exactly that one: phacking for RTMA (#489),
+ * clubSandwich for MAIVE, where it supplies the cluster-robust covariance
+ * behind every standard error (#576). That promise only holds if the version
  * the UI reports is the version the backend image actually installs, so read
- * the pin out of r-packages.txt instead of trusting the constant on its own.
+ * the pins out of r-packages.txt instead of trusting the constants on their
+ * own.
  *
  * The same list pins the packages the results themselves depend on (#574):
- * clubSandwich supplies the CR2 variance and the Satterthwaite degrees of
+ * clubSandwich also supplies the CR2 variance and the Satterthwaite degrees of
  * freedom behind every RDT interval and p-value, and metafor sits underneath
  * it, so neither may float to whatever CRAN ships on the day the image is
  * rebuilt.
@@ -30,25 +33,34 @@ function readPackageEntries(): string[] {
     .filter(Boolean);
 }
 
-describe("phacking version pin", () => {
-  it("pins phacking to an exact version in the backend package list", () => {
-    const entry = readPackageEntries().find((line) =>
-      line.startsWith("phacking"),
-    );
+const PINS = [
+  {
+    pkg: "phacking",
+    reported: CONST.REPRODUCIBILITY.DEFAULTS.PHACKING_VERSION,
+  },
+  {
+    pkg: "clubSandwich",
+    reported: CONST.REPRODUCIBILITY.DEFAULTS.CLUBSANDWICH_VERSION,
+  },
+];
+
+describe.each(PINS)("$pkg version pin", ({ pkg, reported }) => {
+  it("pins the package to an exact version in the backend package list", () => {
+    const entry = readPackageEntries().find((line) => line.startsWith(pkg));
 
     expect(entry).toBeDefined();
-    // pak reads this file verbatim; "phacking" alone installs whatever CRAN
+    // pak reads this file verbatim; a bare package name installs whatever CRAN
     // ships on the day the image is rebuilt.
-    expect(entry).toMatch(/^phacking@\d+(\.\d+)*$/);
+    expect(entry).toMatch(new RegExp(`^${pkg}@\\d+(\\.\\d+)*$`));
   });
 
   it("reports the pinned version to the reproducibility package", () => {
     const entry = readPackageEntries().find((line) =>
-      line.startsWith("phacking@"),
+      line.startsWith(`${pkg}@`),
     );
     const pinnedVersion = entry?.split("@")[1];
 
-    expect(CONST.REPRODUCIBILITY.DEFAULTS.PHACKING_VERSION).toBe(pinnedVersion);
+    expect(reported).toBe(pinnedVersion);
   });
 });
 

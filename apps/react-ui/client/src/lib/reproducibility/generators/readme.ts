@@ -128,7 +128,11 @@ This package contains everything needed to reproduce the ${analysisType} meta-an
 ## Package Information
 
 - **MAIVE UI Version:** ${versionInfo.uiVersion}
-- **MAIVE R Package:** ${versionInfo.maiveTag}
+- **MAIVE R Package:** ${versionInfo.maiveTag}${
+    isRtma
+      ? `\n- **phacking R Package:** ${versionInfo.phackingVersion}`
+      : `\n- **clubSandwich R Package:** ${versionInfo.clubSandwichVersion}`
+  }
 - **R Version Used:** ${versionInfo.rVersion}
 - **Git Commit:** ${describeGitRef(versionInfo)}
 - **Dataset Size:** ${numRows} observations
@@ -239,6 +243,7 @@ After running \`run_analysis.R\`, you will find these new files:
 | \`funnel_plot.png\` | PNG image | Funnel plot visualization |
 | \`maive_results.rds\` | R object | Complete results (load with \`readRDS()\`) |
 | \`maive_results.json\` | JSON | Results in JSON format (for use with other tools) |
+| \`session_info.txt\` | Text | R, platform and package versions this re-run actually used (\`sessionInfo()\`) |
 
 ## Verifying Results
 
@@ -325,16 +330,30 @@ source("funnel_plot.R")
 
 **Problem:** Verification shows "✗ FAIL" for some results
 
+The script writes \`session_info.txt\` next to the results with the R, platform and package versions the re-run actually used. Start there and compare it with the versions listed above.
+
 **Possible causes:**
 1. Different MAIVE package version
    - Check installed version: \`packageVersion("MAIVE")\`
    - Should be: ${versionInfo.maiveTag}
+${
+  isRtma
+    ? `
+2. Different phacking package version
+   - Check installed version: \`packageVersion("phacking")\`
+   - Should be: ${versionInfo.phackingVersion} (run_analysis.R installs it)`
+    : `
+2. Different clubSandwich package version
+   - Check installed version: \`packageVersion("clubSandwich")\`
+   - Should be: ${versionInfo.clubSandwichVersion} (run_analysis.R installs it)
+   - clubSandwich supplies the cluster-robust covariance behind every MAIVE standard error`
+}
 
-2. Different R version
+3. Different R version
    - Check R version: \`R.version.string\`
    - Expected: ${versionInfo.rVersion} or higher
 
-3. Random seed differences (for bootstrap methods)
+4. Random seed differences (for bootstrap methods)
    - Bootstrap methods may produce slightly different results each run
    - This is expected and doesn't indicate an error
 
@@ -366,7 +385,11 @@ ${getCitationsForModel(parameters.modelType)
 ### Software Versions
 
 - **MAIVE UI:** ${versionInfo.uiVersion}
-- **MAIVE Package:** ${versionInfo.maiveTag}
+- **MAIVE Package:** ${versionInfo.maiveTag}${
+    isRtma
+      ? `\n- **phacking Package:** ${versionInfo.phackingVersion}`
+      : `\n- **clubSandwich Package:** ${versionInfo.clubSandwichVersion}`
+  }
 - **R Version:** ${versionInfo.rVersion}
 - **Git Commit:** ${describeGitRef(versionInfo)}
 
@@ -374,7 +397,11 @@ ${getCitationsForModel(parameters.modelType)
 
 The following R packages are required:
 
-- \`MAIVE\` - Core MAIVE algorithms
+- \`MAIVE\` - Core MAIVE algorithms${
+    isRtma
+      ? `\n- \`phacking\` - RTMA implementation (pinned to ${versionInfo.phackingVersion})\n- \`clubSandwich\` - Loaded by maive_model.R`
+      : `\n- \`clubSandwich\` - Cluster-robust covariance behind MAIVE inference (pinned to ${versionInfo.clubSandwichVersion})`
+  }
 - \`jsonlite\` - JSON parsing
 - \`base64enc\` - Image encoding/decoding
 - \`metafor\` - Meta-analysis functions
@@ -416,9 +443,11 @@ export function generateVersionManifest(
   // RTMA is fitted by phacking rather than by the MAIVE package, so its version
   // is the one that has to be recorded for an RTMA run to be reproducible.
   const isRtma = parameters.modelType === "RTMA";
-  const phackingLine = isRtma
+  // clubSandwich supplies the covariance estimator behind every MAIVE standard
+  // error, so it is the version a MAIVE run has to record (#576).
+  const inferenceLine = isRtma
     ? `\nphacking R Package:      ${versionInfo.phackingVersion}`
-    : "";
+    : `\nclubSandwich R Package:  ${versionInfo.clubSandwichVersion}`;
 
   return `MAIVE Analysis Reproducibility Package - Version Manifest
 ============================================================
@@ -429,7 +458,7 @@ SOFTWARE VERSIONS
 -----------------
 MAIVE UI Version:        ${versionInfo.uiVersion}
 MAIVE R Package:         ${versionInfo.maiveTag}
-R Version:               ${versionInfo.rVersion}${phackingLine}
+R Version:               ${versionInfo.rVersion}${inferenceLine}
 Git Commit Hash:         ${describeGitRef(versionInfo)}
 
 GITHUB REFERENCES
@@ -460,7 +489,9 @@ PACKAGE DEPENDENCIES
 --------------------
 Required R packages:
   - MAIVE (${versionInfo.maiveTag})${
-    isRtma ? `\n  - phacking (${versionInfo.phackingVersion})` : ""
+    isRtma
+      ? `\n  - phacking (${versionInfo.phackingVersion})\n  - clubSandwich`
+      : `\n  - clubSandwich (${versionInfo.clubSandwichVersion})`
   }
   - jsonlite
   - base64enc
@@ -483,10 +514,12 @@ To ensure perfect reproducibility:
   - Install MAIVE package version ${versionInfo.maiveTag}${
     isRtma
       ? `\n  - Install phacking package version ${versionInfo.phackingVersion} (run_analysis.R does this)`
-      : ""
+      : `\n  - Install clubSandwich package version ${versionInfo.clubSandwichVersion} (run_analysis.R does this)`
   }
   - Run from the same working directory as the extracted files
   - For bootstrap methods, results may vary slightly due to randomness
+  - run_analysis.R writes session_info.txt next to the results; when the
+    verification fails, compare the versions recorded there with the ones above
 
 CITATION
 --------

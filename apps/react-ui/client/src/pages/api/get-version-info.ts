@@ -13,6 +13,7 @@ import type { VersionInfo } from "@src/types/reproducibility";
  * - Git commit hash
  * - R version
  * - phacking version (the RTMA implementation)
+ * - clubSandwich version (the covariance estimator behind MAIVE inference)
  * - Current timestamp
  */
 
@@ -68,6 +69,14 @@ function getVersionInfo(): VersionInfo {
     process.env.PHACKING_VERSION ??
     CONST.REPRODUCIBILITY.DEFAULTS.PHACKING_VERSION;
 
+  // clubSandwich version, same mechanism: pinned in r-packages.txt, mirrored
+  // by the constant, guarded by the same drift test. It is the covariance
+  // estimator behind every MAIVE standard error, so a MAIVE package names it
+  // and reinstalls exactly that one (#576).
+  const clubSandwichVersion =
+    process.env.CLUBSANDWICH_VERSION ??
+    CONST.REPRODUCIBILITY.DEFAULTS.CLUBSANDWICH_VERSION;
+
   cachedVersionInfo = {
     uiVersion,
     maiveTag,
@@ -76,6 +85,7 @@ function getVersionInfo(): VersionInfo {
     isExactCommit,
     rVersion,
     phackingVersion,
+    clubSandwichVersion,
     timestamp: new Date().toISOString(),
   };
 
