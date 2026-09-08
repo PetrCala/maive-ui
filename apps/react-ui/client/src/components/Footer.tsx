@@ -99,6 +99,7 @@ function isVersionInfo(value: unknown): value is VersionInfo {
     typeof candidate.gitCommitHash === "string" &&
     typeof candidate.rVersion === "string" &&
     typeof candidate.phackingVersion === "string" &&
+    typeof candidate.clubSandwichVersion === "string" &&
     typeof candidate.timestamp === "string"
   );
 }

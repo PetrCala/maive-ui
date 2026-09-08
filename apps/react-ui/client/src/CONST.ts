@@ -78,11 +78,15 @@ const CONST = {
       // Nothing in the repo records the R version the image was built with, so
       // get-version-info needs a literal to fall back to.
       R_VERSION: "4.4.1",
-      // Must equal the version pinned in
+      // Must equal the versions pinned in
       // apps/lambda-r-backend/r_scripts/r-packages.txt, which is what the
       // backend image actually installs. rPackagePins.test.ts fails the
       // build if the two drift apart.
       PHACKING_VERSION: "0.2.1",
+      // clubSandwich supplies the cluster-robust covariance estimator behind
+      // every MAIVE standard error, so a MAIVE reproducibility package pins it
+      // the way an RTMA one pins phacking (#576).
+      CLUBSANDWICH_VERSION: "0.7.0",
       // No MAIVE tag default here, deliberately. The tag is committed to
       // package.json (`maiveTag`) by scripts/set-maive-tag.sh alongside
       // release.yml, and get-version-info reads it from there. A third copy

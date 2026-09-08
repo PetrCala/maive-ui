@@ -15,6 +15,7 @@ const versionInfo: VersionInfo = {
   isExactCommit: true,
   rVersion: "4.4.2",
   phackingVersion: "0.2.1",
+  clubSandwichVersion: "0.7.0",
   timestamp: "2026-08-09T10:00:00.000Z",
 };
 
@@ -169,6 +170,47 @@ describe("generateWrapperScript (RTMA)", () => {
 
     expect(script).toContain("seed = 2025");
     expect(script).toContain("recorded no seed");
+  });
+
+  it("lists the packages maive_model.R attaches without pinning them", () => {
+    // The RTMA script sources maive_model.R for winsorize_percent, and that
+    // file attaches clubSandwich and metafor; neither was listed, so the
+    // script failed on a machine without clubSandwich (#576). They do not
+    // enter the RTMA fit, so they are installed but not pinned.
+    const script = generate(rtmaResults);
+
+    expect(script).toMatch(/required_packages <- c\([\s\S]*"clubSandwich"/);
+    expect(script).toMatch(/required_packages <- c\([\s\S]*"metafor"/);
+    expect(script).not.toContain("clubsandwich_version");
+  });
+
+  it("records sessionInfo() next to the results", () => {
+    const script = generate(rtmaResults);
+
+    expect(script).toContain('session_info_path <- "session_info.txt"');
+    expect(script).toContain("capture.output(sessionInfo())");
+    expect(script).toContain(
+      "Web application ran under: R 4.4.2, phacking 0.2.1",
+    );
+    expect(script.indexOf("run_rtma_model(")).toBeLessThan(
+      script.indexOf("capture.output(sessionInfo())"),
+    );
+    expect(script).toContain("session_info.txt, next to the results");
+    expect(script).toContain("session_info.txt       - R and package versions");
+  });
+
+  it("refuses a missing required RTMA parameter", () => {
+    const withoutFavor: Partial<ModelParameters> = { ...rtmaParameters };
+    delete withoutFavor.favorPositive;
+
+    expect(() =>
+      generateWrapperScript(
+        versionInfo,
+        withoutFavor as ModelParameters,
+        asModelResults(rtmaResults),
+        40,
+      ),
+    ).toThrow(/RTMA run: parameter "favorPositive" missing/);
   });
 
   it("leaves the MAIVE script alone", () => {

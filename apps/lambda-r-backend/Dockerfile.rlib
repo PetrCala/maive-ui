@@ -52,19 +52,37 @@ RUN if [ -n "${GITHUB_PAT:-}" ]; then \
 RUN R -q -e "install.packages('pak', repos='https://cran.rstudio.com')"
 
 # Install CRAN packages from list. Entries may carry a pak version ref
-# (pkg@version); phacking is pinned that way so a rebuilt image keeps shipping
-# the RTMA implementation the exported reproducibility packages name (#489).
-# clubSandwich and metafor are pinned for the same reason (#574): clubSandwich
-# supplies the CR2 variance and the Satterthwaite degrees of freedom behind
-# every RDT interval and p-value, so a rebuild must not quietly move it.
+# (pkg@version). phacking (the RTMA implementation, #489), clubSandwich (the
+# cluster-robust covariance behind every MAIVE standard error and the CR2
+# variance and Satterthwaite degrees of freedom behind every RDT interval,
+# #574/#576) and metafor (#574) are pinned that way, so a rebuilt image keeps
+# shipping the versions the results and the exported reproducibility packages
+# depend on. The UI mirrors the phacking and clubSandwich pins in
+# CONST.REPRODUCIBILITY.DEFAULTS, with a drift test (rPackagePins.test.ts)
+# tying the two together.
 COPY r_scripts/r-packages.txt /tmp/r-packages.txt
 RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 
-# Install the MAIVE package. upgrade = FALSE so this step installs what MAIVE
-# still needs without moving the versions the list above pinned; with
-# upgrade = TRUE it took the newest clubSandwich at build time and undid the
-# pin (#574).
+# Install the MAIVE package. The pinned packages above are installed first and
+# this step must leave them alone: with upgrade = FALSE pak installs MAIVE plus
+# any dependency that is missing or older than MAIVE's DESCRIPTION requires,
+# and keeps an installed dependency that already satisfies it. upgrade = TRUE
+# would instead refresh every dependency to the newest CRAN release, which is
+# exactly how the clubSandwich pin got undone (#574/#576).
 RUN R -q -e "pak::pkg_install('PetrCala/MAIVE@${MAIVE_TAG}', upgrade = FALSE)"
+
+# Fail the build if anything above replaced a pinned package (a future MAIVE
+# release requiring a newer clubSandwich would do that). The pin then has to be
+# bumped in r-packages.txt and in the UI constant together, instead of the
+# image quietly shipping a version the reproducibility packages do not name.
+RUN R -q -e "pins <- grep('@', readLines('/tmp/r-packages.txt'), value = TRUE); \
+  for (pin in pins) { \
+    parts <- strsplit(pin, '@', fixed = TRUE)[[1]]; \
+    installed <- as.character(packageVersion(parts[1])); \
+    if (!identical(installed, parts[2])) \
+      stop(parts[1], ' is ', installed, ' but r-packages.txt pins ', parts[2]); \
+  }; \
+  cat('Pinned packages verified:', paste(pins, collapse = ', '), '\n')"
 
 # Prove what's installed
 RUN R -q -e "writeLines(apply(installed.packages()[,c('Package','Version')],1,paste,collapse='@'))" > /root/rlib-manifest.txt

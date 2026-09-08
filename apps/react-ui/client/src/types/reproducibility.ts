@@ -33,6 +33,16 @@ export type VersionInfo = {
    * rPackagePins.test.ts.
    */
   phackingVersion: string;
+  /**
+   * clubSandwich CRAN version the backend image installs (e.g., "0.7.0").
+   *
+   * MAIVE takes its cluster-robust covariance estimator from clubSandwich, so
+   * it decides every MAIVE standard error, confidence interval and p-value. A
+   * MAIVE package that does not name the version cannot reinstall the same
+   * inference (#576). Pinned in apps/lambda-r-backend/r_scripts/r-packages.txt;
+   * see the drift guard in rPackagePins.test.ts.
+   */
+  clubSandwichVersion: string;
   /** Timestamp when version info was generated */
   timestamp: string;
 };
