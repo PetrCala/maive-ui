@@ -32,7 +32,8 @@ const baseResults: RDTResults = {
   hasStudyColumn: true,
   k: 150,
   droppedRows: 0,
-  minDetectableJump: 0.3276,
+  // 3.0008 (the exact 80%-power multiple at df 14.8) times jumpSE (#573).
+  minDetectableJump: 0.3511,
   firstStage: { slope: -0.5, rSquared: 0.747 },
   sensitivity: { half: fit(-0.1, 1.96), double: fit(-0.14, 1.96) },
   placebo: { below: fit(0.05, 0.84), above: fit(-0.02, 2.59) },
@@ -60,7 +61,7 @@ describe("RDTResultsSummary", () => {
     expect(
       screen.getByText(TEXT.rdt.results.detectable.label),
     ).toBeInTheDocument();
-    expect(screen.getByText("0.328")).toBeInTheDocument();
+    expect(screen.getByText("0.351")).toBeInTheDocument();
     expect(
       screen.getByText(/below the detectable size, a null result says nothing/),
     ).toBeInTheDocument();
