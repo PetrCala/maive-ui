@@ -87,11 +87,13 @@ test_resolver_parity <- function() {
         } else {
           case$parameters
         }
-        response <- v1_post_json(
-          path,
+        # `topLevel` keys ride beside data and parameters (#574): the backend
+        # must reject them rather than ignore them.
+        request_body <- c(
           list(data = resolver_parity_rows(case), parameters = parameters),
-          timeout = 300
+          if (is.null(case$topLevel)) list() else case$topLevel
         )
+        response <- v1_post_json(path, request_body, timeout = 300)
         status <- httr::status_code(response)
         body <- v1_parse_body(response)
 

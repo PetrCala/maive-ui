@@ -10,6 +10,10 @@ import {
 } from "@api/server/runsService";
 import { resolveRunParameters } from "@api/server/modelParameterDefaults";
 
+// Everything the browser's modelService.submitRun() sends; anything else at
+// the top level is a 400 (#574).
+const TOP_LEVEL_KEYS = ["data", "parameters", "dataId", "modelType"] as const;
+
 // Allow larger request bodies than Next.js's 1mb default so we can accept a
 // dataset and decide whether to queue it or signal the synchronous fallback.
 // Bounded by the Lambda sync payload limit (~6mb).
@@ -78,7 +82,12 @@ const handler = async (
   const { resolved, error: resolutionError } = resolveRunParameters(
     modelType,
     parameters,
-    { data, allowExperimentalModels: true },
+    {
+      data,
+      allowExperimentalModels: true,
+      body: req.body,
+      acceptedTopLevelKeys: TOP_LEVEL_KEYS,
+    },
   );
   if (resolutionError) {
     return res.status(400).json({ error: resolutionError.message });

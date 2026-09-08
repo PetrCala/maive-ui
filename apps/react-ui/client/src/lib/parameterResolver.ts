@@ -21,7 +21,9 @@
  * Two modes:
  * - `strict` (the API): a caller-supplied value that the rules would have to
  *   change is a 400, never a silently different analysis. Unknown keys are
- *   also a 400, naming the key.
+ *   also a 400, naming the key, and so is a key the endpoint does not accept
+ *   at the top level of the request body (#574): a `modelType` sent beside
+ *   `data` instead of inside `parameters` used to be ignored, and MAIVE ran.
  * - `lenient` (the browser): the same rules are applied and every change is
  *   reported in `adjustments`, which the model page turns into the usual
  *   parameter alerts.
@@ -154,6 +156,14 @@ export type ResolveInput = {
    * own routes (`/api/runs`, the `rdt` family) opt in.
    */
   allowExperimentalModels?: boolean;
+  /**
+   * Keys present at the top level of the request body, together with the
+   * ones this endpoint accepts there (#574). In strict mode any other key is
+   * a 400 naming it; a parameter name found there is told where it belongs.
+   * Lenient mode (the browser) never sees a request body and ignores both.
+   */
+  topLevelKeys?: readonly string[];
+  acceptedTopLevelKeys?: readonly string[];
   mode?: ResolveMode;
 };
 
@@ -207,6 +217,35 @@ export const RTMA_PARAMETER_KEYS: ReadonlyArray<keyof RTMAParameters> = [
  * fixed in the backend.
  */
 export const RDT_PARAMETER_KEYS: ReadonlyArray<keyof RDTParameters> = [
+  "modelType",
+];
+
+/** Every parameter name any family knows, for spotting one sent at the top level. */
+export const ALL_PARAMETER_KEYS: readonly string[] = Array.from(
+  new Set<string>([
+    ...MAIVE_PARAMETER_KEYS,
+    ...RTMA_PARAMETER_KEYS,
+    ...RDT_PARAMETER_KEYS,
+  ]),
+);
+
+/**
+ * Top-level request body keys the public sync endpoints (`/v1/run-model`,
+ * `/v1/run-rtma`) accept. `modelType` is deliberately not one of them: on
+ * these endpoints it is a parameter and belongs inside `parameters` (#574).
+ */
+export const V1_SYNC_TOP_LEVEL_KEYS: readonly string[] = [
+  "data",
+  "parameters",
+  "recipe",
+];
+
+/**
+ * Top-level request body keys the public async endpoint (`/v1/runs`)
+ * accepts. Here a top-level `modelType` is the documented form, so it stays.
+ */
+export const V1_ASYNC_TOP_LEVEL_KEYS: readonly string[] = [
+  ...V1_SYNC_TOP_LEVEL_KEYS,
   "modelType",
 ];
 
@@ -282,6 +321,40 @@ const rejectUnknownKeys = (
       `Unknown ${family} parameter key${unknown.length > 1 ? "s" : ""}: ${unknown.join(", ")}. Known keys: ${known.join(", ")}.`,
     );
   }
+};
+
+const listKeys = (keys: readonly string[]): string =>
+  keys.length <= 1
+    ? keys.join("")
+    : `${keys.slice(0, -1).join(", ")} and ${keys[keys.length - 1]}`;
+
+/**
+ * A key the endpoint does not accept at the top level of the request body
+ * is a 400 (#574). Parameter names get told where they belong, because that
+ * is the trap: `{"modelType": "WLS", "data": [...]}` on `/v1/run-model` used
+ * to be silently ignored, and MAIVE ran. Anything else is rejected too, so a
+ * misspelled or misplaced key can never change what runs without being
+ * noticed.
+ */
+const rejectUnknownTopLevelKeys = (
+  keys: readonly string[],
+  accepted: readonly string[],
+): void => {
+  const unknown = keys.filter((key) => !accepted.includes(key));
+  if (unknown.length === 0) {
+    return;
+  }
+  const misplaced = unknown.filter((key) => ALL_PARAMETER_KEYS.includes(key));
+  const plural = unknown.length > 1;
+  const where = `this endpoint accepts ${listKeys(accepted)} at the top level`;
+  if (misplaced.length > 0) {
+    invalid(
+      `Unexpected top-level key${plural ? "s" : ""}: ${unknown.join(", ")}. ${listKeys(misplaced)} ${misplaced.length > 1 ? "are run parameters and belong" : "is a run parameter and belongs"} inside \`parameters\`; ${where}.`,
+    );
+  }
+  invalid(
+    `Unexpected top-level key${plural ? "s" : ""}: ${unknown.join(", ")}. Only ${listKeys(accepted)} ${accepted.length > 1 ? "are" : "is"} accepted at the top level.`,
+  );
 };
 
 const enumParameter = <T extends string>(
@@ -712,6 +785,12 @@ const resolveMaiveFamily = (
 
 const resolveOrThrow = (input: ResolveInput): ResolvedRun => {
   const mode = input.mode ?? "strict";
+  if (mode === "strict" && input.topLevelKeys) {
+    rejectUnknownTopLevelKeys(
+      input.topLevelKeys,
+      input.acceptedTopLevelKeys ?? V1_SYNC_TOP_LEVEL_KEYS,
+    );
+  }
   const shape = input.dataShape ?? UNKNOWN_DATA_SHAPE;
   const recipe = resolveRecipe(input.recipe);
   const callerOverrides = asOverrides(input.parameters);

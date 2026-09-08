@@ -343,6 +343,11 @@ export async function proxyToRBackend(
  * @param res - Outgoing Next.js API response
  * @param path - R backend path, "/run-model", "/run-rtma" or "/run-rdt"
  */
+// The legacy body carries exactly two fields; a parameter name beside them
+// (`{"modelType": "WLS", "data": "...", "parameters": "..."}`) would be
+// ignored and must not be (#574).
+const LEGACY_TOP_LEVEL_KEYS = ["data", "parameters"] as const;
+
 export async function proxyModelRun(
   req: NextApiRequest,
   res: NextApiResponse,
@@ -363,6 +368,8 @@ export async function proxyModelRun(
       data: parsedData,
       family:
         path === "/run-rtma" ? "rtma" : path === "/run-rdt" ? "rdt" : "maive",
+      body: req.body,
+      acceptedTopLevelKeys: LEGACY_TOP_LEVEL_KEYS,
     },
   );
   if (resolutionError) {

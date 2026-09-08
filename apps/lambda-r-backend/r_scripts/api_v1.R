@@ -56,6 +56,16 @@ API_V1_RTMA_PARAMETER_KEYS <- c(
   "seed"
 )
 
+# The two keys a /v1 request body carries. A parameter name sent beside them
+# (`{"modelType": "WLS", "data": [...]}`) used to be ignored, so MAIVE ran when
+# the caller asked for WLS (#574); now it is a 400 saying where the key
+# belongs, and any other unexpected key is a 400 too. The Next.js layer applies
+# the same rule (and consumes `recipe`) before forwarding, so this only fires
+# for direct callers of the backend. Keep in sync with V1_SYNC_TOP_LEVEL_KEYS
+# in the UI's parameterResolver.ts.
+API_V1_TOP_LEVEL_KEYS <- c("data", "parameters")
+API_V1_ALL_PARAMETER_KEYS <- union(API_V1_MAIVE_PARAMETER_KEYS, API_V1_RTMA_PARAMETER_KEYS)
+
 API_V1_MAIVE_CANONICAL <- c("effect", "se", "n_obs")
 API_V1_RTMA_CANONICAL <- c("effect", "se")
 
@@ -501,6 +511,50 @@ api_v1_reject_unknown_keys <- function(params, known, family) {
   invisible(NULL)
 }
 
+#' Join key names the way the UI resolver does ("a, b and c")
+api_v1_list_keys <- function(keys) {
+  if (length(keys) <= 1) {
+    return(paste(keys, collapse = ""))
+  }
+  paste0(paste(keys[-length(keys)], collapse = ", "), " and ", keys[length(keys)])
+}
+
+#' Reject request body keys this endpoint does not accept at the top level (#574)
+#'
+#' @param body The parsed request body (named list)
+api_v1_reject_unknown_top_level_keys <- function(body) {
+  unknown <- setdiff(names(body), API_V1_TOP_LEVEL_KEYS)
+  if (length(unknown) == 0) {
+    return(invisible(NULL))
+  }
+  plural <- if (length(unknown) > 1) "s" else ""
+  misplaced <- intersect(unknown, API_V1_ALL_PARAMETER_KEYS)
+  if (length(misplaced) > 0) {
+    api_v1_abort_validation(sprintf(
+      "Unexpected top-level key%s: %s. %s %s inside `parameters`; this endpoint accepts %s at the top level.",
+      plural,
+      paste(unknown, collapse = ", "),
+      api_v1_list_keys(misplaced),
+      if (length(misplaced) > 1) "are run parameters and belong" else "is a run parameter and belongs",
+      api_v1_list_keys(API_V1_TOP_LEVEL_KEYS)
+    ))
+  }
+  if ("recipe" %in% unknown) {
+    api_v1_abort_validation(sprintf(
+      "Unexpected top-level key%s: %s. Named recipes are expanded by the public API layer; when calling the backend directly, send the recipe's parameters inside `parameters`. Only %s are accepted at the top level.",
+      plural,
+      paste(unknown, collapse = ", "),
+      api_v1_list_keys(API_V1_TOP_LEVEL_KEYS)
+    ))
+  }
+  api_v1_abort_validation(sprintf(
+    "Unexpected top-level key%s: %s. Only %s are accepted at the top level.",
+    plural,
+    paste(unknown, collapse = ", "),
+    api_v1_list_keys(API_V1_TOP_LEVEL_KEYS)
+  ))
+}
+
 #' Format a parameter value the way the UI resolver prints it in messages
 api_v1_format_value <- function(value) {
   if (is.logical(value)) {
@@ -856,6 +910,7 @@ api_v1_run_model <- function(req, res, include = "") {
 
   api_v1_handle(res, "/v1/run-model", log_ctx = log_ctx, run = function() {
     body <- api_v1_request_body(req)
+    api_v1_reject_unknown_top_level_keys(body)
     df <- api_v1_validate_maive_data(body$data)
     params <- api_v1_resolve_maive_parameters(body$parameters, !is.null(df$study_id))
 
@@ -895,6 +950,7 @@ api_v1_run_rtma <- function(req, res, include = "") {
 
   api_v1_handle(res, "/v1/run-rtma", log_ctx = log_ctx, run = function() {
     body <- api_v1_request_body(req)
+    api_v1_reject_unknown_top_level_keys(body)
     df <- api_v1_validate_rtma_data(body$data)
     params <- api_v1_resolve_rtma_parameters(body$parameters)
     model_params <- params[names(params) != "modelType"]

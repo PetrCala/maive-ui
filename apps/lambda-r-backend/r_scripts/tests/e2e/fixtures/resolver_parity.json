@@ -1,5 +1,5 @@
 {
-  "description": "Shared parity cases for the parameter resolver (#555). The UI's src/lib/parameterResolver.ts (Vitest: parameterResolver.test.ts) and the R backend's api_v1.R (e2e: resolver_parity_test.R) must both produce `expected` / `expectedRecipe` for a case, or reject it with a message containing `expectedErrorContains`. `family` names the sync endpoint (maive: /v1/run-model, rtma: /v1/run-rtma); `dataShape` says which optional columns the posted data carries.",
+  "description": "Shared parity cases for the parameter resolver (#555). The UI's src/lib/parameterResolver.ts (Vitest: parameterResolver.test.ts) and the R backend's api_v1.R (e2e: resolver_parity_test.R) must both produce `expected` / `expectedRecipe` for a case, or reject it with a message containing `expectedErrorContains`. `family` names the sync endpoint (maive: /v1/run-model, rtma: /v1/run-rtma); `dataShape` says which optional columns the posted data carries; an optional `topLevel` object is merged into the request body beside `data` and `parameters` (#574).",
   "cases": [
     {
       "name": "four-column upload turns study clustering on and the log first stage is the default",
@@ -278,6 +278,38 @@
       "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": false },
       "parameters": { "modelType": "MAIVE" },
       "expectedErrorContains": "This endpoint runs RTMA only"
+    },
+    {
+      "name": "a top-level modelType is rejected instead of silently running MAIVE",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "topLevel": { "modelType": "WLS" },
+      "parameters": {},
+      "expectedErrorContains": "Unexpected top-level key: modelType. modelType is a run parameter and belongs inside `parameters`"
+    },
+    {
+      "name": "two parameter names at the top level are both named",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "topLevel": { "modelType": "WLS", "maiveMethod": "EK" },
+      "parameters": {},
+      "expectedErrorContains": "Unexpected top-level keys: modelType, maiveMethod. modelType and maiveMethod are run parameters and belong inside `parameters`"
+    },
+    {
+      "name": "an arbitrary unknown top-level key is rejected too",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "topLevel": { "options": { "modelType": "WLS" } },
+      "parameters": {},
+      "expectedErrorContains": "Unexpected top-level key: options. Only"
+    },
+    {
+      "name": "a top-level seed on the RTMA endpoint is rejected",
+      "family": "rtma",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": false },
+      "topLevel": { "seed": 42 },
+      "parameters": {},
+      "expectedErrorContains": "Unexpected top-level key: seed. seed is a run parameter and belongs inside `parameters`"
     }
   ]
 }

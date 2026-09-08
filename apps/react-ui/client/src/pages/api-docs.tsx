@@ -14,6 +14,7 @@ import {
   ENDPOINTS,
   ERROR_CODES,
   ERROR_ENVELOPE_EXAMPLE,
+  MISPLACED_KEY_ERROR_EXAMPLE,
   MINIMAL_REQUEST_EXAMPLE,
   MODEL_PARAMETERS,
   RECIPE_ROWS,
@@ -236,6 +237,26 @@ export default function ApiDocsPage() {
               <CodeBlock
                 code={UNKNOWN_KEY_ERROR_EXAMPLE}
                 label="an unknown key error"
+              />
+              <p className="text-secondary text-sm leading-relaxed">
+                The top level of the body is checked the same way. On{" "}
+                <code className={CODE_CLASSES}>/v1/run-model</code> and{" "}
+                <code className={CODE_CLASSES}>/v1/run-rtma</code> every
+                parameter, <code className={CODE_CLASSES}>modelType</code>{" "}
+                included, goes inside{" "}
+                <code className={CODE_CLASSES}>parameters</code>; a{" "}
+                <code className={CODE_CLASSES}>modelType</code> sent beside{" "}
+                <code className={CODE_CLASSES}>data</code> is a{" "}
+                <code className={CODE_CLASSES}>400</code> that says where it
+                belongs, not a MAIVE run. Only{" "}
+                <code className={CODE_CLASSES}>/v1/runs</code> takes a top-level{" "}
+                <code className={CODE_CLASSES}>modelType</code>. Any other key
+                an endpoint does not document at the top level is rejected the
+                same way.
+              </p>
+              <CodeBlock
+                code={MISPLACED_KEY_ERROR_EXAMPLE}
+                label="a misplaced key error"
               />
             </section>
 

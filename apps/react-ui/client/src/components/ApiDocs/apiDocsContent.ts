@@ -73,6 +73,15 @@ export const UNKNOWN_KEY_ERROR_EXAMPLE = `{
   }
 }`;
 
+// The trap #574 closed: on the sync endpoints a `modelType` beside `data`
+// used to be ignored and MAIVE ran with a 200.
+export const MISPLACED_KEY_ERROR_EXAMPLE = `{
+  "error": {
+    "code": "validation_error",
+    "message": "Unexpected top-level key: modelType. modelType is a run parameter and belongs inside \`parameters\`; this endpoint accepts data, parameters and recipe at the top level."
+  }
+}`;
+
 export type EndpointRow = {
   method: string;
   path: string;
@@ -449,7 +458,8 @@ export const ERROR_CODES: ErrorCodeRow[] = [
   {
     code: "validation_error",
     status: "400",
-    meaning: "The request body failed validation.",
+    meaning:
+      "The request body failed validation: bad data, an unknown or conflicting parameter, or a key the endpoint does not accept at the top level.",
   },
   {
     code: "not_found",
