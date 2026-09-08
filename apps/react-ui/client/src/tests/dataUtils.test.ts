@@ -1,8 +1,10 @@
 import { describe, it, expect } from "vitest";
 import * as XLSX from "xlsx";
 import {
+  buildInstrumentedSeRows,
   buildRtmaResultsCsvRows,
   hasNObsColumn,
+  instrumentedSeCell,
   parseLocalizedNumber,
   processUploadedFile,
 } from "@src/utils/dataUtils";
@@ -200,5 +202,55 @@ describe("processUploadedFile", () => {
 
     expect(parsed.columnNames).toEqual(["effect", "se", "n_obs"]);
     expect(parsed.data).toHaveLength(2);
+  });
+});
+
+describe("instrumentedSeCell", () => {
+  it("keeps a finite number, including zero", () => {
+    expect(instrumentedSeCell(0.25)).toBe(0.25);
+    expect(instrumentedSeCell(0)).toBe(0);
+  });
+
+  it('turns the backend "NA" into an empty cell rather than the string', () => {
+    expect(instrumentedSeCell("NA")).toBeNull();
+  });
+
+  it("turns a missing entry into an empty cell", () => {
+    expect(instrumentedSeCell(undefined)).toBeNull();
+  });
+});
+
+describe("buildInstrumentedSeRows", () => {
+  it('adds se_instrumented to every row, empty where the backend said "NA"', () => {
+    const rows = buildInstrumentedSeRows(
+      [
+        { effect: 0.5, se: 0.1 },
+        { effect: 0.3, se: 0.2 },
+        { effect: 0.1, se: 0.3 },
+      ],
+      [0.11, "NA", 0],
+    );
+
+    expect(rows).toEqual([
+      { effect: 0.5, se: 0.1, se_instrumented: 0.11 },
+      { effect: 0.3, se: 0.2, se_instrumented: null },
+      { effect: 0.1, se: 0.3, se_instrumented: 0 },
+    ]);
+  });
+
+  it("leaves an empty cell when the backend returned fewer values than rows", () => {
+    const rows = buildInstrumentedSeRows(
+      [{ effect: 0.5 }, { effect: 0.3 }],
+      [0.11],
+    );
+
+    expect(rows[1].se_instrumented).toBeNull();
+  });
+
+  it("does not mutate the original rows", () => {
+    const original = [{ effect: 0.5 }];
+    buildInstrumentedSeRows(original, ["NA"]);
+
+    expect(original[0]).toEqual({ effect: 0.5 });
   });
 });
