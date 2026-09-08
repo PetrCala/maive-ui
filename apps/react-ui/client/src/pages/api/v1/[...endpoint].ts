@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { sendApiError } from "@api/server/errorEnvelope";
 import { proxyToRBackend } from "@api/server/rBackendProxy";
 import { resolveRunParameters } from "@api/server/modelParameterDefaults";
+import { V1_SYNC_TOP_LEVEL_KEYS } from "@src/lib/parameterResolver";
 
 // Public /v1 synchronous endpoints (#530). The api.maive.eu worker used to
 // route /v1/run-model, /v1/run-rtma and /v1/health straight to the R backend
@@ -14,6 +15,8 @@ import { resolveRunParameters } from "@api/server/modelParameterDefaults";
 // conflicting values with a 400, and the fully resolved parameters are what
 // the R backend receives. The 200 response is decorated with
 // `resolvedParameters` and `recipe` so the caller can see exactly what ran.
+// A key the body does not accept at the top level (a `modelType` beside
+// `data` instead of inside `parameters`, #574) is a 400 as well.
 //
 // /v1/runs* is handled by the specific routes, which take precedence over
 // this catch-all.
@@ -74,6 +77,8 @@ export default async function handler(
     data: body.data,
     recipe: body.recipe,
     family: spec.family,
+    body,
+    acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
   });
   if (error) {
     return sendApiError(res, "validation_error", error.message);

@@ -47,6 +47,14 @@ export type ResolveRunParametersOptions = {
    * routes leave it off and get a 400 for RDT.
    */
   allowExperimentalModels?: boolean;
+  /**
+   * The whole request body, so keys the endpoint does not accept at the top
+   * level can be rejected (#574); paired with `acceptedTopLevelKeys`, the
+   * keys this route documents there. A body that is not a JSON object is
+   * left to the field checks.
+   */
+  body?: unknown;
+  acceptedTopLevelKeys?: readonly string[];
 };
 
 // The API resolves columns by canonical name with positional fallback (D5),
@@ -71,6 +79,11 @@ const shapeFromData = (data: unknown): DataShape | undefined => {
   };
 };
 
+const topLevelKeysOf = (body: unknown): string[] | undefined =>
+  typeof body === "object" && body !== null && !Array.isArray(body)
+    ? Object.keys(body as Record<string, unknown>)
+    : undefined;
+
 const toResolved = (run: ResolvedRun): ResolvedRunParameters => ({
   modelType: run.modelType,
   parameters: run.parameters,
@@ -89,6 +102,9 @@ export const resolveRunParameters = (
     recipe: options.recipe,
     family: options.family,
     allowExperimentalModels: options.allowExperimentalModels,
+    topLevelKeys:
+      options.body === undefined ? undefined : topLevelKeysOf(options.body),
+    acceptedTopLevelKeys: options.acceptedTopLevelKeys,
     mode: "strict",
   });
   if (result.error) {

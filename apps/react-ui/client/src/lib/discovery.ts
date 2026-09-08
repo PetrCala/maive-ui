@@ -161,11 +161,11 @@ ${recipeSections.join("\n\n")}
 
 Every successful response carries \`resolvedParameters\`, the complete parameter object the server actually ran after defaults and data-dependent rules were applied, and \`recipe\`, the named recipe those parameters correspond to (or \`null\`). Report \`resolvedParameters\` alongside the numbers. Do not assume defaults; read them from the echo.
 
-Unknown or misspelled parameter keys (for example \`favourPositive\`) and values that conflict with each other are rejected with \`400 validation_error\` naming the problem. The API never silently runs a different analysis than the one requested.
+Unknown or misspelled parameter keys (for example \`favourPositive\`) and values that conflict with each other are rejected with \`400 validation_error\` naming the problem. So is a key the endpoint does not accept at the top level of the request body: on \`/v1/run-model\` and \`/v1/run-rtma\` every parameter, \`modelType\` included, goes inside \`parameters\`, and \`{"modelType": "WLS", "data": [...]}\` is a 400 saying so rather than a MAIVE run. The API never silently runs a different analysis than the one requested.
 
 ## Long runs
 
-Prefer the asynchronous path: \`POST ${API.BASE_URL}/v1/runs\` with the same body plus \`"modelType"\` (or \`"recipe"\`), then poll \`GET ${API.BASE_URL}/v1/runs/{jobId}\` every few seconds until \`status\` is \`succeeded\`, \`failed\` or \`timedout\`. The submit response and every poll carry \`resolvedParameters\` too. RTMA above ${CONST.RTMA_SYNC_ROW_LIMIT} rows must use this path.
+Prefer the asynchronous path: \`POST ${API.BASE_URL}/v1/runs\` with the same body plus \`"modelType"\` (or \`"recipe"\`); this is the one endpoint that accepts a top-level \`modelType\`. Then poll \`GET ${API.BASE_URL}/v1/runs/{jobId}\` every few seconds until \`status\` is \`succeeded\`, \`failed\` or \`timedout\`. The submit response and every poll carry \`resolvedParameters\` too. RTMA above ${CONST.RTMA_SYNC_ROW_LIMIT} rows must use this path.
 
 ## Reproduce in R
 

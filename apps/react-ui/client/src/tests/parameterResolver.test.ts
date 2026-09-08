@@ -4,6 +4,8 @@ import path from "path";
 import {
   RECIPES,
   RECIPE_NAMES,
+  V1_ASYNC_TOP_LEVEL_KEYS,
+  V1_SYNC_TOP_LEVEL_KEYS,
   describeDataShape,
   detectRecipe,
   fromPageParameters,
@@ -28,6 +30,8 @@ type ParityCase = {
   family: "maive" | "rtma";
   dataShape: DataShape;
   parameters: Record<string, unknown>;
+  /** Extra keys posted beside `data` and `parameters` (#574). */
+  topLevel?: Record<string, unknown>;
   expected?: Record<string, unknown>;
   expectedRecipe?: RecipeName | null;
   expectedErrorContains?: string;
@@ -425,6 +429,12 @@ describe("resolver parity fixture", () => {
         dataShape: parityCase.dataShape,
         parameters: parityCase.parameters,
         family: parityCase.family,
+        topLevelKeys: Object.keys({
+          data: [],
+          parameters: parityCase.parameters,
+          ...(parityCase.topLevel ?? {}),
+        }),
+        acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
         mode: "strict",
       });
       if (parityCase.expectedErrorContains) {
@@ -570,5 +580,133 @@ describe("RDT (#559)", () => {
 
   it("does not match any recipe", () => {
     expect(detectRecipe({ modelType: "RDT" })).toBeNull();
+  });
+});
+
+describe("top-level request body keys (#574)", () => {
+  // The trap: on /v1/run-model a `modelType` beside `data` used to be
+  // ignored and MAIVE ran with a 200. Now the strict resolver names the key
+  // and says where it belongs.
+  it("rejects a parameter name at the top level of a sync request, naming it and where it belongs", () => {
+    expect(
+      resolveError({
+        dataShape: THREE_COLUMN,
+        family: "maive",
+        topLevelKeys: ["modelType", "data"],
+        acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
+      }),
+    ).toBe(
+      "Unexpected top-level key: modelType. modelType is a run parameter and belongs inside `parameters`; this endpoint accepts data, parameters and recipe at the top level.",
+    );
+  });
+
+  it("names every misplaced key at once", () => {
+    expect(
+      resolveError({
+        dataShape: THREE_COLUMN,
+        family: "maive",
+        topLevelKeys: ["data", "modelType", "maiveMethod"],
+        acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
+      }),
+    ).toMatch(
+      /^Unexpected top-level keys: modelType, maiveMethod\. modelType and maiveMethod are run parameters and belong inside `parameters`/,
+    );
+  });
+
+  it("rejects every known parameter name at the top level of a sync request", () => {
+    const parameterNames = [
+      "modelType",
+      "maiveMethod",
+      "weight",
+      "standardErrorTreatment",
+      "includeStudyDummies",
+      "includeStudyClustering",
+      "computeAndersonRubin",
+      "useLogFirstStage",
+      "winsorize",
+      "shouldUseInstrumenting",
+      "favorPositive",
+      "alphaSelect",
+      "ciLevel",
+      "seed",
+    ];
+    parameterNames.forEach((name) => {
+      expect(
+        resolveError({
+          dataShape: THREE_COLUMN,
+          family: "maive",
+          topLevelKeys: ["data", name],
+          acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
+        }),
+      ).toContain(
+        `Unexpected top-level key: ${name}. ${name} is a run parameter and belongs inside \`parameters\``,
+      );
+    });
+  });
+
+  it("rejects an arbitrary unknown top-level key as well", () => {
+    expect(
+      resolveError({
+        dataShape: THREE_COLUMN,
+        family: "maive",
+        topLevelKeys: ["data", "options"],
+        acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
+      }),
+    ).toBe(
+      "Unexpected top-level key: options. Only data, parameters and recipe are accepted at the top level.",
+    );
+  });
+
+  it("checks the top level before the parameters, so the misplaced key is what gets reported", () => {
+    expect(
+      resolveError({
+        dataShape: THREE_COLUMN,
+        family: "maive",
+        parameters: { favourPositive: true },
+        topLevelKeys: ["data", "parameters", "modelType"],
+        acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
+      }),
+    ).toMatch(/^Unexpected top-level key: modelType/);
+  });
+
+  it("accepts the documented sync keys", () => {
+    const { parameters } = resolveOk({
+      dataShape: THREE_COLUMN,
+      family: "maive",
+      recipe: "EK",
+      topLevelKeys: ["recipe", "data", "parameters"],
+      acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
+    });
+    expect(parameters.modelType).toBe("WLS");
+  });
+
+  it("keeps the async form, where a top-level modelType is documented, and still rejects other parameter names there", () => {
+    const { parameters } = resolveOk({
+      dataShape: THREE_COLUMN,
+      modelType: "WLS",
+      topLevelKeys: ["data", "modelType"],
+      acceptedTopLevelKeys: V1_ASYNC_TOP_LEVEL_KEYS,
+    });
+    expect(parameters.modelType).toBe("WLS");
+    expect(
+      resolveError({
+        dataShape: THREE_COLUMN,
+        modelType: "WLS",
+        topLevelKeys: ["data", "modelType", "weight"],
+        acceptedTopLevelKeys: V1_ASYNC_TOP_LEVEL_KEYS,
+      }),
+    ).toBe(
+      "Unexpected top-level key: weight. weight is a run parameter and belongs inside `parameters`; this endpoint accepts data, parameters, recipe and modelType at the top level.",
+    );
+  });
+
+  it("does not apply in lenient mode, which never sees a request body", () => {
+    const { parameters } = resolveOk({
+      dataShape: THREE_COLUMN,
+      mode: "lenient",
+      topLevelKeys: ["modelType", "whatever"],
+      acceptedTopLevelKeys: V1_SYNC_TOP_LEVEL_KEYS,
+    });
+    expect(parameters.modelType).toBe("MAIVE");
   });
 });

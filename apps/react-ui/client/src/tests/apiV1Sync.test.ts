@@ -139,6 +139,55 @@ describe("POST /api/v1/run-model", () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
+  it("400s on a top-level modelType instead of silently running MAIVE (#574)", async () => {
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-model"] },
+      body: { modelType: "WLS", data: fourColumnRows },
+    });
+    const res = withSend(createMockRes());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: {
+        code: "validation_error",
+        message:
+          "Unexpected top-level key: modelType. modelType is a run parameter and belongs inside `parameters`; this endpoint accepts data, parameters and recipe at the top level.",
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("400s on an arbitrary unknown top-level key (#574)", async () => {
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-model"] },
+      body: { data: fourColumnRows, options: { modelType: "WLS" } },
+    });
+    const res = withSend(createMockRes());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: {
+        code: "validation_error",
+        message: expect.stringContaining(
+          "Unexpected top-level key: options.",
+        ) as string,
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("400s when RTMA is requested on the MAIVE endpoint", async () => {
     const { default: handler } = await import(
       "@src/pages/api/v1/[...endpoint]"
@@ -215,6 +264,31 @@ describe("POST /api/v1/run-rtma", () => {
       seed: 2025,
     });
     expect(body.recipe).toBe("RTMA");
+  });
+
+  it("400s on a top-level seed instead of ignoring it (#574)", async () => {
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-rtma"] },
+      body: { seed: 42, data: [{ effect: 0.1, se: 0.1 }] },
+    });
+    const res = withSend(createMockRes());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: {
+        code: "validation_error",
+        message: expect.stringContaining(
+          "Unexpected top-level key: seed. seed is a run parameter and belongs inside `parameters`",
+        ) as string,
+      },
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("keeps a caller seed", async () => {
@@ -295,6 +369,55 @@ describe("POST /api/run-model (browser sync proxy)", () => {
       error: true,
       code: "validation_error",
       message: expect.stringContaining("favourPositive") as string,
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("400s on a top-level modelType with the legacy error shape (#574)", async () => {
+    const { default: handler } = await import("@src/pages/api/run-model");
+    const req = createMockReq({
+      method: "POST",
+      body: {
+        modelType: "WLS",
+        data: JSON.stringify(fourColumnRows),
+        parameters: JSON.stringify({}),
+      },
+    });
+    const res = withSend(createMockRes());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: true,
+      code: "validation_error",
+      message:
+        "Unexpected top-level key: modelType. modelType is a run parameter and belongs inside `parameters`; this endpoint accepts data and parameters at the top level.",
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("400s on a top-level modelType on the RTMA proxy too (#574)", async () => {
+    const { default: handler } = await import("@src/pages/api/run-rtma");
+    const req = createMockReq({
+      method: "POST",
+      body: {
+        modelType: "RTMA",
+        data: JSON.stringify([{ effect: 0.1, se: 0.1 }]),
+        parameters: JSON.stringify({ modelType: "RTMA" }),
+      },
+    });
+    const res = withSend(createMockRes());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: true,
+      code: "validation_error",
+      message: expect.stringContaining(
+        "Unexpected top-level key: modelType.",
+      ) as string,
     });
     expect(fetchMock).not.toHaveBeenCalled();
   });

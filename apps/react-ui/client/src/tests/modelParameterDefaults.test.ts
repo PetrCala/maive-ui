@@ -19,8 +19,12 @@ const resolveOk = (
   return result.resolved;
 };
 
-const resolveError = (modelType: unknown, parameters: unknown): string => {
-  const result = resolveRunParameters(modelType, parameters);
+const resolveError = (
+  modelType: unknown,
+  parameters: unknown,
+  options?: ResolveRunParametersOptions,
+): string => {
+  const result = resolveRunParameters(modelType, parameters, options);
   expect(result.resolved).toBeUndefined();
   if (!result.error) {
     throw new Error("expected a validation error");
@@ -116,6 +120,33 @@ describe("resolveRunParameters", () => {
     expect(
       resolveError("MAIVE", { winsorize: 5, unknownKnob: "boom" }),
     ).toMatch(/Unknown MAIVE-family parameter key: unknownKnob/);
+  });
+
+  it("rejects a parameter name at the top level of the request body (#574)", () => {
+    const body = { data: [], modelType: "WLS" };
+    expect(
+      resolveError(undefined, undefined, {
+        body,
+        acceptedTopLevelKeys: ["data", "parameters", "recipe"],
+      }),
+    ).toMatch(
+      /^Unexpected top-level key: modelType\. modelType is a run parameter and belongs inside `parameters`/,
+    );
+  });
+
+  it("accepts a top-level modelType where the route documents it, and leaves a non-object body to the field checks", () => {
+    expect(
+      resolveOk("WLS", undefined, {
+        body: { data: [], modelType: "WLS" },
+        acceptedTopLevelKeys: ["data", "parameters", "recipe", "modelType"],
+      }).modelType,
+    ).toBe("WLS");
+    expect(
+      resolveOk(undefined, undefined, {
+        body: "not an object",
+        acceptedTopLevelKeys: ["data", "parameters"],
+      }).modelType,
+    ).toBe(CONFIG.DEFAULT_MODEL_PARAMETERS.modelType);
   });
 
   it("derives the data-dependent defaults from the submitted rows", () => {

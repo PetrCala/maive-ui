@@ -69,6 +69,9 @@ describe("discovery files (#555)", () => {
     expect(agent).toContain("resolvedParameters");
     expect(agent).toContain("favourPositive");
     expect(agent).toContain("400");
+    // A top-level modelType on the sync endpoints is a 400, not a MAIVE run (#574).
+    expect(agent).toContain('{"modelType": "WLS", "data": [...]}');
+    expect(agent).toContain("goes inside `parameters`");
     expect(llms).toContain("resolvedParameters");
   });
 

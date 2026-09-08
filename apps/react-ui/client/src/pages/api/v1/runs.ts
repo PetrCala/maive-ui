@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import type { GetRunResponse, ResolvedParameters } from "@src/types/api";
-import type { RecipeName } from "@src/lib/parameterResolver";
+import {
+  V1_ASYNC_TOP_LEVEL_KEYS,
+  type RecipeName,
+} from "@src/lib/parameterResolver";
 import {
   MAX_BATCH_IDS,
   batchGetRunStatuses,
@@ -87,11 +90,18 @@ const handler = async (
   // The shared resolver (#555) expands the named recipe, derives the
   // data-dependent defaults from the submitted rows, and rejects unknown keys
   // or conflicting values with a 400. The queue only ever carries fully
-  // resolved parameters, so the orchestrator forwards them verbatim.
+  // resolved parameters, so the orchestrator forwards them verbatim. Unlike
+  // the sync endpoints, a top-level `modelType` is the documented form here;
+  // any other parameter name at the top level is still a 400 (#574).
   const { resolved, error: parameterError } = resolveRunParameters(
     modelType,
     parameters,
-    { data, recipe },
+    {
+      data,
+      recipe,
+      body: req.body,
+      acceptedTopLevelKeys: V1_ASYNC_TOP_LEVEL_KEYS,
+    },
   );
   if (parameterError) {
     return sendApiError(res, "validation_error", parameterError.message);

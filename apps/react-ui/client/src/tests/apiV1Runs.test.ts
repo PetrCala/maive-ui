@@ -233,6 +233,28 @@ describe("POST /api/v1/runs", () => {
     expect(sqsSendMock).not.toHaveBeenCalled();
   });
 
+  it("keeps accepting a top-level modelType but 400s on any other parameter name there (#574)", async () => {
+    setConfigured();
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const req = createMockReq({
+      method: "POST",
+      body: { data: validMaiveData, modelType: "WLS", maiveMethod: "EK" },
+    });
+    const res = createMockRes();
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(400);
+    expect(res.body).toMatchObject({
+      error: {
+        code: "validation_error",
+        message:
+          "Unexpected top-level key: maiveMethod. maiveMethod is a run parameter and belongs inside `parameters`; this endpoint accepts data, parameters, recipe and modelType at the top level.",
+      },
+    });
+    expect(sqsSendMock).not.toHaveBeenCalled();
+  });
+
   it("turns study clustering on for a four-column submission and echoes the resolved parameters (#555)", async () => {
     setConfigured();
     ddbSendMock.mockResolvedValue({});
