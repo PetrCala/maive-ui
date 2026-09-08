@@ -80,7 +80,7 @@ const CONST = {
       R_VERSION: "4.4.1",
       // Must equal the version pinned in
       // apps/lambda-r-backend/r_scripts/r-packages.txt, which is what the
-      // backend image actually installs. phackingVersionPin.test.ts fails the
+      // backend image actually installs. rPackagePins.test.ts fails the
       // build if the two drift apart.
       PHACKING_VERSION: "0.2.1",
       // No MAIVE tag default here, deliberately. The tag is committed to

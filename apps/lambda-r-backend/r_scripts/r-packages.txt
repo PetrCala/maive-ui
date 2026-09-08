@@ -3,7 +3,8 @@ remotes
 jsonlite
 plumber
 base64enc
-metafor
+metafor@4.8-0
+clubSandwich@0.7.0
 ragg
 systemfonts
 textshaping

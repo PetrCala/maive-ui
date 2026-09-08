@@ -54,11 +54,17 @@ RUN R -q -e "install.packages('pak', repos='https://cran.rstudio.com')"
 # Install CRAN packages from list. Entries may carry a pak version ref
 # (pkg@version); phacking is pinned that way so a rebuilt image keeps shipping
 # the RTMA implementation the exported reproducibility packages name (#489).
+# clubSandwich and metafor are pinned for the same reason (#574): clubSandwich
+# supplies the CR2 variance and the Satterthwaite degrees of freedom behind
+# every RDT interval and p-value, so a rebuild must not quietly move it.
 COPY r_scripts/r-packages.txt /tmp/r-packages.txt
 RUN R -q -e "pkgs <- readLines('/tmp/r-packages.txt'); pak::pkg_install(pkgs)"
 
-# Install the MAIVE package
-RUN R -q -e "pak::pkg_install('PetrCala/MAIVE@${MAIVE_TAG}', upgrade = TRUE)"
+# Install the MAIVE package. upgrade = FALSE so this step installs what MAIVE
+# still needs without moving the versions the list above pinned; with
+# upgrade = TRUE it took the newest clubSandwich at build time and undid the
+# pin (#574).
+RUN R -q -e "pak::pkg_install('PetrCala/MAIVE@${MAIVE_TAG}', upgrade = FALSE)"
 
 # Prove what's installed
 RUN R -q -e "writeLines(apply(installed.packages()[,c('Package','Version')],1,paste,collapse='@'))" > /root/rlib-manifest.txt

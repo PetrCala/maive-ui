@@ -9,6 +9,12 @@ import CONST from "@src/CONST";
  * the UI reports is the version the backend image actually installs, so read
  * the pin out of r-packages.txt instead of trusting the constant on its own.
  *
+ * The same list pins the packages the results themselves depend on (#574):
+ * clubSandwich supplies the CR2 variance and the Satterthwaite degrees of
+ * freedom behind every RDT interval and p-value, and metafor sits underneath
+ * it, so neither may float to whatever CRAN ships on the day the image is
+ * rebuilt.
+ *
  * process.cwd() is apps/react-ui/client when the suite runs.
  */
 const R_PACKAGES_PATH = join(
@@ -43,5 +49,24 @@ describe("phacking version pin", () => {
     const pinnedVersion = entry?.split("@")[1];
 
     expect(CONST.REPRODUCIBILITY.DEFAULTS.PHACKING_VERSION).toBe(pinnedVersion);
+  });
+});
+
+describe("result-bearing package pins (#574)", () => {
+  // pak reads this file verbatim, so a bare name takes whatever CRAN ships on
+  // the day the image is rebuilt. A version ref (pkg@version) freezes it.
+  it.each(["clubSandwich", "metafor"])("pins %s to an exact version", (pkg) => {
+    const entry = readPackageEntries().find((line) =>
+      line.startsWith(`${pkg}@`),
+    );
+
+    expect(entry).toBeDefined();
+    expect(entry).toMatch(new RegExp(`^${pkg}@\\d+(\\.\\d+)*(-\\d+)?$`));
+  });
+
+  it("lists clubSandwich, which used to arrive only as a MAIVE dependency", () => {
+    const names = readPackageEntries().map((line) => line.split("@")[0]);
+
+    expect(names).toContain("clubSandwich");
   });
 });
