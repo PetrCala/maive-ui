@@ -194,10 +194,15 @@ run_maive_model <- function(data, parameters) {
   # winsorization flattened is caught too.
   se_values <- df$sebs[is.finite(df$sebs)]
   if (se_column_is_degenerate(se_values)) {
+    # "vary by less than one part in 100,000" rather than "are all X": the
+    # guard is a relative-tolerance test, so the refused column need not be
+    # literally constant (#572). The figure is derived from the tolerance.
     cli::cli_abort(paste0(
       "The se column has no usable variation: its ", length(se_values),
-      " values are all ", format(signif(se_values[1], 6), scientific = FALSE),
-      ". Every MAIVE-family estimator reads publication bias off the way the ",
+      " values vary by less than one part in ",
+      format(1 / SE_DEGENERATE_RELATIVE_TOLERANCE, big.mark = ",", scientific = FALSE),
+      " (the first is ", format(signif(se_values[1], 6), scientific = FALSE),
+      "). Every MAIVE-family estimator reads publication bias off the way the ",
       "effects vary with their standard errors, so a constant se column leaves ",
       "that slope unidentified. Supply the standard errors as reported, which ",
       "differ across estimates."

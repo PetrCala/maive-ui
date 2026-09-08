@@ -495,10 +495,15 @@ run_rdt_model <- function(data, parameters = "{}", include_plot = TRUE) {
   # Refused here rather than warned about, because there is no signal left to
   # qualify. Mirrors the MAIVE-family guard in maive_model.R (#564).
   if (rdt_se_column_is_degenerate(se)) {
+    # Same wording as the MAIVE-family guard: the test is a relative one, so
+    # "are all X" would be false for a column such as 0.1 next to 0.1000005
+    # (#572). The figure is derived from the tolerance.
     cli::cli_abort(paste0(
       "The se column has no usable variation: its ", length(se),
-      " values are all ", format(signif(se[1], 6), scientific = FALSE),
-      ". RDT reads reported precision off the part of log(SE) that sample size ",
+      " values vary by less than one part in ",
+      format(1 / RDT_SE_DEGENERATE_RELATIVE_TOLERANCE, big.mark = ",", scientific = FALSE),
+      " (the first is ", format(signif(se[1], 6), scientific = FALSE),
+      "). RDT reads reported precision off the part of log(SE) that sample size ",
       "does not explain, so a constant se column leaves that residual identically ",
       "zero and there is nothing left for a jump at the cutoff to be measured in. ",
       "Supply the standard errors as reported, which differ across estimates."

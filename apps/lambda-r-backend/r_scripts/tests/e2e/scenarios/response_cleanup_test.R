@@ -197,6 +197,12 @@ test_constant_se <- function() {
       if (grepl("subscript out of bounds|Internal server error", message_text)) {
         stop(paste("The raw R error must not reach the caller, got:", message_text))
       }
+      # The guard is a relative-tolerance test, so the message states the
+      # spread rather than claiming the values "are all" one number (#572).
+      # \s+ because cli may wrap long messages at the console width.
+      if (!grepl("vary by less than\\s+one part in\\s+100,000", message_text) || grepl("are all", message_text)) {
+        stop(paste("The error message should describe the spread, got:", message_text))
+      }
 
       # The legacy route the browser uses must report it too, rather than
       # failing somewhere inside the fit.
