@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import Header from "@components/Header";
 import Footer from "@components/Footer";
 import RunsWatcher from "@components/RunsWatcher";
+import CanonicalLink from "@components/CanonicalLink";
 
 export default function App({ Component, pageProps }: AppProps) {
   const pathname = usePathname();
@@ -16,6 +17,7 @@ export default function App({ Component, pageProps }: AppProps) {
 
   return (
     <Providers>
+      <CanonicalLink />
       <RunsWatcher />
       <div className="flex flex-col min-h-screen">
         {!isHomePage && <Header />}

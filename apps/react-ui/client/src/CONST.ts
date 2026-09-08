@@ -38,8 +38,9 @@ const CONST = {
       PHACKING_CRAN: "https://doi.org/10.32614/CRAN.package.phacking",
     },
     APP: {
-      // Canonical public address of this app. `spuriousprecision.com` (apex
-      // and www) redirects here; `maive.eu` also serves the app directly.
+      // Canonical public address of this app. `spuriousprecision.com` and
+      // `maive.eu` (apex and www on both) redirect here, and every page's
+      // <link rel="canonical"> is built from it (CanonicalLink.tsx).
       // Deliberately separate from LINKS.MAIVE.WEBSITE, which is the MAIVE
       // *method's* page and is not this application.
       WEBSITE: "https://easymeta.org",

@@ -141,8 +141,8 @@ TLS is terminated by **Cloudflare**, which sits in front of the UI Lambda Functi
 
 ### Domains
 
-- `easymeta.org` is the **canonical** address. It and `maive.eu` (apex + `www` on both) are **proxied through Cloudflare** (orange-cloud), pointing at the UI Lambda Function URL origin.
-- `spuriousprecision.com` (apex + `www`) **301-redirects** to `easymeta.org`.
+- `easymeta.org` is the **canonical** address (apex + `www`), **proxied through Cloudflare** (orange-cloud) and pointing at the UI Lambda Function URL origin. It is the only hostname that serves the app.
+- `spuriousprecision.com` and `maive.eu` (apex + `www` on both) **301-redirect** to `easymeta.org`, path and query preserved.
 - `api.maive.eu` is the public API hostname and is unaffected by any of the above.
 
 Each serving hostname needs a Worker route as well as a DNS record: Lambda Function URLs reject a foreign `Host` header, so a plain proxied CNAME hangs. See [`infra/cloudflare/README.md`](infra/cloudflare/README.md).

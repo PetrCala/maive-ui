@@ -69,3 +69,20 @@ jobs:
         run: |
           R -e "lintr::lint_dir()"
           R -e "styler::style_dir()"
+
+  test-cloudflare-workers:
+    name: Test Cloudflare Workers
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/cloudflare
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      # No dependencies: the worker tests run on node's own test runner.
+      - name: Run tests
+        run: |
+          npm test
