@@ -365,6 +365,14 @@ const downloadFile = (blob: Blob, filename: string): void => {
 };
 
 /**
+ * The exported cell for one instrumented SE: the number, or an empty cell
+ * when the backend reported it as undefined (`"NA"`, #571).
+ */
+const instrumentedSeCell = (
+  value: ModelResults["seInstrumented"][number] | undefined,
+): number | null => (typeof value === "number" ? value : null);
+
+/**
  * Export data with instrumented standard errors
  * @param originalData - The original data
  * @param seInstrumented - The instrumented standard errors
@@ -373,7 +381,7 @@ const downloadFile = (blob: Blob, filename: string): void => {
  */
 export const exportDataWithInstrumentedSE = (
   originalData: DataArray,
-  seInstrumented: number[],
+  seInstrumented: ModelResults["seInstrumented"],
   filename: string,
   shouldAddSalt = true,
 ): void => {
@@ -386,7 +394,7 @@ export const exportDataWithInstrumentedSE = (
   // Create a copy of the original data and add the instrumented SE column
   const exportData = originalData.map((row, index) => ({
     ...row,
-    se_instrumented: seInstrumented[index] || null,
+    se_instrumented: instrumentedSeCell(seInstrumented[index]),
   }));
 
   // Determine the file extension and MIME type based on original format
@@ -472,7 +480,7 @@ export const exportComprehensiveResults = (
   originalData: DataArray,
   results: ModelResults,
   parameters: ModelParameters,
-  seInstrumented: number[],
+  seInstrumented: ModelResults["seInstrumented"],
   filename: string,
   runDuration?: number,
   runTimestamp?: Date,
@@ -523,7 +531,7 @@ export const exportComprehensiveResults = (
   // Sheet 3: Adjusted SEs
   const exportData = originalData.map((row, index) => ({
     ...row,
-    se_instrumented: seInstrumented[index] || null,
+    se_instrumented: instrumentedSeCell(seInstrumented[index]),
   }));
 
   const dataSheet = XLSX.utils.json_to_sheet(exportData);

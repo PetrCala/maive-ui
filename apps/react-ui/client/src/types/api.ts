@@ -82,7 +82,9 @@ type ModelResults = {
     criticalValue: number;
     rejectsNull: boolean | null;
   };
-  seInstrumented: number[];
+  // One entry per input row. `"NA"` when the first stage fitted a negative
+  // variance for that row and its instrumented SE is undefined (#571).
+  seInstrumented: Array<number | "NA">;
   funnelPlot: string; // Base64 encoded image
   funnelPlotWidth: number;
   funnelPlotHeight: number;

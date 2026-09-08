@@ -47,6 +47,7 @@ source(file.path(script_dir, "scenarios/api_v1_test.R"))
 source(file.path(script_dir, "scenarios/resolver_parity_test.R"))
 source(file.path(script_dir, "scenarios/request_log_test.R"))
 source(file.path(script_dir, "scenarios/response_cleanup_test.R"))
+source(file.path(script_dir, "scenarios/nan_se_instrumented_test.R"))
 
 # Define available test scenarios
 AVAILABLE_SCENARIOS <- list(
@@ -126,6 +127,11 @@ AVAILABLE_SCENARIOS <- list(
     name = "MAIVE Warnings Test",
     description = "Test that MAIVE package warnings and instrument_strength reach the response",
     function_name = "test_maive_warnings"
+  ),
+  "nan-se-instrumented" = list(
+    name = "NaN Instrumented SE Test",
+    description = "Test that an undefined instrumented SE is \"NA\" (never \"NaN\") and the response validates against openapi.yaml",
+    function_name = "test_nan_se_instrumented"
   ),
 
   # RTMA scenarios
@@ -542,7 +548,8 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     small_se_precision = test_small_se_precision(),
     identical_effects = test_identical_effects(),
     constant_se = test_constant_se(),
-    maive_warnings = test_maive_warnings()
+    maive_warnings = test_maive_warnings(),
+    nan_se_instrumented = test_nan_se_instrumented()
   )
 
   all_results$response_cleanup <- response_cleanup_tests
