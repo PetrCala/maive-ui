@@ -64,7 +64,8 @@ curl -s https://api.maive.eu/v1/run-model \
 One resolver fills in unset parameters for the browser and the API, and some
 of its defaults depend on the data: study clustering is on when the upload
 has a `study_id` column and the standard errors are clustered; WLS runs with
-standard weights; WAIVE defaults to a log first stage. Every successful
+standard weights and no log first stage; MAIVE and WAIVE run the first
+stage in logs unless told otherwise. Every successful
 response therefore carries `resolvedParameters`, the complete object the
 backend actually ran, and `recipe`, the named recipe it corresponds to (or
 `null`). Report it alongside the numbers and feed it back to reproduce them.

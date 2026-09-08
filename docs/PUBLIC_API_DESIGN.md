@@ -208,7 +208,7 @@ Request (`?include=plot` to embed the funnel plot):
     "includeStudyDummies": false,
     "includeStudyClustering": false,
     "computeAndersonRubin": false,
-    "useLogFirstStage": false,
+    "useLogFirstStage": true,
     "winsorize": 0
   }
 }
@@ -226,7 +226,7 @@ All parameters optional (D6); defaults = the UI's defaults
 | `includeStudyDummies` | boolean | `false` |
 | `includeStudyClustering` | boolean | `false` |
 | `computeAndersonRubin` | boolean | `false` |
-| `useLogFirstStage` | boolean | `false` |
+| `useLogFirstStage` | boolean | derived: `true` when instrumenting, `false` for `WLS` |
 | `winsorize` | number (percent, 0 disables) | `0` |
 | `shouldUseInstrumenting` | boolean | derived: `WLS` → `false`, else `true` |
 

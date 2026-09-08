@@ -75,7 +75,6 @@ export default function ModelPage() {
   const lastInstrumentedWeightRef = useRef<ModelParameters["weight"]>(
     CONFIG.DEFAULT_MODEL_PARAMETERS.weight,
   );
-  const useLogFirstStageUserOverrideRef = useRef(false);
   const autoSetWeightForWlsRef = useRef(false);
   const [shouldSuppressAdvancedAutoOpen, setShouldSuppressAdvancedAutoOpen] =
     useState(false);
@@ -134,15 +133,14 @@ export default function ModelPage() {
       weightUserOverrideRef.current = true;
     }
 
-    if (
-      params.useLogFirstStage !==
-      CONFIG.DEFAULT_MODEL_PARAMETERS.useLogFirstStage
-    ) {
-      useLogFirstStageUserOverrideRef.current = true;
-    }
-
     if (params.shouldUseInstrumenting) {
       lastInstrumentedWeightRef.current = params.weight;
+    } else {
+      // A run without instrumenting records no first stage (the resolver
+      // turns the flag off), so nothing there is a choice to carry over to
+      // the next instrumented model; that one starts from the default (#575).
+      params.useLogFirstStage =
+        CONFIG.DEFAULT_MODEL_PARAMETERS.useLogFirstStage;
     }
 
     setParameters(params);
@@ -277,16 +275,13 @@ export default function ModelPage() {
         weightUserOverrideRef.current = true;
       }
 
-      if (
-        parsed.useLogFirstStage !== undefined &&
-        parsed.useLogFirstStage !==
-          CONFIG.DEFAULT_MODEL_PARAMETERS.useLogFirstStage
-      ) {
-        useLogFirstStageUserOverrideRef.current = true;
-      }
-
       if (params.shouldUseInstrumenting) {
         lastInstrumentedWeightRef.current = params.weight;
+      } else {
+        // Same as restoreSavedParameters: a non-instrumented run carries no
+        // first-stage choice (#575).
+        params.useLogFirstStage =
+          CONFIG.DEFAULT_MODEL_PARAMETERS.useLogFirstStage;
       }
 
       setParameters(params);
@@ -364,10 +359,6 @@ export default function ModelPage() {
           autoSetWeightForWlsRef.current = false;
           lastInstrumentedWeightRef.current = restoredWeight;
 
-          const nextUseLogFirstStage = useLogFirstStageUserOverrideRef.current
-            ? prev.useLogFirstStage
-            : true;
-
           const nextState: ModelParameters = {
             ...prev,
             modelType: nextModelType,
@@ -375,7 +366,6 @@ export default function ModelPage() {
             weight: restoredWeight,
             computeAndersonRubin: prev.computeAndersonRubin,
             maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
-            useLogFirstStage: nextUseLogFirstStage,
           };
           const willShowAndersonRubin =
             shouldShowAndersonRubinOption(nextState);
@@ -547,12 +537,6 @@ export default function ModelPage() {
         andersonRubinUserChoiceRef.current = value;
       }
 
-      if (param === "useLogFirstStage" && typeof value === "boolean") {
-        if (prev.useLogFirstStage !== value) {
-          useLogFirstStageUserOverrideRef.current = true;
-        }
-      }
-
       if (prev[param] === value) {
         return prev;
       }
@@ -563,10 +547,6 @@ export default function ModelPage() {
         nextState.shouldUseInstrumenting = true;
         if (nextState.maiveMethod !== CONST.MAIVE_METHODS.PET_PEESE) {
           nextState.maiveMethod = CONST.MAIVE_METHODS.PET_PEESE;
-        }
-
-        if (!useLogFirstStageUserOverrideRef.current) {
-          nextState.useLogFirstStage = true;
         }
 
         const willShowAndersonRubin = shouldShowAndersonRubinOption(
@@ -613,16 +593,11 @@ export default function ModelPage() {
           return prev;
         }
 
-        const nextUseLogFirstStage = useLogFirstStageUserOverrideRef.current
-          ? prev.useLogFirstStage
-          : true;
-
         const nextState: ModelParameters = {
           ...prev,
           shouldUseInstrumenting: true,
           maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
           computeAndersonRubin: prev.computeAndersonRubin,
-          useLogFirstStage: nextUseLogFirstStage,
         };
         const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
         nextState.computeAndersonRubin = willShowAndersonRubin
@@ -941,7 +916,10 @@ export default function ModelPage() {
           console.debug("Generating mock results in development mode");
           const nrow = uploadedData?.data.length ?? 0;
           result = {
-            data: generateMockResults(nrow, parameters.useLogFirstStage),
+            data: generateMockResults(
+              nrow,
+              (runParameters as ModelParameters).useLogFirstStage,
+            ),
           };
         } else {
           // Same-origin proxy; the server signs and forwards to the R

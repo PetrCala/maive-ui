@@ -78,7 +78,8 @@ assert_parameter_case <- function(test_case, data) {
   params <- test_case$params
 
   # Instrumenting is what produces a first stage; without it the server reports
-  # no F-statistic and omits the first-stage block.
+  # no F-statistic and omits the first-stage block. With it, the reported mode
+  # must follow the requested specification (#575).
   f_statistic <- unlist(data$firstStageFStatistic)
   first_stage_mode <- unlist(data$firstStage$mode)
   if (isTRUE(params$shouldUseInstrumenting)) {
@@ -88,9 +89,11 @@ assert_parameter_case <- function(test_case, data) {
         paste(format(f_statistic), collapse = ", ")
       ))
     }
-    if (!identical(first_stage_mode, "levels")) {
+    expected_mode <- if (isTRUE(params$useLogFirstStage)) "log" else "levels"
+    if (!identical(first_stage_mode, expected_mode)) {
       stop(sprintf(
-        "expected a levels first stage, got '%s'",
+        "expected a %s first stage, got '%s'",
+        expected_mode,
         paste(format(first_stage_mode), collapse = ", ")
       ))
     }
@@ -144,7 +147,7 @@ test_parameter_combinations <- function() {
         maiveMethod = "PET",
         weight = "equal_weights",
         shouldUseInstrumenting = TRUE,
-        useLogFirstStage = FALSE,
+        useLogFirstStage = TRUE,
         winsorize = 0
       )
     ),

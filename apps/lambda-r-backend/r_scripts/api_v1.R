@@ -612,8 +612,6 @@ api_v1_resolve_maive_parameters <- function(parameters, has_study_id) {
   if (identical(model_type, "MAIVE") && !should_use_instrumenting) {
     model_type <- "WLS"
   }
-  is_waive <- identical(model_type, "WAIVE")
-
   resolved <- list(
     modelType = model_type,
     maiveMethod = api_v1_enum_parameter(
@@ -629,7 +627,11 @@ api_v1_resolve_maive_parameters <- function(parameters, has_study_id) {
     includeStudyDummies = api_v1_flag_parameter(params, "includeStudyDummies", FALSE),
     includeStudyClustering = api_v1_flag_parameter(params, "includeStudyClustering", FALSE),
     computeAndersonRubin = api_v1_flag_parameter(params, "computeAndersonRubin", FALSE),
-    useLogFirstStage = api_v1_flag_parameter(params, "useLogFirstStage", is_waive),
+    # A log first stage is the default for every model that instruments
+    # (#575); without instrumenting there is no first stage.
+    useLogFirstStage = api_v1_flag_parameter(
+      params, "useLogFirstStage", should_use_instrumenting
+    ),
     winsorize = api_v1_winsorize_parameter(params),
     shouldUseInstrumenting = should_use_instrumenting,
     favorPositive = api_v1_flag_parameter(params, "favorPositive", TRUE)

@@ -47,14 +47,19 @@ const rtmaResult = (mu: number): RTMAResults => ({
   warnings: [],
 });
 
-const addRun = (jobId: string, filename: string, modelType = "RTMA") => {
+const addRun = (
+  jobId: string,
+  filename: string,
+  modelType = "RTMA",
+  parameters: Record<string, unknown> = {},
+) => {
   useRunsStore.getState().addRun({
     jobId,
     modelType,
     dataId: "d1",
     filename,
     rowCount: 120,
-    parameters: JSON.stringify({ modelType }),
+    parameters: JSON.stringify({ modelType, ...parameters }),
     submittedAt: Date.now(),
     status: "succeeded",
   });
@@ -155,6 +160,22 @@ describe("ComparePage", () => {
     render(<ComparePage />);
 
     expect(await screen.findByText(/different model types/i)).toBeVisible();
+  });
+
+  it("labels the first-stage specification so runs differing only in it can be told apart (#575)", async () => {
+    addRun("job-1", "study-a.csv", "MAIVE", { useLogFirstStage: true });
+    addRun("job-2", "study-b.csv", "MAIVE", { useLogFirstStage: false });
+    addRun("job-3", "study-c.csv", "WLS", { useLogFirstStage: false });
+    searchParams = new URLSearchParams({ jobIds: "job-1,job-2,job-3" });
+    getResult.mockResolvedValue(undefined);
+    getRun.mockResolvedValue({ status: "expired", result: null });
+
+    render(<ComparePage />);
+
+    expect(await screen.findByText("Log first stage")).toBeVisible();
+    expect(screen.getByText("Levels first stage")).toBeVisible();
+    // WLS has no first stage, so its card carries no specification badge.
+    expect(screen.getAllByText(/first stage/i)).toHaveLength(2);
   });
 
   it("reads the ids from the URL when the router has not supplied them yet", async () => {

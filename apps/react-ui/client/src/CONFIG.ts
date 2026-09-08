@@ -30,7 +30,10 @@ const CONFIG = {
     maiveMethod: CONST.MAIVE_METHODS.PET_PEESE,
     weight: CONST.WEIGHT_OPTIONS.EQUAL_WEIGHTS.VALUE,
     shouldUseInstrumenting: true,
-    useLogFirstStage: false,
+    // The first stage runs on log variances by default (#575, MAIVE#25).
+    // Only models that instrument have a first stage; the resolver turns it
+    // off for WLS, RTMA and RDT.
+    useLogFirstStage: true,
     winsorize: 0,
     favorPositive: true,
   },

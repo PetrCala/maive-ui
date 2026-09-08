@@ -58,7 +58,7 @@ export const RESOLVED_ECHO_EXAMPLE = `{
     "includeStudyDummies": false,
     "includeStudyClustering": true,
     "computeAndersonRubin": false,
-    "useLogFirstStage": false,
+    "useLogFirstStage": true,
     "winsorize": 0,
     "shouldUseInstrumenting": false,
     "favorPositive": true
@@ -184,7 +184,8 @@ export const MODEL_PARAMETERS: ParameterRow[] = [
   {
     name: "useLogFirstStage",
     values: "boolean",
-    defaultValue: "derived: true for WAIVE, false otherwise",
+    defaultValue:
+      "derived: true when instrumenting (MAIVE, WAIVE), false for WLS",
   },
   {
     name: "winsorize",

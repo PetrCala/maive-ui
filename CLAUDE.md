@@ -237,7 +237,6 @@ Some parameters are internal/hidden from the user and excluded from alerts:
 | `computeAndersonRubin` | `modelType`, `weight`, `includeStudyDummies` | AR CI availability constraints |
 | `weight` | `modelType` | Adjusted weights requires instrumenting |
 | `maiveMethod` | `modelType → WAIVE` | WAIVE only supports PET-PEESE |
-| `useLogFirstStage` | `modelType → WAIVE` | Log first stage recommended for WAIVE |
 
 ### Reproducibility Package System
 
