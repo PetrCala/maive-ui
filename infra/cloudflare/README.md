@@ -29,9 +29,9 @@ that fails loudly, which is easy to miss when adding a domain.
 
 | Zone | ID | Plan | Role |
 |---|---|---|---|
-| `maive.eu` | `921f07a73f48aa3e80ac2cead44f76ec` | Free | Infrastructure zone: serves the app, hosts `api.maive.eu`, and is the fallback front door |
-| `spuriousprecision.com` | `104e1921be01913c74cc03e3d2bfda74` | Free | Serves the app; being turned into a redirect to `easymeta.org` |
-| `easymeta.org` | `9cc1c18ae7cc9143320233d10fc78c87` | Free | **Canonical** address once migrated; zone created but still `initializing` |
+| `maive.eu` | `921f07a73f48aa3e80ac2cead44f76ec` | Free | Infrastructure zone: hosts `api.maive.eu` (the public API). The apex and `www` 301-redirect to `easymeta.org` (#571) |
+| `spuriousprecision.com` | `104e1921be01913c74cc03e3d2bfda74` | Free | 301-redirects to `easymeta.org` |
+| `easymeta.org` | `9cc1c18ae7cc9143320233d10fc78c87` | Free | **Canonical** address; the only zone that serves the app |
 
 All three zones sit in the same account and share the nameserver pair
 `fonzie.ns.cloudflare.com` / `jessica.ns.cloudflare.com`.
@@ -44,7 +44,10 @@ All three zones sit in the same account and share the nameserver pair
 - `easymeta.org` and `www.easymeta.org` serve the app through Cloudflare;
 - `spuriousprecision.com` and `www` 301-redirect there, path and query
   preserved;
-- `maive.eu` and `api.maive.eu` unchanged.
+- `maive.eu` and `www.maive.eu` 301-redirect there too, path and query
+  preserved, since #571 (they served the app until then; see
+  [Redirecting `maive.eu`](#redirecting-maiveeu));
+- `api.maive.eu` unchanged.
 
 Verified from the edge rather than through a resolver cache: HTTP/2 `200` on
 both canonical hostnames, `HEAD` `200` (the `405` the GoDaddy forwarder
@@ -122,9 +125,14 @@ account-wide setting.
 | `ui-origin-proxy` | [`workers/ui-origin-proxy.js`](workers/ui-origin-proxy.js) | `maive.eu/*`, `www.maive.eu/*`, `easymeta.org/*`, `www.easymeta.org/*` |
 | `api-origin-proxy` | [`workers/api-origin-proxy.js`](workers/api-origin-proxy.js) | `api.maive.eu/*` |
 
-The account contains exactly these two Worker scripts. `ui-origin-proxy` is
-hostname-agnostic: it rewrites whatever host it receives to the fixed origin,
-so adding a hostname is purely a matter of adding a route.
+The account contains exactly these two Worker scripts. `ui-origin-proxy`
+first checks the hostname against a fixed list of retired UI hostnames
+(`maive.eu`, `www.maive.eu`) and answers those with a 301 to `easymeta.org`,
+path and query preserved (#571). Every other host it receives is rewritten to
+the fixed origin, so adding a serving hostname is purely a matter of adding a
+route, and retiring one is a matter of adding it to `REDIRECT_HOSTS` and
+redeploying. The redirect logic has a node test:
+`npm test --prefix infra/cloudflare` (nothing to install).
 
 `api-origin-proxy` path-routes between the two Lambda origins and whitelists
 only the documented `/v1` endpoints (everything else 404s, keeping the legacy
@@ -154,6 +162,61 @@ sources and the DNS records below must be updated.
 bash infra/cloudflare/deploy-worker.sh api-origin-proxy
 ```
 
+### Redirecting `maive.eu`
+
+`easymeta.org` is the canonical address, and until #571 `maive.eu` and
+`www.maive.eu` served the app byte for byte alongside it. They now 301 to
+`easymeta.org` with path and query preserved, exactly what
+`spuriousprecision.com` does:
+
+```text
+https://maive.eu/api-docs?x=1      ->  301  https://easymeta.org/api-docs?x=1
+https://www.maive.eu/upload        ->  301  https://easymeta.org/upload
+https://api.maive.eu/v1/health     ->  200  (unchanged)
+```
+
+The redirect is implemented **in `ui-origin-proxy`**, not as a Redirect Rule,
+for two reasons: the worker is deployable from this repo with
+`deploy-worker.sh`, whereas the API token cannot write redirect rulesets (the
+`spuriousprecision.com` rule had to be clicked together in the dashboard),
+and the worker matches hostnames exactly, so `api.maive.eu` cannot be caught
+by accident. The `maive.eu/*` and `www.maive.eu/*` Worker routes therefore
+**stay**: they are what runs the redirect. The DNS records stay proxied for
+the same reason as on `spuriousprecision.com`.
+
+**`api.maive.eu` must keep serving the API.** Every published example
+(`agent.md`, `/api-docs`, `openapi.yaml`) points at
+`https://api.maive.eu/v1/...`. It has its own route to `api-origin-proxy`,
+and the redirect list in `ui-origin-proxy` is an exact-match set of the apex
+and `www` only. Do not replace it with a zone-wide `*maive.eu` rule.
+
+To deploy the redirect:
+
+1. `npm test --prefix infra/cloudflare` (redirect logic, runs in node).
+2. `bash infra/cloudflare/deploy-worker.sh ui-origin-proxy`.
+3. Verify all four cases from the edge:
+
+   ```bash
+   curl -sI 'https://maive.eu/api-docs?x=1' | grep -i '^HTTP\|^location'
+   curl -sI 'https://www.maive.eu/upload'   | grep -i '^HTTP\|^location'
+   curl -sI 'https://api.maive.eu/v1/health' | head -1   # 200, not 301
+   curl -sI 'https://easymeta.org/'          | head -1   # 200
+   ```
+
+If you would rather have the redirect at the rules layer (it runs before the
+Worker, so both can coexist), the equivalent Redirect Rule on the `maive.eu`
+zone is: match expression
+`(http.host eq "maive.eu") or (http.host eq "www.maive.eu")`, dynamic target
+`concat("https://easymeta.org", http.request.uri.path)`, status 301, query
+string preserved. Do **not** copy the `spuriousprecision.com` wildcard
+(`https://*spuriousprecision.com/*`): on this zone the leading `*` would
+match `api.maive.eu` and take the API down.
+
+The app also emits `<link rel="canonical">` on every page, pointing at
+`https://easymeta.org` plus the path (without query), so a crawler that
+reaches the app through the Function URL origin or any other host still
+attributes the page to the canonical domain.
+
 ## DNS
 
 ### Zone `maive.eu`
@@ -171,6 +234,10 @@ the request and picks the origin per path, so the CNAME target is never used.
 It exists only so the hostname resolves through Cloudflare without depending on
 the `*` wildcard. The `_64ed…` record is a leftover ACM validation record from
 the retired ALB era; harmless.
+
+The apex and `www` records are likewise only there so the hostnames reach
+Cloudflare at all: `ui-origin-proxy` answers them with a 301 to `easymeta.org`
+(#571) and never contacts the origin for them.
 
 Note the wildcard means *any* subdomain resolves through Cloudflare. Subdomains
 with no Worker route (e.g. `foo.maive.eu`) proxy straight to the UI Function
@@ -327,6 +394,56 @@ Added before the zone was delegated, on purpose. A serving hostname without a
 rate-limit rule is the cheap unmetered path to the same Lambdas and defeats the
 rules on the other two zones.
 
+## Browser Integrity Check (Configuration Rules)
+
+Cloudflare's Browser Integrity Check (BIC) 403s some non-browser clients at
+the edge with error code **1010**, before the request reaches a Worker. On
+this account it refuses Python's standard-library client
+(`User-Agent: Python-urllib/3.x`), while `python-httpx`, `Go-http-client`,
+`node-fetch`, `curl`, and an empty User-Agent all pass (#571). That matters
+here because `agent.md` invites AI agents to call the API, and `urllib` is the
+client an agent reaches for first; it was refused on `api.maive.eu` **and** on
+the discovery files at `easymeta.org`, so such an agent could not even read
+the instructions telling it how to call us.
+
+Reproduce (a 403 with `error code: 1010` in the body is BIC):
+
+```bash
+for u in https://api.maive.eu/v1/health https://easymeta.org/agent.md https://easymeta.org/openapi.yaml; do
+  printf '%s  ' "$u"; curl -s -o /dev/null -w '%{http_code}\n' -A 'Python-urllib/3.11' "$u"
+done
+```
+
+The fix is a **Configuration Rule** per zone turning BIC off for the API
+hostname and the discovery paths only, leaving it on for the app itself. The
+token cannot edit zone settings or rulesets (see "API token scope"), so both
+rules are created in the dashboard: zone, *Rules*, *Overview*, *Create rule*,
+*Configuration Rule*. Free plan allows 10 per zone.
+
+| Zone | Rule name | Custom filter expression | Setting |
+|---|---|---|---|
+| `maive.eu` | `bic-off-api` | `(http.host eq "api.maive.eu")` | Browser Integrity Check: **Off** |
+| `easymeta.org` | `bic-off-discovery` | `(http.request.uri.path in {"/agent.md" "/llms.txt" "/openapi.yaml"})` | Browser Integrity Check: **Off** |
+
+Notes:
+
+- Configuration Rules are per zone, which is why it is two rules: the API
+  hostname lives in the `maive.eu` zone, the discovery files in
+  `easymeta.org`. The `maive.eu` rule is host-scoped, so `maive.eu` and `www`
+  (which only redirect anyway) keep BIC.
+- The `easymeta.org` rule is path-scoped, so every page of the app keeps
+  BIC; only the three machine-readable files open up. `/llms.txt` is included
+  because it is the third discovery file the app serves and the same clients
+  fetch it.
+- The same three paths on `api.maive.eu` are covered by the host rule.
+- BIC is the only thing switched off. The rate-limit rules above and the WAF
+  managed rules stay as they are.
+
+After deploying, re-run the loop above: all three must return `200`. Then
+confirm a browser is still challenged as before with
+`curl -s -o /dev/null -w '%{http_code}\n' -A 'Python-urllib/3.11' https://easymeta.org/`,
+which should still be `403` (the app itself is not opened up).
+
 ## Migrating `easymeta.org`
 
 The target topology, per
@@ -334,9 +451,13 @@ The target topology, per
 
 - `easymeta.org` + `www.easymeta.org` serve the app through Cloudflare.
 - `spuriousprecision.com` + `www` 301-redirect to `easymeta.org`.
-- `maive.eu` keeps serving the app unchanged. It is the infrastructure zone and
-  the fallback front door; **do not** redirect it.
-- `api.maive.eu` is untouched.
+- `maive.eu` + `www` also 301-redirect to `easymeta.org`, via
+  `ui-origin-proxy` (#571). An earlier revision of this runbook kept
+  `maive.eu` serving the app as a "fallback front door" and said not to
+  redirect it; that was reversed once `easymeta.org` had proven itself, so
+  that the app has exactly one address. The zone itself stays: it is the
+  infrastructure zone that hosts the API hostname.
+- `api.maive.eu` is untouched and must stay so.
 
 Steps, in this order, because only step 5 is hard to reverse:
 
@@ -479,16 +600,25 @@ read as ordinary pending state; the dashboard's repeated redirect to
      done
    done
    ```
-10. Re-verify all hostnames end to end, including that `maive.eu` and
-    `api.maive.eu` are unaffected, and run a real analysis on the new domain
-    rather than only checking for a homepage `200`.
+10. Re-verify all hostnames end to end, including that `api.maive.eu` is
+    unaffected, and run a real analysis on the new domain rather than only
+    checking for a homepage `200`.
+11. Once the canonical domain has run without incident for a while, retire
+    the old UI hostnames: add them to `REDIRECT_HOSTS` in `ui-origin-proxy`
+    and redeploy (done for `maive.eu` in #571; see
+    [Redirecting `maive.eu`](#redirecting-maiveeu)).
 
 ## Rollback
 
 - **API hostname:** delete the `api.maive.eu/*` Worker route. `api.maive.eu`
   reverts to hanging (via the wildcard); the UI is unaffected.
-- **UI:** the `maive.eu/*` and `www.maive.eu/*` routes are load-bearing; do not
-  delete them without a plan.
+- **UI:** the `easymeta.org/*` and `www.easymeta.org/*` routes are
+  load-bearing; do not delete them without a plan. The `maive.eu/*` and
+  `www.maive.eu/*` routes run the redirect: deleting them makes those
+  hostnames hang (proxied CNAME, foreign `Host`) rather than redirect.
+- **`maive.eu` redirect:** remove the two hostnames from `REDIRECT_HOSTS` in
+  `workers/ui-origin-proxy.js` and redeploy; the routes and DNS records were
+  never changed, so `maive.eu` goes back to serving the app.
 - **`easymeta.org` migration, before the nameserver flip:** delete the
   Cloudflare zone. Nothing public changed.
 - **`easymeta.org` migration, after the nameserver flip:** set the nameservers

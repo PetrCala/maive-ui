@@ -10,7 +10,7 @@ Run the MAIVE release flow. Follow these steps exactly.
   `terraform/stacks/prod-runtime` apply.
 - `master` has branch protection; release PRs are merged with admin: `gh pr merge <PR> --rebase --admin`.
 - **Foundation infra** (`terraform/stacks/prod-foundation`) is applied **manually with elevated creds**, never by CI.
-- Live site: https://maive.eu; version check: `curl -s https://maive.eu/api/get-version-info`.
+- Live site: https://easymeta.org; version check: `curl -s https://easymeta.org/api/get-version-info` (`maive.eu` only redirects there now, so `curl -s` against it returns nothing).
 
 ## Steps
 1. **Keep master clean.** Work must be on a feature branch off the latest `master` (never commit to master directly).
@@ -25,7 +25,7 @@ Run the MAIVE release flow. Follow these steps exactly.
 7. **Monitor the release:** `gh run list --workflow=release.yml --limit 3`, then `gh run watch <id> --exit-status`.
    `--exit-status` returning 0 is **not** sufficient; confirm every job (especially `deploy`) with
    `gh run view <id> --json conclusion,jobs`.
-8. **Confirm live:** `curl -s https://maive.eu/api/get-version-info` shows the new version.
+8. **Confirm live:** `curl -s https://easymeta.org/api/get-version-info` shows the new version.
 
 ## Gotchas (learned the hard way)
 - **IAM 403 on `deploy`** (`iam:CreatePolicyVersion` AccessDenied): the change modifies an existing managed IAM policy,

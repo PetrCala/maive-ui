@@ -96,8 +96,8 @@ are a **prerequisite**, not a nice-to-have.
   via `GET /api/runs?ids=`. `jobId` is an opaque bearer token (locked decision
   D6 of the async design).
 - **Edge**: Cloudflare fronts the *UI* domains only (`easymeta.org`, the
-  canonical one, and `maive.eu`; `spuriousprecision.com` redirects to
-  `easymeta.org`), with a Worker rewriting Host/SNI to the `.on.aws` origin.
+  canonical one; `spuriousprecision.com` and, since #571, `maive.eu` redirect
+  to `easymeta.org`), with a Worker rewriting Host/SNI to the `.on.aws` origin.
   At design time the R Function URL was **not** behind Cloudflare and the
   browser called it directly; since #530 the browser posts to same-origin
   `/api/run-model` / `/api/run-rtma` and the Next.js server signs and forwards

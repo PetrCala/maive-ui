@@ -1,0 +1,9 @@
+{
+  "name": "maive-cloudflare-workers",
+  "private": true,
+  "description": "Marks the worker sources as ES modules (they use `export default`) and runs their node tests. Nothing to install.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  }
+}
