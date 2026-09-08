@@ -12,7 +12,7 @@ const parameters: ModelParameters = {
   maiveMethod: "PET-PEESE",
   weight: "equal_weights",
   shouldUseInstrumenting: true,
-  useLogFirstStage: false,
+  useLogFirstStage: true,
   winsorize: 0,
   favorPositive: true,
 };

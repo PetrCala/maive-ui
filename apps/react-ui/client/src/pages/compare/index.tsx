@@ -10,6 +10,7 @@ import RTMAResultsSummary from "@src/components/RTMAResultsSummary";
 import RDTResultsSummary from "@src/components/RDTResultsSummary";
 import Alert from "@src/components/Alert";
 import CONST from "@src/CONST";
+import TEXT from "@src/lib/text";
 import { useRunsStore, type RunEntry } from "@src/store/runsStore";
 import { useRunResults, type RunResultState } from "@src/hooks/useRunResults";
 import { useReadySearchParams } from "@src/hooks/useReadySearchParams";
@@ -51,9 +52,20 @@ type RunCardProps = {
   state: RunResultState | undefined;
 };
 
+const badgeClassName =
+  "inline-flex flex-shrink-0 items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300";
+
 function RunCard({ jobId, entry, state }: RunCardProps) {
   const router = useRouter();
   const parameters = parseRunParameters(entry?.parameters);
+  // Runs saved before and after the log first stage became the default
+  // (#575) otherwise look identical side by side, so the first-stage
+  // specification sits next to the model type on every instrumented run.
+  const firstStageLabel = parameters.shouldUseInstrumenting
+    ? parameters.useLogFirstStage
+      ? TEXT.compare.firstStage.log
+      : TEXT.compare.firstStage.levels
+    : null;
 
   return (
     <div className="surface-elevated flex flex-col rounded-lg border border-primary p-4">
@@ -65,9 +77,12 @@ function RunCard({ jobId, entry, state }: RunCardProps) {
           {entry?.filename ?? "Unknown dataset"}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-          <span className="inline-flex flex-shrink-0 items-center rounded bg-gray-100 px-1.5 py-0.5 text-xs font-medium text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <span className={badgeClassName}>
             {entry?.modelType ?? parameters.modelType}
           </span>
+          {firstStageLabel ? (
+            <span className={badgeClassName}>{firstStageLabel}</span>
+          ) : null}
           {entry ? (
             <span>
               {new Date(entry.submittedAt).toLocaleString()}

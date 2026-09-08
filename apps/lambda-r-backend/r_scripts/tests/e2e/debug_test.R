@@ -22,7 +22,7 @@ params <- list(
   maiveMethod = "PET",
   weight = "standard_weights",
   shouldUseInstrumenting = TRUE,
-  useLogFirstStage = FALSE,
+  useLogFirstStage = TRUE,
   winsorize = 0
 )
 

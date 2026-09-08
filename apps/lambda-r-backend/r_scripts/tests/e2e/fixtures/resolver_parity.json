@@ -2,7 +2,7 @@
   "description": "Shared parity cases for the parameter resolver (#555). The UI's src/lib/parameterResolver.ts (Vitest: parameterResolver.test.ts) and the R backend's api_v1.R (e2e: resolver_parity_test.R) must both produce `expected` / `expectedRecipe` for a case, or reject it with a message containing `expectedErrorContains`. `family` names the sync endpoint (maive: /v1/run-model, rtma: /v1/run-rtma); `dataShape` says which optional columns the posted data carries.",
   "cases": [
     {
-      "name": "four-column upload turns study clustering on by default",
+      "name": "four-column upload turns study clustering on and the log first stage is the default",
       "family": "maive",
       "dataShape": { "hasStudyIdColumn": true, "hasNObsColumn": true },
       "parameters": {},
@@ -14,7 +14,7 @@
         "includeStudyDummies": false,
         "includeStudyClustering": true,
         "computeAndersonRubin": false,
-        "useLogFirstStage": false,
+        "useLogFirstStage": true,
         "winsorize": 0,
         "shouldUseInstrumenting": true,
         "favorPositive": true
@@ -34,7 +34,7 @@
         "includeStudyDummies": false,
         "includeStudyClustering": false,
         "computeAndersonRubin": false,
-        "useLogFirstStage": false,
+        "useLogFirstStage": true,
         "winsorize": 0,
         "shouldUseInstrumenting": true,
         "favorPositive": true
@@ -42,7 +42,7 @@
       "expectedRecipe": "MAIVE"
     },
     {
-      "name": "WLS defaults to standard weights and no instrumenting",
+      "name": "WLS defaults to standard weights, no instrumenting and no log first stage",
       "family": "maive",
       "dataShape": { "hasStudyIdColumn": true, "hasNObsColumn": true },
       "parameters": { "modelType": "WLS" },
@@ -134,7 +134,7 @@
         "includeStudyDummies": false,
         "includeStudyClustering": false,
         "computeAndersonRubin": false,
-        "useLogFirstStage": false,
+        "useLogFirstStage": true,
         "winsorize": 0,
         "shouldUseInstrumenting": true,
         "favorPositive": true
@@ -142,7 +142,7 @@
       "expectedRecipe": null
     },
     {
-      "name": "WAIVE forces PET-PEESE and defaults to a log first stage",
+      "name": "WAIVE forces PET-PEESE and keeps the log first stage default",
       "family": "maive",
       "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
       "parameters": { "modelType": "WAIVE" },
@@ -162,6 +162,33 @@
       "expectedRecipe": null
     },
     {
+      "name": "an explicit levels first stage is kept on MAIVE",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "useLogFirstStage": false },
+      "expected": {
+        "modelType": "MAIVE",
+        "maiveMethod": "PET-PEESE",
+        "weight": "equal_weights",
+        "standardErrorTreatment": "clustered_cr2",
+        "includeStudyDummies": false,
+        "includeStudyClustering": false,
+        "computeAndersonRubin": false,
+        "useLogFirstStage": false,
+        "winsorize": 0,
+        "shouldUseInstrumenting": true,
+        "favorPositive": true
+      },
+      "expectedRecipe": "MAIVE"
+    },
+    {
+      "name": "an explicit log first stage without instrumenting is a conflict",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "modelType": "WLS", "useLogFirstStage": true },
+      "expectedErrorContains": "a log first stage needs instrumenting"
+    },
+    {
       "name": "not_clustered standard errors turn study clustering off on four-column data",
       "family": "maive",
       "dataShape": { "hasStudyIdColumn": true, "hasNObsColumn": true },
@@ -174,7 +201,7 @@
         "includeStudyDummies": false,
         "includeStudyClustering": false,
         "computeAndersonRubin": false,
-        "useLogFirstStage": false,
+        "useLogFirstStage": true,
         "winsorize": 0,
         "shouldUseInstrumenting": true,
         "favorPositive": true

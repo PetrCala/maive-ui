@@ -184,20 +184,6 @@ const EXPLANATION_RULES: ExplanationRule[] = [
     }
     return null;
   },
-
-  // useLogFirstStage changed due to WAIVE model
-  ({ param, next, changedByUser }) => {
-    if (param !== "useLogFirstStage") {
-      return null;
-    }
-    if (
-      changedByUser === "modelType" &&
-      next.modelType === CONST.MODEL_TYPES.WAIVE
-    ) {
-      return "log first stage is recommended for **WAIVE**";
-    }
-    return null;
-  },
 ];
 
 /**

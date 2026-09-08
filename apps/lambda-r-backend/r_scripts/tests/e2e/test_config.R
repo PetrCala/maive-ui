@@ -48,7 +48,7 @@ DEFAULT_PARAMETERS <- list(
   maiveMethod = "PET-PEESE",
   weight = "equal_weights",
   shouldUseInstrumenting = TRUE,
-  useLogFirstStage = FALSE,
+  useLogFirstStage = TRUE,
   winsorize = 0,
   # The UI forwards the full ModelParameters object, which carries the
   # RTMA-only favorPositive key. run_maive_model must tolerate extra keys.

@@ -95,7 +95,7 @@ test_api_v1 <- function() {
         includeStudyDummies = FALSE,
         includeStudyClustering = TRUE,
         computeAndersonRubin = FALSE,
-        useLogFirstStage = FALSE,
+        useLogFirstStage = TRUE,
         winsorize = 0,
         shouldUseInstrumenting = TRUE
       )
@@ -136,6 +136,11 @@ test_api_v1 <- function() {
       expect_api_v1(
         is.null(minimal_body$funnelPlot),
         "minimal run: plot fields must be stripped by default"
+      )
+      expect_api_v1(
+        isTRUE(minimal_body$resolvedParameters$useLogFirstStage) &&
+          identical(unlist(minimal_body$firstStage$mode), "log"),
+        "minimal run: the first stage must default to logs (#575)"
       )
 
       # 4. Positional fallback matches canonical resolution on the same data

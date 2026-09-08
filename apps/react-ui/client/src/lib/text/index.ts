@@ -446,7 +446,7 @@ const TEXT = {
     useLogFirstStage: {
       label: "Use log first stage",
       tooltip:
-        "Estimates the first-stage regression on log variances versus log sample size. Applies Duan smearing when transforming fitted variances back to levels. Using logs typically strengthens the instrument and often performs better in practical applications.",
+        "Estimates the first-stage regression on log variances versus log sample size, applying Duan smearing when transforming fitted variances back to levels. This is the default: logs typically strengthen the instrument and often perform better in practical applications. Set to No to run the first stage in levels instead.",
     },
     favorPositive: {
       label: "Favor Positive",
@@ -578,6 +578,14 @@ const TEXT = {
     cautionNote: "WAIVE is experimental. Interpretation should be cautious.",
     runInfoLabel: "Experimental model (WAIVE)",
     runInfoValue: "Active",
+  },
+  compare: {
+    // Badges on the run cards; the first-stage one is shown only for runs
+    // that instrument (#575).
+    firstStage: {
+      log: "Log first stage",
+      levels: "Levels first stage",
+    },
   },
   results: RESULTS_TEXT,
   maiveModal: {

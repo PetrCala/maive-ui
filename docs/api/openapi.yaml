@@ -147,7 +147,7 @@ paths:
                     includeStudyDummies: false
                     includeStudyClustering: true
                     computeAndersonRubin: false
-                    useLogFirstStage: false
+                    useLogFirstStage: true
                     winsorize: 0
       responses:
         "200":
@@ -643,7 +643,8 @@ components:
           `false` otherwise.
         - `weight` defaults to `standard_weights` when instrumenting is off
           (WLS), `equal_weights` otherwise.
-        - `useLogFirstStage` defaults to `true` for WAIVE.
+        - `useLogFirstStage` defaults to `true` whenever the model instruments
+          (MAIVE, WAIVE) and `false` for WLS, which has no first stage.
         - `shouldUseInstrumenting` defaults to `false` for WLS and `true`
           otherwise. `modelType: MAIVE` with `shouldUseInstrumenting: false`
           is the conventional estimator, which the app calls WLS; the echo
@@ -697,7 +698,10 @@ components:
             or study dummies.
         useLogFirstStage:
           type: boolean
-          description: Default `true` for WAIVE, `false` otherwise. Needs instrumenting.
+          description: >-
+            Run the first-stage regression on log variances versus log
+            sample size. Default `true` when instrumenting (MAIVE, WAIVE),
+            `false` for WLS. Needs instrumenting.
         winsorize:
           type: number
           description: Winsorization percentage applied to effect sizes and standard errors. 0 disables it.

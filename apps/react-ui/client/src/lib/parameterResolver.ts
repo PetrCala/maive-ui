@@ -628,7 +628,6 @@ const resolveMaiveFamily = (
     resolvedModelType = CONST.MODEL_TYPES.WLS as ModelTypeValue;
   }
 
-  const isWaive = resolvedModelType === CONST.MODEL_TYPES.WAIVE;
   const params: ModelParameters = {
     modelType: resolvedModelType,
     maiveMethod: enumParameter(
@@ -669,7 +668,14 @@ const resolveMaiveFamily = (
       "computeAndersonRubin",
       defaults.computeAndersonRubin,
     ),
-    useLogFirstStage: flagParameter(overrides, "useLogFirstStage", isWaive),
+    // A log first stage is the default for every model that instruments
+    // (#575); without instrumenting there is no first stage, so the default
+    // is off and the rule below treats an explicit true as a conflict.
+    useLogFirstStage: flagParameter(
+      overrides,
+      "useLogFirstStage",
+      shouldUseInstrumenting ? defaults.useLogFirstStage : false,
+    ),
     winsorize: winsorizeParameter(overrides),
     shouldUseInstrumenting,
     favorPositive: flagParameter(
@@ -851,6 +857,10 @@ export const toPageParameters = (
  * The inverse: the subset of the page's parameter object the resolver should
  * see for the selected model type. RTMA ignores every MAIVE-family knob, RDT
  * has no knobs at all, and sending them would trip the unknown-key check.
+ * WLS has no first stage, so the page's (hidden) log-first-stage choice is
+ * left out too: the resolver then defaults it off for the run without
+ * reporting an adjustment, and the page keeps the choice for the next
+ * instrumented model (#575).
  */
 export const fromPageParameters = (
   parameters: ModelParameters,
@@ -859,7 +869,11 @@ export const fromPageParameters = (
     return { modelType: "RDT" };
   }
   if (parameters.modelType !== CONST.MODEL_TYPES.RTMA) {
-    return parameters;
+    if (parameters.shouldUseInstrumenting) {
+      return parameters;
+    }
+    const { useLogFirstStage, ...withoutFirstStage } = parameters;
+    return withoutFirstStage;
   }
   return {
     modelType: "RTMA",

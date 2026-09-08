@@ -101,6 +101,37 @@ describe("resolveRunParameters (shared browser/API resolver)", () => {
     expect(recipe).toBe("PET-PEESE");
   });
 
+  it("runs the first stage in logs by default for every instrumented model (#575)", () => {
+    for (const modelType of ["MAIVE", "WAIVE"] as const) {
+      const { parameters } = resolveOk({
+        dataShape: THREE_COLUMN,
+        parameters: { modelType },
+      });
+      expect(parameters).toMatchObject({
+        modelType,
+        shouldUseInstrumenting: true,
+        useLogFirstStage: true,
+      });
+    }
+    const { parameters: levels } = resolveOk({
+      dataShape: THREE_COLUMN,
+      parameters: { useLogFirstStage: false },
+    });
+    expect(levels).toMatchObject({ useLogFirstStage: false });
+  });
+
+  it("defaults the first stage off for WLS without reporting an adjustment (#575)", () => {
+    const { parameters, adjustments } = resolveOk({
+      dataShape: THREE_COLUMN,
+      parameters: { modelType: "WLS" },
+      mode: "lenient",
+    });
+    expect(parameters).toMatchObject({ useLogFirstStage: false });
+    expect(adjustments.map((adjustment) => adjustment.param)).not.toContain(
+      "useLogFirstStage",
+    );
+  });
+
   it("keeps an explicit compatible weight on WLS", () => {
     const { parameters } = resolveOk({
       dataShape: THREE_COLUMN,
@@ -414,6 +445,31 @@ describe("page parameter helpers", () => {
     const maive: ModelParameters = { ...CONFIG.DEFAULT_MODEL_PARAMETERS };
     expect(fromPageParameters(maive)).toBe(maive);
     expect(toPageParameters(maive)).toBe(maive);
+  });
+
+  it("leaves the page's log-first-stage choice out of a WLS submission (#575)", () => {
+    // The option is hidden for WLS and the page keeps the default (true) in
+    // its state; the resolver must neither see it as a conflict nor report
+    // an adjustment that would overwrite the choice for the next MAIVE run.
+    const wls: ModelParameters = {
+      ...CONFIG.DEFAULT_MODEL_PARAMETERS,
+      modelType: "WLS",
+      shouldUseInstrumenting: false,
+      weight: "standard_weights",
+      useLogFirstStage: true,
+    };
+    const submitted = fromPageParameters(wls);
+    expect(submitted).not.toHaveProperty("useLogFirstStage");
+    const { parameters, adjustments } = resolveOk({
+      dataShape: THREE_COLUMN,
+      parameters: submitted,
+      mode: "lenient",
+    });
+    expect(parameters).toMatchObject({
+      modelType: "WLS",
+      useLogFirstStage: false,
+    });
+    expect(adjustments).toEqual([]);
   });
 
   it("detects the recipe from resolved parameters", () => {
