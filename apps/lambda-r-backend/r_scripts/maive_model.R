@@ -442,6 +442,24 @@ run_maive_model <- function(data, parameters) {
   # Warnings are muffled above so they never reach the Lambda log on their own;
   # re-emit them here. "{msg}" keeps cli from glue-interpolating the message.
   maive_warnings <- unique(gsub("\\s+", " ", trimws(maive_warnings)))
+
+  # Two base-R warnings surface next to the package's own diagnostics (#571).
+  #
+  # "essentially perfect fit: summary may be unreliable" is summary.lm() on a
+  # regression with (near) identical effect sizes; the words read as breakage
+  # to a user, so it is rewritten as a plain sentence. "NaNs produced" is
+  # sqrt() on a negative fitted variance in the first stage. It is deliberately
+  # NOT dropped: the affected estimates get an undefined instrumented SE and
+  # fall out of the second stage, and this warning is currently the only signal
+  # of that row loss. It may be suppressed once the package reports the count
+  # of excluded estimates itself (PetrCala/MAIVE#24).
+  is_perfect_fit_warning <- grepl("^essentially perfect fit", maive_warnings)
+  maive_warnings[is_perfect_fit_warning] <- paste(
+    "A regression in the analysis fit the data essentially perfectly (for example, identical effect sizes),",
+    "so its summary statistics may be unreliable."
+  )
+  maive_warnings <- unique(maive_warnings)
+
   if (length(maive_warnings) > 0) {
     cli::cli_h2(sprintf("%s warnings:", model_label))
     for (msg in maive_warnings) {
@@ -472,6 +490,16 @@ run_maive_model <- function(data, parameters) {
 
     ci_field
   }
+  # A negative fitted variance in the levels first stage goes through sqrt()
+  # and leaves NaN in SE_instrumented (PetrCala/MAIVE#24); jsonlite would send
+  # it as the string "NaN" inside a number-typed array. Report undefined
+  # entries as the same "NA" string every other undefined number in the
+  # payload uses, one element at a time so the finite ones stay numbers (#571).
+  # unname() matters: fitted() names the vector, and a named list would be
+  # serialized as an object rather than an array.
+  se_instrumented <- unname(as.list(maive_res$SE_instrumented))
+  se_instrumented[!vapply(se_instrumented, is_defined_number, logical(1))] <- list("NA")
+
   boot_se <- parse_boot_result(maive_res$boot_result, "boot_se") # [a, b]
   boot_ci <- parse_boot_result(maive_res$boot_result, "boot_ci") # [[a, b], [c, d]]
   egger_boot_ci <- format_ci_field(maive_res$egger_boot_ci)
@@ -515,7 +543,7 @@ run_maive_model <- function(data, parameters) {
       criticalValue = hausman_critical_value,
       rejectsNull = hausman_rejects_null
     ),
-    seInstrumented = maive_res$SE_instrumented,
+    seInstrumented = se_instrumented, # numbers, "NA" for undefined entries
     funnelPlot = funnel_plot_data$data_uri,
     funnelPlotWidth = funnel_plot_data$width_px,
     funnelPlotHeight = funnel_plot_data$height_px,

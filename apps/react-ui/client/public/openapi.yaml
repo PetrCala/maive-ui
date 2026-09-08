@@ -974,9 +974,17 @@ components:
               nullable: true
               description: '`null` when the statistic is undefined (reported as `"NA"`).'
         seInstrumented:
+          description: >-
+            One entry per input row: the instrumented standard error, or
+            `"NA"` when the first stage fitted a negative variance for that
+            row and its instrumented SE is undefined (see
+            https://github.com/PetrCala/MAIVE/issues/24).
           type: array
           items:
-            type: number
+            oneOf:
+              - type: number
+              - type: string
+                enum: ["NA"]
         bootSE:
           description: '`[se_lower, se_upper]`, or `"NA"` when bootstrap SE was not requested/computed.'
           oneOf:
