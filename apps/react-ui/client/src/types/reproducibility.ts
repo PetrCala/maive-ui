@@ -30,7 +30,7 @@ export type VersionInfo = {
    * RTMA is fitted by phacking, so a package that does not name the version it
    * ran under cannot be re-run against the same implementation (#489). Pinned
    * in apps/lambda-r-backend/r_scripts/r-packages.txt; see the drift guard in
-   * phackingVersionPin.test.ts.
+   * rPackagePins.test.ts.
    */
   phackingVersion: string;
   /** Timestamp when version info was generated */
