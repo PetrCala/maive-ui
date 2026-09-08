@@ -255,6 +255,11 @@ check_rdt_constant_se <- function(df) {
       if (is.null(response$message)) "a successful response" else response$message
     ))
   }
+  # Same wording as the MAIVE-family guard: the spread, not "are all X" (#572).
+  # \s+ because cli wraps long messages at the console width on this route.
+  if (!grepl("vary by less than\\s+one part in\\s+100,000", response$message) || grepl("are all", response$message)) {
+    stop(paste("The RDT refusal should describe the spread, got:", response$message))
+  }
 
   # Just above the tolerance the column is analysable again, so the guard does
   # not swallow genuinely near-constant but varying standard errors.

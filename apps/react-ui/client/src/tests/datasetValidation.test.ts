@@ -268,7 +268,9 @@ describe("validateDataset: MAIVE-family", () => {
     ];
     const message = validateDataset(data, "MAIVE")?.message;
     expect(message).toMatch(/`se` column has no usable variation/);
-    expect(message).toContain("0.1");
+    expect(message).toContain(
+      "its 4 values vary by less than one part in 100,000 (the first is 0.1)",
+    );
   });
 
   it("rejects a near-constant se column", () => {
@@ -282,6 +284,29 @@ describe("validateDataset: MAIVE-family", () => {
     expect(validateDataset(data, "MAIVE")?.message).toMatch(
       /`se` column has no usable variation/,
     );
+  });
+
+  it("does not claim a near-constant column's values are all equal (#572)", () => {
+    // The issue's example: 0.1 and 0.1000005 are two distinct values, so the
+    // refusal must describe the spread rather than say they "are all 0.1".
+    const data = Array.from({ length: 400 }, (_, index) =>
+      maiveRow(0.3, index % 2 === 0 ? 0.1 : 0.1000005, 100 + index),
+    );
+    const message = validateDataset(data, "MAIVE")?.message;
+    expect(message).toContain(
+      "its 400 values vary by less than one part in 100,000 (the first is 0.1)",
+    );
+    expect(message).not.toMatch(/are all/);
+  });
+
+  it("accepts an se column with 1% variation", () => {
+    const data = [
+      maiveRow(0.3, 0.1, 120),
+      maiveRow(0.3, 0.101, 95),
+      maiveRow(0.3, 0.1, 200),
+      maiveRow(0.3, 0.101, 60),
+    ];
+    expect(validateDataset(data, "MAIVE")).toBeNull();
   });
 
   it("accepts a normally varying se column", () => {

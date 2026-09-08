@@ -27,6 +27,10 @@ import type {
   SubsampleFilterState,
 } from "@src/types";
 import { parseLocalizedNumber } from "@utils/dataUtils";
+import {
+  describeDegenerateSeColumn,
+  summarizeDegenerateSeColumn,
+} from "@src/lib/seVariation";
 import { DataProcessingService } from "@src/services/dataProcessingService";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import {
@@ -523,6 +527,27 @@ const validateData = (
       type: CONST.ALERT_TYPES.ERROR,
       message: `The ${seField} column must contain only positive values (greater than 0). Found invalid values at row(s): ${indexesText}. Please check your data.`,
     });
+  }
+
+  // Advisory only (#572): this page runs before the model is chosen, and RTMA
+  // never regresses the effects on their standard errors, so a constant `se`
+  // column is legitimate input there. The hard refusal stays at submit, once
+  // the model type is known (datasetValidation.ts and the R backend, #564).
+  // Skipped without a sample-size column, when only RTMA is on offer anyway.
+  if (mapping.nObs) {
+    const degenerateSe = summarizeDegenerateSeColumn(
+      fullData.map((row) => row.se),
+    );
+    if (degenerateSe) {
+      messages.push({
+        type: CONST.ALERT_TYPES.WARNING,
+        message:
+          `${describeDegenerateSeColumn(seField, degenerateSe)} MAIVE, WAIVE, ` +
+          "WLS and RDT will refuse it when you run the analysis, because they " +
+          "read publication bias off the way the effects vary with their " +
+          "standard errors. RTMA does not use that variation and accepts it.",
+      });
+    }
   }
 
   if (issues?.rowsWithMissing.length) {

@@ -1,4 +1,8 @@
 import CONST from "@src/CONST";
+import {
+  describeDegenerateSeColumn,
+  summarizeDegenerateSeColumn,
+} from "@src/lib/seVariation";
 
 // Server-side validation for the public `/v1/runs` submit endpoint (design
 // §6.2). Mirrors the rules on the UI's validation page
@@ -16,12 +20,10 @@ export const MIN_MAIVE_ROWS = 4;
 // in the R backend (api_v1.R / index.R).
 export const MAX_ROWS = 50000;
 
-// Relative spread below which a standard-error column counts as constant, so
-// the submit endpoint rejects it here rather than letting the job fail in the
-// second stage (#564). Keep in sync with the R backend's two copies of the same
-// rule: SE_DEGENERATE_RELATIVE_TOLERANCE in maive_model.R and
-// RDT_SE_DEGENERATE_RELATIVE_TOLERANCE in rdt_model.R.
-export const SE_DEGENERATE_RELATIVE_TOLERANCE = 1e-5;
+// The constant-se rule itself lives in `@src/lib/seVariation` so the browser's
+// validation page can warn with the same tolerance before the model is chosen
+// (#572); this module only turns it into a refusal at submit (#564).
+export { SE_DEGENERATE_RELATIVE_TOLERANCE } from "@src/lib/seVariation";
 
 export type ResolvedColumns = {
   effect: string;
@@ -126,55 +128,28 @@ const toNumber = (value: unknown): number =>
   typeof value === "number" ? value : Number(value);
 
 /**
- * Rejects a standard-error column that carries no usable variation. Every
- * MAIVE-family model regresses the effects on their standard errors, so a
- * constant column is collinear with the intercept: the R package drops the
- * aliased coefficient and then indexes it anyway, which used to reach callers
- * as a "subscript out of bounds" 500 (#564). Mirrors
- * `se_column_is_degenerate` in the R backend, so the async submit endpoint
- * fails fast instead of queuing a job that cannot finish.
- *
- * Min/max are taken in a single pass: `Math.min(...values)` would spread up to
- * MAX_ROWS arguments, past the engine's argument limit.
+ * Rejects a standard-error column that carries no usable variation, so the
+ * submit endpoints fail fast instead of queuing a job that cannot finish
+ * (#564). The rule and the factual half of the message are shared with the
+ * validation page's advisory warning (`@src/lib/seVariation`); the R backend
+ * (`se_column_is_degenerate`) applies the same rule and wording.
  */
 const degenerateSeColumn = (
   rows: Array<Record<string, unknown>>,
   seKey: string,
 ): ValidationError | null => {
-  let count = 0;
-  let min = Number.POSITIVE_INFINITY;
-  let max = Number.NEGATIVE_INFINITY;
-  let first = 0;
-
-  rows.forEach((row) => {
-    const value = toNumber(row[seKey]);
-    if (!Number.isFinite(value)) {
-      return;
-    }
-    if (count === 0) {
-      first = value;
-    }
-    count += 1;
-    min = Math.min(min, value);
-    max = Math.max(max, value);
-  });
-
-  if (count < 2) {
-    return null;
-  }
-
-  const scale = Math.max(Math.abs(min), Math.abs(max));
-  if (scale === 0 || max - min > SE_DEGENERATE_RELATIVE_TOLERANCE * scale) {
+  const summary = summarizeDegenerateSeColumn(rows.map((row) => row[seKey]));
+  if (!summary) {
     return null;
   }
 
   return {
     message:
-      `The \`se\` column has no usable variation: its ${count} values are all ` +
-      `${Number(first.toPrecision(6))}. Every MAIVE-family estimator reads ` +
-      "publication bias off the way the effects vary with their standard " +
-      "errors, so a constant `se` column leaves that slope unidentified. " +
-      "Supply the standard errors as reported, which differ across estimates.",
+      `${describeDegenerateSeColumn("`se`", summary)} Every MAIVE-family ` +
+      "estimator reads publication bias off the way the effects vary with " +
+      "their standard errors, so a constant `se` column leaves that slope " +
+      "unidentified. Supply the standard errors as reported, which differ " +
+      "across estimates.",
   };
 };
 
