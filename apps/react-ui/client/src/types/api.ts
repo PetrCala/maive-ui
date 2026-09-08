@@ -264,7 +264,11 @@ type RDTResults = {
   /** Usable estimates after the row filter, and the rows that filter dropped. */
   k: number;
   droppedRows: number;
-  /** Smallest jump detectable with 80% power: 2.8 standard errors. */
+  /**
+   * Smallest jump detectable with 80% power at the 5% level: the standard
+   * error times the exact noncentral-t multiplier on `df`, which is about
+   * 3.05 from df 12 and larger with fewer clusters (#573).
+   */
   minDetectableJump: number;
   firstStage: {
     slope: number;

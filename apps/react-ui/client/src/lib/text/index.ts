@@ -518,7 +518,7 @@ const TEXT = {
         subLabel:
           "a jump of about 0.10 corresponds to standard errors roughly 10% smaller than sample size predicts; below the detectable size, a null result says nothing.",
         tooltip:
-          "2.8 times the standard error of the jump: the smallest true jump that a two-sided 5% test would detect 80% of the time. Power is genuinely low in most literatures, so a result that is not significant is not evidence of clean data.",
+          "The smallest true jump that a two-sided 5% test on this dataset would detect 80% of the time: the standard error of the jump times the exact noncentral-t multiplier on the same degrees of freedom as the interval (about 3.05 from 12 degrees of freedom, larger with fewer clusters, never below the normal-theory 2.8). Power is genuinely low in most literatures, so a result that is not significant is not evidence of clean data.",
       },
       window: {
         label: "Estimation window",

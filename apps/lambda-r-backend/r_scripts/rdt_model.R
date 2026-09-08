@@ -50,9 +50,78 @@ RDT_SE_DEGENERATE_RELATIVE_TOLERANCE <- 1e-05
 # fingerprint alone gives false positives, the pair separates cleanly. Corpus
 # median 0.19; the five reconstructed literatures run 0.63-0.83.
 RDT_RECONSTRUCTED_SE_WARN <- 0.60
-# Smallest jump detectable with 80% power at the 5% level, as a multiple of the
-# standard error: qnorm(0.975) + qnorm(0.8) = 1.96 + 0.84.
-RDT_DETECTABLE_JUMP_SE_MULTIPLE <- 2.8
+# Distinct values of the running variable log|t| that the Imbens-Kalyanaraman
+# pilot cubic needs. With fewer than five its u^3 coefficient is NA and the
+# bandwidth rule throws "missing value where TRUE/FALSE needed"; at exactly
+# five, 2 of 3 seeds in #573 still died further down the pipeline, so six is
+# the floor. The per-window guard in rdt_local_linear covers what this one
+# cannot see: values that exist in the data but not inside the bandwidth.
+RDT_MIN_DISTINCT_T <- 6
+# Gap in log|t| below which two estimates count as the same value for that
+# floor: 0.1% in |t|. A t-statistic reproduced from numbers rounded to four
+# or more significant digits comes back with noise at 1e-4 or less and still
+# counts once; t-statistics printed to two decimals sit at least 0.2% apart on
+# the |t| range RDT uses, so they stay distinct.
+RDT_DISTINCT_T_TOLERANCE <- 1e-03
+# Distinct log|t| values each side of the cutoff needs inside the estimation
+# window for the local-linear fit. Two identify a line per side, but the CR2
+# Satterthwaite step still hit a singular chol() on 2 of 120 sweep draws at
+# two; none at three (#573).
+RDT_MIN_DISTINCT_T_IN_WINDOW <- 3
+# Clusters the CR2 cluster-robust variance needs. clubSandwich refuses a single
+# cluster with its own message, so the count is checked before the fit (#573).
+RDT_MIN_CLUSTERS <- 2
+# Power and size of the test the smallest detectable jump is defined for.
+RDT_DETECTABLE_JUMP_POWER <- 0.80
+RDT_DETECTABLE_JUMP_ALPHA <- 0.05
+
+#' Multiple of the standard error that a two-sided t test detects with 80% power
+#'
+#' The interval beside the smallest-detectable-jump line is a t interval on
+#' Satterthwaite degrees of freedom, so the multiplier is the noncentrality m
+#' at which P(|T_{df, ncp = m}| > qt(0.975, df)) = 0.80, found by root search
+#' over the noncentral t distribution. The normal-theory constant
+#' qnorm(0.975) + qnorm(0.80) = 2.8 understates it at every finite df, by 44%
+#' at df 2.2 and still 5% at df 20, which is where RDT is least informative
+#' (#573). qt(0.975, df) + qt(0.80, df) is closer but still delivers only
+#' 77% power at df 2.2; it is used only if the root search fails.
+#'
+#' @param df Satterthwaite degrees of freedom of the jump
+#' @return The multiplier; 5.208 at df 2.2, 3.761 at df 4, 3.201 at df 8,
+#'   3.053 from about df 12 on, tending to 2.8 as df grows
+rdt_detectable_jump_multiple <- function(df) {
+  if (!is.finite(df) || df <= 0) {
+    return(NA_real_)
+  }
+  crit <- stats::qt(1 - RDT_DETECTABLE_JUMP_ALPHA / 2, df)
+  approx <- crit + stats::qt(RDT_DETECTABLE_JUMP_POWER, df)
+  power_gap <- function(m) {
+    stats::pt(crit, df, ncp = m, lower.tail = FALSE) +
+      stats::pt(-crit, df, ncp = m) - RDT_DETECTABLE_JUMP_POWER
+  }
+  root <- tryCatch(
+    stats::uniroot(power_gap, c(0, 4 * approx), tol = 1e-10)$root,
+    error = function(e) NA_real_
+  )
+  if (is.finite(root)) root else approx
+}
+
+#' Count the distinct values of a numeric vector up to a gap tolerance
+#'
+#' Sorts the values and counts the gaps wider than `tol`, so a value that
+#' repeats with rounding noise counts once and the count does not depend on
+#' where the noise falls relative to a rounding boundary.
+#'
+#' @param x Numeric vector
+#' @param tol Gap above which two neighbours are different values
+#' @return Number of distinct values
+rdt_distinct_count <- function(x, tol) {
+  values <- sort(x[is.finite(x)])
+  if (length(values) == 0) {
+    return(0L)
+  }
+  1L + sum(diff(values) > tol)
+}
 
 #' Check whether a standard-error column carries no usable variation
 #'
@@ -145,10 +214,29 @@ rdt_local_linear <- function(y, x, cl, c, h) {
     cli::cli_abort("Too few estimates on one side of the cutoff inside the estimation window.")
   }
   h_eff <- max(abs(u[keep]))
+  # One line per side needs distinct running-variable values on each side
+  # inside the window. With too few the design is rank deficient, and the
+  # failure surfaces from clubSandwich's Satterthwaite step as "the leading
+  # minor of order 3 is not positive" (#573).
+  distinct_below <- rdt_distinct_count(u[keep & u < 0], RDT_DISTINCT_T_TOLERANCE)
+  distinct_above <- rdt_distinct_count(u[keep & u >= 0], RDT_DISTINCT_T_TOLERANCE)
+  if (distinct_below < RDT_MIN_DISTINCT_T_IN_WINDOW || distinct_above < RDT_MIN_DISTINCT_T_IN_WINDOW) {
+    cli::cli_abort(paste0(
+      "Estimates inside the estimation window take only ", distinct_below,
+      " distinct |t| value(s) below the cutoff and ", distinct_above, " above; the local ",
+      "fit needs at least ", RDT_MIN_DISTINCT_T_IN_WINDOW, " on each side."
+    ))
+  }
   dat <- data.frame(
     y = y[keep], u = u[keep],
     d = as.numeric(u[keep] >= 0), cl = cl[keep]
   )
+  if (length(unique(dat$cl)) < RDT_MIN_CLUSTERS) {
+    cli::cli_abort(paste0(
+      "Every estimate inside the estimation window comes from a single study, ",
+      "so no cluster-robust standard error can be computed."
+    ))
+  }
   dat$w <- pmax(1 - abs(dat$u) / h_eff, 1e-8) # triangular kernel
   fit <- stats::lm(y ~ d * u, data = dat, weights = w) # nolint: object_usage_linter. w is a column of dat.
 
@@ -368,6 +456,34 @@ run_rdt_model <- function(data, parameters = "{}", include_plot = TRUE) {
     ))
   }
 
+  # The Imbens-Kalyanaraman rule fits a pilot cubic in log|t|; a running
+  # variable that takes only a handful of values (standard errors copied from
+  # a few t-statistics, say) cannot support it, and R's own error from inside
+  # the rule ("missing value where TRUE/FALSE needed") says nothing a user can
+  # act on (#573).
+  n_distinct_t <- rdt_distinct_count(r, RDT_DISTINCT_T_TOLERANCE)
+  if (n_distinct_t < RDT_MIN_DISTINCT_T) {
+    cli::cli_abort(paste0(
+      "RDT needs at least ", RDT_MIN_DISTINCT_T, " distinct values of |t| = |effect / se| ",
+      "to choose its bandwidth; found ", n_distinct_t, " among ", k, " usable estimates. ",
+      "The local fit runs on |t|, so standard errors that put every estimate on a few ",
+      "t-statistics leave it nothing to fit."
+    ))
+  }
+
+  # CR2 standard errors cluster by study. One study is one cluster, and
+  # clubSandwich refuses that with its own wording after the fit; say so here,
+  # before it, in terms of the upload (#573).
+  n_clusters <- length(unique(study))
+  if (n_clusters < RDT_MIN_CLUSTERS) {
+    cli::cli_abort(paste0(
+      "RDT needs estimates from at least ", RDT_MIN_CLUSTERS, " studies to compute ",
+      "cluster-robust standard errors; all ", k, " usable estimates come from a single study (",
+      study[1], "). Supply a study column that separates the estimates into studies, or omit ",
+      "it to cluster by estimate."
+    ))
+  }
+
   # A constant SE column leaves log(SE) with no variation, so the residual the
   # whole test is built on is identically zero and what survives is rounding
   # error from the QR fit at ~1e-15. Every jump, interval and p-value below
@@ -489,7 +605,9 @@ run_rdt_model <- function(data, parameters = "{}", include_plot = TRUE) {
     hasStudyColumn = has_study_column,
     k = k,
     droppedRows = dropped_rows,
-    minDetectableJump = RDT_DETECTABLE_JUMP_SE_MULTIPLE * headline$jumpSE,
+    # Exact noncentral-t multiple on the headline df, so the line beside the t
+    # interval means what it says at every cluster count (#573).
+    minDetectableJump = rdt_detectable_jump_multiple(headline$df) * headline$jumpSE,
     firstStage = list(
       slope = first_stage_slope,
       rSquared = first_stage_r2

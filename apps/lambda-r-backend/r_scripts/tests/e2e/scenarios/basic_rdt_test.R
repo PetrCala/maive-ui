@@ -5,8 +5,39 @@
 # pin the response contract the UI's RDTResultsSummary reads, the input
 # guards (sample size mandatory, minimum counts each side of the cutoff), the
 # first-stage warning that fires when standard errors are an exact function of
-# sample size and the warning for standard errors that were back-computed from
-# a rounded t-statistic rather than reported (#564).
+# sample size, the warning for standard errors that were back-computed from
+# a rounded t-statistic rather than reported (#564), the thin-data guards for
+# a running variable on too few distinct |t| values and for a single study,
+# and the smallest detectable jump as an exact noncentral-t multiple of the
+# standard error on the headline degrees of freedom (#573).
+
+#' Source rdt_model.R into a private environment
+#'
+#' The file only defines constants and functions, so sourcing it is cheap and
+#' lets the pure helpers be checked directly, on the pattern of
+#' request_log_helpers().
+#' @return Environment containing the RDT helpers
+rdt_model_helpers <- function() {
+  helpers <- new.env()
+  source(file.path("..", "..", "rdt_model.R"), local = helpers)
+  helpers
+}
+
+#' Independent computation of the 80%-power multiplier on a t reference
+#'
+#' The noncentrality m at which P(|T_{df, ncp = m}| > qt(0.975, df)) = 0.80,
+#' written separately from the backend so the headline assertion is against
+#' the formula rather than the backend's own helper.
+#' @param df Degrees of freedom
+#' @return The multiplier
+rdt_expected_detectable_multiple <- function(df) {
+  crit <- stats::qt(0.975, df)
+  stats::uniroot(
+    function(m) stats::pt(crit, df, ncp = m, lower.tail = FALSE) + stats::pt(-crit, df, ncp = m) - 0.80,
+    c(0, 30),
+    tol = 1e-10
+  )$root
+}
 
 #' Post a data frame to /run-rdt and return the parsed results
 #' @param df Data frame with effect, se, n_obs and optionally study_id
@@ -66,6 +97,113 @@ check_rdt_input_guards <- function(df) {
   one_side <- test_run_rdt(df_to_json(one_sided), params_to_json(list()))
   if (!isTRUE(one_side$error) || !grepl("each side", one_side$message)) {
     stop("Fewer than 10 estimates on one side of the cutoff should be refused, naming both counts")
+  }
+
+  invisible(TRUE)
+}
+
+#' Check the thin-data guards that used to surface raw R errors (#573)
+#'
+#' The fixtures put every estimate on a few t-statistics by setting the
+#' standard error to |effect / t|, and post at full precision (`digits = NA`)
+#' the way the browser does: `df_to_json` rounds to four decimals, which
+#' smears the repeated t-statistics into noise the guard is not about.
+check_rdt_thin_data_guards <- function(df) {
+  cat("Checking RDT thin-data guards...\n")
+  refuse <- function(data) {
+    test_run_rdt(
+      jsonlite::toJSON(data, auto_unbox = TRUE, digits = NA),
+      params_to_json(list(modelType = "RDT"))
+    )
+  }
+  expect_refusal <- function(response, wanted, raw, label) {
+    message <- if (is.null(response$message)) "a successful response" else response$message
+    if (!isTRUE(response$error) || !grepl(wanted, message, fixed = TRUE)) {
+      stop(sprintf("%s should be refused with a message naming %s; got: %s", label, wanted, message))
+    }
+    if (grepl(raw, message, fixed = TRUE)) {
+      stop(sprintf("%s surfaced the raw R error: %s", label, message))
+    }
+  }
+
+  # Three t-statistics, both sides of the cutoff populated, so the per-side
+  # guard passes and the IK pilot cubic is what would fail.
+  few_t <- df
+  few_t$sebs <- abs(few_t$bs) / rep(c(1.0, 2.5, 1.5), length.out = nrow(few_t))
+  expect_refusal(
+    refuse(few_t), "distinct values of |t|", "missing value where TRUE/FALSE needed",
+    "A running variable on three distinct |t| values"
+  )
+
+  # Six values clear the dataset floor, but every estimate below the cutoff
+  # sits on one of them, so the local fit has nothing to draw a line through.
+  one_below <- df
+  one_below$sebs <- abs(one_below$bs) / rep(c(1.5, 2.0, 2.2, 2.5, 3.0, 4.0), length.out = nrow(one_below))
+  expect_refusal(
+    refuse(one_below), "inside the estimation window", "leading minor",
+    "A window with one distinct |t| value below the cutoff"
+  )
+
+  single_study <- df
+  single_study$study_id <- "study_1"
+  expect_refusal(
+    refuse(single_study), "single study", "Cluster-robust variance estimation",
+    "Every estimate from a single study"
+  )
+
+  invisible(TRUE)
+}
+
+#' Check the smallest detectable jump against the exact noncentral-t rule (#573)
+#'
+#' The interval beside it is a t interval on Satterthwaite degrees of freedom,
+#' so the multiplier is the noncentrality that gives 80% power on the same
+#' df, not the normal-theory 2.8. Checked three ways: the backend helper
+#' against the reference values at df 2.2, 4 and 8; the headline result on the
+#' basic fixture against an independent root search on its reported df; and
+#' end to end at two cluster counts, where the multiple must track the df.
+check_rdt_detectable_jump <- function(results) {
+  cat("Checking RDT smallest detectable jump...\n")
+  helpers <- rdt_model_helpers()
+  reference <- c("2.2" = 5.208, "4" = 3.761, "8" = 3.201)
+  for (df in names(reference)) {
+    got <- helpers$rdt_detectable_jump_multiple(as.numeric(df))
+    if (abs(got - reference[[df]]) > 5e-4) {
+      stop(sprintf("The detectable-jump multiple at df %s should be %.3f; got %.4f", df, reference[[df]], got))
+    }
+  }
+
+  expect_exact_multiple <- function(fit, label) {
+    expected <- rdt_expected_detectable_multiple(fit$df)
+    ratio <- fit$minDetectableJump / fit$jumpSE
+    if (abs(ratio - expected) > 1e-6 * expected) {
+      stop(sprintf(
+        "%s: minDetectableJump / jumpSE should be the exact 80%%-power multiple %.4f at df %.2f; got %.4f",
+        label, expected, fit$df, ratio
+      ))
+    }
+    if (ratio <= 2.8) {
+      stop(sprintf("%s: the t-based multiple must exceed the normal-theory 2.8; got %.4f", label, ratio))
+    }
+    ratio
+  }
+  expect_exact_multiple(results, "Basic fixture")
+
+  few_clusters <- rdt_results_for(generate_rdt_test_data(n = 150, n_studies = 6))
+  many_clusters <- rdt_results_for(generate_rdt_test_data(n = 400, n_studies = 40))
+  if (few_clusters$df >= 8 || many_clusters$df <= 15) {
+    stop(sprintf(
+      "The two cluster counts should straddle the df range (got %.2f and %.2f)",
+      few_clusters$df, many_clusters$df
+    ))
+  }
+  few_multiple <- expect_exact_multiple(few_clusters, "Six clusters")
+  many_multiple <- expect_exact_multiple(many_clusters, "Forty clusters")
+  if (few_multiple <= many_multiple || few_multiple < 3.3 || many_multiple > 3.0) {
+    stop(sprintf(
+      "The multiple should fall with the degrees of freedom; got %.4f at df %.2f and %.4f at df %.2f",
+      few_multiple, few_clusters$df, many_multiple, many_clusters$df
+    ))
   }
 
   invisible(TRUE)
@@ -233,7 +371,7 @@ test_basic_rdt <- function() {
       }
 
       rdt_fields <- c(
-        "model", "jump", "jumpSE", "jumpCI", "pValue", "cutoff", "bandwidth",
+        "model", "jump", "jumpSE", "jumpCI", "pValue", "df", "cutoff", "bandwidth",
         "windowT", "nLeft", "nRight", "studies", "hasStudyColumn", "k",
         "droppedRows", "minDetectableJump", "firstStage", "sensitivity",
         "placebo", "warnings", "plot", "plotWidth", "plotHeight"
@@ -258,8 +396,8 @@ test_basic_rdt <- function() {
       if (length(results$windowT) != 2 || results$windowT[[1]] >= 1.96 || results$windowT[[2]] <= 1.96) {
         stop("windowT should bracket |t| = 1.96")
       }
-      if (abs(results$minDetectableJump - 2.8 * results$jumpSE) > 1e-8) {
-        stop("minDetectableJump should be 2.8 times the standard error")
+      if (!is.numeric(results$df) || results$df <= 0) {
+        stop("df should be the positive Satterthwaite degrees of freedom of the jump")
       }
       if (results$nLeft < 5 || results$nRight < 5) {
         stop("Each side of the cutoff should keep at least 5 estimates inside the window")
@@ -283,8 +421,10 @@ test_basic_rdt <- function() {
         stop("The plot should be a base64 PNG data URI")
       }
 
+      check_rdt_detectable_jump(results)
       check_rdt_jump_sign()
       check_rdt_input_guards(test_data)
+      check_rdt_thin_data_guards(test_data)
       check_rdt_constant_se(test_data)
       check_rdt_exact_first_stage(test_data)
       check_rdt_no_study_column(test_data)
