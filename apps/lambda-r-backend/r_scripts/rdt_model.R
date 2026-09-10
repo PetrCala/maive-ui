@@ -81,7 +81,7 @@ RDT_DETECTABLE_JUMP_ALPHA <- 0.05
 #' Satterthwaite degrees of freedom, so the multiplier is the noncentrality m
 #' at which P(|T_{df, ncp = m}| > qt(0.975, df)) = 0.80, found by root search
 #' over the noncentral t distribution. The normal-theory constant
-#' qnorm(0.975) + qnorm(0.80) = 2.8 understates it at every finite df, by 44%
+#' qnorm(0.975) + qnorm(0.80) = 2.8 understates it at every finite df, by 46%
 #' at df 2.2 and still 5% at df 20, which is where RDT is least informative
 #' (#573). qt(0.975, df) + qt(0.80, df) is closer but still delivers only
 #' 77% power at df 2.2; it is used only if the root search fails.
@@ -476,12 +476,15 @@ run_rdt_model <- function(data, parameters = "{}", include_plot = TRUE) {
   # before it, in terms of the upload (#573).
   n_clusters <- length(unique(study))
   if (n_clusters < RDT_MIN_CLUSTERS) {
-    cli::cli_abort(paste0(
+    # The study id is user text: pass the message as a glue value, not as the
+    # template, so braces in it are printed instead of evaluated by cli.
+    msg <- paste0(
       "RDT needs estimates from at least ", RDT_MIN_CLUSTERS, " studies to compute ",
       "cluster-robust standard errors; all ", k, " usable estimates come from a single study (",
       study[1], "). Supply a study column that separates the estimates into studies, or omit ",
       "it to cluster by estimate."
-    ))
+    )
+    cli::cli_abort("{msg}")
   }
 
   # A constant SE column leaves log(SE) with no variation, so the residual the

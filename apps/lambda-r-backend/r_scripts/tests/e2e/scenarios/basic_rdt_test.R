@@ -151,6 +151,17 @@ check_rdt_thin_data_guards <- function(df) {
     "Every estimate from a single study"
   )
 
+  # A study id is user text and must reach the message verbatim, braces
+  # included; cli would otherwise read "{b}" as a glue expression and fail
+  # with a raw R error instead of this guard (#573). "(a{b}c)" has no spaces,
+  # so the legacy route's line wrapping cannot split it.
+  braced_study <- df
+  braced_study$study_id <- "a{b}c"
+  expect_refusal(
+    refuse(braced_study), "(a{b}c)", "Could not evaluate cli",
+    "A single study whose id contains braces"
+  )
+
   invisible(TRUE)
 }
 
