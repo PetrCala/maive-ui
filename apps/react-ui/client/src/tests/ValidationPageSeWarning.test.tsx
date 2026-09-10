@@ -69,6 +69,9 @@ describe("ValidationPage constant-se warning (#572)", () => {
       "its 6 values vary by less than one part in 100,000 (the first is 0.1)",
     );
     expect(warning.textContent).toContain("RTMA");
+    expect(warning.textContent).toContain(
+      "part of log(SE) that sample size does not explain",
+    );
     expect(warning.textContent).not.toMatch(/are all/);
 
     // Advisory, not an error: RTMA is a legitimate target for such data.
@@ -90,6 +93,28 @@ describe("ValidationPage constant-se warning (#572)", () => {
     expect(
       screen.getByText("Your data is valid and ready for analysis!"),
     ).toBeInTheDocument();
+  });
+
+  it("lists RDT among the models that need a sample-size column", async () => {
+    const rawData: DataArray = [0.1, 0.12, 0.15, 0.2, 0.25, 0.3].map(
+      (se, index) => ({ effect: 0.3 + index * 0.01, se }),
+    );
+    dataCache.set(DATA_ID, {
+      id: DATA_ID,
+      filename: "two-column.csv",
+      data: rawData,
+      rawData,
+      columnNames: ["effect", "se"],
+      hasHeaders: true,
+      base64Data: "",
+      uploadedAt: new Date(),
+    });
+    renderPage();
+
+    const notice = await screen.findByText(/No sample-size column is mapped/);
+    expect(notice.textContent).toContain(
+      "MAIVE, WAIVE, WLS, and RDT require sample sizes",
+    );
   });
 
   it("does not warn about a column with 1% variation", async () => {
