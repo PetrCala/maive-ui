@@ -44,7 +44,7 @@ import {
 
 // Sample size (nObs) is deliberately not required: a two-column (effect, se)
 // dataset is the standard input for RTMA, which never uses sample sizes. The
-// model page restricts such data to RTMA; MAIVE, WAIVE, and WLS need nObs.
+// model page restricts such data to RTMA; MAIVE, WAIVE, WLS, and RDT need nObs.
 const REQUIRED_FIELDS: Array<keyof ColumnMapping> = ["effect", "se"];
 
 type MappingState = {
@@ -434,7 +434,7 @@ const validateData = (
     messages.push({
       type: CONST.ALERT_TYPES.INFO,
       message:
-        "No sample-size column is mapped, so only RTMA (p-hacking correction) will be available on the next screen. MAIVE, WAIVE, and WLS require sample sizes.",
+        "No sample-size column is mapped, so only RTMA (p-hacking correction) will be available on the next screen. MAIVE, WAIVE, WLS, and RDT require sample sizes.",
     });
   }
 
@@ -543,9 +543,11 @@ const validateData = (
         type: CONST.ALERT_TYPES.WARNING,
         message:
           `${describeDegenerateSeColumn(seField, degenerateSe)} MAIVE, WAIVE, ` +
-          "WLS and RDT will refuse it when you run the analysis, because they " +
-          "read publication bias off the way the effects vary with their " +
-          "standard errors. RTMA does not use that variation and accepts it.",
+          "WLS and RDT will refuse it when you run the analysis. MAIVE, WAIVE " +
+          "and WLS read publication bias off the way the effects vary with their " +
+          "standard errors, and RDT reads precision off the part of log(SE) that " +
+          "sample size does not explain, which a constant column leaves at zero. " +
+          "RTMA does not use that variation and accepts it.",
       });
     }
   }
