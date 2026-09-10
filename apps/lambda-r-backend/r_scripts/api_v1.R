@@ -628,9 +628,11 @@ api_v1_resolve_maive_parameters <- function(parameters, has_study_id) {
     includeStudyClustering = api_v1_flag_parameter(params, "includeStudyClustering", FALSE),
     computeAndersonRubin = api_v1_flag_parameter(params, "computeAndersonRubin", FALSE),
     # A log first stage is the default for every model that instruments
-    # (#575); without instrumenting there is no first stage.
+    # (#575): MAIVE and WAIVE, not WLS. It follows the resolved model type,
+    # not should_use_instrumenting, because the WAIVE rule below can still
+    # switch instrumenting on; parameterResolver.ts uses the same expression.
     useLogFirstStage = api_v1_flag_parameter(
-      params, "useLogFirstStage", should_use_instrumenting
+      params, "useLogFirstStage", !identical(model_type, "WLS")
     ),
     winsorize = api_v1_winsorize_parameter(params),
     shouldUseInstrumenting = should_use_instrumenting,

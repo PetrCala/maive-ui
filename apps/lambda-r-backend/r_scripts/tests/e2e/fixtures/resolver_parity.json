@@ -237,6 +237,13 @@
       "expectedErrorContains": "WAIVE only supports PET-PEESE"
     },
     {
+      "name": "WAIVE without instrumenting is a conflict",
+      "family": "maive",
+      "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
+      "parameters": { "modelType": "WAIVE", "shouldUseInstrumenting": false },
+      "expectedErrorContains": "WAIVE always instruments standard errors"
+    },
+    {
       "name": "RTMA on the MAIVE endpoint is rejected",
       "family": "maive",
       "dataShape": { "hasStudyIdColumn": false, "hasNObsColumn": true },
