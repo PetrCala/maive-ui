@@ -669,12 +669,15 @@ const resolveMaiveFamily = (
       defaults.computeAndersonRubin,
     ),
     // A log first stage is the default for every model that instruments
-    // (#575); without instrumenting there is no first stage, so the default
-    // is off and the rule below treats an explicit true as a conflict.
+    // (#575): MAIVE and WAIVE, not WLS. It follows the resolved model type
+    // rather than the shouldUseInstrumenting flag, because the WAIVE rule
+    // below can still switch the flag on, and api_v1.R uses the same
+    // expression so the two resolvers cannot drift. An explicit true on WLS
+    // is still a conflict (rule below).
     useLogFirstStage: flagParameter(
       overrides,
       "useLogFirstStage",
-      shouldUseInstrumenting ? defaults.useLogFirstStage : false,
+      resolvedModelType !== CONST.MODEL_TYPES.WLS,
     ),
     winsorize: winsorizeParameter(overrides),
     shouldUseInstrumenting,

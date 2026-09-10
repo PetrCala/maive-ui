@@ -287,6 +287,43 @@ describe("resolveRunParameters (shared browser/API resolver)", () => {
       ]);
     });
 
+    it("keeps the log first stage on WAIVE when lenient mode turns instrumenting back on", () => {
+      const resolved = resolveOk({
+        parameters: { modelType: "WAIVE", shouldUseInstrumenting: false },
+        mode: "lenient",
+      });
+      expect(resolved.parameters).toMatchObject({
+        modelType: "WAIVE",
+        shouldUseInstrumenting: true,
+        useLogFirstStage: true,
+      });
+      expect(resolved.adjustments).toContainEqual(
+        expect.objectContaining({
+          param: "shouldUseInstrumenting",
+          from: false,
+          to: true,
+        }),
+      );
+      expect(resolved.adjustments.map((a) => a.param)).not.toContain(
+        "useLogFirstStage",
+      );
+    });
+
+    it("does not report a first-stage change when lenient mode turns instrumenting off on WLS", () => {
+      const resolved = resolveOk({
+        parameters: { modelType: "WLS", shouldUseInstrumenting: true },
+        mode: "lenient",
+      });
+      expect(resolved.parameters).toMatchObject({
+        modelType: "WLS",
+        shouldUseInstrumenting: false,
+        useLogFirstStage: false,
+      });
+      expect(resolved.adjustments.map((a) => a.param)).not.toContain(
+        "useLogFirstStage",
+      );
+    });
+
     it("rejects WAIVE with a method other than PET-PEESE", () => {
       expect(
         resolveError({ parameters: { modelType: "WAIVE", maiveMethod: "EK" } }),
