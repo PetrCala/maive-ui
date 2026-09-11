@@ -215,4 +215,67 @@ describe("generateWrapperScript", () => {
     // `weight = "undefined"` is what a missing parameter used to become.
     expect(script).not.toMatch(/= "?undefined"?/);
   });
+
+  it("pins a hyphenated clubSandwich version and compares it as a version", () => {
+    // R reports a 0.7-1 release as 0.7.1, so the pin has to be compared with
+    // package_version() rather than as a string, and the version pattern has
+    // to accept the hyphen instead of falling back to an unpinned install.
+    const script = generateWrapperScript(
+      { ...versionInfo, clubSandwichVersion: "0.7-1" },
+      parameters,
+      results,
+      60,
+    );
+
+    expect(script).toContain('clubsandwich_version <- "0.7-1"');
+    expect(script).toContain('remotes::install_version(\n    "clubSandwich",');
+    expect(script).not.toContain("does not record the clubSandwich version");
+    expect(script).toContain(
+      'utils::packageVersion("clubSandwich") == package_version(clubsandwich_version)',
+    );
+    expect(script).not.toMatch(
+      /identical\(as\.character\(utils::packageVersion/,
+    );
+  });
+
+  it("refuses version info that lacks a version the script names", () => {
+    // A version info without clubSandwichVersion used to write the literal
+    // string "undefined" into the header and the session info hint.
+    const without = (key: keyof VersionInfo): VersionInfo => {
+      const partial: Partial<VersionInfo> = { ...versionInfo };
+      delete partial[key];
+      return partial as VersionInfo;
+    };
+
+    expect(() =>
+      generateWrapperScript(
+        without("clubSandwichVersion"),
+        parameters,
+        results,
+        60,
+      ),
+    ).toThrow(/version info is missing "clubSandwichVersion"/);
+    expect(() =>
+      generateWrapperScript(without("maiveTag"), parameters, results, 60),
+    ).toThrow(/version info is missing "maiveTag"/);
+
+    // A MAIVE script never names phacking, so it does not need that version,
+    // and leaving it out writes nothing new into the script. (One R comment
+    // uses the word "undefined" on its own, so count against a complete run.)
+    const complete = generateWrapperScript(
+      versionInfo,
+      parameters,
+      results,
+      60,
+    );
+    const script = generateWrapperScript(
+      without("phackingVersion"),
+      parameters,
+      results,
+      60,
+    );
+    expect(script.split("undefined").length).toBe(
+      complete.split("undefined").length,
+    );
+  });
 });

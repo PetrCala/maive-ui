@@ -224,4 +224,51 @@ describe("generateWrapperScript (RTMA)", () => {
     expect(maiveScript).toContain("run_maive_model(");
     expect(maiveScript).not.toContain("set.seed(parameters$seed)");
   });
+
+  it("pins a hyphenated phacking version and compares it as a version", () => {
+    // R reports a 0.2-1 release as 0.2.1, so a string comparison would
+    // reinstall a correct phacking on every run.
+    const script = generateWrapperScript(
+      { ...versionInfo, phackingVersion: "0.2-1" },
+      rtmaParameters,
+      asModelResults(rtmaResults),
+      40,
+    );
+
+    expect(script).toContain('phacking_version <- "0.2-1"');
+    expect(script).toContain('remotes::install_version(\n    "phacking",');
+    expect(script).not.toContain("does not record the phacking version");
+    expect(script).toContain(
+      'utils::packageVersion("phacking") == package_version(phacking_version)',
+    );
+    expect(script).not.toMatch(
+      /identical\(as\.character\(utils::packageVersion/,
+    );
+  });
+
+  it("refuses version info without the phacking version", () => {
+    const without = (key: keyof VersionInfo): VersionInfo => {
+      const partial: Partial<VersionInfo> = { ...versionInfo };
+      delete partial[key];
+      return partial as VersionInfo;
+    };
+
+    expect(() =>
+      generateWrapperScript(
+        without("phackingVersion"),
+        rtmaParameters,
+        asModelResults(rtmaResults),
+        40,
+      ),
+    ).toThrow(/version info is missing "phackingVersion"/);
+
+    // clubSandwich enters an RTMA script unpinned, so its version is optional.
+    const script = generateWrapperScript(
+      without("clubSandwichVersion"),
+      rtmaParameters,
+      asModelResults(rtmaResults),
+      40,
+    );
+    expect(script).not.toContain("undefined");
+  });
 });
