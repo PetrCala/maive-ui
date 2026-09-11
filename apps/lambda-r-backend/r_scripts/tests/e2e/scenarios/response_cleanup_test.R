@@ -34,9 +34,11 @@ CONSTANT_SE_FIXTURE <- data.frame(
 
 #' Run the legacy /run-model route and fail on its 200-with-error envelope
 #' @param df Data frame to submit
+#' @param parameters Full parameter list; the suite defaults unless a scenario
+#'   needs a specific setting
 #' @return Parsed response with a populated `data` field
-run_model_or_fail <- function(df) {
-  response <- test_run_model(df_to_json(df), params_to_json(DEFAULT_PARAMETERS))
+run_model_or_fail <- function(df, parameters = DEFAULT_PARAMETERS) {
+  response <- test_run_model(df_to_json(df), params_to_json(parameters))
   if (isTRUE(response$error) || is.null(response$data)) {
     stop(paste("run-model returned an error:", response$message))
   }
