@@ -2,10 +2,14 @@
 #
 # Twenty rows with the same effect and standard errors that grow with the
 # sample size. The levels first stage fits a negative variance for the first
-# row, sqrt() turns it into NaN, and the response used to carry the string
-# "NaN" inside the number-typed seInstrumented array, next to two raw base-R
-# warnings ("NaNs produced", "essentially perfect fit"). The root cause lives
-# in the package (PetrCala/MAIVE#24); this scenario pins the response contract.
+# row. Before MAIVE 0.4.0, sqrt() turned it into NaN: the response carried the
+# string "NaN" inside the number-typed seInstrumented array, next to two raw
+# base-R warnings ("NaNs produced", "essentially perfect fit"). MAIVE 0.4.0
+# (PetrCala/MAIVE#24) excludes the estimate itself and warns with the count
+# (n_excluded), so this scenario pins the current contract: "NA" for that
+# instrumented SE, the package's exclusion warning, and no raw base-R warning.
+# It needs the pinned MAIVE (0.4.0 or later); a local library on an older
+# MAIVE fails the exclusion check (scripts/install-maive-tag.sh updates it).
 #
 # Uses run_model_or_fail() and assert_warnings_array() from
 # response_cleanup_test.R, which the runner sources first.
@@ -123,8 +127,9 @@ test_nan_se_instrumented <- function() {
       if (!any(is_number)) {
         stop("Expected the well-defined rows to keep numeric instrumented SEs")
       }
-      # The quotes matter: the "NaNs produced" warning legitimately contains
-      # the letters, a JSON string value "NaN" is the bug.
+      # The quotes matter: warning text may legitimately contain the letters
+      # (MAIVE before 0.4.0 raised "NaNs produced"); a JSON string value "NaN"
+      # is the bug.
       if (grepl("\"NaN\"", body_text, fixed = TRUE)) {
         stop("The raw response must not contain the JSON string \"NaN\" anywhere")
       }
@@ -134,10 +139,16 @@ test_nan_se_instrumented <- function() {
       if (any(grepl("essentially perfect fit", warning_text, fixed = TRUE))) {
         stop("The raw base-R 'essentially perfect fit' warning must not reach the caller")
       }
-      # Load-bearing until the package reports the excluded count
-      # (PetrCala/MAIVE#24); see the comment in maive_model.R.
-      if (!any(grepl("NaNs produced", warning_text, fixed = TRUE))) {
-        stop("'NaNs produced' is currently the only signal of row loss and must stay")
+      # MAIVE 0.4.0 reports the excluded estimates itself (PetrCala/MAIVE#24),
+      # which is the explicit replacement #571 asked for before "NaNs produced"
+      # could go. Pin the replacement, and that the raw warning is gone.
+      # Whitespace is collapsed because the legacy routes wrap cli messages.
+      flat_warnings <- gsub("\\s+", " ", warning_text)
+      if (!any(grepl("excluded from the analysis \\(n_excluded = [0-9]+\\)", flat_warnings))) {
+        stop("Expected the package's exclusion warning with the n_excluded count")
+      }
+      if (any(grepl("NaNs produced", flat_warnings, fixed = TRUE))) {
+        stop("The raw base-R 'NaNs produced' warning should no longer reach the caller")
       }
 
       validate <- openapi_response_validator("/v1/run-model")
