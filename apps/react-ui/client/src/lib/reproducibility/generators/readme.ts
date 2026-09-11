@@ -121,6 +121,78 @@ export function generateReadme(
     : "MAIVE Analysis Reproducibility Package";
   const analysisType = isRtma ? "RTMA" : "MAIVE";
 
+  // The two scripts write different files and verify different fields, so an
+  // RTMA package must not describe the MAIVE ones: it used to promise a
+  // funnel_plot.png and maive_results.* that an RTMA run never writes.
+  const resultsFile = isRtma ? "rtma_results" : "maive_results";
+  const outputFilesTable = [
+    isRtma
+      ? ["z_score_plot.png", "PNG image", "Z-score density plot"]
+      : ["funnel_plot.png", "PNG image", "Funnel plot visualization"],
+    [
+      `${resultsFile}.rds`,
+      "R object",
+      "Complete results (load with `readRDS()`)",
+    ],
+    [
+      `${resultsFile}.json`,
+      "JSON",
+      "Results in JSON format (for use with other tools)",
+    ],
+    [
+      "session_info.txt",
+      "Text",
+      "R, platform and package versions this re-run actually used (`sessionInfo()`)",
+    ],
+  ]
+    .map(
+      ([file, format, description]) =>
+        `| \`${file}\` | ${format} | ${description} |`,
+    )
+    .join("\n");
+
+  // Mirrors the labels the generated script prints (wrapperScript.ts).
+  const verificationLabels = isRtma
+    ? [
+        "mu (mode)",
+        "mu (median)",
+        "mu CI lower",
+        "mu CI upper",
+        "tau (mode)",
+        "tau (median)",
+        "tau CI lower",
+        "tau CI upper",
+        "Unadjusted FE mean",
+        "Estimates used (k)",
+        "Affirmative count",
+      ]
+    : ["Effect Estimate", "Standard Error", "Egger Coefficient"];
+  const labelWidth = Math.max(
+    ...verificationLabels.map((label) => `${label} Match:`.length),
+  );
+  const expectedVerification = verificationLabels
+    .map((label) => `${`${label} Match:`.padEnd(labelWidth)} ✓ PASS`)
+    .join("\n");
+
+  const accessExample = isRtma
+    ? `corrected_mean <- results$mu
+credible_interval <- results$muCI
+heterogeneity <- results$tau`
+    : `effect_estimate <- results$effectEstimate
+standard_error <- results$standardError
+egger_coef <- results$publicationBias$eggerCoef`;
+
+  const customVisualization = isRtma
+    ? "The z-score density plot is saved as `z_score_plot.png`. `rtma_model.R` draws it with `phacking::z_density()`; see `render_z_density_plot()` there to regenerate or customize it."
+    : `\`\`\`r
+# The funnel plot is saved as PNG, but you can regenerate it
+# Load the plotting functions
+source("funnel_plot.R")
+
+# Customize and regenerate
+# (see funnel_plot.R for available parameters)
+\`\`\``;
+
   return `# ${title}
 
 This package contains everything needed to reproduce the ${analysisType} meta-analysis performed on **${timestamp}**.
@@ -208,9 +280,9 @@ The \`run_analysis.R\` script will automatically:
 3. ✓ Load helper functions from the R backend code
 4. ✓ Load your data from \`data.csv\`
 5. ✓ Configure analysis parameters (exactly as in the web app)
-6. ✓ Run the MAIVE analysis
+6. ✓ Run the ${analysisType} analysis
 7. ✓ Compare results with expected values
-8. ✓ Generate and save the funnel plot
+8. ✓ Generate and save the ${isRtma ? "z-score density plot" : "funnel plot"}
 9. ✓ Save results in multiple formats
 
 **First run may take a few minutes** while R installs the required packages. Subsequent runs will be much faster.
@@ -220,7 +292,11 @@ The \`run_analysis.R\` script will automatically:
 | File | Description |
 |------|-------------|
 | \`run_analysis.R\` | Main script that orchestrates the entire analysis |
-| \`maive_model.R\` | Core MAIVE model implementation (from web app backend) |
+${
+  isRtma
+    ? "| `rtma_model.R` | RTMA model implementation (from web app backend) |\n| `maive_model.R` | Data helpers the RTMA script sources, such as winsorization (from web app backend) |"
+    : "| `maive_model.R` | Core MAIVE model implementation (from web app backend) |"
+}
 | \`funnel_plot.R\` | Funnel plot generation code (from web app backend) |
 | \`data.csv\` | Your uploaded data (${numRows} rows) |
 | \`parameters.json\` | Complete analysis configuration |
@@ -240,10 +316,7 @@ After running \`run_analysis.R\`, you will find these new files:
 
 | File | Format | Description |
 |------|--------|-------------|
-| \`funnel_plot.png\` | PNG image | Funnel plot visualization |
-| \`maive_results.rds\` | R object | Complete results (load with \`readRDS()\`) |
-| \`maive_results.json\` | JSON | Results in JSON format (for use with other tools) |
-| \`session_info.txt\` | Text | R, platform and package versions this re-run actually used (\`sessionInfo()\`) |
+${outputFilesTable}
 
 ## Verifying Results
 
@@ -253,9 +326,7 @@ The script automatically compares computed results with the web application outp
 \`\`\`
 === VERIFICATION ===
 Comparing with expected results from web application...
-Effect Estimate Match:   ✓ PASS
-Standard Error Match:    ✓ PASS
-Egger Coefficient Match: ✓ PASS
+${expectedVerification}
 
 ✓ All key results match! Reproducibility confirmed.
 \`\`\`
@@ -266,8 +337,8 @@ Egger Coefficient Match: ✓ PASS
 - Different BLAS/LAPACK implementations
 
 **Larger differences** may indicate:
-- Different MAIVE package version
-- Different random seed (for bootstrap methods)
+- Different ${isRtma ? "phacking" : "MAIVE"} package version
+- Different random seed (${isRtma ? "the script reports the one the sampler ran under" : "for bootstrap methods"})
 - Missing or incompatible dependencies
 
 ## Using the Results in Your Own Scripts
@@ -276,12 +347,10 @@ Egger Coefficient Match: ✓ PASS
 
 \`\`\`r
 # Load the complete results object
-results <- readRDS("maive_results.rds")
+results <- readRDS("${resultsFile}.rds")
 
 # Access specific values
-effect_estimate <- results$effectEstimate
-standard_error <- results$standardError
-egger_coef <- results$publicationBias$eggerCoef
+${accessExample}
 
 # View results structure
 str(results)
@@ -289,14 +358,7 @@ str(results)
 
 ### Create Custom Visualizations
 
-\`\`\`r
-# The funnel plot is saved as PNG, but you can regenerate it
-# Load the plotting functions
-source("funnel_plot.R")
-
-# Customize and regenerate
-# (see funnel_plot.R for available parameters)
-\`\`\`
+${customVisualization}
 
 ## Troubleshooting
 
