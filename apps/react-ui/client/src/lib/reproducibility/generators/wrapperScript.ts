@@ -104,16 +104,20 @@ export function assertScriptParameters(parameters: ModelParameters): void {
 }
 
 /**
- * Versions every script names. A version info without one used to be written
- * out as the literal string `undefined` (`# clubSandwich:    undefined`).
- * "unknown" is still accepted: the install sections treat anything that is
- * not a version as unrecorded and fall back to an unpinned install that says
- * so.
+ * Versions and source refs every script names. A version info without one
+ * used to be written out as the literal string `undefined`
+ * (`# clubSandwich:    undefined`, `# Git Commit:      undefined`), and a
+ * missing gitRef is also the ref the R sources are fetched from. "unknown" is
+ * still accepted: the install sections treat anything that is not a version
+ * as unrecorded and fall back to an unpinned install that says so, and
+ * get-version-info reports an unrecorded commit as "unknown".
  */
 const SHARED_SCRIPT_VERSIONS: ReadonlyArray<keyof VersionInfo> = [
   "uiVersion",
   "maiveTag",
   "rVersion",
+  "gitCommitHash",
+  "gitRef",
 ];
 
 /**
