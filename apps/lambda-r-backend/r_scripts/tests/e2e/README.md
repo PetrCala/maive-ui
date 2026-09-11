@@ -26,7 +26,7 @@ tests/e2e/
 2. **Required R Packages**: Install the following packages:
 
    ```r
-   install.packages(c("httr", "jsonlite", "cli"))
+   install.packages(c("httr", "jsonlite", "cli", "yaml", "jsonvalidate"))
    ```
 
 3. **MAIVE Package**: The vendor MAIVE package should be available
@@ -200,7 +200,7 @@ Each successful API call should return:
 2. **Missing Packages**: Install required R packages
 
    ```r
-   install.packages(c("httr", "jsonlite", "cli"))
+   install.packages(c("httr", "jsonlite", "cli", "yaml", "jsonvalidate"))
    ```
 
 3. **Permission Issues**: Make sure the test script is executable
