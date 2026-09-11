@@ -28,6 +28,7 @@ import {
   generateVersionManifest,
   packagedRSourceFiles,
 } from "./generators/readme";
+import { rtmaPackageParameters } from "./generators/rtmaSettings";
 import { convertDataToCSV } from "./csvConverter";
 import { validateExportData, estimatePackageSize } from "./validator";
 
@@ -128,19 +129,26 @@ export async function generateReproducibilityPackage(
 
   // 4. Generate README
   console.log("Generating README...");
-  const readme = generateReadme(
-    versionInfo,
-    parameters,
-    dataLength,
-    parameters.modelType === "RTMA" ? getRtmaSeed(results) : null,
-  );
+  const isRtma = parameters.modelType === "RTMA";
+  const rtmaSeed = isRtma ? getRtmaSeed(results) : null;
+  const readme = generateReadme(versionInfo, parameters, dataLength, rtmaSeed);
 
   // 5. Generate version manifest
   console.log("Generating version manifest...");
-  const versionManifest = generateVersionManifest(versionInfo, parameters);
+  const versionManifest = generateVersionManifest(
+    versionInfo,
+    parameters,
+    rtmaSeed,
+  );
 
-  // 6. Prepare parameters JSON
-  const parametersJson = JSON.stringify(parameters, null, 2);
+  // 6. Prepare parameters JSON: the settings the script runs with. An RTMA
+  // run reaches this point in the page's MAIVE-shaped parameter object, whose
+  // MAIVE keys it never used.
+  const parametersJson = JSON.stringify(
+    isRtma ? rtmaPackageParameters(parameters, rtmaSeed) : parameters,
+    null,
+    2,
+  );
 
   // 7. Prepare expected results JSON
   const expectedResultsJson = JSON.stringify(results, null, 2);

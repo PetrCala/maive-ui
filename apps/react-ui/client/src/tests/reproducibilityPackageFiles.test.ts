@@ -2,6 +2,8 @@ import JSZip from "jszip";
 import { describe, expect, it } from "vitest";
 import { addRSourceFiles } from "@src/lib/reproducibility";
 import { packagedRSourceFiles } from "@src/lib/reproducibility/generators/readme";
+import { rtmaPackageParameters } from "@src/lib/reproducibility/generators/rtmaSettings";
+import type { ModelParameters } from "@src/types/api";
 import type { RCodeBundle } from "@src/types/reproducibility";
 
 const bundle: RCodeBundle = {
@@ -56,5 +58,38 @@ describe("addRSourceFiles", () => {
     expect(() =>
       addRSourceFiles(new JSZip(), withoutRtma, "MAIVE"),
     ).not.toThrow();
+  });
+});
+
+describe("rtmaPackageParameters", () => {
+  // What the results page hands the export for an RTMA run: the MAIVE-shaped
+  // page object (toPageParameters), MAIVE keys filled with page defaults.
+  const pageParameters: ModelParameters = {
+    modelType: "RTMA",
+    includeStudyDummies: false,
+    includeStudyClustering: false,
+    standardErrorTreatment: "clustered_cr2",
+    computeAndersonRubin: false,
+    maiveMethod: "PET-PEESE",
+    weight: "equal_weights",
+    shouldUseInstrumenting: false,
+    useLogFirstStage: true,
+    winsorize: 5,
+    favorPositive: false,
+  };
+
+  it("exports only the RTMA settings the script runs with", () => {
+    expect(rtmaPackageParameters(pageParameters, 4242)).toEqual({
+      modelType: "RTMA",
+      favorPositive: false,
+      alphaSelect: 0.05,
+      ciLevel: 0.95,
+      winsorize: 5,
+      seed: 4242,
+    });
+  });
+
+  it("records the seed the script falls back to when the run recorded none", () => {
+    expect(rtmaPackageParameters(pageParameters, null).seed).toBe(2025);
   });
 });

@@ -99,6 +99,61 @@ describe("generateReadme", () => {
     expect(maive).not.toContain("host.R");
   });
 
+  it("lists the settings each script runs with under ANALYSIS CONFIGURATION", () => {
+    // An RTMA run reaches the export in the page's MAIVE-shaped parameters,
+    // and its manifest used to list MAIVE Method, Weight Scheme, Log First
+    // Stage and the rest, none of which an RTMA run has.
+    const configuration = (manifest: string): string =>
+      manifest.slice(
+        manifest.indexOf("ANALYSIS CONFIGURATION"),
+        manifest.indexOf("PACKAGE DEPENDENCIES"),
+      );
+
+    const rtma = configuration(
+      generateVersionManifest(versionInfo, rtmaParameters, 4242),
+    );
+    expect(rtma).toContain("Model Type:              RTMA");
+    expect(rtma).toContain("Favor Positive:          true");
+    expect(rtma).toContain("Alpha Select:            0.05");
+    expect(rtma).toContain("CI Level:                0.95");
+    expect(rtma).toContain("Winsorize:               0%");
+    expect(rtma).toContain("Sampler Seed:            4242");
+    [
+      "MAIVE Method",
+      "Weight Scheme",
+      "Use Instrumenting",
+      "Study Dummies",
+      "Study Clustering",
+      "SE Treatment",
+      "Anderson-Rubin",
+      "Log First Stage",
+    ].forEach((label) => expect(rtma).not.toContain(label));
+
+    expect(
+      configuration(generateVersionManifest(versionInfo, rtmaParameters, null)),
+    ).toContain(
+      "Sampler Seed:            2025 (default; the original run recorded no seed",
+    );
+
+    // The MAIVE lines are unchanged.
+    const maive = configuration(
+      generateVersionManifest(versionInfo, maiveParameters),
+    );
+    [
+      "Model Type:              MAIVE",
+      "MAIVE Method:            PET-PEESE",
+      "Weight Scheme:           equal_weights",
+      "Use Instrumenting:       true",
+      "Study Dummies:           false",
+      "Study Clustering:        false",
+      "SE Treatment:            not_clustered",
+      "Anderson-Rubin:          false",
+      "Log First Stage:         true",
+      "Winsorize:               0%",
+    ].forEach((line) => expect(maive).toContain(line));
+    expect(maive).not.toContain("Sampler Seed");
+  });
+
   it("shows the verification lines an RTMA script prints", () => {
     const verifying = section(
       generateReadme(versionInfo, rtmaParameters, 40, 4242),
