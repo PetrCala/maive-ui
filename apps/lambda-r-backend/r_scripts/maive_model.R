@@ -447,12 +447,13 @@ run_maive_model <- function(data, parameters) {
   #
   # "essentially perfect fit: summary may be unreliable" is summary.lm() on a
   # regression with (near) identical effect sizes; the words read as breakage
-  # to a user, so it is rewritten as a plain sentence. "NaNs produced" is
-  # sqrt() on a negative fitted variance in the first stage. It is deliberately
-  # NOT dropped: the affected estimates get an undefined instrumented SE and
-  # fall out of the second stage, and this warning is currently the only signal
-  # of that row loss. It may be suppressed once the package reports the count
-  # of excluded estimates itself (PetrCala/MAIVE#24).
+  # to a user, so it is rewritten as a plain sentence.
+  #
+  # sqrt() on a negative fitted variance in the levels first stage used to
+  # raise "NaNs produced" here. MAIVE 0.4.0 (PetrCala/MAIVE#24) excludes those
+  # estimates itself and warns with the count (n_excluded), which is the
+  # explicit signal #571 asked for, so that raw warning no longer occurs with
+  # the pinned package.
   is_perfect_fit_warning <- grepl("^essentially perfect fit", maive_warnings)
   maive_warnings[is_perfect_fit_warning] <- paste(
     "A regression in the analysis fit the data essentially perfectly (for example, identical effect sizes),",
