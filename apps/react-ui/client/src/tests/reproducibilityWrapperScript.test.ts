@@ -121,11 +121,15 @@ describe("generateWrapperScript (RTMA)", () => {
       "matches(results$unadjustedMean, expected$unadjustedMean)",
     );
 
-    expect(script).toContain("\\u2713 PASS");
-    expect(script).toContain("\\u2717 FAIL");
+    expect(script).toContain("✓ PASS");
+    expect(script).toContain("✗ FAIL");
     expect(script).toContain(
-      "\\u2713 All key results match! Reproducibility confirmed.",
+      "✓ All key results match! Reproducibility confirmed.",
     );
+    // R prints a ✓ escape as "<U+2713>" under a C locale (a bare Rscript
+    // on many machines); the literal glyph prints as written, so the script
+    // carries no escapes at all.
+    expect(script).not.toMatch(/\\u[0-9a-f]{4}/i);
 
     expect(script).not.toContain("expected$effectEstimate");
   });

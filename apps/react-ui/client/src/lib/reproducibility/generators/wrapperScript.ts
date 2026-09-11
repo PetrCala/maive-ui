@@ -331,7 +331,7 @@ matches <- function(actual, expected) {
   abs(actual - expected) < tolerance || abs(round(actual, 4) - expected) < tolerance
 }
 verdict <- function(match) {
-  if (is.na(match)) "- not recorded" else if (match) "\\u2713 PASS" else "\\u2717 FAIL"
+  if (is.na(match)) "- not recorded" else if (match) "✓ PASS" else "✗ FAIL"
 }
 
 ${comparisons}
@@ -340,14 +340,14 @@ ${report}
 
 checks <- c(${fields.map((field) => field.variable).join(", ")})
 if (all(is.na(checks))) {
-  cat("\\n\\u26a0 expected_results.json records none of these fields; nothing to verify.\\n")
+  cat("\\n⚠ expected_results.json records none of these fields; nothing to verify.\\n")
 } else if (all(checks[!is.na(checks)])) {
-  cat("\\n\\u2713 All key results match! Reproducibility confirmed.\\n")
+  cat("\\n✓ All key results match! Reproducibility confirmed.\\n")
   if (any(is.na(checks))) {
     cat("  (fields shown as not recorded were absent from expected_results.json)\\n")
   }
 } else {
-  cat("\\n\\u26a0 Some results differ. This may be due to:\\n")
+  cat("\\n⚠ Some results differ. This may be due to:\\n")
 ${causes}
   cat("  The R and package versions this re-run actually used are recorded in\\n")
   cat("  session_info.txt, next to the results; compare them with the versions above.\\n")
@@ -661,7 +661,7 @@ function generatePhackingInstallSection(phackingVersion: string): string {
   if (!PINNABLE_VERSION.test(phackingVersion)) {
     return `
 # Install phacking package (RTMA)
-cat("\\n\\u26a0 This package does not record the phacking version the analysis ran\\n")
+cat("\\n⚠ This package does not record the phacking version the analysis ran\\n")
 cat("  under, so the current CRAN release is installed instead. The RTMA\\n")
 cat("  implementation may differ from the one the web application used.\\n")
 if (!requireNamespace("phacking", quietly = TRUE)) {
@@ -698,9 +698,9 @@ library(phacking)
 
 phacking_loaded <- format(utils::packageVersion("phacking"))
 if (package_version(phacking_loaded) == package_version(phacking_version)) {
-  cat("\\u2713 phacking", phacking_version, "loaded\\n")
+  cat("✓ phacking", phacking_version, "loaded\\n")
 } else {
-  cat("\\u26a0 phacking", phacking_loaded, "is loaded, but this analysis ran under",
+  cat("⚠ phacking", phacking_loaded, "is loaded, but this analysis ran under",
       phacking_version, "- results may differ\\n")
 }
 `;
@@ -789,7 +789,7 @@ for (pkg in required_packages) {
   suppressPackageStartupMessages(library(pkg, character.only = TRUE))
 }
 ${generatePhackingInstallSection(versionInfo.phackingVersion)}
-cat("\\u2713 Environment setup complete\\n")
+cat("✓ Environment setup complete\\n")
 
 # ============================================================
 # 2. LOAD HELPER FUNCTIONS
@@ -802,14 +802,14 @@ if (!file.exists("rtma_model.R")) {
   stop("ERROR: rtma_model.R not found. Ensure all files from the ZIP are in the working directory.")
 }
 source("rtma_model.R")
-cat("\\u2713 Loaded rtma_model.R\\n")
+cat("✓ Loaded rtma_model.R\\n")
 
 # Source maive_model.R (needed for winsorize_percent helper)
 if (!file.exists("maive_model.R")) {
   stop("ERROR: maive_model.R not found. Ensure all files from the ZIP are in the working directory.")
 }
 source("maive_model.R")
-cat("\\u2713 Loaded maive_model.R\\n")
+cat("✓ Loaded maive_model.R\\n")
 
 # ============================================================
 # 3. LOAD DATA
@@ -822,7 +822,7 @@ if (!file.exists("data.csv")) {
 }
 
 data <- read.csv("data.csv", stringsAsFactors = FALSE)
-cat("\\u2713 Loaded", nrow(data), "observations with", ncol(data), "columns\\n")
+cat("✓ Loaded", nrow(data), "observations with", ncol(data), "columns\\n")
 
 # Verify data structure
 expected_rows <- ${numRows}
@@ -865,7 +865,7 @@ results <- run_rtma_model(
   jsonlite::toJSON(parameters, auto_unbox = TRUE, digits = NA)
 )
 
-cat("\\u2713 Analysis complete\\n")
+cat("✓ Analysis complete\\n")
 ${generateSessionInfoSection(versionInfo, [
   `phacking ${versionInfo.phackingVersion}`,
 ])}
@@ -896,16 +896,16 @@ cat("tau CI:      ", sprintf("[%.6f, %.6f]", results$tauCI[1], results$tauCI[2])
 cat("\\n=== REPRODUCIBILITY ===\\n")
 cat("Seed requested:  ", parameters$seed, "\\n")
 if (is.null(results$seed)) {
-  cat("\\u26a0 The bundled rtma_model.R reports no seed, so it predates seeded RTMA runs.\\n")
+  cat("⚠ The bundled rtma_model.R reports no seed, so it predates seeded RTMA runs.\\n")
   cat("  The set.seed() call above still pins this run, but repeat it to confirm.\\n")
 } else if (!isTRUE(all.equal(as.numeric(results$seed), as.numeric(parameters$seed)))) {
-  cat("\\u26a0 The fit ran under seed", results$seed, "instead of", parameters$seed, "\\n")
+  cat("⚠ The fit ran under seed", results$seed, "instead of", parameters$seed, "\\n")
 } else {
-  cat("\\u2713 The fit ran under the requested seed\\n")
+  cat("✓ The fit ran under the requested seed\\n")
 }${
     recordedSeed === null
       ? `
-cat("\\u26a0 The original web-app run recorded no seed, so its credible intervals\\n")
+cat("⚠ The original web-app run recorded no seed, so its credible intervals\\n")
 cat("  cannot be reproduced exactly. This run is pinned and repeatable from here on.\\n")`
       : ""
   }
@@ -926,10 +926,10 @@ if (!is.null(results$zScorePlot) && results$zScorePlot != "") {
   # Save as PNG file
   plot_path <- "z_score_plot.png"
   writeBin(png_binary, plot_path)
-  cat("\\u2713 Z-score plot saved as:", plot_path, "\\n")
+  cat("✓ Z-score plot saved as:", plot_path, "\\n")
   cat("  Dimensions:", results$zScorePlotWidth, "x", results$zScorePlotHeight, "pixels\\n")
 } else {
-  cat("\\u26a0 No z-score plot data available\\n")
+  cat("⚠ No z-score plot data available\\n")
 }
 
 # ============================================================
@@ -941,12 +941,12 @@ cat("\\n=== SAVING RESULTS ===\\n")
 # Save as R object
 rds_path <- "rtma_results.rds"
 saveRDS(results, rds_path)
-cat("\\u2713 R object saved as:", rds_path, "\\n")
+cat("✓ R object saved as:", rds_path, "\\n")
 
 # Save as JSON
 json_path <- "rtma_results.json"
 write(jsonlite::toJSON(results, auto_unbox = TRUE, pretty = TRUE), json_path)
-cat("\\u2713 JSON saved as:", json_path, "\\n")
+cat("✓ JSON saved as:", json_path, "\\n")
 
 # ============================================================
 # 8. SUMMARY
@@ -957,10 +957,10 @@ cat("ANALYSIS COMPLETE\\n")
 cat("========================================\\n\\n")
 
 cat("Generated files:\\n")
-cat("  \\u2713 z_score_plot.png       - Z-score density plot\\n")
-cat("  \\u2713 rtma_results.rds       - R object (load with readRDS())\\n")
-cat("  \\u2713 rtma_results.json      - JSON format (for other tools)\\n")
-cat("  \\u2713 session_info.txt       - R and package versions this run used\\n")
+cat("  ✓ z_score_plot.png       - Z-score density plot\\n")
+cat("  ✓ rtma_results.rds       - R object (load with readRDS())\\n")
+cat("  ✓ rtma_results.json      - JSON format (for other tools)\\n")
+cat("  ✓ session_info.txt       - R and package versions this run used\\n")
 
 cat("\\nTo load results in another R session:\\n")
 cat("  results <- readRDS('rtma_results.rds')\\n")
