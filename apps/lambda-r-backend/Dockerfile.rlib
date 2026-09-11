@@ -75,12 +75,14 @@ RUN R -q -e "pak::pkg_install('PetrCala/MAIVE@${MAIVE_TAG}', upgrade = FALSE)"
 # release requiring a newer clubSandwich would do that). The pin then has to be
 # bumped in r-packages.txt and in the UI constant together, instead of the
 # image quietly shipping a version the reproducibility packages do not name.
+# Compare as package versions, not strings: R reports the metafor@4.8-0 pin as
+# 4.8.0, so a string comparison would fail the build on a correct install.
 RUN R -q -e "pins <- grep('@', readLines('/tmp/r-packages.txt'), value = TRUE); \
   for (pin in pins) { \
     parts <- strsplit(pin, '@', fixed = TRUE)[[1]]; \
-    installed <- as.character(packageVersion(parts[1])); \
-    if (!identical(installed, parts[2])) \
-      stop(parts[1], ' is ', installed, ' but r-packages.txt pins ', parts[2]); \
+    installed <- packageVersion(parts[1]); \
+    if (installed != package_version(parts[2])) \
+      stop(parts[1], ' is ', format(installed), ' but r-packages.txt pins ', parts[2]); \
   }; \
   cat('Pinned packages verified:', paste(pins, collapse = ', '), '\n')"
 
