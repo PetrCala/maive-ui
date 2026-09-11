@@ -1,7 +1,7 @@
 {
   "name": "client",
   "version": "0.9.7-0",
-  "maiveTag": "0.4.0",
+  "maiveTag": "0.4.1",
   "private": true,
   "type": "commonjs",
   "scripts": {
