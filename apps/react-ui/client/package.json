@@ -1,6 +1,6 @@
 {
   "name": "client",
-  "version": "0.9.6-0",
+  "version": "0.9.7-0",
   "maiveTag": "0.4.0",
   "private": true,
   "type": "commonjs",
