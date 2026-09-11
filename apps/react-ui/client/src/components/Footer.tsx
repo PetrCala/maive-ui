@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 import CONST from "@src/CONST";
+import { formatMaiveTagForDisplay, maiveSourceHref } from "@src/lib/maiveTag";
 import CitationBox from "./CitationBox";
 import CodeLinkCard from "./CodeLinkCard";
 import InvisibleLink from "./InvisibleLink";
@@ -108,24 +109,11 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
   const [maiveTag, setMaiveTag] = useState("unknown");
 
-  const maiveTagDisplay =
-    maiveTag === "unknown"
-      ? "unknown"
-      : maiveTag.startsWith("v")
-        ? maiveTag
-        : `v${maiveTag}`;
-
-  const maiveTagForUrl =
-    maiveTag === "unknown"
-      ? null
-      : maiveTag.startsWith("v")
-        ? maiveTag
-        : `v${maiveTag}`;
-
-  const maiveGithubDevHref =
-    maiveTagForUrl === null
-      ? CONST.LINKS.MAIVE.GITHUB
-      : `${CONST.LINKS.MAIVE.GITHUB}/tree/${maiveTagForUrl}`;
+  const maiveTagDisplay = formatMaiveTagForDisplay(maiveTag);
+  const maiveGithubDevHref = maiveSourceHref(
+    maiveTag,
+    CONST.LINKS.MAIVE.GITHUB,
+  );
 
   useEffect(() => {
     if (!isOpen) {
