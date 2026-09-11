@@ -87,10 +87,11 @@ async function fetchRFileFromGitHub(
 async function fetchReproducibilityBundle(
   commitHash = "latest",
 ): Promise<RCodeBundle> {
+  // host.R is not fetched: it is the Plumber server entrypoint, and nothing
+  // in a package sources it.
   const files = [
     { key: "maiveModel", filename: "maive_model.R" },
     { key: "funnelPlot", filename: "funnel_plot.R" },
-    { key: "hostHelpers", filename: "host.R" },
     { key: "rtmaModel", filename: "rtma_model.R" },
   ];
 
@@ -105,8 +106,9 @@ async function fetchReproducibilityBundle(
         results[key as keyof RCodeBundle] = content;
       } catch (error) {
         console.error(`Failed to fetch ${filename}:`, error);
-        // For optional files like hostHelpers, we can continue without them
-        if (key === "hostHelpers" || key === "rtmaModel") {
+        // Only an RTMA package needs rtma_model.R, so a MAIVE export can go
+        // on without it; addRSourceFiles refuses an RTMA package that lacks it.
+        if (key === "rtmaModel") {
           console.warn(`Skipping optional file ${filename}`);
         } else {
           throw error; // Re-throw for required files
