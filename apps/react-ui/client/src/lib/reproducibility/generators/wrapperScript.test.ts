@@ -258,6 +258,39 @@ describe("generateWrapperScript", () => {
     expect(() =>
       generateWrapperScript(without("maiveTag"), parameters, results, 60),
     ).toThrow(/version info is missing "maiveTag"/);
+    // The commit is printed in the header and by the script itself, and the
+    // ref is where the R sources come from; neither may become "undefined".
+    expect(() =>
+      generateWrapperScript(without("gitCommitHash"), parameters, results, 60),
+    ).toThrow(/version info is missing "gitCommitHash"/);
+    expect(() =>
+      generateWrapperScript(without("gitRef"), parameters, results, 60),
+    ).toThrow(/version info is missing "gitRef"/);
+    expect(() =>
+      generateWrapperScript(
+        without("gitCommitHash"),
+        { ...parameters, modelType: "RTMA" },
+        results,
+        60,
+      ),
+    ).toThrow(/version info is missing "gitCommitHash"/);
+
+    // A deployment that did not record its commit reports "unknown" and the
+    // default branch; that still exports, naming the branch.
+    const unrecorded = generateWrapperScript(
+      {
+        ...versionInfo,
+        gitCommitHash: "unknown",
+        gitRef: "master",
+        isExactCommit: false,
+      },
+      parameters,
+      results,
+      60,
+    );
+    expect(unrecorded).toContain(
+      "# Git Commit:      not recorded by this deployment; sources fetched from the master branch",
+    );
 
     // A MAIVE script never names phacking, so it does not need that version,
     // and leaving it out writes nothing new into the script. (One R comment
