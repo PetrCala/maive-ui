@@ -40,6 +40,7 @@
     "cloud:status": "cd terraform/stacks/prod-runtime && terragrunt output",
     "cloud:ui-url": "cd terraform/stacks/prod-runtime && terragrunt output -raw ui_lambda_url",
     "cloud:lambda-url": "cd terraform/stacks/prod-runtime && terragrunt output -raw lambda_r_backend_url",
+    "cloud:warm": "./scripts/warmLambdas.sh",
     "release": "./scripts/openPR.sh --release",
     "openPR": "./scripts/openPR.sh",
     "test-quarterly": "./scripts/test-quarterly-release.sh",

@@ -55,12 +55,15 @@ variable "ui_lambda_reserved_concurrency" {
     Reserved concurrency for the UI Lambda (-1 = unreserved). Caps how much the
     public UI Function URL can spend and stops a flood from consuming the
     account-wide concurrency pool that the R backend and orchestrator also draw
-    from. UI requests are short (page loads and lightweight API routes), so a
-    small cap is ample for minimal traffic; raise it if legitimate traffic grows
+    from. UI requests are short (page loads and lightweight API routes), but a
+    burst of visitors arriving together needs one instance per request for the
+    ~1.2 s Next.js cold start. The old cap of 30 throttled in exactly those
+    bursts (Jul 20, Aug 1, Aug 31 2026), which is what a room opening the site
+    at a conference looks like. Reserved concurrency itself costs nothing
     (docs/COST_CONTROLS.md).
   EOT
   type        = number
-  default     = 30
+  default     = 100
 }
 
 variable "lambda_r_backend_function_base_name" {
@@ -110,11 +113,29 @@ variable "lambda_r_backend_reserved_concurrency" {
     primary cost/abuse control for the public /v1 API (docs/PUBLIC_API_DESIGN.md
     D2): it hard-caps concurrent R executions regardless of entry path (UI, sync
     /v1, or the async orchestrator), so worst-case spend is bounded and excess
-    requests get a 429. Must stay above the orchestrator's maximum_concurrency
-    (5) so async runs never starve synchronous UI/API calls.
+    requests get a 429. Must stay above var.orchestrator_maximum_concurrency
+    (a precondition in orchestrator_lambda.tf enforces it) so async runs never
+    starve synchronous UI/API calls: 25 = 15 async slots + 10 for sync callers.
   EOT
   type        = number
-  default     = 10
+  default     = 25
+}
+
+variable "orchestrator_maximum_concurrency" {
+  description = <<-EOT
+    How many queued runs the SQS event source fans out to the orchestrator, and
+    so to the R backend, at once. Every browser run goes through this queue, so
+    it is the UI's analysis throughput limit. At 15, a burst of 40 simultaneous
+    RTMA runs clears in about 80 s instead of about 4 minutes at 5. Must stay
+    below var.lambda_r_backend_reserved_concurrency.
+  EOT
+  type        = number
+  default     = 15
+
+  validation {
+    condition     = var.orchestrator_maximum_concurrency >= 2
+    error_message = "SQS event source maximum_concurrency must be at least 2."
+  }
 }
 
 variable "cost_circuit_breaker_enabled" {
@@ -159,14 +180,16 @@ variable "cost_circuit_breaker_throttle_periods" {
 
 variable "lambda_daily_gb_seconds_budget" {
   description = <<-EOT
-    Daily Lambda compute budget in GB-seconds, summed across all functions. The
-    AWS free tier grants 400,000 GB-s per month, so the default is roughly one
-    thirtieth of that. Crossing it publishes to the cost circuit breaker topic,
-    which emails the operator and, when the breaker is enabled, trips the
-    auto-shutoff (docs/COST_CONTROLS.md, #533).
+    Daily Lambda compute budget in GB-seconds, summed across all functions.
+    Crossing it publishes to the cost circuit breaker topic, which emails the
+    operator and, when the breaker is enabled, trips the auto-shutoff
+    (docs/COST_CONTROLS.md, #533). 60,000 GB-s is about $1 of compute at the
+    x86 rate. It was 13,000 (a thirtieth of the 400,000 GB-s monthly free
+    tier) until ordinary days reached 12,640 GB-s (Aug 24, Sep 5 2026), close
+    enough that a conference demo would trip the breaker on legitimate load.
   EOT
   type        = number
-  default     = 13000
+  default     = 60000
 }
 
 variable "lambda_r_backend_hourly_error_threshold" {

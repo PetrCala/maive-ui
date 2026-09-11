@@ -68,6 +68,7 @@ npm run cloud:init      # Deploy foundation infrastructure (ECR, IAM/OIDC, S3 st
 npm run cloud:status    # Get all service URLs and status
 npm run cloud:ui-url    # Get UI frontend URL
 npm run cloud:lambda-url # Get R backend URL
+npm run cloud:warm      # Pre-warm the R and UI Lambdas before a demo (docs/COST_CONTROLS.md)
 npm run cloud:destroy   # Destroy all infrastructure
 ```
 
