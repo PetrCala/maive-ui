@@ -104,6 +104,55 @@ export function assertScriptParameters(parameters: ModelParameters): void {
 }
 
 /**
+ * Versions every script names. A version info without one used to be written
+ * out as the literal string `undefined` (`# clubSandwich:    undefined`).
+ * "unknown" is still accepted: the install sections treat anything that is
+ * not a version as unrecorded and fall back to an unpinned install that says
+ * so.
+ */
+const SHARED_SCRIPT_VERSIONS: ReadonlyArray<keyof VersionInfo> = [
+  "uiVersion",
+  "maiveTag",
+  "rVersion",
+];
+
+/**
+ * Refuses version info that lacks a version the script would interpolate.
+ * clubSandwich enters an RTMA script unpinned, so only MAIVE-family scripts
+ * need its version; only the RTMA script names phacking.
+ *
+ * @throws Error naming the missing versions
+ */
+export function assertScriptVersionInfo(
+  versionInfo: VersionInfo,
+  modelType: string,
+): void {
+  const required: Array<keyof VersionInfo> = [
+    ...SHARED_SCRIPT_VERSIONS,
+    modelType === CONST.MODEL_TYPES.RTMA
+      ? "phackingVersion"
+      : "clubSandwichVersion",
+  ];
+  const missing = required.filter(
+    (key) => typeof versionInfo?.[key] !== "string",
+  );
+
+  if (missing.length > 0) {
+    throw new Error(
+      "Cannot generate a reproducibility script: the version info is missing " +
+        `${missing.map((key) => `"${key}"`).join(", ")}. ` +
+        "Reload the page and export again.",
+    );
+  }
+}
+
+/**
+ * A version R's package_version() accepts: two or more integers joined by
+ * dots or hyphens (0.7.0, 4.8-0). Anything else counts as unrecorded.
+ */
+const PINNABLE_VERSION = /^\d+([.-]\d+)+$/;
+
+/**
  * Reads the seed the RTMA sampler actually ran under, if the run recorded one.
  *
  * RTMA results travel through the export path typed as ModelResults (the two
@@ -545,7 +594,7 @@ function generateClubSandwichInstallSection(
   // A backend that never reported its clubSandwich version leaves nothing to
   // pin to. An unpinned install still beats failing the script, as long as it
   // says out loud that the inference may not be the recorded one.
-  if (!/^\d+(\.\d+)*$/.test(clubSandwichVersion)) {
+  if (!PINNABLE_VERSION.test(clubSandwichVersion)) {
     return `
 # Install clubSandwich (cluster-robust covariance behind MAIVE inference)
 cat("\\n⚠ This package does not record the clubSandwich version the analysis\\n")
@@ -565,8 +614,9 @@ library(clubSandwich)
 # unpinned install would quietly change the inference once CRAN moves on. It
 # is installed before MAIVE so that install (upgrade = "never") keeps it.
 clubsandwich_version <- "${clubSandwichVersion}"
+# Compared as versions, not strings: R reports a 0.7-1 release as 0.7.1.
 clubsandwich_ready <- requireNamespace("clubSandwich", quietly = TRUE) &&
-  identical(as.character(utils::packageVersion("clubSandwich")), clubsandwich_version)
+  utils::packageVersion("clubSandwich") == package_version(clubsandwich_version)
 
 if (!clubsandwich_ready) {
   cat("\\nInstalling clubSandwich", clubsandwich_version, "...\\n")
@@ -584,8 +634,8 @@ if (!clubsandwich_ready) {
 }
 library(clubSandwich)
 
-clubsandwich_loaded <- as.character(utils::packageVersion("clubSandwich"))
-if (identical(clubsandwich_loaded, clubsandwich_version)) {
+clubsandwich_loaded <- format(utils::packageVersion("clubSandwich"))
+if (package_version(clubsandwich_loaded) == package_version(clubsandwich_version)) {
   cat("✓ clubSandwich", clubsandwich_version, "loaded\\n")
 } else {
   cat("⚠ clubSandwich", clubsandwich_loaded, "is loaded, but this analysis ran under",
@@ -609,7 +659,7 @@ function generatePhackingInstallSection(phackingVersion: string): string {
   // that is not a version) leaves nothing to pin to. Falling back to the
   // unpinned install is still better than failing the script, as long as it
   // says out loud that the RTMA implementation is not the recorded one.
-  if (!/^\d+(\.\d+)*$/.test(phackingVersion)) {
+  if (!PINNABLE_VERSION.test(phackingVersion)) {
     return `
 # Install phacking package (RTMA)
 cat("\\n\\u26a0 This package does not record the phacking version the analysis ran\\n")
@@ -627,8 +677,9 @@ library(phacking)
 # ran under. phacking is the RTMA implementation itself, so an unpinned install
 # would quietly change the method once CRAN moves on.
 phacking_version <- "${phackingVersion}"
+# Compared as versions, not strings: R reports a 0.2-1 release as 0.2.1.
 phacking_ready <- requireNamespace("phacking", quietly = TRUE) &&
-  identical(as.character(utils::packageVersion("phacking")), phacking_version)
+  utils::packageVersion("phacking") == package_version(phacking_version)
 
 if (!phacking_ready) {
   cat("\\nInstalling phacking", phacking_version, "...\\n")
@@ -646,8 +697,8 @@ if (!phacking_ready) {
 }
 library(phacking)
 
-phacking_loaded <- as.character(utils::packageVersion("phacking"))
-if (identical(phacking_loaded, phacking_version)) {
+phacking_loaded <- format(utils::packageVersion("phacking"))
+if (package_version(phacking_loaded) == package_version(phacking_version)) {
   cat("\\u2713 phacking", phacking_version, "loaded\\n")
 } else {
   cat("\\u26a0 phacking", phacking_loaded, "is loaded, but this analysis ran under",
@@ -934,6 +985,7 @@ export function generateWrapperScript(
   winsorizeInfo?: WinsorizeInfo,
 ): string {
   assertScriptParameters(parameters);
+  assertScriptVersionInfo(versionInfo, parameters.modelType);
 
   if (parameters.modelType === "RTMA") {
     return generateRtmaWrapperScript(

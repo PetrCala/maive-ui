@@ -15,6 +15,7 @@ import type { DataArray } from "@src/types";
 import { fetchRCodeBundle } from "./githubFetcher";
 import {
   assertScriptParameters,
+  assertScriptVersionInfo,
   generateWrapperScript,
   getRtmaSeed,
 } from "./generators/wrapperScript";
@@ -63,6 +64,7 @@ export async function generateReproducibilityPackage(
   // Refuse a run the script generator cannot write for before spending a
   // round trip on GitHub, so the user sees the reason straight away (#576).
   assertScriptParameters(parameters);
+  assertScriptVersionInfo(versionInfo, parameters.modelType);
 
   // Create a new ZIP file
   const zip = new JSZip();
