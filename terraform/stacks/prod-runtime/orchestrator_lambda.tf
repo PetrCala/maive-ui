@@ -106,6 +106,16 @@ resource "aws_lambda_event_source_mapping" "orchestrator" {
   enabled          = true
 
   scaling_config {
-    maximum_concurrency = 5
+    maximum_concurrency = var.orchestrator_maximum_concurrency
+  }
+
+  lifecycle {
+    precondition {
+      condition = (
+        var.lambda_r_backend_reserved_concurrency < 0 ||
+        var.orchestrator_maximum_concurrency < var.lambda_r_backend_reserved_concurrency
+      )
+      error_message = "orchestrator_maximum_concurrency must stay below lambda_r_backend_reserved_concurrency, or async runs can starve synchronous UI/API calls."
+    }
   }
 }

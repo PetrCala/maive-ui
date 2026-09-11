@@ -50,6 +50,23 @@ function() {
   list(status = "ok", time = format(Sys.time(), tz = "UTC"))
 }
 
+#* Warm-up hold: keep this container busy for a few seconds so that concurrent
+#* warm-up requests each land on their own Lambda container instead of queueing
+#* behind one that is already warm (scripts/warmLambdas.sh). Capped at 5 s. The
+#* Function URL is IAM-only and the UI proxy forwards only the model routes, so
+#* anonymous callers cannot use it to pin containers.
+#* @param seconds How long to hold the container, 0 to 5
+#* @get /warmup
+function(seconds = "0") {
+  hold <- suppressWarnings(as.numeric(seconds))
+  if (length(hold) != 1L || is.na(hold)) {
+    hold <- 0
+  }
+  hold <- min(max(hold, 0), 5)
+  Sys.sleep(hold)
+  list(status = "ok", held = hold)
+}
+
 #* Run the model
 #* @param data The file data to run the model on, passed as a JSON string
 #* @param parameters The parameters to run the model on

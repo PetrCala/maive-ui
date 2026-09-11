@@ -48,6 +48,7 @@ source(file.path(script_dir, "scenarios/resolver_parity_test.R"))
 source(file.path(script_dir, "scenarios/request_log_test.R"))
 source(file.path(script_dir, "scenarios/response_cleanup_test.R"))
 source(file.path(script_dir, "scenarios/nan_se_instrumented_test.R"))
+source(file.path(script_dir, "scenarios/warmup_test.R"))
 
 # Define available test scenarios
 AVAILABLE_SCENARIOS <- list(
@@ -173,6 +174,11 @@ AVAILABLE_SCENARIOS <- list(
     name = "Request Log Test",
     description = "Test the structured per-request JSON log line helpers",
     function_name = "test_request_log"
+  ),
+  "warmup" = list(
+    name = "Warm-up Hold Test",
+    description = "Test that /warmup holds for the requested time, capped at 5 s",
+    function_name = "test_warmup"
   ),
 
   # Public /v1 API scenarios
@@ -564,6 +570,18 @@ run_all_scenarios <- function(api_url = NULL, verbose = TRUE) {
     }
     test_count <- test_count + 1
   }
+
+  # Warm-up hold used by scripts/warmLambdas.sh; the 5 s cap bounds its cost.
+  cat("\n14. Running warm-up hold test...\n")
+  warmup_result <- test_warmup()
+  all_results$warmup <- warmup_result
+  if (warmup_result$status == "PASS") {
+    passed_count <- passed_count + 1
+    cat("   ✓ Warm-up hold test passed\n")
+  } else {
+    cat("   ✗ Warm-up hold test failed:", warmup_result$error, "\n")
+  }
+  test_count <- test_count + 1
 
   # Summary
   cat("\n", paste(rep("=", 60), collapse = ""), "\n")
