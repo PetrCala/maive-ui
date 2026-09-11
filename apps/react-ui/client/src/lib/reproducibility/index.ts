@@ -9,7 +9,11 @@
 
 import JSZip from "jszip";
 import type { ModelParameters, ModelResults } from "@src/types/api";
-import type { VersionInfo, WinsorizeInfo } from "@src/types/reproducibility";
+import type {
+  RCodeBundle,
+  VersionInfo,
+  WinsorizeInfo,
+} from "@src/types/reproducibility";
 import type { DataArray } from "@src/types";
 
 import { fetchRCodeBundle } from "./githubFetcher";
@@ -19,16 +23,48 @@ import {
   generateWrapperScript,
   getRtmaSeed,
 } from "./generators/wrapperScript";
-import { generateReadme, generateVersionManifest } from "./generators/readme";
+import {
+  generateReadme,
+  generateVersionManifest,
+  packagedRSourceFiles,
+} from "./generators/readme";
 import { convertDataToCSV } from "./csvConverter";
 import { validateExportData, estimatePackageSize } from "./validator";
+
+/**
+ * Adds the backend R files the package's run_analysis.R sources, the same
+ * list the README and the version manifest describe (packagedRSourceFiles).
+ *
+ * @throws Error when a file the script sources was not fetched
+ */
+export function addRSourceFiles(
+  zip: JSZip,
+  bundle: RCodeBundle,
+  modelType: string,
+): void {
+  const contents = new Map<string, string | undefined>([
+    ["maive_model.R", bundle.maiveModel],
+    ["funnel_plot.R", bundle.funnelPlot],
+    ["rtma_model.R", bundle.rtmaModel],
+  ]);
+  packagedRSourceFiles(modelType).forEach(({ file }) => {
+    const content = contents.get(file);
+    if (!content) {
+      throw new Error(
+        `Could not fetch ${file} from GitHub, and run_analysis.R sources it. Try the export again.`,
+      );
+    }
+    zip.file(file, content);
+  });
+}
 
 /**
  * Generates a complete reproducibility package as a ZIP blob
  *
  * The package includes:
  * - R wrapper script (run_analysis.R)
- * - R backend source code from GitHub (maive_model.R, funnel_plot.R)
+ * - The R backend files the script sources, from GitHub (maive_model.R and
+ *   funnel_plot.R; RTMA packages also rtma_model.R)
  * - User's data in CSV format
  * - Analysis parameters and expected results in JSON
  * - Comprehensive README and version manifest
@@ -115,15 +151,8 @@ export async function generateReproducibilityPackage(
   // Main wrapper script
   zip.file("run_analysis.R", wrapperScript);
 
-  // R source code from backend
-  zip.file("maive_model.R", rCodeBundle.maiveModel);
-  zip.file("funnel_plot.R", rCodeBundle.funnelPlot);
-  if (rCodeBundle.hostHelpers) {
-    zip.file("host.R", rCodeBundle.hostHelpers);
-  }
-  if (rCodeBundle.rtmaModel) {
-    zip.file("rtma_model.R", rCodeBundle.rtmaModel);
-  }
+  // R source code from backend: what the script sources, nothing else
+  addRSourceFiles(zip, rCodeBundle, parameters.modelType);
 
   // Data and configuration
   zip.file("data.csv", dataCsv);

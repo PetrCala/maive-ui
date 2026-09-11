@@ -75,9 +75,7 @@ export type RCodeBundle = {
   maiveModel: string;
   /** Content of funnel_plot.R */
   funnelPlot: string;
-  /** Content of host.R (helper functions) */
-  hostHelpers?: string;
-  /** Content of rtma_model.R (RTMA analysis) */
+  /** Content of rtma_model.R (RTMA analysis; only RTMA packages ship it) */
   rtmaModel?: string;
 };
 
