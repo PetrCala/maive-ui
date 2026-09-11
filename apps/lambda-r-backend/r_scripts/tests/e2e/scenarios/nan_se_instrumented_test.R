@@ -10,6 +10,8 @@
 # instrumented SE, the package's exclusion warning, and no raw base-R warning.
 # It needs the pinned MAIVE (0.4.0 or later); a local library on an older
 # MAIVE fails the exclusion check (scripts/install-maive-tag.sh updates it).
+# The request names the levels first stage explicitly: MAIVE defaults to the
+# log first stage (#579), which never fits the negative variance.
 #
 # Uses run_model_or_fail() and assert_warnings_array() from
 # response_cleanup_test.R, which the runner sources first.
@@ -98,7 +100,10 @@ test_nan_se_instrumented <- function() {
         paste0(API_BASE_URL, "/v1/run-model"),
         body = list(
           data = NAN_SE_INSTRUMENTED_FIXTURE,
-          parameters = list(modelType = "MAIVE")
+          # The negative variance only happens in the levels first stage, and
+          # a bare MAIVE request defaults to the log first stage since #579,
+          # which leaves every instrumented SE defined and tests nothing.
+          parameters = list(modelType = "MAIVE", useLogFirstStage = FALSE)
         ),
         encode = "json",
         httr::timeout(API_TIMEOUT)
@@ -160,7 +165,12 @@ test_nan_se_instrumented <- function() {
       }
 
       # The legacy /run-model route the browser uses shares the result builder.
-      legacy <- run_model_or_fail(NAN_SE_INSTRUMENTED_FIXTURE)
+      # DEFAULT_PARAMETERS carries the log first stage (#579), so ask for the
+      # levels one here too, as in the request above.
+      legacy <- run_model_or_fail(
+        NAN_SE_INSTRUMENTED_FIXTURE,
+        modifyList(DEFAULT_PARAMETERS, list(useLogFirstStage = FALSE))
+      )
       legacy_se <- legacy$data$seInstrumented
       if (!any(vapply(legacy_se, function(x) identical(x, "NA"), logical(1)))) {
         stop("/run-model should report the undefined instrumented SE as \"NA\" too")
