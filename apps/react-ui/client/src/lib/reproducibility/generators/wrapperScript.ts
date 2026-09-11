@@ -18,16 +18,11 @@ import type {
 } from "@src/types/api";
 import type { VersionInfo, WinsorizeInfo } from "@src/types/reproducibility";
 import { describeGitRef } from "./readme";
-
-/**
- * Seed written into an RTMA script when the run itself carries none.
- *
- * Mirrors RTMA_DEFAULT_SEED in apps/lambda-r-backend/r_scripts/rtma_model.R.
- * Only reached for runs stored before the backend pinned a seed (#479); those
- * numbers cannot be reproduced by any seed, so the script says so rather than
- * pretending this one recreates them.
- */
-const RTMA_FALLBACK_SEED = 2025;
+import {
+  RTMA_ALPHA_SELECT,
+  RTMA_CI_LEVEL,
+  RTMA_FALLBACK_SEED,
+} from "./rtmaSettings";
 
 /**
  * Model types the generator can write a runnable script for.
@@ -211,8 +206,8 @@ function generateParametersSection(
 parameters <- list(
   modelType = "RTMA",
   favorPositive = ${parameters.favorPositive ? "TRUE" : "FALSE"},
-  alphaSelect = 0.05,
-  ciLevel = 0.95,
+  alphaSelect = ${RTMA_ALPHA_SELECT},
+  ciLevel = ${RTMA_CI_LEVEL},
   winsorize = ${parameters.winsorize},
   # RNG seed the sampler runs under. phacking::phacking_meta() takes no seed
   # argument, so run_rtma_model() calls set.seed() with this value immediately
