@@ -30,7 +30,13 @@ const RUN_RECORD_KEY_PREFIX = "input#";
 const RUN_RECORD_TTL_SECONDS = 30 * 24 * 60 * 60; // 30 days
 const RUNNING_FRESH_MS = 700_000; // above the R budget (570s) plus margin
 const TIMEOUT_REUSE_MS = 6 * 60 * 60 * 1000; // replay window for timeouts
-const DEDUP_POLL_MS = 15_000; // poll cadence while waiting on an identical run
+// Poll cadence while waiting on an identical run. It starts fast because the
+// common duplicate is a room of people running the same demo, whose original
+// finishes in ~2 s; a flat 15 s poll made every duplicate wait at least 15 s
+// and hold an orchestrator slot the whole time. It backs off so a long RTMA
+// wait still costs only a DynamoDB read every 15 s.
+const DEDUP_POLL_INITIAL_MS = 1_000;
+const DEDUP_POLL_MAX_MS = 15_000;
 const DEDUP_REPLAY_SUFFIX = " (reused from an identical earlier run)";
 const DEDUP_TIMEOUT_FALLBACK_MESSAGE =
   "An identical analysis recently timed out. Please adjust the dataset or parameters before retrying.";
@@ -682,6 +688,14 @@ async function fetchJobResult(
 }
 
 /**
+ * Delay before the nth (0-based) poll while waiting on an identical run:
+ * 1 s, 2 s, 4 s, 8 s, then 15 s from there on.
+ */
+export function dedupPollDelay(attempt: number): number {
+  return Math.min(DEDUP_POLL_INITIAL_MS * 2 ** attempt, DEDUP_POLL_MAX_MS);
+}
+
+/**
  * Answer this job from an existing record for the identical input, if the
  * record allows it (#529). Dedup applies when the identical input is already
  * running (wait for it, then copy its outcome) or recently timed out (replay
@@ -724,12 +738,17 @@ async function tryDedup(
   }
 
   // An identical run is in flight: wait for its outcome instead of doubling
-  // the compute. Polling the record is a cheap DynamoDB read every 15s.
+  // the compute. Each poll is a cheap DynamoDB read, on the dedupPollDelay
+  // schedule.
   await recordDedupHit(inputHash);
   const deadline = startedAt + FETCH_TIMEOUT_MS;
-  while (Date.now() + DEDUP_POLL_MS < deadline) {
+  let attempt = 0;
+  let delay = dedupPollDelay(attempt);
+  while (Date.now() + delay < deadline) {
     // eslint-disable-next-line no-await-in-loop
-    await sleep(DEDUP_POLL_MS);
+    await sleep(delay);
+    attempt += 1;
+    delay = dedupPollDelay(attempt);
     // eslint-disable-next-line no-await-in-loop
     const current = await getRunRecord(inputHash);
     if (!current || current.status === "running") {
