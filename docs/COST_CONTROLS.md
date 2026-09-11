@@ -26,21 +26,21 @@ Lambda for up to 600 s. The controls below bound what that adds up to.
 
 | Layer | Where | What it bounds |
 |---|---|---|
-| Reserved concurrency = 25 (R backend) | `prod-runtime/variables.tf` (`lambda_r_backend_reserved_concurrency`) | Concurrent R executions, regardless of entry path. Excess gets `429`. Bounds the *rate* of spend (~$0.21/hr per slot). |
+| Reserved concurrency = 15 (R backend) | `prod-runtime/variables.tf` (`lambda_r_backend_reserved_concurrency`) | Concurrent R executions, regardless of entry path. Excess gets `429`. Bounds the *rate* of spend (~$0.21/hr per slot). |
 | Reserved concurrency = 100 (UI) | `prod-runtime/variables.tf` (`ui_lambda_reserved_concurrency`) | UI Lambda spend and its share of the account concurrency pool. Sized for bursts: each simultaneous cold start holds its own instance for ~1.2 s. |
-| Async fan-out = 15 | `prod-runtime/variables.tf` (`orchestrator_maximum_concurrency`) | Concurrent async runs, which includes every browser run. A Terraform precondition keeps it below the R cap so async never starves sync. |
+| Async fan-out = 10 | `prod-runtime/variables.tf` (`orchestrator_maximum_concurrency`) | Concurrent async runs, which includes every browser run. A Terraform precondition keeps it below the R cap so async never starves sync. |
 | Max dataset rows = 50,000 | R `api_v1.R` / `index.R` (`MAX_INPUT_ROWS`), UI `datasetValidation.ts` (`MAX_ROWS`) | Per-request work; caps payload-driven CPU/output amplification on every HTTP route including the raw legacy path. |
 | Request wall-clock budget = 120 s default, 570 s max | R `request_bounds.R` (`timeoutSeconds`) | How long any model request can hold a slot. The whole handler runs in a forked child the server kills at the deadline, Stan workers and bootstrap forks included, and the caller gets a structured `code: "timeout"` error instead of a dropped connection (#526). Interactive requests (UI, public `/v1`) get the 120 s default; the async orchestrator requests the 570 s maximum, still under the 600 s function timeout. |
 | RTMA fit budget = request budget minus 10 s | R `rtma_model.R` (`RTMA_FIT_HEADROOM_SEC`) | The RTMA fit's own child-process kill, kept inside the request budget so the fit-specific timeout message reaches the caller before the request-level backstop fires (#521, #526). Standalone use (reproducibility packages) keeps the old 480 s default. |
 | Run records + dedup of identical inputs | Orchestrator `apps/orchestrator/src/index.ts`, UI proxy `runRecords.ts`/`rBackendProxy.ts` | Repeat spend on one input (#529). Every run upserts a 30 day record in the runs table (input hash, k, method, outcome, duration, run/dedup counters) so there is something to look at after an incident. An identical input already running is not recomputed (sync callers get an "already running" error; queued runs wait and copy the original's outcome), and an input that recently timed out gets the recorded timeout replayed for 6 h instead of burning another 570 s slot. On Aug 15 the same heavy job was resubmitted for hours; this layer would have cut most of that day. |
 | **Cost circuit breaker** | `prod-runtime/circuit_breaker.tf` | The **monthly total**. Auto-degrades the R backend to a reserved concurrency of 2 on sustained abuse and turns on the unstable banner. |
-| Daily GB-seconds alarm (60,000 GB-s/day) | `prod-runtime/circuit_breaker.tf` (`lambda_daily_gb_seconds_budget`) | The **daily compute total**, measured in the free tier's own unit (400k GB-s/month free; 60,000 GB-s is about $1 of compute). Metric math over Sum(Duration) x memory across the Lambdas; publishes to the circuit-breaker topic, so it pages and (when enabled) trips the breaker (#533). |
+| Daily GB-seconds alarm (25,000 GB-s/day) | `prod-runtime/circuit_breaker.tf` (`lambda_daily_gb_seconds_budget`) | The **daily compute total**, measured in the free tier's own unit (400k GB-s/month free; 25,000 GB-s is about $0.42 of compute). Metric math over Sum(Duration) x memory across the Lambdas; publishes to the circuit-breaker topic, so it pages and (when enabled) trips the breaker (#533). |
 | Budget notifications ($10, 50/80/forecast) | `prod-foundation/budget.tf` | Human awareness; email backstop. |
 | Cost Anomaly Detection | `prod-foundation/cost_anomaly.tf` | Human awareness; catches deviation from baseline rather than a fixed threshold. Daily digest, on ~24h-lagged billing data. |
 | Alarm notifications (errors/throttles/duration/DLQ) | `prod-runtime/monitoring.tf` + the alarms | Human awareness; previously these alarms notified no one. |
 
-Reserved concurrency bounds the *rate* of spend but not the *total*: 25 slots
-pinned at 3.5 GB around the clock would be ~$3,730/month. The circuit breaker is
+Reserved concurrency bounds the *rate* of spend but not the *total*: 15 slots
+pinned at 3.5 GB around the clock would be ~$2,240/month. The circuit breaker is
 what turns the rate limit into an enforced ceiling.
 
 That ceiling rose by ~73% when the R backend went from 2048 MB to 3538 MB to get
@@ -68,9 +68,9 @@ R backend throttling (sustained) → CloudWatch alarm → SNS → kill-switch La
   a near-zero false-positive rate for a low-traffic site.
 - **Second trigger (daily compute budget):** the `-lambda-daily-gb-seconds`
   alarm publishes to the same topic when total Lambda compute across the day
-  crosses `lambda_daily_gb_seconds_budget` (default 60,000 GB-s, about $1 of
-  compute; it was 13,000 until ordinary days reached 12,640 GB-s, too close
-  for a conference demo). The Aug 15 incident burned ~139k GB-s in a day
+  crosses `lambda_daily_gb_seconds_budget` (default 25,000 GB-s, about $0.42
+  of compute; it was 13,000 until ordinary days reached 12,640 GB-s, too
+  close for comfort). The Aug 15 incident burned ~139k GB-s in a day
   without tripping the saturation alarm: a spend spike that never saturates the
   concurrency cap for 30 straight minutes is invisible to it (#533).
 - **Action:** the kill-switch Lambda (`apps/kill-switch/index.mjs`) degrades
@@ -80,7 +80,7 @@ R backend throttling (sustained) → CloudWatch alarm → SNS → kill-switch La
   the spend rate drops to ~$0.42/hr worst case. It also flips the
   `/maive/ui/unstable_banner_*` SSM parameters so the UI shows users a
   reduced-capacity notice (see `unstable-release-banner.md`). The worst-case
-  bleed before it trips is ~30 min × 25 slots ≈ $2.60 per episode.
+  bleed before it trips is ~30 min × 15 slots ≈ $1.55 per episode.
 - **Notification:** the same alarm emails `var.email` (via the circuit-breaker
   SNS topic), so an operator knows the service was degraded.
 - **Toggle:** `cost_circuit_breaker_enabled` (default `true`). When `false`, the
@@ -99,11 +99,11 @@ stopped (e.g. blocked at Cloudflare):
      concurrency to `lambda_r_backend_reserved_concurrency` and turns the
      banner back off), or
    - Lambda console → `maive-lambda-r-backend` → Configuration → Concurrency →
-     set reserved concurrency back to 25, then set the
+     set reserved concurrency back to 15, then set the
      `/maive/ui/unstable_banner_enabled` SSM parameter back to `false`.
 
 Note: because the Lambda sets concurrency and the banner out of band, Terraform
-state shows drift (it wants 25 and a disabled banner, actual is 2 and enabled)
+state shows drift (it wants 15 and a disabled banner, actual is 2 and enabled)
 until the next apply reconciles it. That is expected.
 
 ## What this does and does not guarantee
@@ -136,10 +136,14 @@ load pattern that looks like abuse. Before one:
 
 - Confirm the two SNS email subscriptions (`maive-alarm-notifications`,
   `maive-cost-circuit-breaker`) so alarms reach someone.
-- Check the Cloudflare rate-limit rule (`infra/cloudflare/README.md`). It
-  counts every request per IP, and conference Wi-Fi puts the whole room behind
-  one IP, so a handful of simultaneous first page loads (about 15 to 20
-  requests each) is enough to reach 100 per 10 s.
+- Raise the caps for the event and bring them back afterwards. For the Sep
+  2026 conference the R cap went to 25, `orchestrator_maximum_concurrency` to
+  15 and the daily budget to 60,000 GB-s (#586), then back to the values
+  above.
+- Check the Cloudflare rate-limit rule (`infra/cloudflare/README.md`).
+  Conference Wi-Fi puts the whole room behind one IP. The rule exempts
+  `/_next/static/`, so only page and API requests count, and allows 200 per
+  10 s; the Sep 2026 conference raised it to 500 for the week.
 - About 10 minutes before the session, run `npm run cloud:warm`
   (`scripts/warmLambdas.sh`). It checks that the banner is off and no alarm is
   firing, then sends 15 concurrent requests to the R backend's `/warmup` route,
