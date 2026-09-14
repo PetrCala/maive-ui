@@ -122,15 +122,20 @@ const EXPLANATION_RULES: ExplanationRule[] = [
     return null;
   },
 
-  // weight changed due to model type (instrumenting being disabled)
-  ({ param, changedByUser }) => {
-    if (param !== "weight") {
+  // weight changed by a model switch
+  ({ param, prev, next, changedByUser }) => {
+    if (param !== "weight" || changedByUser !== "modelType") {
       return null;
     }
-    if (changedByUser === "modelType") {
+    if (next.shouldUseInstrumenting) {
+      // Standard Weights was the previous model's default, so the
+      // instrumented model returns to its own weighting (#583).
+      return `**${next.modelType}** returns to its own weighting`;
+    }
+    if (prev.weight === CONST.WEIGHT_OPTIONS.ADJUSTED_WEIGHTS.VALUE) {
       return "**Adjusted Weights** requires instrumenting";
     }
-    return null;
+    return `**${next.modelType}** starts from **Standard Weights**`;
   },
 
   // Rules below explain adjustments made by the shared parameter resolver
@@ -171,18 +176,16 @@ const EXPLANATION_RULES: ExplanationRule[] = [
     return null;
   },
 
-  // maiveMethod changed due to WAIVE model
+  // maiveMethod changed by a model switch
   ({ param, next, changedByUser }) => {
-    if (param !== "maiveMethod") {
+    if (param !== "maiveMethod" || changedByUser !== "modelType") {
       return null;
     }
-    if (
-      changedByUser === "modelType" &&
-      next.modelType === CONST.MODEL_TYPES.WAIVE
-    ) {
+    if (next.modelType === CONST.MODEL_TYPES.WAIVE) {
       return "**WAIVE** only supports **PET-PEESE**";
     }
-    return null;
+    // A method picked for one model does not carry over to the next (#583).
+    return `**${next.modelType}** starts from its default method`;
   },
 ];
 
