@@ -236,8 +236,9 @@ Some parameters are internal/hidden from the user and excluded from alerts:
 | Changed Param | Trigger | Explanation |
 |---------------|---------|-------------|
 | `computeAndersonRubin` | `modelType`, `weight`, `includeStudyDummies` | AR CI availability constraints |
-| `weight` | `modelType` | Adjusted weights requires instrumenting |
+| `weight` | `modelType` | Adjusted weights requires instrumenting; WLS starts from Standard Weights; an instrumented model returns to its own weighting |
 | `maiveMethod` | `modelType → WAIVE` | WAIVE only supports PET-PEESE |
+| `maiveMethod` | `modelType` (any other switch) | Each model starts from its default method |
 
 ### Reproducibility Package System
 

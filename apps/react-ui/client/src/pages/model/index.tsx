@@ -47,6 +47,16 @@ import { getUploadedData as getCachedUploadedData } from "@src/utils/dataCacheDb
 const isModelWeight = (weight: string): weight is ModelParameters["weight"] =>
   Object.values(CONST.WEIGHT_OPTIONS).some((option) => option.VALUE === weight);
 
+// The weighting a model starts from: models without instrumenting use
+// Standard Weights, matching the resolver's default. Only a weighting that
+// differs from it is a user choice worth keeping across model switches (#583).
+const getDefaultWeight = (
+  shouldUseInstrumenting: boolean,
+): ModelParameters["weight"] =>
+  shouldUseInstrumenting
+    ? CONFIG.DEFAULT_MODEL_PARAMETERS.weight
+    : CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE;
+
 const weightSupportsAndersonRubin = (weight: ModelParameters["weight"]) =>
   weight !== CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE;
 
@@ -75,7 +85,6 @@ export default function ModelPage() {
   const lastInstrumentedWeightRef = useRef<ModelParameters["weight"]>(
     CONFIG.DEFAULT_MODEL_PARAMETERS.weight,
   );
-  const autoSetWeightForWlsRef = useRef(false);
   const [shouldSuppressAdvancedAutoOpen, setShouldSuppressAdvancedAutoOpen] =
     useState(false);
   const router = useRouter();
@@ -129,7 +138,7 @@ export default function ModelPage() {
       params.shouldUseInstrumenting = true;
     }
 
-    if (params.weight !== CONFIG.DEFAULT_MODEL_PARAMETERS.weight) {
+    if (params.weight !== getDefaultWeight(params.shouldUseInstrumenting)) {
       weightUserOverrideRef.current = true;
     }
 
@@ -270,7 +279,7 @@ export default function ModelPage() {
 
       if (
         parsed.weight !== undefined &&
-        parsed.weight !== CONFIG.DEFAULT_MODEL_PARAMETERS.weight
+        parsed.weight !== getDefaultWeight(params.shouldUseInstrumenting)
       ) {
         weightUserOverrideRef.current = true;
       }
@@ -348,15 +357,25 @@ export default function ModelPage() {
           lastInstrumentedWeightRef.current = prev.weight;
         }
 
-        const isSwitchingFromWls = prev.modelType === CONST.MODEL_TYPES.WLS;
+        // Each model starts from its default method, so a method picked for
+        // one model never runs silently under the next one (#583).
+        const nextMaiveMethod =
+          nextModelType === prev.modelType
+            ? prev.maiveMethod
+            : CONFIG.DEFAULT_MODEL_PARAMETERS.maiveMethod;
+        // Standard Weights on a model without instrumenting is that model's
+        // default, not a choice for an instrumented one: return to the last
+        // instrumented weighting (the default when there is none). This reads
+        // only the current state, so it holds after a browser Back remounts
+        // the page from saved parameters too (#583). A weighting the user
+        // picked there on purpose stays.
+        const restoredWeight =
+          !prev.shouldUseInstrumenting &&
+          prev.weight === CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE
+            ? lastInstrumentedWeightRef.current
+            : prev.weight;
 
         if (nextModelType === CONST.MODEL_TYPES.WAIVE) {
-          const restoredWeight =
-            isSwitchingFromWls && autoSetWeightForWlsRef.current
-              ? lastInstrumentedWeightRef.current
-              : prev.weight;
-
-          autoSetWeightForWlsRef.current = false;
           lastInstrumentedWeightRef.current = restoredWeight;
 
           const nextState: ModelParameters = {
@@ -393,14 +412,13 @@ export default function ModelPage() {
             ? CONST.WEIGHT_OPTIONS.STANDARD_WEIGHTS.VALUE
             : prev.weight;
 
-          autoSetWeightForWlsRef.current = shouldAutoSetWeight;
-
           const nextState = {
             ...prev,
             modelType: nextModelType,
             shouldUseInstrumenting: false,
             weight: nextWeight,
             computeAndersonRubin: false,
+            maiveMethod: nextMaiveMethod,
           };
           markAdvancedChangeFromBasic(prev, nextState);
 
@@ -438,12 +456,6 @@ export default function ModelPage() {
           return nextState;
         }
 
-        const restoredWeight =
-          isSwitchingFromWls && autoSetWeightForWlsRef.current
-            ? lastInstrumentedWeightRef.current
-            : prev.weight;
-
-        autoSetWeightForWlsRef.current = false;
         lastInstrumentedWeightRef.current = restoredWeight;
 
         const nextState: ModelParameters = {
@@ -452,6 +464,7 @@ export default function ModelPage() {
           shouldUseInstrumenting: true,
           weight: restoredWeight,
           computeAndersonRubin: prev.computeAndersonRubin,
+          maiveMethod: nextMaiveMethod,
         };
         const willShowAndersonRubin = shouldShowAndersonRubinOption(nextState);
         nextState.computeAndersonRubin = willShowAndersonRubin
@@ -472,10 +485,6 @@ export default function ModelPage() {
       if (param === "weight" && typeof value === "string") {
         if (!isModelWeight(value)) {
           return prev;
-        }
-
-        if (!prev.shouldUseInstrumenting) {
-          autoSetWeightForWlsRef.current = false;
         }
 
         weightUserOverrideRef.current = true;
@@ -586,8 +595,6 @@ export default function ModelPage() {
         return;
       }
 
-      autoSetWeightForWlsRef.current = false;
-
       setParameters((prev) => {
         if (prev.modelType !== CONST.MODEL_TYPES.WAIVE) {
           return prev;
@@ -684,8 +691,6 @@ export default function ModelPage() {
       parameters.modelType !== CONST.MODEL_TYPES.RDT &&
       !parameters.shouldUseInstrumenting
     ) {
-      autoSetWeightForWlsRef.current = false;
-
       setParameters((prev) => {
         if (
           prev.modelType === CONST.MODEL_TYPES.WLS ||
@@ -1045,8 +1050,6 @@ export default function ModelPage() {
     ) {
       return;
     }
-
-    autoSetWeightForWlsRef.current = true;
 
     setParameters((prev) => {
       const nextState = {
