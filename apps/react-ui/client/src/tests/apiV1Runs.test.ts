@@ -263,7 +263,6 @@ describe("POST /api/v1/runs", () => {
     const req = createMockReq({
       method: "POST",
       body: {
-        // One study: four rows satisfy the rows >= studies + 3 rule.
         data: validMaiveData.map((row) => ({ ...row, study_id: "a" })),
       },
     });
@@ -284,6 +283,44 @@ describe("POST /api/v1/runs", () => {
       resolvedParameters: stored,
       recipe: "MAIVE",
     });
+  });
+
+  it("queues one estimate per study, and refuses it only with study dummies (#23)", async () => {
+    setConfigured();
+    ddbSendMock.mockResolvedValue({});
+    sqsSendMock.mockResolvedValue({});
+    const perStudy = validMaiveData.map((row, index) => ({
+      ...row,
+      study_id: `s${index}`,
+    }));
+
+    const { default: handler } = await import("@src/pages/api/v1/runs");
+    const clustered = createMockRes();
+    await handler(
+      createMockReq({ method: "POST", body: { data: perStudy } }),
+      clustered,
+    );
+    expect(clustered.statusCode).toBe(200);
+    expect(sqsSendMock).toHaveBeenCalledTimes(1);
+
+    const withDummies = createMockRes();
+    await handler(
+      createMockReq({
+        method: "POST",
+        body: { data: perStudy, parameters: { includeStudyDummies: true } },
+      }),
+      withDummies,
+    );
+    expect(withDummies.statusCode).toBe(400);
+    expect(withDummies.body).toMatchObject({
+      error: {
+        code: "validation_error",
+        message: expect.stringMatching(
+          /need at least 7 rows for 4 unique study IDs.*found 4/,
+        ) as unknown,
+      },
+    });
+    expect(sqsSendMock).toHaveBeenCalledTimes(1);
   });
 
   it("expands a named recipe before queueing (#555)", async () => {

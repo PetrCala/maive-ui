@@ -632,9 +632,10 @@ components:
         study_id:
           type: string
           description: >-
-            Optional study identifier, used for clustering. If present across
-            rows, the number of rows must be at least the number of unique
-            study ids plus 3.
+            Optional study identifier, used for clustering. With
+            `includeStudyDummies: true` the number of rows must be at least
+            the number of unique study ids plus 3; clustering alone has no
+            such minimum.
       additionalProperties: true
       example:
         effect: 0.42
@@ -823,8 +824,9 @@ components:
           minItems: 4
           description: >-
             3 or 4 columns; at least 4 rows; `effect`/`se`/`n_obs` numeric;
-            `se > 0`; `n_obs` positive integers; if `study_id` is present,
-            rows must be >= unique studies + 3 (§6.2).
+            `se > 0`; `n_obs` positive integers; with `study_id` and
+            `includeStudyDummies: true`, rows must be >= unique studies + 3
+            (§6.2).
           items:
             $ref: "#/components/schemas/DataRow"
         parameters:

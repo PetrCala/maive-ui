@@ -316,8 +316,9 @@ api_v1_coerce_numeric_column <- function(values, column) {
 #' Validate MAIVE-family data per design section 6.2
 #'
 #' Mirrors the UI validation page rules so API callers get structured 400s:
-#' 3 or 4 columns, at least 4 rows, numeric effect/se/n_obs, se > 0, n_obs
-#' positive integers, and rows >= unique studies + 3 when study_id is present.
+#' 3 or 4 columns, at least 4 rows, numeric effect/se/n_obs, se > 0 and n_obs
+#' positive integers. The rows-per-study rule depends on the resolved
+#' parameters, so api_v1_check_study_dummy_rows() applies it afterwards.
 #'
 #' @param data The `data` field of the request body
 #' @return Validated data frame ready for the positional model contract
@@ -356,15 +357,40 @@ api_v1_validate_maive_data <- function(data) {
         "The study_id column contains empty values. Study IDs can be strings or numbers."
       )
     }
-    if (n_rows < length(unique(study_id_text)) + 3) {
-      api_v1_abort_validation(
-        "The number of rows must be larger than the number of unique study IDs plus 3."
-      )
-    }
     df$study_id <- columns$study_id
   }
 
   df
+}
+
+#' Refuse a study-dummy run with fewer rows than unique studies plus 3
+#'
+#' Study dummies add one regressor per study, so they need the unique studies
+#' plus the intercept, the slope and a residual degree of freedom. Clustering
+#' by study spends none of those, and MAIVE 0.4.0 and later refuse only the
+#' dummy fit (#23), so the rule applies only with includeStudyDummies. Same
+#' message as studyDummyRowsMessage() in datasetValidation.ts.
+#'
+#' @param df Validated data frame from api_v1_validate_maive_data()
+#' @param params Resolved parameters from api_v1_resolve_maive_parameters()
+#' @return Invisible NULL; aborts with a validation error otherwise
+api_v1_check_study_dummy_rows <- function(df, params) {
+  if (is.null(df$study_id) || !isTRUE(params$includeStudyDummies)) {
+    return(invisible(NULL))
+  }
+  n_studies <- length(unique(trimws(as.character(df$study_id))))
+  min_rows <- n_studies + 3L
+  if (nrow(df) < min_rows) {
+    api_v1_abort_validation(sprintf(
+      paste0(
+        "Study dummies add one regressor per study, so they need at least %d rows ",
+        "for %d unique study IDs (the unique study IDs plus 3); found %d. Set ",
+        "includeStudyDummies to false: clustering by study works on this data."
+      ),
+      min_rows, n_studies, nrow(df)
+    ))
+  }
+  invisible(NULL)
 }
 
 #' Validate RTMA data per design section 6.2
@@ -913,6 +939,7 @@ api_v1_run_model <- function(req, res, include = "") {
     api_v1_reject_unknown_top_level_keys(body)
     df <- api_v1_validate_maive_data(body$data)
     params <- api_v1_resolve_maive_parameters(body$parameters, !is.null(df$study_id))
+    api_v1_check_study_dummy_rows(df, params)
 
     results <- run_maive_model( # nolint: object_usage_linter.
       jsonlite::toJSON(df, dataframe = "rows", digits = NA),
