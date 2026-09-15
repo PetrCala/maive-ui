@@ -149,7 +149,7 @@ EasyMeta (${SITE}) runs meta-analysis corrections for publication bias, p-hackin
 
 ## Data
 
-Send \`data\` as an array of row objects with keys \`effect\`, \`se\`, \`n_obs\` and, optionally, \`study_id\` (RTMA needs only \`effect\` and \`se\`). Keys are matched case-insensitively; without canonical names the first three or four keys are read positionally. When a \`study_id\` column is present the rows must number at least the unique studies plus three, and study clustering is on by default, exactly as in the browser.
+Send \`data\` as an array of row objects with keys \`effect\`, \`se\`, \`n_obs\` and, optionally, \`study_id\` (RTMA needs only \`effect\` and \`se\`). Keys are matched case-insensitively; without canonical names the first three or four keys are read positionally. When a \`study_id\` column is present study clustering is on by default, exactly as in the browser; with \`includeStudyDummies: true\` the rows must also number at least the unique studies plus three.
 
 ## Recipes
 

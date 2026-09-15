@@ -3,6 +3,10 @@ import {
   describeDegenerateSeColumn,
   summarizeDegenerateSeColumn,
 } from "@src/lib/seVariation";
+import {
+  minRowsForStudyDummies,
+  studyDummyRowsMessage,
+} from "@src/lib/studyDummyRows";
 
 // Server-side validation for the public `/v1/runs` submit endpoint (design
 // §6.2). Mirrors the rules on the UI's validation page
@@ -153,9 +157,15 @@ const degenerateSeColumn = (
   };
 };
 
+export type ValidateDatasetOptions = {
+  /** Whether the run fits study fixed effects (`includeStudyDummies`). */
+  includeStudyDummies?: boolean;
+};
+
 export const validateDataset = (
   data: unknown,
   modelType: string,
+  options: ValidateDatasetOptions = {},
 ): ValidationError | null => {
   if (!Array.isArray(data) || data.length === 0) {
     return { message: "`data` must be a non-empty array of row objects." };
@@ -270,13 +280,17 @@ export const validateDataset = (
       };
     }
 
-    const uniqueStudyIds = new Set(studyIds.map((value) => String(value))).size;
-
-    if (rows.length < uniqueStudyIds + 3) {
-      return {
-        message:
-          "The number of rows must be larger than the number of unique study IDs plus 3.",
-      };
+    // Only study dummies spend a degree of freedom per study. Clustering by
+    // study runs on one estimate per study, and MAIVE 0.4.0 and later refuse
+    // the dummy fit alone (#23), so neither may this check.
+    if (options.includeStudyDummies) {
+      const uniqueStudyIds = new Set(studyIds.map((value) => String(value)))
+        .size;
+      if (rows.length < minRowsForStudyDummies(uniqueStudyIds)) {
+        return {
+          message: studyDummyRowsMessage(rows.length, uniqueStudyIds),
+        };
+      }
     }
   }
 

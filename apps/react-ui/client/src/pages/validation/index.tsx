@@ -31,6 +31,7 @@ import {
   describeDegenerateSeColumn,
   summarizeDegenerateSeColumn,
 } from "@src/lib/seVariation";
+import { minRowsForStudyDummies } from "@src/lib/studyDummyRows";
 import { DataProcessingService } from "@src/services/dataProcessingService";
 import { useEnterKeyAction } from "@src/hooks/useEnterKeyAction";
 import {
@@ -365,6 +366,8 @@ const formatRowIssuesMessage = (
   return formattedRows.join("; ");
 };
 
+const VALID_DATA_MESSAGE = "Your data is valid and ready for analysis!";
+
 const validateData = (
   fullData: DataArray,
   mapping: ColumnMapping,
@@ -580,18 +583,26 @@ const validateData = (
     });
   }
 
-  if (mapping.studyId) {
+  // Advisory (#23): only study dummies need more rows than studies, and they
+  // are an opt-in on the next screen. Clustering by study runs on one
+  // estimate per study, so this must not block the data; MAIVE refuses the
+  // dummy fit itself if the user turns dummies on anyway.
+  if (mapping.studyId && mapping.nObs) {
     const uniqueStudyIds = new Set(
       fullData
         .map((row) => row.study_id)
-        .filter((value) => value !== undefined && value !== null),
+        .filter((value) => value !== undefined && value !== null)
+        .map((value) => String(value)),
     ).size;
+    const minRows = minRowsForStudyDummies(uniqueStudyIds);
 
-    if (!(fullData.length >= uniqueStudyIds + 3)) {
+    if (fullData.length < minRows) {
       messages.push({
-        type: CONST.ALERT_TYPES.ERROR,
+        type: CONST.ALERT_TYPES.WARNING,
         message:
-          "The number of rows must be larger than the number of unique study IDs plus 3.",
+          `The data has ${fullData.length} rows for ${uniqueStudyIds} unique study IDs. ` +
+          `Study dummies add one regressor per study and need at least ${minRows} rows, ` +
+          `so leave ${TEXT.model.includeStudyDummies.label} off for this data. Clustering by study still works.`,
       });
     }
   }
@@ -606,10 +617,20 @@ const validateData = (
   const hasErrors = messages.some(
     (msg) => msg.type === CONST.ALERT_TYPES.ERROR,
   );
+  const warningCount = messages.filter(
+    (msg) => msg.type === CONST.ALERT_TYPES.WARNING,
+  ).length;
   if (!hasErrors) {
+    // A warning means some model or some rows will not go through as uploaded
+    // (#572), so the page must not also call the data ready without a caveat.
     messages.push({
       type: CONST.ALERT_TYPES.SUCCESS,
-      message: "Your data is valid and ready for analysis!",
+      message:
+        warningCount === 0
+          ? VALID_DATA_MESSAGE
+          : `Your data can be analyzed, but read the ${
+              warningCount === 1 ? "warning" : `${warningCount} warnings`
+            } above first: they say which models or rows are affected.`,
     });
   }
 

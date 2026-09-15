@@ -209,16 +209,59 @@ describe("validateDataset: MAIVE-family", () => {
     );
   });
 
-  it("rejects too few rows relative to unique study ids", () => {
+  it("accepts one estimate per study when study dummies are off (#23)", () => {
+    // Clustering by study spends no degree of freedom per study, and MAIVE
+    // 0.4.0 and later refuse only the dummy fit, so neither may the API.
     const data = [
       maiveRow(0.1, 0.11, 10, "A"),
       maiveRow(0.2, 0.06, 10, "B"),
       maiveRow(0.3, 0.2, 10, "C"),
       maiveRow(0.4, 0.04, 10, "D"),
     ];
-    expect(validateDataset(data, "MAIVE")?.message).toMatch(
-      /unique study IDs plus 3/,
+    expect(validateDataset(data, "MAIVE")).toBeNull();
+    expect(
+      validateDataset(data, "MAIVE", { includeStudyDummies: false }),
+    ).toBeNull();
+  });
+
+  it("rejects too few rows for study dummies and names the counts", () => {
+    const data = [
+      maiveRow(0.1, 0.11, 10, "A"),
+      maiveRow(0.2, 0.06, 10, "B"),
+      maiveRow(0.3, 0.2, 10, "C"),
+      maiveRow(0.4, 0.04, 10, "D"),
+    ];
+    expect(
+      validateDataset(data, "MAIVE", { includeStudyDummies: true })?.message,
+    ).toBe(
+      "Study dummies add one regressor per study, so they need at least 7 rows " +
+        "for 4 unique study IDs (the unique study IDs plus 3); found 4. Set " +
+        "includeStudyDummies to false: clustering by study works on this data.",
     );
+  });
+
+  it("accepts study dummies at exactly unique studies plus 3 rows", () => {
+    // The old message said "larger than" while the check allowed equality.
+    const data = [
+      maiveRow(0.1, 0.11, 10, "A"),
+      maiveRow(0.2, 0.06, 20, "A"),
+      maiveRow(0.3, 0.2, 30, "A"),
+      maiveRow(0.4, 0.04, 40, "A"),
+      maiveRow(0.5, 0.05, 50, "B"),
+    ];
+    expect(
+      validateDataset(data, "MAIVE", { includeStudyDummies: true }),
+    ).toBeNull();
+    // One row fewer than unique studies plus 3: A, A, A, B, C.
+    const oneShort = [
+      ...data.slice(0, 3),
+      maiveRow(0.4, 0.04, 40, "B"),
+      maiveRow(0.5, 0.05, 50, "C"),
+    ];
+    expect(
+      validateDataset(oneShort, "MAIVE", { includeStudyDummies: true })
+        ?.message,
+    ).toMatch(/at least 6 rows for 3 unique study IDs.*found 5/);
   });
 
   it("rejects more than 4 columns when resolving positionally", () => {

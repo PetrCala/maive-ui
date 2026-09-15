@@ -66,9 +66,10 @@ test_api_v1 <- function() {
       canonical_rows <- df_to_v1_rows(canonical_df)
       positional_rows <- df_to_v1_rows(fixture_3col) # keys bs/sebs/Ns -> positional
 
-      # The raw 4-column fixture has one unique study per row, which violates
-      # the "rows >= unique studies + 3" rule; regroup into 5 studies of 4
-      # rows for the happy path and keep the raw fixture for the 400 test.
+      # The raw 4-column fixture has one unique study per row, which only
+      # study dummies cannot use ("rows >= unique studies + 3", #23); regroup
+      # into 5 studies of 4 rows for the happy path and keep the raw fixture
+      # for the dummies 400 and the clustering-only 200 below.
       grouped_4col <- fixture_4col
       grouped_4col$study_id <- paste0("study_", rep(seq_len(5), each = 4))
       grouped_rows <- df_to_v1_rows(grouped_4col)
@@ -224,10 +225,31 @@ test_api_v1 <- function() {
         "non-integer n_obs"
       )
 
-      # The raw 4-column fixture: 20 rows, 20 unique studies -> rule violated
-      expect_api_v1_validation_error(
+      # The raw 4-column fixture: 20 rows, 20 unique studies. Study dummies
+      # need 23 rows, so they are refused with the counts; clustering by
+      # study alone has no such minimum and must run (#23, MAIVE 0.4.0).
+      dummies_response <- v1_post_json(
+        "/v1/run-model",
+        list(
+          data = df_to_v1_rows(fixture_4col),
+          parameters = list(includeStudyDummies = TRUE)
+        )
+      )
+      expect_api_v1_validation_error(dummies_response, "rows vs unique studies rule with dummies")
+      dummies_message <- v1_parse_body(dummies_response)$error$message
+      expect_api_v1(
+        grepl("need at least 23 rows for 20 unique study IDs", dummies_message, fixed = TRUE) &&
+          grepl("found 20", dummies_message, fixed = TRUE),
+        paste("rows vs unique studies rule: the message should name the counts; got:", dummies_message)
+      )
+      clustered_body <- expect_api_v1_success(
         v1_post_json("/v1/run-model", list(data = df_to_v1_rows(fixture_4col))),
-        "rows vs unique studies rule"
+        "one estimate per study, clustered without dummies"
+      )
+      expect_api_v1(
+        isTRUE(clustered_body$resolvedParameters$includeStudyClustering) &&
+          identical(clustered_body$resolvedParameters$includeStudyDummies, FALSE),
+        "one estimate per study: expected clustering on and study dummies off"
       )
 
       expect_api_v1_validation_error(

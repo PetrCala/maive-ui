@@ -154,7 +154,7 @@ export const DATA_FIELDS: DataFieldRow[] = [
     type: "string",
     requiredFor: "Optional",
     notes:
-      "Enables study clustering. If present, rows must be at least unique studies plus 3.",
+      "Enables study clustering. With study dummies on, rows must be at least unique studies plus 3.",
   },
 ];
 

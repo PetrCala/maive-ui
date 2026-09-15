@@ -107,7 +107,11 @@ const handler = async (
     return sendApiError(res, "validation_error", parameterError.message);
   }
 
-  const validationError = validateDataset(data, resolved.modelType);
+  const validationError = validateDataset(data, resolved.modelType, {
+    includeStudyDummies:
+      "includeStudyDummies" in resolved.parameters &&
+      resolved.parameters.includeStudyDummies === true,
+  });
   if (validationError) {
     return sendApiError(res, "validation_error", validationError.message);
   }
