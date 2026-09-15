@@ -27,18 +27,21 @@ vi.mock("@src/utils/dataCacheDb", () => ({
   deleteUploadedData: vi.fn(() => Promise.resolve()),
 }));
 
-const seedDataset = (seValues: number[]): void => {
+const seedDataset = (seValues: number[], studyIds?: string[]): void => {
   const rawData: DataArray = seValues.map((se, index) => ({
     effect: 0.3 + index * 0.01,
     se,
     n_obs: 100 + index,
+    ...(studyIds ? { study_id: studyIds[index] } : {}),
   }));
   const uploaded: UploadedData = {
     id: DATA_ID,
     filename: "constant.csv",
     data: rawData,
     rawData,
-    columnNames: ["effect", "se", "n_obs"],
+    columnNames: studyIds
+      ? ["effect", "se", "n_obs", "study_id"]
+      : ["effect", "se", "n_obs"],
     hasHeaders: true,
     base64Data: "",
     uploadedAt: new Date(),
@@ -54,6 +57,10 @@ const renderPage = () =>
   );
 
 const WARNING_PATTERN = /has no usable variation/;
+const READY_MESSAGE = "Your data is valid and ready for analysis!";
+// With a warning on the page the success line must carry the caveat (#572).
+const CAVEAT_PATTERN =
+  /can be analyzed, but read the warning above first: it says which models/;
 
 describe("ValidationPage constant-se warning (#572)", () => {
   beforeEach(() => {
@@ -74,10 +81,10 @@ describe("ValidationPage constant-se warning (#572)", () => {
     );
     expect(warning.textContent).not.toMatch(/are all/);
 
-    // Advisory, not an error: RTMA is a legitimate target for such data.
-    expect(
-      screen.getByText("Your data is valid and ready for analysis!"),
-    ).toBeInTheDocument();
+    // Advisory, not an error: RTMA is a legitimate target for such data. But
+    // the page must not also call the data ready without saying so (#572).
+    expect(screen.getByText(CAVEAT_PATTERN)).toBeInTheDocument();
+    expect(screen.queryByText(READY_MESSAGE)).not.toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /continue to model setup/i }),
     ).toBeEnabled();
@@ -90,9 +97,7 @@ describe("ValidationPage constant-se warning (#572)", () => {
     const warning = await screen.findByText(WARNING_PATTERN);
     expect(warning.textContent).toContain("vary by less than one part in");
     expect(warning.textContent).not.toMatch(/are all/);
-    expect(
-      screen.getByText("Your data is valid and ready for analysis!"),
-    ).toBeInTheDocument();
+    expect(screen.getByText(CAVEAT_PATTERN)).toBeInTheDocument();
   });
 
   it("lists RDT among the models that need a sample-size column", async () => {
@@ -121,7 +126,67 @@ describe("ValidationPage constant-se warning (#572)", () => {
     seedDataset([0.1, 0.101, 0.1, 0.101, 0.1, 0.101]);
     renderPage();
 
-    await screen.findByText("Your data is valid and ready for analysis!");
+    await screen.findByText(READY_MESSAGE);
     expect(screen.queryByText(WARNING_PATTERN)).not.toBeInTheDocument();
+  });
+});
+
+describe("ValidationPage caveat with several warnings", () => {
+  beforeEach(() => {
+    dataCache.clear();
+  });
+
+  it("counts the warnings and uses the plural", async () => {
+    seedDataset(
+      [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      ["s1", "s2", "s3", "s4", "s5", "s6"],
+    );
+    renderPage();
+
+    await screen.findByText(WARNING_PATTERN);
+    expect(
+      screen.getByText(
+        "Your data can be analyzed, but read the 2 warnings above first: they say which models or rows are affected.",
+      ),
+    ).toBeInTheDocument();
+  });
+});
+
+describe("ValidationPage study dummy rows (#23)", () => {
+  beforeEach(() => {
+    dataCache.clear();
+  });
+
+  it("only warns about one estimate per study and keeps the data usable", async () => {
+    seedDataset(
+      [0.1, 0.12, 0.15, 0.2, 0.25, 0.3],
+      ["s1", "s2", "s3", "s4", "s5", "s6"],
+    );
+    renderPage();
+
+    const warning = await screen.findByText(/unique study IDs\. Study dummies/);
+    expect(warning.textContent).toContain(
+      "The data has 6 rows for 6 unique study IDs.",
+    );
+    expect(warning.textContent).toContain("need at least 9 rows");
+    expect(warning.textContent).toContain(
+      "leave Fixed-Intercept Multilevel off for this data",
+    );
+    expect(screen.queryByText(/must be larger than/)).not.toBeInTheDocument();
+    expect(screen.getByText(CAVEAT_PATTERN)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /continue to model setup/i }),
+    ).toBeEnabled();
+  });
+
+  it("says nothing when the studies leave room for dummies", async () => {
+    seedDataset(
+      [0.1, 0.12, 0.15, 0.2, 0.25, 0.3],
+      ["s1", "s1", "s1", "s2", "s2", "s3"],
+    );
+    renderPage();
+
+    await screen.findByText(READY_MESSAGE);
+    expect(screen.queryByText(/Study dummies add/)).not.toBeInTheDocument();
   });
 });

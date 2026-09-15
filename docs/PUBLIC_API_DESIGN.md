@@ -186,8 +186,9 @@ are a **prerequisite**, not a nice-to-have.
   the first 3-4 keys are taken positionally as (effect, se, n_obs[, study_id])
   per D5.
 - **MAIVE-family** (`/v1/run-model`): 3 or 4 columns; ≥ 4 rows; `effect`,
-  `se`, `n_obs` numeric; `se > 0`; `n_obs` positive integers; if `study_id`
-  present, rows ≥ unique studies + 3. These mirror the UI validation page
+  `se`, `n_obs` numeric; `se > 0`; `n_obs` positive integers; with `study_id`
+  and `includeStudyDummies`, rows ≥ unique studies + 3 (#23: MAIVE applies the
+  rule only to the dummy fit, and the validation page only warns). These mirror the UI validation page
   (`pages/validation/index.tsx`) and are enforced server-side so API callers
   get structured `400`s.
 - **RTMA** (`/v1/run-rtma`): ≥ 2 columns (`effect`, `se`); rows with missing
