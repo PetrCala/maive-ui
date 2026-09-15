@@ -628,9 +628,9 @@ const validateData = (
       message:
         warningCount === 0
           ? VALID_DATA_MESSAGE
-          : `Your data can be analyzed, but read the ${
-              warningCount === 1 ? "warning" : `${warningCount} warnings`
-            } above first: they say which models or rows are affected.`,
+          : warningCount === 1
+            ? "Your data can be analyzed, but read the warning above first: it says which models or rows are affected."
+            : `Your data can be analyzed, but read the ${warningCount} warnings above first: they say which models or rows are affected.`,
     });
   }
 

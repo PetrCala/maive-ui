@@ -59,7 +59,8 @@ const renderPage = () =>
 const WARNING_PATTERN = /has no usable variation/;
 const READY_MESSAGE = "Your data is valid and ready for analysis!";
 // With a warning on the page the success line must carry the caveat (#572).
-const CAVEAT_PATTERN = /can be analyzed, but read the warning above first/;
+const CAVEAT_PATTERN =
+  /can be analyzed, but read the warning above first: it says which models/;
 
 describe("ValidationPage constant-se warning (#572)", () => {
   beforeEach(() => {
@@ -127,6 +128,27 @@ describe("ValidationPage constant-se warning (#572)", () => {
 
     await screen.findByText(READY_MESSAGE);
     expect(screen.queryByText(WARNING_PATTERN)).not.toBeInTheDocument();
+  });
+});
+
+describe("ValidationPage caveat with several warnings", () => {
+  beforeEach(() => {
+    dataCache.clear();
+  });
+
+  it("counts the warnings and uses the plural", async () => {
+    seedDataset(
+      [0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
+      ["s1", "s2", "s3", "s4", "s5", "s6"],
+    );
+    renderPage();
+
+    await screen.findByText(WARNING_PATTERN);
+    expect(
+      screen.getByText(
+        "Your data can be analyzed, but read the 2 warnings above first: they say which models or rows are affected.",
+      ),
+    ).toBeInTheDocument();
   });
 });
 
