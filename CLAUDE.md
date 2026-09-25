@@ -69,6 +69,7 @@ npm run cloud:status    # Get all service URLs and status
 npm run cloud:ui-url    # Get UI frontend URL
 npm run cloud:lambda-url # Get R backend URL
 npm run cloud:warm      # Pre-warm the R and UI Lambdas before a demo (docs/COST_CONTROLS.md)
+npm run cloud:usage-report -- --hours 48 --out report.md  # Markdown usage report from CloudWatch and the runs table
 npm run cloud:destroy   # Destroy all infrastructure
 ```
 
