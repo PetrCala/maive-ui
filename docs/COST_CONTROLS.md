@@ -129,6 +129,31 @@ until the next apply reconciles it. That is expected.
 - Adjust `cost_circuit_breaker_throttle_periods` to trade sensitivity against
   false positives.
 
+## Looking at usage after the fact
+
+`npm run cloud:usage-report -- --hours 48 --out report.md`
+(`scripts/usageReport.sh`) renders one Markdown report for a recent window
+from the three sources the stack already keeps, all read-only:
+
+- CloudWatch metrics per Lambda (invocations, errors, throttles, duration,
+  peak concurrency), the UI Function URL request/4xx/5xx counts, and an
+  hourly traffic table.
+- The R backend's per-request JSON log line (`request_log.R`, #532) through
+  Logs Insights: requests by endpoint, method and outcome, duration
+  percentiles, dataset sizes, the slowest requests and every timeout or error.
+  The `REPORT` lines of all three functions give cold starts and billed
+  GB-seconds, the unit the daily alarm above is set in.
+- The runs table (#529): distinct inputs by outcome, model and method with
+  their run and dedup counters, the inputs that failed or timed out, and the
+  async jobs submitted in the window.
+
+It also prints each function's last deployment time and reserved
+concurrency, the banner parameter, and any `maive-*` alarm that is not `OK`,
+so one run answers "what happened yesterday" and "is anything still tripped".
+Use `--profile`/`--region` as with `cloud:warm`. The runs table only holds
+records for 30 days and the async job records for 48 h, so widen `--hours`
+only as far as the log retention goes.
+
 ## Before a demo or talk
 
 A room of people opening the site at the same moment is the one legitimate
