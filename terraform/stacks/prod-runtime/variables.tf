@@ -115,22 +115,25 @@ variable "lambda_r_backend_reserved_concurrency" {
     /v1, or the async orchestrator), so worst-case spend is bounded and excess
     requests get a 429. Must stay above var.orchestrator_maximum_concurrency
     (a precondition in orchestrator_lambda.tf enforces it) so async runs never
-    starve synchronous UI/API calls: 25 = 15 async slots + 10 for sync callers.
+    starve synchronous UI/API calls: 15 = 10 async slots + 5 for sync callers.
+    Raised to 25 for the Sep 2026 conference (#586); in a load test of 80
+    simultaneous visitors the R backend peaked at 14.
   EOT
   type        = number
-  default     = 25
+  default     = 15
 }
 
 variable "orchestrator_maximum_concurrency" {
   description = <<-EOT
     How many queued runs the SQS event source fans out to the orchestrator, and
     so to the R backend, at once. Every browser run goes through this queue, so
-    it is the UI's analysis throughput limit. At 15, a burst of 40 simultaneous
-    RTMA runs clears in about 80 s instead of about 4 minutes at 5. Must stay
-    below var.lambda_r_backend_reserved_concurrency.
+    it is the UI's analysis throughput limit. At 10, a burst of 40 simultaneous
+    RTMA runs clears in about 2 minutes (about 4 at 5). Raised to 15 for the
+    Sep 2026 conference (#586). Must stay below
+    var.lambda_r_backend_reserved_concurrency.
   EOT
   type        = number
-  default     = 15
+  default     = 10
 
   validation {
     condition     = var.orchestrator_maximum_concurrency >= 2
@@ -183,13 +186,14 @@ variable "lambda_daily_gb_seconds_budget" {
     Daily Lambda compute budget in GB-seconds, summed across all functions.
     Crossing it publishes to the cost circuit breaker topic, which emails the
     operator and, when the breaker is enabled, trips the auto-shutoff
-    (docs/COST_CONTROLS.md, #533). 60,000 GB-s is about $1 of compute at the
-    x86 rate. It was 13,000 (a thirtieth of the 400,000 GB-s monthly free
-    tier) until ordinary days reached 12,640 GB-s (Aug 24, Sep 5 2026), close
-    enough that a conference demo would trip the breaker on legitimate load.
+    (docs/COST_CONTROLS.md, #533). 25,000 GB-s is about $0.42 of compute at
+    the x86 rate. It was 13,000 (a thirtieth of the 400,000 GB-s monthly free
+    tier) until ordinary days reached 12,640 GB-s (Aug 24, Sep 5 2026), too
+    close to tripping the breaker on legitimate load. The Sep 2026 conference
+    ran at 60,000 (#586).
   EOT
   type        = number
-  default     = 60000
+  default     = 25000
 }
 
 variable "lambda_r_backend_hourly_error_threshold" {

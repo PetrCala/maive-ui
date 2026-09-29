@@ -387,8 +387,14 @@ Terraform), per `PUBLIC_API_DESIGN.md` D2.
 ### Zone `easymeta.org`
 
 - Ruleset `22e8bfe243e44a8fba4681ae089c784d`, rule `536d815293d1482b8beb2b6b66dfe39f`
-- Expression: `(http.host eq "easymeta.org" or http.host eq "www.easymeta.org")`
-- Same shape: `block`, 100 requests / 10s per `(ip.src, cf.colo.id)`
+- Expression: `(http.host eq "easymeta.org" or http.host eq "www.easymeta.org") and not starts_with(http.request.uri.path, "/_next/static/")`
+- Action: `block`, 200 requests / 10s per `(ip.src, cf.colo.id)`, mitigation 10s
+
+Static assets are exempt because a first page load pulls 9 to 16 cached JS
+chunks. Counting them let five or six people on one shared IP (conference
+Wi-Fi) trip the old 100-request limit together, and they cost nothing to
+serve. The Free plan accepts the `starts_with` filter. For the Sep 2026
+conference the threshold was 500 for the week.
 
 Added before the zone was delegated, on purpose. A serving hostname without a
 rate-limit rule is the cheap unmetered path to the same Lambdas and defeats the
