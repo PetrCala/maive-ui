@@ -602,7 +602,7 @@ const TEXT = {
     howItWorks: {
       title: "How MAIVE Works",
       text: [
-        `**Step 1 (First stage).** Regress the *reported* variances on the inverse sample size: SE² = ψ₀ + ψ₁(1/N) + ν. This isolates the share of variance unlikely to be affected by p-hacking: artificially increasing sample size is harder than increasing precision.`,
+        `**Step 1 (First stage).** Regress the *reported* variances on the inverse sample size: SE² = ψ₀ + ψ₁(1/N) + ν. This isolates the share of variance unlikely to be affected by p-hacking: artificially increasing sample size is harder than increasing precision. EasyMeta runs this regression in logs by default, log SE² = γ₀ + γ₁ log N + ν, with fitted variances returned to levels by Duan smearing, so they are always positive. To reproduce the paper's specification, set "Use log first stage" to No.`,
         `**Step 2 (Second stage).** Replace each variance in your chosen funnel-plot model (PET, PEESE, PET-PEESE, EK) with the fitted value from Step 1 and **drop or adjust inverse-variance weights**. The resulting instrumental variable estimator is MAIVE.`,
         `**Step 3 (Inference).** Report a heteroskedasticity-robust standard error, the Anderson-Rubin confidence interval and the first-stage F statistic so users can judge instrument strength.`,
       ],
