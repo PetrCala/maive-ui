@@ -49,10 +49,37 @@ function resolveRegion(hostname: string): string {
 }
 
 /**
+ * The URL's query string as the bag SigV4 signs. A forwarded
+ * `?include=plot` (#598) has to be part of the canonical request: the
+ * Function URL recomputes the signature over the query it receives and
+ * answers 403 when that differs from what was signed. A repeated key
+ * becomes an array, which is how the signer canonicalizes it.
+ * @param searchParams - Query of the URL about to be fetched
+ */
+function queryParameterBag(
+  searchParams: URLSearchParams,
+): Record<string, string | string[]> {
+  const bag: Record<string, string | string[]> = {};
+  searchParams.forEach((value, key) => {
+    const existing = bag[key];
+    if (existing === undefined) {
+      bag[key] = value;
+    } else if (Array.isArray(existing)) {
+      existing.push(value);
+    } else {
+      bag[key] = [existing, value];
+    }
+  });
+  return bag;
+}
+
+/**
  * Fetch from the R backend, SigV4-signing the request when the target is a
  * Lambda Function URL. Signing credentials come from the Lambda runtime
  * environment (the execution role's temporary keys).
- * @param path - R backend path, e.g. "/run-model"
+ * @param path - R backend path, with its query string when there is one,
+ *   e.g. "/run-model" or "/v1/run-model?include=plot"; the query is fetched
+ *   and, on a Function URL, signed along with the path
  * @param init - Method, JSON body and abort signal for the upstream call
  */
 export async function signedRFetch(
@@ -105,6 +132,7 @@ export async function signedRFetch(
       protocol: url.protocol,
       hostname: url.hostname,
       path: url.pathname,
+      query: queryParameterBag(url.searchParams),
       headers: { ...headers, host: url.hostname },
       body: init.body,
     }),
@@ -269,7 +297,8 @@ async function notifyOutcome(
  * contract and the /v1 contract pass through unchanged.
  * @param req - Incoming Next.js API request
  * @param res - Outgoing Next.js API response
- * @param path - R backend path to forward to, e.g. "/run-model"
+ * @param path - R backend path to forward to, e.g. "/run-model", with any
+ *   query string the caller wants the backend to see
  * @param envelope - Error shape for proxy-level failures: the legacy internal
  *   `{ error: true, message }` or the /v1 `{ error: { code, message } }`
  * @param options - Optional run-record integration (#529)

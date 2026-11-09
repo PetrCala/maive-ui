@@ -18,6 +18,9 @@ import { V1_SYNC_TOP_LEVEL_KEYS } from "@src/lib/parameterResolver";
 // A key the body does not accept at the top level (a `modelType` beside
 // `data` instead of inside `parameters`, #574) is a 400 as well.
 //
+// The `include` query parameter (`?include=plot`, #598) travels with the
+// path so the R handlers can embed the plot fields; see forwardedQuery.
+//
 // /v1/runs* is handled by the specific routes, which take precedence over
 // this catch-all.
 export const config = {
@@ -41,6 +44,28 @@ const SYNC_ENDPOINTS: Record<string, SyncEndpoint> = {
   "run-rtma": { method: "POST", family: "rtma" },
   health: { method: "GET" },
 };
+
+// The R /v1 run handlers read one query parameter, `include`: `?include=plot`
+// embeds the plot fields (#598). It is the only key forwarded, so nothing
+// else on the URL reaches the backend; `req.query` also carries the
+// `endpoint` path segments, which never belong upstream. Values go through
+// verbatim (R splits them on commas) and a repeated key keeps every value.
+const FORWARDED_QUERY_KEYS = ["include"] as const;
+
+function forwardedQuery(query: NextApiRequest["query"]): string {
+  const search = new URLSearchParams();
+  FORWARDED_QUERY_KEYS.forEach((key) => {
+    const value = query[key];
+    if (value === undefined) {
+      return;
+    }
+    (Array.isArray(value) ? value : [value]).forEach((item) =>
+      search.append(key, item),
+    );
+  });
+  const encoded = search.toString();
+  return encoded ? `?${encoded}` : "";
+}
 
 export default async function handler(
   req: NextApiRequest,
@@ -87,11 +112,17 @@ export default async function handler(
   // `recipe` is consumed here; the R handler sees only data and parameters.
   const { recipe: recipeIgnored, ...rest } = body;
   void recipeIgnored;
-  return proxyToRBackend(req, res, `/v1/${name}`, "v1", {
-    body: { ...rest, parameters: resolved.parameters },
-    decorateSuccess: {
-      resolvedParameters: resolved.parameters,
-      recipe: resolved.recipe,
+  return proxyToRBackend(
+    req,
+    res,
+    `/v1/${name}${forwardedQuery(req.query)}`,
+    "v1",
+    {
+      body: { ...rest, parameters: resolved.parameters },
+      decorateSuccess: {
+        resolvedParameters: resolved.parameters,
+        recipe: resolved.recipe,
+      },
     },
-  });
+  );
 }

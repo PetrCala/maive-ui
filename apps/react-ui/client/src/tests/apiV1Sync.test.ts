@@ -61,6 +61,13 @@ const forwardedBody = (): Record<string, unknown> => {
   return JSON.parse(init.body as string) as Record<string, unknown>;
 };
 
+const forwardedUrl = (): string => {
+  const [url] = fetchMock.mock.calls[0] as unknown as [URL, RequestInit];
+  return url.toString();
+};
+
+const twoColumnRows = fourColumnRows.map(({ effect, se }) => ({ effect, se }));
+
 beforeEach(() => {
   ENV_KEYS.forEach((key) => {
     savedEnv[key] = process.env[key];
@@ -314,6 +321,135 @@ describe("POST /api/v1/run-rtma", () => {
     expect(forwardedBody().parameters).toMatchObject({ seed: 7 });
     const body = parseBody<{ resolvedParameters: { seed: number } }>(res);
     expect(body.resolvedParameters.seed).toBe(7);
+  });
+});
+
+describe("?include=plot on the sync endpoints (#598)", () => {
+  it("forwards include=plot to /v1/run-model and relays the embedded plot", async () => {
+    fetchMock.mockImplementation(() =>
+      upstreamJson({
+        effectEstimate: 0.2,
+        funnelPlot: "iVBORw0KGgo=",
+        funnelPlotWidth: 800,
+        funnelPlotHeight: 600,
+      }),
+    );
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-model"], include: "plot" },
+      body: { data: fourColumnRows, recipe: "MAIVE" },
+    });
+    const res = withSend(createMockRes<string>());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(forwardedUrl()).toBe(
+      "http://localhost:8787/v1/run-model?include=plot",
+    );
+    const body = parseBody(res);
+    expect(body.funnelPlot).toBe("iVBORw0KGgo=");
+    expect(body.funnelPlotWidth).toBe(800);
+    expect(body.recipe).toBe("MAIVE");
+  });
+
+  it("forwards include=plot to /v1/run-rtma and relays the embedded plot", async () => {
+    fetchMock.mockImplementation(() =>
+      upstreamJson({ mu: 0.1, seed: 2025, zScorePlot: "iVBORw0KGgo=" }),
+    );
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-rtma"], include: "plot" },
+      body: { data: twoColumnRows, recipe: "RTMA" },
+    });
+    const res = withSend(createMockRes<string>());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(forwardedUrl()).toBe(
+      "http://localhost:8787/v1/run-rtma?include=plot",
+    );
+    expect(parseBody(res).zScorePlot).toBe("iVBORw0KGgo=");
+  });
+
+  it("forwards no query string when the request carries none", async () => {
+    fetchMock.mockImplementation(() => upstreamJson({ effectEstimate: 0.2 }));
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-model"] },
+      body: { data: fourColumnRows },
+    });
+    const res = withSend(createMockRes<string>());
+
+    await handler(req, res);
+
+    expect(res.statusCode).toBe(200);
+    expect(forwardedUrl()).toBe("http://localhost:8787/v1/run-model");
+  });
+
+  it("forwards include but not an unrelated query key", async () => {
+    fetchMock.mockImplementation(() => upstreamJson({ effectEstimate: 0.2 }));
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-model"], foo: "bar", include: "plot" },
+      body: { data: fourColumnRows },
+    });
+    const res = withSend(createMockRes<string>());
+
+    await handler(req, res);
+
+    expect(forwardedUrl()).toBe(
+      "http://localhost:8787/v1/run-model?include=plot",
+    );
+  });
+
+  it("forwards no query string when only unrelated keys are present", async () => {
+    fetchMock.mockImplementation(() => upstreamJson({ mu: 0.1 }));
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-rtma"], foo: "bar" },
+      body: { data: twoColumnRows },
+    });
+    const res = withSend(createMockRes<string>());
+
+    await handler(req, res);
+
+    expect(forwardedUrl()).toBe("http://localhost:8787/v1/run-rtma");
+  });
+
+  it("keeps every value of a repeated include key", async () => {
+    fetchMock.mockImplementation(() => upstreamJson({ effectEstimate: 0.2 }));
+    const { default: handler } = await import(
+      "@src/pages/api/v1/[...endpoint]"
+    );
+    const req = createMockReq({
+      method: "POST",
+      query: { endpoint: ["run-model"], include: ["plot", "extra"] },
+      body: { data: fourColumnRows },
+    });
+    const res = withSend(createMockRes<string>());
+
+    await handler(req, res);
+
+    expect(forwardedUrl()).toBe(
+      "http://localhost:8787/v1/run-model?include=plot&include=extra",
+    );
   });
 });
 

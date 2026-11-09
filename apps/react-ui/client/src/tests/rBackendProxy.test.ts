@@ -73,6 +73,64 @@ describe("signedRFetch", () => {
     expect(headers["x-amz-date"]).toBeDefined();
   });
 
+  it("keeps the query string on an unsigned local target (#598)", async () => {
+    process.env.R_API_URL = "http://localhost:8787";
+
+    await signedRFetch("/v1/run-model?include=plot", {
+      method: "POST",
+      body: "{}",
+    });
+
+    const [url, init] = fetchMock.mock.calls[0] as unknown as [
+      URL,
+      RequestInit,
+    ];
+    expect(url.toString()).toBe(
+      "http://localhost:8787/v1/run-model?include=plot",
+    );
+    const headers = init.headers as Record<string, string>;
+    expect(headers.authorization ?? headers.Authorization).toBeUndefined();
+  });
+
+  it("keeps the query string on a Function URL target and signs it (#598)", async () => {
+    process.env.R_API_URL = "https://abc123.lambda-url.eu-central-1.on.aws";
+    process.env.AWS_ACCESS_KEY_ID = "AKIAFAKEFAKEFAKEFAKE";
+    process.env.AWS_SECRET_ACCESS_KEY = "fake-secret";
+    // Freeze the signing time so the two requests below differ only in
+    // their query string.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-11-09T12:00:00Z"));
+    try {
+      await signedRFetch("/v1/run-model?include=plot", {
+        method: "POST",
+        body: "{}",
+      });
+      await signedRFetch("/v1/run-model", { method: "POST", body: "{}" });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [withQuery, withoutQuery] = fetchMock.mock.calls as unknown as [
+      [URL, RequestInit],
+      [URL, RequestInit],
+    ];
+    expect(withQuery[0].toString()).toBe(
+      "https://abc123.lambda-url.eu-central-1.on.aws/v1/run-model?include=plot",
+    );
+    const signedHeaders = withQuery[1].headers as Record<string, string>;
+    const bareHeaders = withoutQuery[1].headers as Record<string, string>;
+    const signedAuthorization =
+      signedHeaders.authorization ?? signedHeaders.Authorization;
+    expect(signedAuthorization).toContain("AWS4-HMAC-SHA256");
+    expect(signedHeaders["x-amz-date"]).toBe(bareHeaders["x-amz-date"]);
+    // Same credentials, path, headers, body and time: a different signature
+    // means the query string is part of what was signed.
+    expect(signedAuthorization).not.toBe(
+      bareHeaders.authorization ?? bareHeaders.Authorization,
+    );
+  });
+
   it("refuses to call a Function URL without credentials", async () => {
     process.env.R_API_URL = "https://abc123.lambda-url.eu-central-1.on.aws";
 
