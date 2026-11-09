@@ -9,7 +9,7 @@ const GH_R_SCRIPTS_PATH = "apps/lambda-r-backend/r_scripts";
 const GH_DEFAULT_BRANCH = "master";
 
 const CONST = {
-  APP_DISPLAY_NAME: "MAIVE UI",
+  APP_DISPLAY_NAME: "EasyMeta",
 
   CREATOR: "Petr Čala",
   CREATOR_EMAIL: "61505008@fsv.cuni.cz",
@@ -38,9 +38,10 @@ const CONST = {
       PHACKING_CRAN: "https://doi.org/10.32614/CRAN.package.phacking",
     },
     APP: {
-      // Canonical public address of this app. `spuriousprecision.com` and
-      // `maive.eu` (apex and www on both) redirect here, and every page's
-      // <link rel="canonical"> is built from it (CanonicalLink.tsx).
+      // Canonical public address of this app. `www.easymeta.org`,
+      // `spuriousprecision.com` and `maive.eu` (apex and www on both) redirect
+      // here, and every page's <link rel="canonical"> is built from it
+      // (CanonicalLink.tsx).
       // Deliberately separate from LINKS.MAIVE.WEBSITE, which is the MAIVE
       // *method's* page and is not this application.
       WEBSITE: "https://easymeta.org",

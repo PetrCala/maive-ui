@@ -197,7 +197,7 @@ const RESULTS_TEXT: ResultsText = {
 
 const TEXT = {
   home: {
-    title: "Seamless Meta-Analysis with MAIVE",
+    title: "EasyMeta: Meta-Analysis with MAIVE",
     uploadYourData: "Upload Your Data",
     whatIsMaive: "What is MAIVE?",
   },

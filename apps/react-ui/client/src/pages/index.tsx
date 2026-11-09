@@ -13,6 +13,18 @@ import { FaInfoCircle } from "react-icons/fa";
 
 const PENDING_STATUSES = ["queued", "running"];
 
+// Search title, snippet and shared-link preview for the landing page (#596).
+// Inner pages keep `${APP_DISPLAY_NAME} - <Page>`; only the home page carries
+// the long form and the Open Graph tags.
+const TITLE =
+  "EasyMeta: MAIVE meta-analysis corrected for p-hacking and publication bias";
+const DESCRIPTION =
+  "Free web app and API, no account needed. Runs MAIVE (Nature Communications, 2025) " +
+  "beside PET-PEESE, EK and RTMA, with R code to reproduce the results.";
+// Same base as the canonical link (CanonicalLink.tsx), so the preview URL and
+// the canonical never drift apart.
+const HOME_URL = `${CONST.LINKS.APP.WEBSITE}/`;
+
 type StatusBannerResponse = {
   show: boolean;
   message: string;
@@ -96,16 +108,24 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>{`${CONST.APP_DISPLAY_NAME} - Welcome`}</title>
+        <title>{TITLE}</title>
+        <meta name="description" content={DESCRIPTION} />
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={HOME_URL} />
+        <meta property="og:title" content={TITLE} />
+        <meta property="og:description" content={DESCRIPTION} />
+        <meta name="twitter:card" content="summary" />
       </Head>
       <main className="home-page-container">
         <div className="page-shell text-center animate-fade-in">
           <h1 className="text-4xl sm:text-5xl font-bold mb-6 text-primary tracking-tight">
             {TEXT.home.title}
           </h1>
-          <p className="text-lg sm:text-xl mb-8 sm:mb-12 text-secondary leading-relaxed">
-            Adjust your data for publication bias, p-hacking, and spurious
-            precision.
+          {/* text-lg at every width: at sm:text-xl the longer lead line (#596) came
+              out as wide as the H1 and flattened the hero's inverted-funnel taper. */}
+          <p className="text-lg mb-8 sm:mb-12 text-secondary leading-relaxed">
+            Estimate the mean effect corrected for publication bias, p-hacking,
+            and spurious precision.
             <br />
             Powered by the MAIVE estimator (
             <em>
@@ -169,6 +189,22 @@ export default function Home() {
               )}
             </Link>
           )}
+
+          {/* Two short centred lines rather than one (#596): a single line is
+              wider than the primary button and reads as a base under the funnel
+              instead of its tip. The margin only separates it from the My Runs
+              link above; otherwise the buttons' own mb-8 is the gap. */}
+          <p className={`text-sm text-muted ${showMyRuns ? "mt-4" : ""}`}>
+            Free, no account &nbsp;·&nbsp; PET-PEESE, EK and RTMA too
+            <br />
+            Reproducible R code &nbsp;·&nbsp;{" "}
+            <Link
+              href={CONST.LINKS.PUBLIC_API.DOCS_ROUTE}
+              className="underline"
+            >
+              Public API
+            </Link>
+          </p>
         </div>
 
         {isDevelopment && <PingButton />}

@@ -105,8 +105,8 @@ Browser ──► Cloudflare ──► UI Lambda Function URL (Next.js)
 
 **Domains:**
 
-- `easymeta.org` is the canonical address (apex + `www`), proxied through Cloudflare, and the only hostname that serves the app. Every page carries a `<link rel="canonical">` pointing at it (`CONST.LINKS.APP.WEBSITE`).
-- `spuriousprecision.com` and `maive.eu` (apex + `www` on both) 301-redirect to `easymeta.org`, path and query preserved.
+- `easymeta.org` is the canonical address, proxied through Cloudflare, and the only hostname that serves the app. Every page carries a `<link rel="canonical">` pointing at it (`CONST.LINKS.APP.WEBSITE`).
+- `www.easymeta.org`, `spuriousprecision.com` and `maive.eu` (apex + `www` on both of the latter) 301-redirect to `easymeta.org`, path and query preserved.
 - `api.maive.eu` is the public API hostname and is never redirected.
 
 ### Directory Structure
