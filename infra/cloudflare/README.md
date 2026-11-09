@@ -41,7 +41,9 @@ All three zones sit in the same account and share the nameserver pair
 **Complete as of 2026-08-12.** The topology in
 [#487](https://github.com/PetrCala/maive-ui/issues/487) is live:
 
-- `easymeta.org` and `www.easymeta.org` serve the app through Cloudflare;
+- `easymeta.org` serves the app through Cloudflare; `www.easymeta.org`
+  301-redirects to the apex via `ui-origin-proxy` (#596), path and query
+  preserved;
 - `spuriousprecision.com` and `www` 301-redirect there, path and query
   preserved;
 - `maive.eu` and `www.maive.eu` 301-redirect there too, path and query
@@ -449,7 +451,8 @@ which should still be `403` (the app itself is not opened up).
 The target topology, per
 [#487](https://github.com/PetrCala/maive-ui/issues/487):
 
-- `easymeta.org` + `www.easymeta.org` serve the app through Cloudflare.
+- `easymeta.org` serves the app through Cloudflare; `www.easymeta.org`
+  301-redirects to the apex via `ui-origin-proxy` (#596).
 - `spuriousprecision.com` + `www` 301-redirect to `easymeta.org`.
 - `maive.eu` + `www` also 301-redirect to `easymeta.org`, via
   `ui-origin-proxy` (#571). An earlier revision of this runbook kept

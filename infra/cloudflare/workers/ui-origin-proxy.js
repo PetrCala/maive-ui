@@ -1,5 +1,6 @@
-// ui-origin-proxy: fronts the Next.js UI on easymeta.org and www.easymeta.org,
-// and 301-redirects the retired UI hostnames maive.eu and www.maive.eu there.
+// ui-origin-proxy: fronts the Next.js UI on easymeta.org, and 301-redirects
+// www.easymeta.org and the retired UI hostnames maive.eu and www.maive.eu
+// there.
 //
 // Lambda Function URLs reject a foreign Host header, so the request is
 // re-issued as a subrequest to the .on.aws origin with Host/SNI rewritten.
@@ -10,9 +11,11 @@
 // contract the spuriousprecision.com Redirect Rule implements. The redirect
 // lives in the worker rather than in a dashboard Redirect Rule because the
 // worker is deployable from this repo (deploy-worker.sh) while the API token
-// cannot write redirect rulesets (see README.md). Only the two UI hostnames
+// cannot write redirect rulesets (see README.md). Only the listed UI hostnames
 // are matched, by exact name: api.maive.eu is served by api-origin-proxy and
 // must keep answering the API, and every published example points at it.
+// www.easymeta.org joined the list in #596 so the canonical tag and the
+// address bar agree; the apex is the only hostname that serves the app.
 //
 // NOTE: this file was recovered from the deployed worker (created 2026-06-04,
 // originally configured by hand in the Cloudflare dashboard) and committed here
@@ -21,13 +24,14 @@
 
 const ORIGIN = "zekrvvwo2u3fcbmvzlkozy56du0jqwdu.lambda-url.eu-central-1.on.aws";
 
-// Retired UI hostnames, matched exactly. Never add api.maive.eu here.
-const REDIRECT_HOSTS = new Set(["maive.eu", "www.maive.eu"]);
+// Hostnames redirected to the canonical origin, matched exactly. Never add
+// api.maive.eu here.
+const REDIRECT_HOSTS = new Set(["maive.eu", "www.maive.eu", "www.easymeta.org"]);
 
 const CANONICAL_ORIGIN = "https://easymeta.org";
 
 // The URL a request for `url` should be redirected to, or null when the host
-// is not one of the retired UI hostnames. Exported for the node test.
+// is not one of the redirected hostnames. Exported for the node test.
 export function redirectTarget(url) {
   const parsed = new URL(url);
   if (!REDIRECT_HOSTS.has(parsed.hostname.toLowerCase())) {

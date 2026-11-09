@@ -20,12 +20,25 @@ test("apex and www of maive.eu redirect to easymeta.org, path and query preserve
   assert.equal(redirectTarget("http://MAIVE.EU/x"), "https://easymeta.org/x");
 });
 
-test("api.maive.eu and the canonical hostnames are never redirected", () => {
+test("www.easymeta.org redirects to the apex, path and query preserved (#596)", () => {
+  assert.equal(
+    redirectTarget("https://www.easymeta.org/about?x=1"),
+    "https://easymeta.org/about?x=1",
+  );
+  assert.equal(redirectTarget("https://www.easymeta.org/"), "https://easymeta.org/");
+  assert.equal(
+    redirectTarget("http://WWW.EasyMeta.org/upload#frag"),
+    "https://easymeta.org/upload",
+  );
+});
+
+test("api.maive.eu and the canonical hostname are never redirected", () => {
   for (const url of [
     "https://api.maive.eu/v1/health",
     "https://api.maive.eu/openapi.yaml",
     "https://easymeta.org/",
-    "https://www.easymeta.org/about",
+    "https://easymeta.org/about?x=1",
+    "https://foo.easymeta.org/",
     "https://foo.maive.eu/",
     "https://zekrvvwo2u3fcbmvzlkozy56du0jqwdu.lambda-url.eu-central-1.on.aws/",
   ]) {

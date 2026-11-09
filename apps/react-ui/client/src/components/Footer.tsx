@@ -246,7 +246,7 @@ const CodeLinksModal = ({ isOpen, onClose }: CodeLinksModalProps) => {
 
           <div className="space-y-2">
             <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              MAIVE UI (this web app)
+              {CONST.APP_DISPLAY_NAME} (this web app)
             </p>
             <div className="space-y-2">
               <CodeLinkCard
