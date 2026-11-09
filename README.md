@@ -20,7 +20,7 @@ Through our interactive interface, you can quickly and easily check whether your
 - **Interactive analysis** - Upload and analyze your data in a matter of seconds
 - **Accurate detection** - Leverage the peer reviewed MAIVE package
 - **Clear results** - Understand your data quality with confidence
-- **Four methods, one upload** - MAIVE, RTMA, PET-PEESE and EK under the same clustering and weighting choices, with one reproducibility package
+- **Four methods, one upload** - MAIVE, PET-PEESE and EK with the same study-clustering options, RTMA with its own settings, and an R reproducibility package for each run
 
 ### 🤖 API and AI assistants
 

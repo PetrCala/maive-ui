@@ -33,10 +33,11 @@ The contract is reachable without a GitHub hint:
 
 ## Recipes and the resolved echo
 
-All four methods (MAIVE, RTMA, PET-PEESE, EK) run on the same upload under
-the same clustering and weighting choices, in the browser and over the API
-alike. Pass `"recipe": "<name>"` beside `data`; explicit `parameters` are
-applied on top of the recipe's preset.
+MAIVE, PET-PEESE and EK run on the same upload with the same study-clustering
+options, in the browser and over this API alike; RTMA has its own settings and
+uses no study clustering or weights. The browser exports an R reproducibility
+package for each of these runs. Pass `"recipe": "<name>"` beside `data`;
+explicit `parameters` are applied on top of the recipe's preset.
 
 | Recipe | Expands to |
 |---|---|
@@ -103,7 +104,7 @@ positionally in that order.
 | `effect` | number | MAIVE-family, RTMA | Estimated effect size |
 | `se` | number | MAIVE-family, RTMA | Standard error; must be `> 0`. MAIVE-family runs also need it to vary across rows: a constant column leaves the publication-bias slope unidentified |
 | `n_obs` | integer | MAIVE-family | Number of observations; must be a positive integer |
-| `study_id` | string | optional | Enables study clustering; with `includeStudyDummies`, rows must be ≥ unique studies + 3 |
+| `study_id` | string | optional | Enables study clustering (MAIVE, WAIVE and WLS; not used by RTMA); with `includeStudyDummies`, rows must be ≥ unique studies + 3 |
 
 | Endpoint | Columns | Min rows |
 |---|---|---|

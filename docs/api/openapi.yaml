@@ -632,10 +632,10 @@ components:
         study_id:
           type: string
           description: >-
-            Optional study identifier, used for clustering. With
-            `includeStudyDummies: true` the number of rows must be at least
-            the number of unique study ids plus 3; clustering alone has no
-            such minimum.
+            Optional study identifier, used for clustering (MAIVE, WAIVE and
+            WLS; not used by RTMA). With `includeStudyDummies: true` the
+            number of rows must be at least the number of unique study ids
+            plus 3; clustering alone has no such minimum.
       additionalProperties: true
       example:
         effect: 0.42
@@ -675,6 +675,9 @@ components:
           type: string
           enum: [MAIVE, WAIVE, WLS]
           default: MAIVE
+          description: >-
+            `MAIVE` (default), `WAIVE` (experimental) or `WLS`, the
+            conventional estimator without instrumenting.
         maiveMethod:
           type: string
           enum: [PET, PEESE, PET-PEESE, EK]

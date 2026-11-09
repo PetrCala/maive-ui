@@ -65,6 +65,19 @@ describe("discovery files (#555)", () => {
     expect(recipeCurlExample("RTMA")).toContain('{"effect":0.05,"se":0.1}');
   });
 
+  it("say which methods share the clustering options and that RTMA has its own settings", () => {
+    // RTMA uses no study ids or weights, and /v1/run-rtma rejects
+    // includeStudyClustering and weight with a 400 (#597).
+    expect(llms).toContain(
+      "MAIVE, PET-PEESE and EK on the same upload with the same study-clustering options",
+    );
+    expect(llms).toContain("RTMA uses no study clustering or weights");
+    expect(agent).toContain("RTMA has its own settings");
+    for (const text of [llms, agent]) {
+      expect(text).not.toContain("same clustering and weighting choices");
+    }
+  });
+
   it("describe the resolved echo and the unknown-key rejection", () => {
     expect(agent).toContain("resolvedParameters");
     expect(agent).toContain("favourPositive");

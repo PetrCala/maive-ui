@@ -99,7 +99,7 @@ export const buildLlmsTxt = (): string => {
   );
   return `# EasyMeta
 
-> EasyMeta (${SITE}) corrects meta-analysis estimates for publication bias, p-hacking and spurious precision. It runs MAIVE, RTMA, PET-PEESE and EK on the same upload, under the same clustering and weighting choices, and hands back one reproducibility package. The same compute is available as a free, anonymous HTTP API at ${API.BASE_URL}.
+> EasyMeta (${SITE}) corrects meta-analysis estimates for publication bias, p-hacking and spurious precision. It runs MAIVE, PET-PEESE and EK on the same upload with the same study-clustering options, and Mathur's RTMA with its own settings (RTMA uses no study clustering or weights). The browser exports an R reproducibility package for each of these runs. The same compute is available as a free, anonymous HTTP API at ${API.BASE_URL}.
 
 ## For AI assistants
 
@@ -138,7 +138,7 @@ ${recipeCurlExample(name)}
 
   return `# EasyMeta for AI assistants
 
-EasyMeta (${SITE}) runs meta-analysis corrections for publication bias, p-hacking and spurious precision. Four named recipes, MAIVE, RTMA, PET-PEESE and EK, run on the same upload under the same clustering and weighting choices, and every run can be reproduced locally in R. This page is the short version; the contract is the OpenAPI spec.
+EasyMeta (${SITE}) runs meta-analysis corrections for publication bias, p-hacking and spurious precision. Four named recipes, MAIVE, RTMA, PET-PEESE and EK, run on the same upload; MAIVE, PET-PEESE and EK share the study-clustering options, while RTMA has its own settings. Every run can be reproduced locally in R. This page is the short version; the contract is the OpenAPI spec.
 
 ## Discover
 

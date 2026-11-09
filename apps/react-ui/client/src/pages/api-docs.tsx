@@ -101,7 +101,7 @@ export default function ApiDocsPage() {
         <title>{`${CONST.APP_DISPLAY_NAME} - Public API`}</title>
         <meta
           name="description"
-          content="Run MAIVE, WAIVE, WLS, and RTMA meta-analysis models programmatically over a free, anonymous HTTP API."
+          content="Run MAIVE, WAIVE (experimental), WLS, and RTMA meta-analysis models programmatically over a free, anonymous HTTP API."
         />
       </Head>
       <main className="content-page-container">
@@ -113,7 +113,7 @@ export default function ApiDocsPage() {
               <SectionHeading
                 level="h1"
                 text="Public API"
-                description="Run MAIVE, WAIVE, WLS, and RTMA models from your own scripts and pipelines."
+                description="Run MAIVE, WAIVE (experimental), WLS, and RTMA models from your own scripts and pipelines."
               />
               <p className="text-secondary text-sm leading-relaxed">
                 The API is free and anonymous: no accounts, no API keys, no
@@ -134,10 +134,11 @@ export default function ApiDocsPage() {
                   the same examples in narrative form.
                 </p>
                 <p className="text-sm text-secondary">
-                  All four methods (MAIVE, RTMA, PET-PEESE, EK) run on the same
-                  upload under the same clustering and weighting choices, in the
-                  browser and over this API alike, and every run comes with one
-                  reproducibility package.
+                  MAIVE, PET-PEESE and EK run on the same upload with the same
+                  study-clustering options, in the browser and over this API
+                  alike; RTMA has its own settings and uses no study clustering
+                  or weights. The browser exports an R reproducibility package
+                  for each of these runs.
                 </p>
               </div>
             </header>
@@ -403,7 +404,7 @@ export default function ApiDocsPage() {
                 label="the minimal request body"
               />
               <h3 className="text-base font-semibold text-primary">
-                MAIVE, WAIVE, and WLS
+                MAIVE, WAIVE (experimental), and WLS
               </h3>
               <ParameterTable
                 caption="MAIVE-family model parameters and defaults"
