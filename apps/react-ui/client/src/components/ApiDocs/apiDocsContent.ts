@@ -154,7 +154,7 @@ export const DATA_FIELDS: DataFieldRow[] = [
     type: "string",
     requiredFor: "Optional",
     notes:
-      "Enables study clustering. With study dummies on, rows must be at least unique studies plus 3.",
+      "Enables study clustering (MAIVE, WAIVE and WLS; not used by RTMA). With study dummies on, rows must be at least unique studies plus 3.",
   },
 ];
 
@@ -165,7 +165,11 @@ export type ParameterRow = {
 };
 
 export const MODEL_PARAMETERS: ParameterRow[] = [
-  { name: "modelType", values: "MAIVE | WAIVE | WLS", defaultValue: "MAIVE" },
+  {
+    name: "modelType",
+    values: "MAIVE | WAIVE (experimental) | WLS",
+    defaultValue: "MAIVE",
+  },
   {
     name: "maiveMethod",
     values: "PET | PEESE | PET-PEESE | EK",

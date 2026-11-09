@@ -37,6 +37,15 @@ const CONST = {
       PAPER: "https://doi.org/10.1002/jrsm.1701",
       PHACKING_CRAN: "https://doi.org/10.32614/CRAN.package.phacking",
     },
+    // The method papers behind a conventional (WLS) run (#597).
+    PET_PEESE: {
+      // Stanley & Doucouliagos (2014), Research Synthesis Methods.
+      PAPER: "https://doi.org/10.1002/jrsm.1095",
+    },
+    EK: {
+      // Bom & Rachinger (2019), Research Synthesis Methods.
+      PAPER: "https://doi.org/10.1002/jrsm.1352",
+    },
     APP: {
       // Canonical public address of this app. `spuriousprecision.com` and
       // `maive.eu` (apex and www on both) redirect here, and every page's

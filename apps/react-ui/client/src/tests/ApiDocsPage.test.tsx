@@ -55,7 +55,7 @@ describe("ApiDocsPage", () => {
     ).toHaveAttribute("href", CONST.LINKS.PUBLIC_API.SPEC);
   });
 
-  it("surfaces the MAIVE and RTMA citations", () => {
+  it("surfaces the MAIVE, PET-PEESE, EK and RTMA citations", () => {
     render(<ApiDocsPage />);
 
     expect(
@@ -63,14 +63,29 @@ describe("ApiDocsPage", () => {
         /Irsova, Z., Bom, P\.R\.D\., Havranek, T\., & Rachinger, H\. \(2025\)/,
       ),
     ).toBeInTheDocument();
+    // A WLS run is conventional PET-PEESE or EK, neither of which is the
+    // MAIVE paper's method (#597).
+    expect(
+      screen.getByText(/Stanley, T\. D\., & Doucouliagos, H\. \(2014\)/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Bom, P\. R\. D\., & Rachinger, H\. \(2019\)/),
+    ).toBeInTheDocument();
     expect(screen.getByText(/Mathur, M\. B\. \(2024\)/)).toBeInTheDocument();
     expect(
       screen.getByText(/phacking: Sensitivity Analysis for p-Hacking/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /For WLS and RTMA runs, please also cite the MAIVE paper as the application/,
+      ),
     ).toBeInTheDocument();
 
     const paperLinks = screen.getAllByRole("link", { name: /paper/i });
     expect(paperLinks.map((link) => link.getAttribute("href"))).toEqual([
       CONST.LINKS.MAIVE.PAPER,
+      CONST.LINKS.PET_PEESE.PAPER,
+      CONST.LINKS.EK.PAPER,
       CONST.LINKS.RTMA.PAPER,
     ]);
     expect(screen.getByRole("link", { name: /package/i })).toHaveAttribute(

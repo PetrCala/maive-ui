@@ -745,7 +745,10 @@ export default function ResultsPage() {
                 <CitationBox
                   variant="compact"
                   useBlueStyling
-                  citations={getCitationsForModel(parsedParameters.modelType)}
+                  citations={getCitationsForModel(
+                    parsedParameters.modelType,
+                    parsedParameters.maiveMethod,
+                  )}
                 />
               ) : null}
             </div>

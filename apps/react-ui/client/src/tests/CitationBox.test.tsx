@@ -45,6 +45,29 @@ describe("CitationBox", () => {
     ).toBeInTheDocument();
   });
 
+  it("labels the method and the application for a conventional WLS run", () => {
+    render(
+      <CitationBox
+        variant="compact"
+        useBlueStyling
+        citations={getCitationsForModel("WLS", "PET-PEESE")}
+      />,
+    );
+
+    expect(screen.getByText("Method:")).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Stanley & Doucouliagos, Research Synthesis Methods, 2014\./,
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Application:")).toBeInTheDocument();
+    expect(
+      screen.getByText(/Irsova et al\., Nature Communications, 2025\./),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Citation:")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Mathur/)).not.toBeInTheDocument();
+  });
+
   it("keeps the compact variant a single unlabeled line for MAIVE runs", () => {
     render(
       <CitationBox

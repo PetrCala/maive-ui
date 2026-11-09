@@ -65,6 +65,19 @@ describe("discovery files (#555)", () => {
     expect(recipeCurlExample("RTMA")).toContain('{"effect":0.05,"se":0.1}');
   });
 
+  it("say which methods share the clustering options and that RTMA has its own settings", () => {
+    // RTMA uses no study ids or weights, and /v1/run-rtma rejects
+    // includeStudyClustering and weight with a 400 (#597).
+    expect(llms).toContain(
+      "MAIVE, PET-PEESE and EK on the same upload with the same study-clustering options",
+    );
+    expect(llms).toContain("RTMA uses no study clustering or weights");
+    expect(agent).toContain("RTMA has its own settings");
+    for (const text of [llms, agent]) {
+      expect(text).not.toContain("same clustering and weighting choices");
+    }
+  });
+
   it("describe the resolved echo and the unknown-key rejection", () => {
     expect(agent).toContain("resolvedParameters");
     expect(agent).toContain("favourPositive");
@@ -78,11 +91,25 @@ describe("discovery files (#555)", () => {
   it("cite from the registry, never by hand", () => {
     const maive = getCitationsForModel("MAIVE")[0].formats.plain;
     const [rtmaMethod, rtmaSoftware] = getCitationsForModel("RTMA");
+    const [petPeese] = getCitationsForModel("WLS", "PET-PEESE");
+    const [ek] = getCitationsForModel("WLS", "EK");
     for (const text of [llms, agent]) {
-      expect(text).toContain(maive);
+      expect(text).toContain(`- MAIVE runs: ${maive}`);
       expect(text).toContain(rtmaMethod.formats.plain);
       expect(text).toContain(rtmaSoftware.formats.plain);
       expect(text).toContain(CONST.LINKS.APP.WEBSITE);
+      // Conventional runs cite their own method paper, and the MAIVE paper
+      // as the application (#597).
+      expect(text).toContain(
+        `- Conventional PET, PEESE and PET-PEESE runs (method): ${petPeese.formats.plain}`,
+      );
+      expect(text).toContain(
+        `- Conventional EK runs (method): ${ek.formats.plain}`,
+      );
+      expect(text).toContain(
+        `- PET-PEESE, EK and RTMA runs (application): ${maive}`,
+      );
+      expect(text).not.toContain("MAIVE, PET-PEESE and EK runs:");
     }
   });
 
