@@ -165,6 +165,51 @@ describe("generateReadme", () => {
     expect(verifying).not.toContain("Egger Coefficient Match");
   });
 
+  it("cites the method paper and the MAIVE app for a conventional run", () => {
+    // A WLS run is conventional PET-PEESE or EK, so the package cites that
+    // paper as the method and the MAIVE paper as the application (#597).
+    const wlsEk: ModelParameters = {
+      ...maiveParameters,
+      modelType: "WLS",
+      maiveMethod: "EK",
+      shouldUseInstrumenting: false,
+      useLogFirstStage: false,
+    };
+
+    const citation = section(
+      generateReadme(versionInfo, wlsEk, 60),
+      "## Citation",
+    );
+    expect(citation).toContain("If you use these results in your research");
+    expect(citation).toContain("**Method:**");
+    expect(citation).toContain("@article{bom2019kinked,");
+    expect(citation).toContain("**Application:**");
+    expect(citation).toContain("@article{irsova2025spurious,");
+    expect(citation.indexOf("bom2019kinked")).toBeLessThan(
+      citation.indexOf("irsova2025spurious"),
+    );
+    expect(citation).not.toContain("stanley2014meta");
+
+    const manifest = generateVersionManifest(versionInfo, {
+      ...wlsEk,
+      maiveMethod: "PET-PEESE",
+    });
+    expect(manifest).toContain("If you use these results in your research");
+    expect(manifest).toContain(
+      "Method:      Stanley, T. D., & Doucouliagos, H. (2014).",
+    );
+    expect(manifest).toContain("Application: Irsova, Z., Bom, P.R.D.,");
+
+    // A MAIVE package still cites the MAIVE paper alone, unlabeled.
+    const maive = section(
+      generateReadme(versionInfo, maiveParameters, 60),
+      "## Citation",
+    );
+    expect(maive).toContain("@article{irsova2025spurious,");
+    expect(maive).not.toContain("**Method:**");
+    expect(maive).not.toContain("If you use MAIVE in your research");
+  });
+
   it("keeps the MAIVE outputs for a MAIVE package", () => {
     const readme = generateReadme(versionInfo, maiveParameters, 60);
 

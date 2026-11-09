@@ -374,11 +374,24 @@ codes and every schema referenced above.
 If you use this API in published or reported work, please cite the paper
 behind the model you ran.
 
-For MAIVE, WAIVE, and WLS runs:
+For MAIVE and WAIVE runs, and as the application behind every WLS and RTMA
+run:
 
 > Irsova, Z., Bom, P.R.D., Havranek, T., & Rachinger, H. (2025). Spurious
 > precision in meta-analysis of observational research. Nature
 > Communications, 16, 8454. https://doi.org/10.1038/s41467-025-63261-0
+
+A WLS run is the conventional estimator. With PET, PEESE or PET-PEESE, cite:
+
+> Stanley, T. D., & Doucouliagos, H. (2014). Meta-regression approximations
+> to reduce publication selection bias. Research Synthesis Methods, 5(1),
+> 60-78. https://doi.org/10.1002/jrsm.1095
+
+With EK, cite:
+
+> Bom, P. R. D., & Rachinger, H. (2019). A kinked meta-regression model for
+> publication bias correction. Research Synthesis Methods, 10(4), 497-514.
+> https://doi.org/10.1002/jrsm.1352
 
 For RTMA runs, cite the method and the software implementing it (the MAIVE
 app is the application layer):

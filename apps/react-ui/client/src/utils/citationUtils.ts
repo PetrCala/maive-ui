@@ -115,15 +115,90 @@ ER  -`,
   },
 };
 
+// The method papers behind a conventional (WLS) run (#597): PET, PEESE and
+// PET-PEESE are Stanley & Doucouliagos's, the endogenous kink is Bom &
+// Rachinger's. Neither is MAIVE's, so a WLS run cites them as the method.
+const PET_PEESE_PAPER: Citation = {
+  key: "petpeese",
+  shortText: "Stanley & Doucouliagos, Research Synthesis Methods, 2014.",
+  url: CONST.LINKS.PET_PEESE.PAPER,
+  formats: {
+    apa: "Stanley, T. D., & Doucouliagos, H. (2014). Meta-regression approximations to reduce publication selection bias. Research Synthesis Methods, 5(1), 60-78. https://doi.org/10.1002/jrsm.1095",
+    bibtex: `@article{stanley2014meta,
+  title={Meta-regression approximations to reduce publication selection bias},
+  author={Stanley, Tom D. and Doucouliagos, Hristos},
+  journal={Research Synthesis Methods},
+  volume={5},
+  number={1},
+  pages={60--78},
+  year={2014},
+  doi={10.1002/jrsm.1095}
+}`,
+    ris: `TY  - JOUR
+TI  - Meta-regression approximations to reduce publication selection bias
+AU  - Stanley, Tom D.
+AU  - Doucouliagos, Hristos
+PY  - 2014
+JO  - Research Synthesis Methods
+VL  - 5
+IS  - 1
+SP  - 60
+EP  - 78
+DO  - 10.1002/jrsm.1095
+UR  - https://doi.org/10.1002/jrsm.1095
+ER  -`,
+    plain:
+      "Stanley, T. D., & Doucouliagos, H. (2014). Meta-regression approximations to reduce publication selection bias. Research Synthesis Methods 5(1), 60-78. https://doi.org/10.1002/jrsm.1095",
+  },
+};
+
+const EK_PAPER: Citation = {
+  key: "ek",
+  shortText: "Bom & Rachinger, Research Synthesis Methods, 2019.",
+  url: CONST.LINKS.EK.PAPER,
+  formats: {
+    apa: "Bom, P. R. D., & Rachinger, H. (2019). A kinked meta-regression model for publication bias correction. Research Synthesis Methods, 10(4), 497-514. https://doi.org/10.1002/jrsm.1352",
+    bibtex: `@article{bom2019kinked,
+  title={A kinked meta-regression model for publication bias correction},
+  author={Bom, Pedro R. D. and Rachinger, Heiko},
+  journal={Research Synthesis Methods},
+  volume={10},
+  number={4},
+  pages={497--514},
+  year={2019},
+  doi={10.1002/jrsm.1352}
+}`,
+    ris: `TY  - JOUR
+TI  - A kinked meta-regression model for publication bias correction
+AU  - Bom, Pedro R. D.
+AU  - Rachinger, Heiko
+PY  - 2019
+JO  - Research Synthesis Methods
+VL  - 10
+IS  - 4
+SP  - 497
+EP  - 514
+DO  - 10.1002/jrsm.1352
+UR  - https://doi.org/10.1002/jrsm.1352
+ER  -`,
+    plain:
+      "Bom, P. R. D., & Rachinger, H. (2019). A kinked meta-regression model for publication bias correction. Research Synthesis Methods 10(4), 497-514. https://doi.org/10.1002/jrsm.1352",
+  },
+};
+
 /**
  * Citations to show for a finished model run. RTMA runs Mathur's method, so
  * the method citation comes first and the MAIVE app is credited as the
- * application; every other model type is MAIVE's own method. RDT is an
- * unpublished, different method (#559): it has no citation entry, and the
- * MAIVE paper must not be attached to its results.
+ * application. A WLS run is the conventional estimator, so it credits the
+ * method paper the same way (Stanley & Doucouliagos for PET, PEESE and
+ * PET-PEESE, Bom & Rachinger for EK; PET-PEESE when no method is given) with
+ * the MAIVE app as the application (#597). MAIVE and WAIVE are the MAIVE
+ * paper's own method. RDT is an unpublished, different method (#559): it has
+ * no citation entry, and the MAIVE paper must not be attached to its results.
  */
 function getCitationsForModel(
   modelType?: ModelParameters["modelType"],
+  maiveMethod?: ModelParameters["maiveMethod"],
 ): Citation[] {
   if (modelType === "RDT") {
     return [];
@@ -135,14 +210,26 @@ function getCitationsForModel(
       { ...MAIVE_PAPER, role: "Application" },
     ];
   }
+  if (modelType === "WLS") {
+    const method = maiveMethod === "EK" ? EK_PAPER : PET_PEESE_PAPER;
+    return [
+      { ...method, role: "Method" },
+      { ...MAIVE_PAPER, role: "Application" },
+    ];
+  }
   return [MAIVE_PAPER];
 }
 
 /**
- * Citations for the public API docs, which advertise both model families.
+ * Citations for the public API docs, which advertise every model family.
  */
 const API_DOCS_CITATIONS: Citation[] = [
-  { ...MAIVE_PAPER, role: "MAIVE, WAIVE, and WLS models" },
+  {
+    ...MAIVE_PAPER,
+    role: "MAIVE and WAIVE models; application for WLS and RTMA",
+  },
+  { ...PET_PEESE_PAPER, role: "WLS model with PET, PEESE or PET-PEESE" },
+  { ...EK_PAPER, role: "WLS model with EK" },
   { ...RTMA_PAPER, role: "RTMA model" },
   { ...PHACKING_PACKAGE, role: "RTMA software" },
 ];

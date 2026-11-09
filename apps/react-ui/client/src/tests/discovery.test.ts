@@ -91,11 +91,25 @@ describe("discovery files (#555)", () => {
   it("cite from the registry, never by hand", () => {
     const maive = getCitationsForModel("MAIVE")[0].formats.plain;
     const [rtmaMethod, rtmaSoftware] = getCitationsForModel("RTMA");
+    const [petPeese] = getCitationsForModel("WLS", "PET-PEESE");
+    const [ek] = getCitationsForModel("WLS", "EK");
     for (const text of [llms, agent]) {
-      expect(text).toContain(maive);
+      expect(text).toContain(`- MAIVE runs: ${maive}`);
       expect(text).toContain(rtmaMethod.formats.plain);
       expect(text).toContain(rtmaSoftware.formats.plain);
       expect(text).toContain(CONST.LINKS.APP.WEBSITE);
+      // Conventional runs cite their own method paper, and the MAIVE paper
+      // as the application (#597).
+      expect(text).toContain(
+        `- Conventional PET, PEESE and PET-PEESE runs (method): ${petPeese.formats.plain}`,
+      );
+      expect(text).toContain(
+        `- Conventional EK runs (method): ${ek.formats.plain}`,
+      );
+      expect(text).toContain(
+        `- PET-PEESE, EK and RTMA runs (application): ${maive}`,
+      );
+      expect(text).not.toContain("MAIVE, PET-PEESE and EK runs:");
     }
   });
 

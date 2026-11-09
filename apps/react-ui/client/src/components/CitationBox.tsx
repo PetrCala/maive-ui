@@ -17,8 +17,8 @@ type CitationBoxProps = {
   useBlueStyling?: boolean;
   /**
    * Which references to show. Defaults to the MAIVE paper alone; results
-   * pages pass getCitationsForModel(modelType) so RTMA runs credit Mathur's
-   * method ahead of the app.
+   * pages pass getCitationsForModel(modelType, maiveMethod) so RTMA and
+   * conventional WLS runs credit their method paper ahead of the app.
    */
   citations?: Citation[];
 };

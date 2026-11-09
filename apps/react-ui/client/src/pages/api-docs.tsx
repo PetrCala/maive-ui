@@ -608,8 +608,12 @@ export default function ApiDocsPage() {
               <SectionHeading level="h2" text="Citation" />
               <p className="text-secondary text-sm leading-relaxed">
                 If you use this API in published or reported work, please cite
-                the paper behind the model you ran. RTMA is Mathur&apos;s
-                method; the other models are MAIVE&apos;s.
+                the paper behind the model you ran. MAIVE is Irsova et al.
+                (2025), and WAIVE is an experimental extension of it; a WLS run
+                is conventional PET-PEESE (Stanley &amp; Doucouliagos, 2014) or
+                EK (Bom &amp; Rachinger, 2019); RTMA is Mathur (2024). For WLS
+                and RTMA runs, please also cite the MAIVE paper as the
+                application.
               </p>
               <CitationBox
                 variant="full"

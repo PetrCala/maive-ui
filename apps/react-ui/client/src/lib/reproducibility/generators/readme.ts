@@ -471,9 +471,9 @@ ${
 
 ## Citation
 
-If you use ${analysisType} in your research, please cite:
+If you use these results in your research, please cite:
 
-${getCitationsForModel(parameters.modelType)
+${getCitationsForModel(parameters.modelType, parameters.maiveMethod)
   .map((citation) =>
     [
       citation.role ? `**${citation.role}:**` : null,
@@ -666,9 +666,9 @@ To ensure perfect reproducibility:
 
 CITATION
 --------
-If you use ${parameters.modelType === "RTMA" ? "RTMA" : "MAIVE"} in your research, please cite:
+If you use these results in your research, please cite:
 
-${getCitationsForModel(parameters.modelType)
+${getCitationsForModel(parameters.modelType, parameters.maiveMethod)
   .map((citation) =>
     citation.role
       ? `${`${citation.role}:`.padEnd(13)}${citation.formats.plain}`

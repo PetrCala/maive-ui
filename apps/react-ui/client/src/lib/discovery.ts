@@ -75,17 +75,27 @@ ${formatRows(rows)}
 export const recipePresetJson = (name: RecipeName): string =>
   JSON.stringify(RECIPES[name].parameters);
 
+/**
+ * One line per recipe and role, all from the registry. A conventional
+ * PET-PEESE or EK run and an RTMA run cite their own method paper, with the
+ * MAIVE paper as the application (#597).
+ */
 const citationLines = (): string[] => {
-  const maive = getCitationsForModel("MAIVE");
+  const [maive] = getCitationsForModel("MAIVE");
+  const [petPeese, application] = getCitationsForModel("WLS", "PET-PEESE");
+  const [ek] = getCitationsForModel("WLS", "EK");
   const rtma = getCitationsForModel("RTMA").filter(
     (citation) => citation.role !== "Application",
   );
   return [
-    `- MAIVE, PET-PEESE and EK runs: ${maive.map((c) => c.formats.plain).join(" ")}`,
+    `- MAIVE runs: ${maive.formats.plain}`,
+    `- Conventional PET, PEESE and PET-PEESE runs (method): ${petPeese.formats.plain}`,
+    `- Conventional EK runs (method): ${ek.formats.plain}`,
     ...rtma.map(
       (citation) =>
         `- RTMA runs (${citation.role?.toLowerCase() ?? "reference"}): ${citation.formats.plain}`,
     ),
+    `- PET-PEESE, EK and RTMA runs (application): ${application.formats.plain}`,
   ];
 };
 
